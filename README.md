@@ -100,13 +100,20 @@ ffmpeg:
 
 ### 1. 后端
 
+默认使用**系统 Python**（当前开发环境为 `D:\Python\Python311\python.exe`，3.11.9）：
+
 ```bash
 cd backend
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 python -m uvicorn app.main:app --host 127.0.0.1 --port 6200
 ```
 
 Windows 也可以直接双击根目录的 `start.bat`；Linux 用 `bash start.sh`。
+两个脚本都调用 PATH 里的 `python` / `python3`，也可以用环境变量 `PYTHON` 指定解释器。
+
+> 想用独立虚拟环境：`python -m venv backend/.venv` 后装依赖，再用
+> `PYTHON=backend/.venv/Scripts/python.exe` 启动 `start.bat`。
+> 仓库里可能残留一个只有 pip 的空 `backend/.venv`，不用时可直接删掉。
 
 ### 2. 前端
 
