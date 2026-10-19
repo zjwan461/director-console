@@ -10,6 +10,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 CONFIG_PATH = ROOT / "config.yaml"
+LOCAL_CONFIG_PATH = ROOT / "config.local.yaml"
 
 DEFAULTS: dict[str, Any] = {
     "app": {"host": "127.0.0.1", "port": 6200},
@@ -56,10 +57,23 @@ def _deep_merge(base: dict, override: dict) -> dict:
 class Settings:
     raw: dict = field(default_factory=dict)
 
+    _mtime: tuple = (0.0, 0.0)
+
     def __post_init__(self) -> None:
+        self.reload()
+
+    def reload(self) -> None:
         data: dict = {}
+        mtime = 0.0
+        local_mtime = 0.0
         if CONFIG_PATH.exists():
+            mtime = CONFIG_PATH.stat().st_mtime
             data = yaml.safe_load(CONFIG_PATH.read_text(encoding="utf-8")) or {}
+        # 本地私有覆盖（不进 git）：放 api_key 之类的敏感项
+        if LOCAL_CONFIG_PATH.exists():
+            local_mtime = LOCAL_CONFIG_PATH.stat().st_mtime
+            local_data = yaml.safe_load(LOCAL_CONFIG_PATH.read_text(encoding="utf-8")) or {}
+            data = _deep_merge(data, local_data)
         self.raw = _deep_merge(DEFAULTS, data)
         self.raw.setdefault("paths", {})
         self.raw["paths"] = {
@@ -74,6 +88,19 @@ class Settings:
         }
         for key in ("data", "uploads", "outputs"):
             Path(self.raw["paths"][key]).mkdir(parents=True, exist_ok=True)
+        self._mtime = (mtime, local_mtime)
+
+    def refresh_if_changed(self) -> bool:
+        """config.yaml 被外部编辑后，无需重启即可生效（返回是否重载）。"""
+        try:
+            mtime = CONFIG_PATH.stat().st_mtime if CONFIG_PATH.exists() else 0.0
+            local_mtime = LOCAL_CONFIG_PATH.stat().st_mtime if LOCAL_CONFIG_PATH.exists() else 0.0
+        except OSError:
+            return False
+        if (mtime, local_mtime) == self._mtime:
+            return False
+        self.reload()
+        return True
 
     def get(self, path: str, default: Any = None) -> Any:
         cur: Any = self.raw

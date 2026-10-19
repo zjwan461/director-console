@@ -40,7 +40,11 @@ ffmpeg:
 ai:
   base_url: https://www.autodl.art/api/v1
   api_key: ""
-  model: ""
+  model: "DeepSeek-V4.1-Flash"
+  # 调用提示词模型时是否读取系统代理；公司代理环境才需要 true
+  trust_env: false
+  # 也可直接指定代理（推荐写进 config.local.yaml）：http://host:port
+  proxy: ""
 
 ui:
   # 旧面板 / ComfyUI 作为「高级模式」入口，填了才显示

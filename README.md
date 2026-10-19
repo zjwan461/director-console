@@ -57,6 +57,31 @@ python tools/stub_comfy.py --port 8199 --token secret123
 - [x] M3 成片：镜头勾选排序、逐段标准化、拼接、抽封面（需要本机有 ffmpeg）
 - [ ] M4 真实环境联调：local / ssh 模式接上 GPU 机
 
+## 提示词助手（可选）
+
+在 `config.local.yaml` 里放密钥（**该文件已 gitignore，不会提交**）：
+
+```yaml
+ai:
+  api_key: "sk-..."
+  proxy: "http://10.0.0.1:8080"   # 只有需要走公司代理时才填
+```
+
+`config.yaml` 里配接口与模型：
+
+```yaml
+ai:
+  base_url: https://www.autodl.art/api/v1
+  api_key: ""
+  model: "DeepSeek-V4.1-Flash"
+  trust_env: false   # 只有想直接用系统 HTTP_PROXY 时才改 true
+```
+
+- 改完**保存即生效**：后端按文件修改时间自动重载 `config.yaml` / `config.local.yaml`，不用重启；
+- 模型返回的是 JSON，后端会转成 H3 习惯的六段式文本
+  （`subject_definitions` / `summary` / `retention_analysis` / `detailed_description` / `overall_soundscape` / `non_diegetic_music`）再填进描述框；
+- 没配 key 时按钮仍可点，会提示去哪里配。
+
 ## 创作台 ↔ 项目
 
 两边现在互通了：

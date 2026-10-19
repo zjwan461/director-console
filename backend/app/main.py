@@ -42,6 +42,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.middleware("http")
+async def _refresh_settings(request, call_next):
+    """config.yaml 改动（比如填了 ai.api_key）无需重启即可生效。"""
+    if settings.refresh_if_changed():
+        runtime.apply_runtime_settings()
+    return await call_next(request)
+
+
 store.init_db()
 runtime.apply_runtime_settings()
 DATA.mkdir(parents=True, exist_ok=True)
@@ -582,6 +590,47 @@ class RewriteRequest(BaseModel):
     extra: str = ""
 
 
+
+
+PROMPT_ORDER = [
+    "subject_definitions",
+    "summary",
+    "retention_analysis",
+    "detailed_description",
+    "overall_soundscape",
+    "non_diegetic_music",
+]
+
+
+def _format_prompt_content(raw: str) -> str:
+    """把模型返回的 JSON 转成 H3 工作流习惯的六段式文本。"""
+    text = (raw or "").strip()
+    if text.startswith("```"):
+        text = text.strip("`")
+        if text.lower().startswith("json"):
+            text = text[4:]
+        text = text.strip()
+    try:
+        data = json.loads(text)
+    except Exception:
+        return raw
+    if not isinstance(data, dict):
+        return raw
+
+    blocks: list[str] = []
+    keys = [k for k in PROMPT_ORDER if k in data] + [k for k in data if k not in PROMPT_ORDER]
+    for key in keys:
+        value = data[key]
+        if isinstance(value, list):
+            body = "\n".join(str(v).strip() for v in value if str(v).strip())
+        elif isinstance(value, str):
+            body = value.strip()
+        else:
+            body = json.dumps(value, ensure_ascii=False)
+        blocks.append(f"{key}:\n{body}")
+    return "\n\n".join(blocks)
+
+
 @app.post("/api/prompt/rewrite")
 async def rewrite_prompt(body: RewriteRequest) -> dict:
     prompts = _skill_prompts()
@@ -605,7 +654,13 @@ async def rewrite_prompt(body: RewriteRequest) -> dict:
         "temperature": 0.7,
     }
     try:
-        async with httpx.AsyncClient(timeout=120) as client:
+        proxy = str(settings.get("ai.proxy", "") or "").strip()
+        client_kwargs: dict[str, Any] = {"timeout": 120, "trust_env": False}
+        if proxy:
+            client_kwargs["proxy"] = proxy
+        elif settings.get("ai.trust_env", False):
+            client_kwargs["trust_env"] = True
+        async with httpx.AsyncClient(**client_kwargs) as client:
             resp = await client.post(
                 f"{base}/chat/completions",
                 headers={"Authorization": f"Bearer {api_key}"},
@@ -615,7 +670,7 @@ async def rewrite_prompt(body: RewriteRequest) -> dict:
             raise HTTPException(status_code=502, detail=f"提示词模型返回 {resp.status_code}：{resp.text[:200]}")
         data = resp.json()
         content = data["choices"][0]["message"]["content"]
-        return {"ok": True, "content": content, "model": model}
+        return {"ok": True, "content": _format_prompt_content(content), "model": model}
     except HTTPException:
         raise
     except Exception as exc:
