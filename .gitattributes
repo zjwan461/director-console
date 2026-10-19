@@ -1,0 +1,12 @@
+# 统一换行：Linux 脚本/配置必须 LF，Windows 批处理用 CRLF
+* text=auto eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ico binary
+*.mp3 binary
+*.wav binary
+*.mp4 binary

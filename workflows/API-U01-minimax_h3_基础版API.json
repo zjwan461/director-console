@@ -1,0 +1,519 @@
+{
+  "92": {
+    "inputs": {
+      "filename_prefix": "comfyui",
+      "format": "auto",
+      "codec": "auto",
+      "video": [
+        "150",
+        0
+      ]
+    },
+    "class_type": "SaveVideo",
+    "_meta": {
+      "title": "保存视频"
+    }
+  },
+  "119": {
+    "inputs": {
+      "vae_name": "minimax_h3_video_vae_fp16.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "加载VAE"
+    }
+  },
+  "120": {
+    "inputs": {
+      "vae_name": "minimax_h3_audio_vae_fp32.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "加载VAE"
+    }
+  },
+  "121": {
+    "inputs": {
+      "samples": [
+        "156",
+        0
+      ],
+      "vae": [
+        "120",
+        0
+      ]
+    },
+    "class_type": "VAEDecodeAudio",
+    "_meta": {
+      "title": "VAE解码（音频）"
+    }
+  },
+  "122": {
+    "inputs": {
+      "samples": [
+        "156",
+        0
+      ],
+      "vae": [
+        "119",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "123": {
+    "inputs": {
+      "sampler_name": "res_multistep"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "K采样器选择"
+    }
+  },
+  "124": {
+    "inputs": {
+      "scheduler": "simple",
+      "steps": 25,
+      "denoise": 1,
+      "model": [
+        "159",
+        0
+      ]
+    },
+    "class_type": "BasicScheduler",
+    "_meta": {
+      "title": "基本调度器"
+    }
+  },
+  "125": {
+    "inputs": {
+      "noise": [
+        "129",
+        0
+      ],
+      "guider": [
+        "126",
+        0
+      ],
+      "sampler": [
+        "123",
+        0
+      ],
+      "sigmas": [
+        "160",
+        0
+      ],
+      "latent_image": [
+        "136",
+        1
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "自定义采样器（高级）"
+    }
+  },
+  "126": {
+    "inputs": {
+      "model": [
+        "159",
+        0
+      ],
+      "conditioning": [
+        "136",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "基本引导器"
+    }
+  },
+  "127": {
+    "inputs": {
+      "unet_name": "minimax/minimax_h3_ref2va_int8_convrot.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "UNet加载器"
+    }
+  },
+  "128": {
+    "inputs": {
+      "clip_name": "qwen3vl_32b_minimax_h3_int8_convrot.safetensors",
+      "type": "minimax",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "加载CLIP"
+    }
+  },
+  "129": {
+    "inputs": {
+      "noise_seed": 461692676120124
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "随机噪波"
+    }
+  },
+  "130": {
+    "inputs": {
+      "fps": 24,
+      "bit_depth": 8,
+      "images": [
+        "122",
+        0
+      ],
+      "audio": [
+        "121",
+        0
+      ]
+    },
+    "class_type": "CreateVideo",
+    "_meta": {
+      "title": "创建视频"
+    }
+  },
+  "131": {
+    "inputs": {
+      "expression": "max(5, round(a * 24)) + (5 - (max(5, round(a * 24)) % 17)) % 17",
+      "values.a": [
+        "147",
+        0
+      ]
+    },
+    "class_type": "ComfyMathExpression",
+    "_meta": {
+      "title": "数学表达式"
+    }
+  },
+  "136": {
+    "inputs": {
+      "prompt": [
+        "146",
+        0
+      ],
+      "width": [
+        "145",
+        1
+      ],
+      "height": [
+        "145",
+        2
+      ],
+      "length": [
+        "131",
+        1
+      ],
+      "ref_image_size": "match",
+      "clip": [
+        "128",
+        0
+      ],
+      "vae": [
+        "119",
+        0
+      ],
+      "audio_vae": [
+        "120",
+        0
+      ],
+      "ref_images.ref_image_0": [
+        "137",
+        0
+      ],
+      "ref_images.ref_image_1": [
+        "139",
+        0
+      ],
+      "ref_images.ref_image_2": [
+        "141",
+        0
+      ]
+    },
+    "class_type": "MiniMaxH3ReferenceToVideo",
+    "_meta": {
+      "title": "MiniMax H3 Reference to Video"
+    }
+  },
+  "137": {
+    "inputs": {
+      "image": "Untitled(4).jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "139": {
+    "inputs": {
+      "image": "Untitled(5).jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "141": {
+    "inputs": {
+      "image": "Untitled(6).jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "145": {
+    "inputs": {
+      "预设分辨率": "自定义",
+      "横竖对调": false,
+      "批量大小": 1,
+      "自定义宽": 864,
+      "自定义高": 480,
+      "缩放倍数": "32"
+    },
+    "class_type": "WJILatentPreset",
+    "_meta": {
+      "title": "📐 Latent预设 (Empty Latent Preset)"
+    }
+  },
+  "146": {
+    "inputs": {
+      "prompt": "Aesthetic: Cinematic wuxia atmosphere, static handheld medium shot, warm oil-lantern glow cutting through cool rainy mist, moody and healing film grain texture\n[SHOT 1]\nDuration: 0:00 - 0:03\nCamera Motion: Static handheld medium shot, subtle frame tremor from falling rain\nVisual Prompt: Starting from the reference frame. Inside a wooden canopy boat drifting on a misty lake at night, the young woman in red embroidered hanfu — with black hair in a traditional updo and dangling earrings — holds the white fox with thick pure-white fur in both arms. She bends forward and lowers the fox onto a dry wooden plank inside the cabin, then grabs a cloth and wipes rainwater off its fur with firm stroking motions. A lit oil lantern hangs beside her, casting warm golden light across the cabin while rain streaks down outside. Lotus leaves float on the dark lake surface visible through the boat entrance.\nAudio / Dialogue: 淅沥雨声、木船吱呀声、湖水轻拍船舷 [环境音为主，此镜无人声]\n[SHOT 2]\nDuration: 0:03 - 0:07\nCamera Motion: Subtle handheld push-in, slow and steady toward both figures\nVisual Prompt: The white fox sits upright with pointed ears raised high, staring directly at her with alert dark eyes and rigid posture. The woman lowers herself into a squat and reaches one hand toward the fox's head, then strokes firmly along its head and back with repeated downward palm motions. She speaks directly to the fox with natural lip-sync, her expression calm and steady. The fox's bushy tail stays tense behind its body but makes no attempt to flee. Warm lantern light flickers across both their faces.\nAudio / Dialogue: 雨声持续、布料摩擦声 [年轻女声 / 温软低缓] 人声：\"别怕，已经没事了。雨再大，我也不会把你丢下。\"\n[SHOT 3]\nDuration: 0:07 - 0:11\nCamera Motion: Static handheld medium close-up, minimal movement holding both in frame\nVisual Prompt: The white fox releases tension from its shoulders and settles its breathing, eyes softening into a calmer gaze. The woman maintains eye contact with the fox and smiles warmly while continuing steady stroking motions along its back with her open palm. She speaks again with clear lip movement, nodding her head as she talks. The fox's bushy tail relaxes and rests on the wooden floor. Rain continues falling outside the boat canopy, and mist drifts across the lake.\nAudio / Dialogue: 雨声渐柔、灯火轻微摇曳声 [年轻女声 / 轻声带笑意] 人声：\"下次你可得多小心点呀，外面的坏人实在太多了。\"\n[SHOT 4]\nDuration: 0:11 - 0:15\nCamera Motion: Very slow handheld pull-back, gentle drift keeping both figures centered\nVisual Prompt: The white fox lowers its full body into a resting position and curls its thick bushy tail around itself in a deliberate wrapping motion. The woman stays crouched beside it, keeping one hand on the fox's back with slow, consistent stroking. The oil lantern flame swings back and forth inside the cabin, painting moving golden streaks on the wooden walls. Mist drifts across the dark lake surface visible through the boat entrance, and lotus leaves shift gently in the rain. Both figures remain centered in the frame — the red hanfu and white fur glowing against the dark rainy background.\nAudio / Dialogue: 雨声、湖水声、灯火摇曳声交织 [环境音收尾，无人声]"
+    },
+    "class_type": "CR Prompt Text",
+    "_meta": {
+      "title": "⚙️ CR Prompt Text"
+    }
+  },
+  "147": {
+    "inputs": {
+      "value": 10
+    },
+    "class_type": "PrimitiveFloat",
+    "_meta": {
+      "title": "Float (Duration)"
+    }
+  },
+  "150": {
+    "inputs": {
+      "clean_file_cache": true,
+      "clean_processes": true,
+      "clean_dlls": true,
+      "retry_times": 3,
+      "anything": [
+        "130",
+        0
+      ]
+    },
+    "class_type": "RAMCleanup",
+    "_meta": {
+      "title": "🎈RAM-Cleanup"
+    }
+  },
+  "156": {
+    "inputs": {
+      "offload_model": true,
+      "offload_cache": true,
+      "anything": [
+        "125",
+        0
+      ]
+    },
+    "class_type": "VRAMCleanup",
+    "_meta": {
+      "title": "🎈VRAM-Cleanup"
+    }
+  },
+  "159": {
+    "inputs": {
+      "attention": "comfy kitchen attention",
+      "model": [
+        "127",
+        0
+      ]
+    },
+    "class_type": "ModelAttentionBackend",
+    "_meta": {
+      "title": "ModelAttentionBackend"
+    }
+  },
+  "160": {
+    "inputs": {
+      "sigmas": [
+        "124",
+        0
+      ],
+      "extra_steps": 2,
+      "start_at_sigma": 0.65,
+      "end_at_sigma": 0,
+      "spacing": "cosine"
+    },
+    "class_type": "H3SigmaRefiner",
+    "_meta": {
+      "title": "H3 Sigma Refiner"
+    }
+  },
+  "_api_config": {
+    "customLabels": {
+      "92:filename_prefix": "文件名前缀",
+      "92:format": "format",
+      "92:codec": "codec",
+      "124:steps": "迭代步数",
+      "124:denoise": "denoise",
+      "127:weight_dtype": "weight_dtype",
+      "128:type": "type",
+      "128:device": "device",
+      "129:noise_seed": "noise_seed",
+      "130:fps": "fps",
+      "130:bit_depth": "bit_depth",
+      "131:expression": "expression",
+      "136:ref_image_size": "ref_image_size",
+      "137:image": "参考图 0",
+      "139:image": "参考图 1",
+      "141:image": "参考图 2",
+      "145:预设分辨率": "预设分辨率",
+      "145:横竖对调": "横竖对调",
+      "145:批量大小": "批量大小",
+      "145:自定义宽": "自定义宽",
+      "145:自定义高": "自定义高",
+      "145:缩放倍数": "缩放倍数",
+      "146:prompt": "prompt",
+      "147:value": "value",
+      "150:clean_file_cache": "clean_file_cache",
+      "150:clean_processes": "clean_processes",
+      "150:clean_dlls": "clean_dlls",
+      "150:retry_times": "retry_times",
+      "156:offload_model": "offload_model",
+      "156:offload_cache": "offload_cache",
+      "159:attention": "attention",
+      "160:extra_steps": "extra_steps",
+      "160:start_at_sigma": "start_at_sigma",
+      "160:end_at_sigma": "end_at_sigma",
+      "160:spacing": "spacing"
+    },
+    "enabledParams": {
+      "92:filename_prefix": false,
+      "92:format": false,
+      "92:codec": false,
+      "124:steps": false,
+      "124:denoise": false,
+      "127:weight_dtype": false,
+      "128:type": false,
+      "128:device": false,
+      "129:noise_seed": false,
+      "130:fps": false,
+      "130:bit_depth": false,
+      "131:expression": false,
+      "136:ref_image_size": false,
+      "137:image": true,
+      "139:image": true,
+      "141:image": true,
+      "145:预设分辨率": false,
+      "145:横竖对调": false,
+      "145:批量大小": false,
+      "145:自定义宽": true,
+      "145:自定义高": true,
+      "145:缩放倍数": false,
+      "146:prompt": true,
+      "147:value": true,
+      "150:clean_file_cache": false,
+      "150:clean_processes": false,
+      "150:clean_dlls": false,
+      "150:retry_times": false,
+      "156:offload_model": false,
+      "156:offload_cache": false,
+      "159:attention": false,
+      "160:extra_steps": false,
+      "160:start_at_sigma": false,
+      "160:end_at_sigma": false,
+      "160:spacing": false
+    },
+    "formValues": {
+      "92:filename_prefix": "comfyui",
+      "92:format": "auto",
+      "92:codec": "auto",
+      "124:steps": 25,
+      "124:denoise": 1,
+      "127:weight_dtype": "default",
+      "128:type": "minimax",
+      "128:device": "default",
+      "129:noise_seed": 461692676120124,
+      "130:fps": 24,
+      "130:bit_depth": 8,
+      "131:expression": "max(5, round(a * 24)) + (5 - (max(5, round(a * 24)) % 17)) % 17",
+      "136:ref_image_size": "match",
+      "137:image": null,
+      "139:image": null,
+      "141:image": null,
+      "145:预设分辨率": "自定义",
+      "145:横竖对调": false,
+      "145:批量大小": 1,
+      "145:自定义宽": 864,
+      "145:自定义高": 480,
+      "145:缩放倍数": "32",
+      "146:prompt": "Aesthetic: Cinematic wuxia atmosphere, static handheld medium shot, warm oil-lantern glow cutting through cool rainy mist, moody and healing film grain texture\n[SHOT 1]\nDuration: 0:00 - 0:03\nCamera Motion: Static handheld medium shot, subtle frame tremor from falling rain\nVisual Prompt: Starting from the reference frame. Inside a wooden canopy boat drifting on a misty lake at night, the young woman in red embroidered hanfu — with black hair in a traditional updo and dangling earrings — holds the white fox with thick pure-white fur in both arms. She bends forward and lowers the fox onto a dry wooden plank inside the cabin, then grabs a cloth and wipes rainwater off its fur with firm stroking motions. A lit oil lantern hangs beside her, casting warm golden light across the cabin while rain streaks down outside. Lotus leaves float on the dark lake surface visible through the boat entrance.\nAudio / Dialogue: 淅沥雨声、木船吱呀声、湖水轻拍船舷 [环境音为主，此镜无人声]\n[SHOT 2]\nDuration: 0:03 - 0:07\nCamera Motion: Subtle handheld push-in, slow and steady toward both figures\nVisual Prompt: The white fox sits upright with pointed ears raised high, staring directly at her with alert dark eyes and rigid posture. The woman lowers herself into a squat and reaches one hand toward the fox's head, then strokes firmly along its head and back with repeated downward palm motions. She speaks directly to the fox with natural lip-sync, her expression calm and steady. The fox's bushy tail stays tense behind its body but makes no attempt to flee. Warm lantern light flickers across both their faces.\nAudio / Dialogue: 雨声持续、布料摩擦声 [年轻女声 / 温软低缓] 人声：\"别怕，已经没事了。雨再大，我也不会把你丢下。\"\n[SHOT 3]\nDuration: 0:07 - 0:11\nCamera Motion: Static handheld medium close-up, minimal movement holding both in frame\nVisual Prompt: The white fox releases tension from its shoulders and settles its breathing, eyes softening into a calmer gaze. The woman maintains eye contact with the fox and smiles warmly while continuing steady stroking motions along its back with her open palm. She speaks again with clear lip movement, nodding her head as she talks. The fox's bushy tail relaxes and rests on the wooden floor. Rain continues falling outside the boat canopy, and mist drifts across the lake.\nAudio / Dialogue: 雨声渐柔、灯火轻微摇曳声 [年轻女声 / 轻声带笑意] 人声：\"下次你可得多小心点呀，外面的坏人实在太多了。\"\n[SHOT 4]\nDuration: 0:11 - 0:15\nCamera Motion: Very slow handheld pull-back, gentle drift keeping both figures centered\nVisual Prompt: The white fox lowers its full body into a resting position and curls its thick bushy tail around itself in a deliberate wrapping motion. The woman stays crouched beside it, keeping one hand on the fox's back with slow, consistent stroking. The oil lantern flame swings back and forth inside the cabin, painting moving golden streaks on the wooden walls. Mist drifts across the dark lake surface visible through the boat entrance, and lotus leaves shift gently in the rain. Both figures remain centered in the frame — the red hanfu and white fur glowing against the dark rainy background.\nAudio / Dialogue: 雨声、湖水声、灯火摇曳声交织 [环境音收尾，无人声]",
+      "147:value": 10,
+      "150:clean_file_cache": true,
+      "150:clean_processes": true,
+      "150:clean_dlls": true,
+      "150:retry_times": 3,
+      "156:offload_model": true,
+      "156:offload_cache": true,
+      "159:attention": "comfy kitchen attention",
+      "160:extra_steps": 2,
+      "160:start_at_sigma": 0.65,
+      "160:end_at_sigma": 0,
+      "160:spacing": "cosine"
+    },
+    "mediaOrder": [
+      "137:image",
+      "139:image",
+      "141:image"
+    ],
+    "mediaOrderSource": "auto",
+    "apiNames": {
+      "92:filename_prefix": "filename_prefix",
+      "92:format": "format",
+      "92:codec": "codec",
+      "124:steps": "steps",
+      "124:denoise": "denoise",
+      "127:weight_dtype": "weight_dtype",
+      "128:type": "type",
+      "128:device": "device",
+      "129:noise_seed": "noise_seed",
+      "130:fps": "fps",
+      "130:bit_depth": "bit_depth",
+      "131:expression": "expression",
+      "136:ref_image_size": "ref_image_size",
+      "137:image": "ref_image_0",
+      "139:image": "ref_image_1",
+      "141:image": "ref_image_2",
+      "145:预设分辨率": "param_2",
+      "145:横竖对调": "param",
+      "145:批量大小": "param_3",
+      "145:自定义宽": "param_4",
+      "145:自定义高": "param_5",
+      "145:缩放倍数": "param_6",
+      "146:prompt": "prompt",
+      "147:value": "value",
+      "150:clean_file_cache": "clean_file_cache",
+      "150:clean_processes": "clean_processes",
+      "150:clean_dlls": "clean_dlls",
+      "150:retry_times": "retry_times",
+      "156:offload_model": "offload_model",
+      "156:offload_cache": "offload_cache",
+      "159:attention": "attention",
+      "160:extra_steps": "extra_steps",
+      "160:start_at_sigma": "start_at_sigma",
+      "160:end_at_sigma": "end_at_sigma",
+      "160:spacing": "spacing"
+    }
+  }
+}

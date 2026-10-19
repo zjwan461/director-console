@@ -1,0 +1,45 @@
+id: h3.lipsync
+name: 图片对口型
+badge: 数字人
+category: video
+output_kind: video
+order: 60
+desc: 一张人物图 + 一段音频，生成对得上口型、带声音的视频。
+hint: 用正脸、嘴部清晰、光位均匀的图效果最好；音频建议先剪到 15 秒以内。
+workflow: API-U11-Minimax-图片音频对口型API.json
+timeout: 5400
+placeholders:
+  image: blank-image.png
+  video: blank-video.mp4
+  audio: blank-audio.mp3
+fields:
+  - key: portrait
+    bind: "233:image"
+    type: image
+    label: 人物图
+    required: true
+  - key: audio
+    bind: "155:audio"
+    type: audio
+    label: 配音音频
+    required: true
+  - key: size
+    type: size
+    label: 画幅
+    mode: wh
+    width: "202:自定义宽"
+    height: "202:自定义高"
+    default_aspect: "9:16"
+    default_megapixels: 0.4
+  - key: duration
+    bind: "155:duration"
+    type: duration
+    label: 时长（秒）
+    default: 5
+    min: 1
+    max: 30
+  - key: fps
+    bind: "232:fps"
+    type: number
+    label: 帧率
+    default: 24

@@ -1,0 +1,5114 @@
+{
+  "221": {
+    "inputs": {
+      "image": "image (4).png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    },
+    "t": {
+      "title": "上传图像"
+    }
+  },
+  "234": {
+    "inputs": {
+      "images": [
+        "2518",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "图像比例调整后预览"
+    }
+  },
+  "255": {
+    "inputs": {
+      "prompt": "对着镜头唱歌，双手轻垂身侧，微微低头，神情落寞\n对着镜头唱歌，单手轻扶脸颊，眉眼低垂，面露忧伤\n对着镜头唱歌，双手交叠放在身前，身体微颤，眼神深情怅然\n对着镜头唱歌，抬手轻触眉眼，头部微侧，神情哀伤\n对着镜头唱歌，手臂自然轻晃，眉头微蹙，眼底满是柔情与惆怅\n对着镜头唱歌，单手按在胸口，微微仰头，情绪沉静伤感\n对着镜头唱歌，双手松弛下垂，肩膀微收，眼神黯淡温柔\n对着镜头唱歌，指尖轻抵下唇，目光放空，神态忧郁\n对着镜头唱歌，身体小幅轻晃，双手缓缓抬起又落下，面露怅惘\n对着镜头唱歌，单手搭在肩头，眉眼低垂，神情隐忍又深情\n对着镜头唱歌，双手轻垂身侧，微微低头，神情落寞\n对着镜头唱歌，单手轻扶脸颊，眉眼低垂，面露忧伤\n对着镜头唱歌，双手交叠放在身前，身体微颤，眼神深情怅然\n对着镜头唱歌，抬手轻触眉眼，头部微侧，神情哀伤\n对着镜头唱歌，手臂自然轻晃，眉头微蹙，眼底满是柔情与惆怅\n对着镜头唱歌，单手按在胸口，微微仰头，情绪沉静伤感\n对着镜头唱歌，双手松弛下垂，肩膀微收，眼神黯淡温柔\n对着镜头唱歌，指尖轻抵下唇，目光放空，神态忧郁\n对着镜头唱歌，身体小幅轻晃，双手缓缓抬起又落下，面露怅惘\n对着镜头唱歌，单手搭在肩头，眉眼低垂，神情隐忍又深情",
+      "start_index": 0,
+      "max_rows": 1000,
+      "remove_empty_lines": ""
+    },
+    "class_type": "easy promptLine",
+    "_meta": {
+      "title": "提示词行 （1共20行）"
+    },
+    "t": {
+      "title": "人物动作描述"
+    }
+  },
+  "458": {
+    "inputs": {
+      "frame_rate": [
+        "3071",
+        0
+      ],
+      "loop_count": 0,
+      "filename_prefix": "InfiniteTalk",
+      "format": "video/h264-mp4",
+      "pix_fmt": "yuv420p",
+      "crf": 14,
+      "save_metadata": false,
+      "trim_to_audio": true,
+      "pingpong": false,
+      "save_output": true,
+      "images": [
+        "3242",
+        0
+      ],
+      "audio": [
+        "2900",
+        0
+      ]
+    },
+    "class_type": "VHS_VideoCombine",
+    "_meta": {
+      "title": "Video Combine 🎥🅥🅗🅢"
+    }
+  },
+  "2518": {
+    "inputs": {
+      "aspect_ratio": "original",
+      "proportional_width": 1,
+      "proportional_height": 1,
+      "fit": "crop",
+      "method": "lanczos",
+      "round_to_multiple": "32",
+      "scale_to_side": "longest",
+      "scale_to_length": [
+        "3238",
+        0
+      ],
+      "background_color": "#000000",
+      "image": [
+        "221",
+        0
+      ]
+    },
+    "class_type": "LayerUtility: ImageScaleByAspectRatio V2",
+    "_meta": {
+      "title": "图层工具：按宽高比缩放 V2"
+    }
+  },
+  "2704": {
+    "inputs": {
+      "seed": -1
+    },
+    "class_type": "Seed (rgthree)",
+    "_meta": {
+      "title": "Seed (rgthree)"
+    }
+  },
+  "2855": {
+    "inputs": {
+      "vae_name": "wan_2.1_vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "加载VAE"
+    }
+  },
+  "2856": {
+    "inputs": {
+      "clip_name": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+      "type": "wan",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "加载CLIP"
+    }
+  },
+  "2857": {
+    "inputs": {
+      "crop": "center",
+      "clip_vision": [
+        "2867",
+        0
+      ],
+      "image": [
+        "2518",
+        0
+      ]
+    },
+    "class_type": "CLIPVisionEncode",
+    "_meta": {
+      "title": "CLIP视觉编码"
+    }
+  },
+  "2864": {
+    "inputs": {
+      "name": "Wan2_1-InfiniTetalk-Single_fp16.safetensors"
+    },
+    "class_type": "ModelPatchLoader",
+    "_meta": {
+      "title": "加载模型补丁"
+    }
+  },
+  "2865": {
+    "inputs": {
+      "audio_encoder_name": "wav2vec2-chinese-base_fp16.safetensors"
+    },
+    "class_type": "AudioEncoderLoader",
+    "_meta": {
+      "title": "加载音频编码器"
+    }
+  },
+  "2866": {
+    "inputs": {
+      "unet_name": "Wan/wan2.1_i2v_720p_scaled_fp8_e4m3_lightx2v_4step_comfyui.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "UNet加载器"
+    }
+  },
+  "2867": {
+    "inputs": {
+      "clip_name": "clip_vision_h.safetensors"
+    },
+    "class_type": "CLIPVisionLoader",
+    "_meta": {
+      "title": "加载CLIP视觉"
+    }
+  },
+  "2869": {
+    "inputs": {
+      "model_name": "MelRoFormer/MelBandRoformer_fp16.safetensors"
+    },
+    "class_type": "MelBandRoFormerModelLoader",
+    "_meta": {
+      "title": "Mel-Band RoFormer Model Loader"
+    }
+  },
+  "2870": {
+    "inputs": {
+      "model": [
+        "2869",
+        0
+      ],
+      "audio": [
+        "3068",
+        0
+      ]
+    },
+    "class_type": "MelBandRoFormerSampler",
+    "_meta": {
+      "title": "Mel-Band RoFormer Sampler"
+    }
+  },
+  "2871": {
+    "inputs": {
+      "audio_encoder": [
+        "2865",
+        0
+      ],
+      "audio": [
+        "2870",
+        0
+      ]
+    },
+    "class_type": "AudioEncoderEncode",
+    "_meta": {
+      "title": "音频编码器编码"
+    }
+  },
+  "2888": {
+    "inputs": {
+      "value": 121
+    },
+    "class_type": "easy int",
+    "_meta": {
+      "title": "每节火车最大帧数(4N+1)，显存小，需要降低"
+    }
+  },
+  "2893": {
+    "inputs": {
+      "text": "9",
+      "anything": [
+        "3078",
+        0
+      ]
+    },
+    "class_type": "easy showAnything",
+    "_meta": {
+      "title": "跑几节火车"
+    }
+  },
+  "2900": {
+    "inputs": {
+      "audio": "在他乡.mp3",
+      "start_time": 0,
+      "duration": 0
+    },
+    "class_type": "VHS_LoadAudioUpload",
+    "_meta": {
+      "title": "加载音频"
+    },
+    "t": {
+      "title": "上传音频"
+    }
+  },
+  "3067": {
+    "inputs": {
+      "audio": [
+        "3068",
+        0
+      ]
+    },
+    "class_type": "Audio Duration (mtb)",
+    "_meta": {
+      "title": "Audio Duration (mtb)"
+    }
+  },
+  "3068": {
+    "inputs": {
+      "lufs": -23,
+      "audio": [
+        "2900",
+        0
+      ]
+    },
+    "class_type": "NormalizeAudioLoudness",
+    "_meta": {
+      "title": "Normalize Audio Loudness"
+    }
+  },
+  "3069": {
+    "inputs": {
+      "value": 9
+    },
+    "class_type": "easy int",
+    "_meta": {
+      "title": "整数"
+    }
+  },
+  "3070": {
+    "inputs": {
+      "expression": "a/1000",
+      "a": [
+        "3067",
+        0
+      ]
+    },
+    "class_type": "MathExpression|pysssss",
+    "_meta": {
+      "title": "Math Expression 🐍"
+    }
+  },
+  "3071": {
+    "inputs": {
+      "value": 25
+    },
+    "class_type": "PrimitiveFloat",
+    "_meta": {
+      "title": "浮点数"
+    }
+  },
+  "3072": {
+    "inputs": {
+      "expression": "a*b",
+      "a": [
+        "3070",
+        1
+      ],
+      "b": [
+        "3071",
+        0
+      ]
+    },
+    "class_type": "MathExpression|pysssss",
+    "_meta": {
+      "title": "Math Expression 🐍"
+    }
+  },
+  "3073": {
+    "inputs": {
+      "a": [
+        "3074",
+        0
+      ],
+      "b": 1,
+      "operation": "subtract"
+    },
+    "class_type": "easy mathInt",
+    "_meta": {
+      "title": "整数运算"
+    }
+  },
+  "3074": {
+    "inputs": {
+      "expression": "ceil(a/(b-9))",
+      "a": [
+        "3072",
+        1
+      ],
+      "b": [
+        "2888",
+        0
+      ],
+      "c": [
+        "3069",
+        0
+      ]
+    },
+    "class_type": "MathExpression|pysssss",
+    "_meta": {
+      "title": "Math Expression 🐍"
+    }
+  },
+  "3075": {
+    "inputs": {
+      "cmp": "a > b",
+      "a": [
+        "3073",
+        0
+      ],
+      "b": [
+        "3077",
+        0
+      ]
+    },
+    "class_type": "ImpactCompare",
+    "_meta": {
+      "title": "ImpactCompare"
+    }
+  },
+  "3076": {
+    "inputs": {
+      "switch": [
+        "3075",
+        0
+      ],
+      "on_false": [
+        "3073",
+        0
+      ],
+      "on_true": [
+        "3077",
+        0
+      ]
+    },
+    "class_type": "LazySwitchKJ",
+    "_meta": {
+      "title": "Lazy Switch (KJ)"
+    }
+  },
+  "3077": {
+    "inputs": {
+      "value": 19
+    },
+    "class_type": "easy int",
+    "_meta": {
+      "title": "整数"
+    }
+  },
+  "3078": {
+    "inputs": {
+      "a": [
+        "3076",
+        0
+      ],
+      "b": 1,
+      "operation": "add"
+    },
+    "class_type": "easy mathInt",
+    "_meta": {
+      "title": "整数运算"
+    }
+  },
+  "3079": {
+    "inputs": {
+      "text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "clip": [
+        "2856",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "3080": {
+    "inputs": {
+      "text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "clip": [
+        "2856",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "3081": {
+    "inputs": {
+      "seed": [
+        "2704",
+        0
+      ],
+      "steps": 4,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "normal",
+      "denoise": 1,
+      "model": [
+        "3093",
+        0
+      ],
+      "positive": [
+        "3093",
+        1
+      ],
+      "negative": [
+        "3093",
+        2
+      ],
+      "latent_image": [
+        "3093",
+        3
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "3082": {
+    "inputs": {
+      "text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "clip": [
+        "2856",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "3083": {
+    "inputs": {
+      "seed": [
+        "2704",
+        0
+      ],
+      "steps": 4,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "normal",
+      "denoise": 1,
+      "model": [
+        "3084",
+        0
+      ],
+      "positive": [
+        "3084",
+        1
+      ],
+      "negative": [
+        "3084",
+        2
+      ],
+      "latent_image": [
+        "3084",
+        3
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "3084": {
+    "inputs": {
+      "mode": "single_speaker",
+      "width": [
+        "2518",
+        3
+      ],
+      "height": [
+        "2518",
+        4
+      ],
+      "length": [
+        "2888",
+        0
+      ],
+      "motion_frame_count": 9,
+      "audio_scale": 1,
+      "model": [
+        "2866",
+        0
+      ],
+      "model_patch": [
+        "2864",
+        0
+      ],
+      "positive": [
+        "3101",
+        0
+      ],
+      "negative": [
+        "3082",
+        0
+      ],
+      "vae": [
+        "2855",
+        0
+      ],
+      "audio_encoder_output_1": [
+        "2871",
+        0
+      ],
+      "clip_vision_output": [
+        "2857",
+        0
+      ],
+      "start_image": [
+        "2518",
+        0
+      ],
+      "previous_frames": [
+        "3236",
+        0
+      ]
+    },
+    "class_type": "WanInfiniteTalkToVideo",
+    "_meta": {
+      "title": "WanInfiniteTalkToVideo"
+    }
+  },
+  "3085": {
+    "inputs": {
+      "text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "clip": [
+        "2856",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "3086": {
+    "inputs": {
+      "seed": [
+        "2704",
+        0
+      ],
+      "steps": 4,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "normal",
+      "denoise": 1,
+      "model": [
+        "3087",
+        0
+      ],
+      "positive": [
+        "3087",
+        1
+      ],
+      "negative": [
+        "3087",
+        2
+      ],
+      "latent_image": [
+        "3087",
+        3
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "3087": {
+    "inputs": {
+      "mode": "single_speaker",
+      "width": [
+        "2518",
+        3
+      ],
+      "height": [
+        "2518",
+        4
+      ],
+      "length": [
+        "2888",
+        0
+      ],
+      "motion_frame_count": 9,
+      "audio_scale": 1,
+      "model": [
+        "2866",
+        0
+      ],
+      "model_patch": [
+        "2864",
+        0
+      ],
+      "positive": [
+        "3181",
+        0
+      ],
+      "negative": [
+        "3085",
+        0
+      ],
+      "vae": [
+        "2855",
+        0
+      ],
+      "audio_encoder_output_1": [
+        "2871",
+        0
+      ],
+      "clip_vision_output": [
+        "2857",
+        0
+      ],
+      "start_image": [
+        "2518",
+        0
+      ],
+      "previous_frames": [
+        "3237",
+        0
+      ]
+    },
+    "class_type": "WanInfiniteTalkToVideo",
+    "_meta": {
+      "title": "WanInfiniteTalkToVideo"
+    }
+  },
+  "3088": {
+    "inputs": {
+      "text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "clip": [
+        "2856",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "3089": {
+    "inputs": {
+      "seed": [
+        "2704",
+        0
+      ],
+      "steps": 4,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "normal",
+      "denoise": 1,
+      "model": [
+        "3182",
+        0
+      ],
+      "positive": [
+        "3182",
+        1
+      ],
+      "negative": [
+        "3182",
+        2
+      ],
+      "latent_image": [
+        "3182",
+        3
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "3090": {
+    "inputs": {
+      "samples": [
+        "3095",
+        0
+      ],
+      "vae": [
+        "2855",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "3091": {
+    "inputs": {
+      "samples": [
+        "3083",
+        0
+      ],
+      "vae": [
+        "2855",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "3092": {
+    "inputs": {
+      "samples": [
+        "3086",
+        0
+      ],
+      "vae": [
+        "2855",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "3093": {
+    "inputs": {
+      "mode": "single_speaker",
+      "width": [
+        "2518",
+        3
+      ],
+      "height": [
+        "2518",
+        4
+      ],
+      "length": [
+        "2888",
+        0
+      ],
+      "motion_frame_count": 9,
+      "audio_scale": 1,
+      "model": [
+        "2866",
+        0
+      ],
+      "model_patch": [
+        "2864",
+        0
+      ],
+      "positive": [
+        "3194",
+        0
+      ],
+      "negative": [
+        "3079",
+        0
+      ],
+      "vae": [
+        "2855",
+        0
+      ],
+      "audio_encoder_output_1": [
+        "2871",
+        0
+      ],
+      "clip_vision_output": [
+        "2857",
+        0
+      ],
+      "start_image": [
+        "2518",
+        0
+      ]
+    },
+    "class_type": "WanInfiniteTalkToVideo",
+    "_meta": {
+      "title": "WanInfiniteTalkToVideo"
+    }
+  },
+  "3094": {
+    "inputs": {
+      "batch_index": [
+        "3180",
+        4
+      ],
+      "length": 4090,
+      "image": [
+        "3090",
+        0
+      ]
+    },
+    "class_type": "ImageFromBatch",
+    "_meta": {
+      "title": "从批次获取图像"
+    }
+  },
+  "3095": {
+    "inputs": {
+      "seed": [
+        "2704",
+        0
+      ],
+      "steps": 4,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "normal",
+      "denoise": 1,
+      "model": [
+        "3180",
+        0
+      ],
+      "positive": [
+        "3180",
+        1
+      ],
+      "negative": [
+        "3180",
+        2
+      ],
+      "latent_image": [
+        "3180",
+        3
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "3096": {
+    "inputs": {
+      "samples": [
+        "3198",
+        0
+      ],
+      "vae": [
+        "2855",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "3097": {
+    "inputs": {
+      "batch_index": [
+        "3087",
+        4
+      ],
+      "length": 4090,
+      "image": [
+        "3092",
+        0
+      ]
+    },
+    "class_type": "ImageFromBatch",
+    "_meta": {
+      "title": "从批次获取图像"
+    }
+  },
+  "3098": {
+    "inputs": {
+      "batch_index": [
+        "3182",
+        4
+      ],
+      "length": 4090,
+      "image": [
+        "3099",
+        0
+      ]
+    },
+    "class_type": "ImageFromBatch",
+    "_meta": {
+      "title": "从批次获取图像"
+    }
+  },
+  "3099": {
+    "inputs": {
+      "samples": [
+        "3089",
+        0
+      ],
+      "vae": [
+        "2855",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "3100": {
+    "inputs": {
+      "text": [
+        "3217",
+        0
+      ],
+      "clip": [
+        "2856",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "3101": {
+    "inputs": {
+      "text": [
+        "3218",
+        0
+      ],
+      "clip": [
+        "2856",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "3102": {
+    "inputs": {
+      "text": [
+        "3220",
+        0
+      ],
+      "clip": [
+        "2856",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "3103": {
+    "inputs": {
+      "text": [
+        "3221",
+        0
+      ],
+      "clip": [
+        "2856",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "3104": {
+    "inputs": {
+      "image1": [
+        "3107",
+        0
+      ],
+      "image2": [
+        "3098",
+        0
+      ]
+    },
+    "class_type": "ImageBatch",
+    "_meta": {
+      "title": "组合图像批次"
+    }
+  },
+  "3105": {
+    "inputs": {
+      "batch_index": [
+        "3214",
+        4
+      ],
+      "length": 4090,
+      "image": [
+        "3096",
+        0
+      ]
+    },
+    "class_type": "ImageFromBatch",
+    "_meta": {
+      "title": "从批次获取图像"
+    }
+  },
+  "3106": {
+    "inputs": {
+      "batch_index": [
+        "3084",
+        4
+      ],
+      "length": 4090,
+      "image": [
+        "3091",
+        0
+      ]
+    },
+    "class_type": "ImageFromBatch",
+    "_meta": {
+      "title": "从批次获取图像"
+    }
+  },
+  "3107": {
+    "inputs": {
+      "image1": [
+        "3237",
+        0
+      ],
+      "image2": [
+        "3097",
+        0
+      ]
+    },
+    "class_type": "ImageBatch",
+    "_meta": {
+      "title": "组合图像批次"
+    }
+  },
+  "3108": {
+    "inputs": {
+      "samples": [
+        "3081",
+        0
+      ],
+      "vae": [
+        "2855",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "3109": {
+    "inputs": {
+      "index": 0,
+      "any": [
+        "255",
+        0
+      ]
+    },
+    "class_type": "easy indexAnything",
+    "_meta": {
+      "title": "任何索引"
+    }
+  },
+  "3110": {
+    "inputs": {
+      "seed": [
+        "2704",
+        0
+      ],
+      "steps": 4,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "normal",
+      "denoise": 1,
+      "model": [
+        "3184",
+        0
+      ],
+      "positive": [
+        "3184",
+        1
+      ],
+      "negative": [
+        "3184",
+        2
+      ],
+      "latent_image": [
+        "3184",
+        3
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "3111": {
+    "inputs": {
+      "samples": [
+        "3110",
+        0
+      ],
+      "vae": [
+        "2855",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "3112": {
+    "inputs": {
+      "batch_index": [
+        "3184",
+        4
+      ],
+      "length": 4090,
+      "image": [
+        "3111",
+        0
+      ]
+    },
+    "class_type": "ImageFromBatch",
+    "_meta": {
+      "title": "从批次获取图像"
+    }
+  },
+  "3113": {
+    "inputs": {
+      "text": [
+        "3222",
+        0
+      ],
+      "clip": [
+        "2856",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "3114": {
+    "inputs": {
+      "image1": [
+        "3104",
+        0
+      ],
+      "image2": [
+        "3105",
+        0
+      ]
+    },
+    "class_type": "ImageBatch",
+    "_meta": {
+      "title": "组合图像批次"
+    }
+  },
+  "3115": {
+    "inputs": {
+      "seed": [
+        "2704",
+        0
+      ],
+      "steps": 4,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "normal",
+      "denoise": 1,
+      "model": [
+        "3185",
+        0
+      ],
+      "positive": [
+        "3185",
+        1
+      ],
+      "negative": [
+        "3185",
+        2
+      ],
+      "latent_image": [
+        "3185",
+        3
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "3116": {
+    "inputs": {
+      "samples": [
+        "3115",
+        0
+      ],
+      "vae": [
+        "2855",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "3117": {
+    "inputs": {
+      "text": [
+        "3223",
+        0
+      ],
+      "clip": [
+        "2856",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "3118": {
+    "inputs": {
+      "batch_index": [
+        "3185",
+        4
+      ],
+      "length": 4090,
+      "image": [
+        "3116",
+        0
+      ]
+    },
+    "class_type": "ImageFromBatch",
+    "_meta": {
+      "title": "从批次获取图像"
+    }
+  },
+  "3119": {
+    "inputs": {
+      "seed": [
+        "2704",
+        0
+      ],
+      "steps": 4,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "normal",
+      "denoise": 1,
+      "model": [
+        "3120",
+        0
+      ],
+      "positive": [
+        "3120",
+        1
+      ],
+      "negative": [
+        "3120",
+        2
+      ],
+      "latent_image": [
+        "3120",
+        3
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "3120": {
+    "inputs": {
+      "mode": "single_speaker",
+      "width": [
+        "2518",
+        3
+      ],
+      "height": [
+        "2518",
+        4
+      ],
+      "length": [
+        "2888",
+        0
+      ],
+      "motion_frame_count": 9,
+      "audio_scale": 1,
+      "model": [
+        "2866",
+        0
+      ],
+      "model_patch": [
+        "2864",
+        0
+      ],
+      "positive": [
+        "3122",
+        0
+      ],
+      "negative": [
+        "3202",
+        0
+      ],
+      "vae": [
+        "2855",
+        0
+      ],
+      "audio_encoder_output_1": [
+        "2871",
+        0
+      ],
+      "clip_vision_output": [
+        "2857",
+        0
+      ],
+      "start_image": [
+        "2518",
+        0
+      ],
+      "previous_frames": [
+        "3183",
+        0
+      ]
+    },
+    "class_type": "WanInfiniteTalkToVideo",
+    "_meta": {
+      "title": "WanInfiniteTalkToVideo"
+    }
+  },
+  "3121": {
+    "inputs": {
+      "samples": [
+        "3119",
+        0
+      ],
+      "vae": [
+        "2855",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "3122": {
+    "inputs": {
+      "text": [
+        "3224",
+        0
+      ],
+      "clip": [
+        "2856",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "3123": {
+    "inputs": {
+      "batch_index": [
+        "3120",
+        4
+      ],
+      "length": 4090,
+      "image": [
+        "3121",
+        0
+      ]
+    },
+    "class_type": "ImageFromBatch",
+    "_meta": {
+      "title": "从批次获取图像"
+    }
+  },
+  "3124": {
+    "inputs": {
+      "seed": [
+        "2704",
+        0
+      ],
+      "steps": 4,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "normal",
+      "denoise": 1,
+      "model": [
+        "3196",
+        0
+      ],
+      "positive": [
+        "3196",
+        1
+      ],
+      "negative": [
+        "3196",
+        2
+      ],
+      "latent_image": [
+        "3196",
+        3
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "3125": {
+    "inputs": {
+      "samples": [
+        "3124",
+        0
+      ],
+      "vae": [
+        "2855",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "3126": {
+    "inputs": {
+      "text": [
+        "3225",
+        0
+      ],
+      "clip": [
+        "2856",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "3127": {
+    "inputs": {
+      "batch_index": [
+        "3196",
+        4
+      ],
+      "length": 4090,
+      "image": [
+        "3125",
+        0
+      ]
+    },
+    "class_type": "ImageFromBatch",
+    "_meta": {
+      "title": "从批次获取图像"
+    }
+  },
+  "3128": {
+    "inputs": {
+      "samples": [
+        "3195",
+        0
+      ],
+      "vae": [
+        "2855",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "3129": {
+    "inputs": {
+      "text": [
+        "3226",
+        0
+      ],
+      "clip": [
+        "2856",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "3130": {
+    "inputs": {
+      "batch_index": [
+        "3197",
+        4
+      ],
+      "length": 4090,
+      "image": [
+        "3128",
+        0
+      ]
+    },
+    "class_type": "ImageFromBatch",
+    "_meta": {
+      "title": "从批次获取图像"
+    }
+  },
+  "3131": {
+    "inputs": {
+      "mode": "single_speaker",
+      "width": [
+        "2518",
+        3
+      ],
+      "height": [
+        "2518",
+        4
+      ],
+      "length": [
+        "2888",
+        0
+      ],
+      "motion_frame_count": 9,
+      "audio_scale": 1,
+      "model": [
+        "2866",
+        0
+      ],
+      "model_patch": [
+        "2864",
+        0
+      ],
+      "positive": [
+        "3133",
+        0
+      ],
+      "negative": [
+        "3212",
+        0
+      ],
+      "vae": [
+        "2855",
+        0
+      ],
+      "audio_encoder_output_1": [
+        "2871",
+        0
+      ],
+      "clip_vision_output": [
+        "2857",
+        0
+      ],
+      "start_image": [
+        "2518",
+        0
+      ],
+      "previous_frames": [
+        "3170",
+        0
+      ]
+    },
+    "class_type": "WanInfiniteTalkToVideo",
+    "_meta": {
+      "title": "WanInfiniteTalkToVideo"
+    }
+  },
+  "3132": {
+    "inputs": {
+      "samples": [
+        "3193",
+        0
+      ],
+      "vae": [
+        "2855",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "3133": {
+    "inputs": {
+      "text": [
+        "3227",
+        0
+      ],
+      "clip": [
+        "2856",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "3134": {
+    "inputs": {
+      "batch_index": [
+        "3131",
+        4
+      ],
+      "length": 4090,
+      "image": [
+        "3132",
+        0
+      ]
+    },
+    "class_type": "ImageFromBatch",
+    "_meta": {
+      "title": "从批次获取图像"
+    }
+  },
+  "3135": {
+    "inputs": {
+      "seed": [
+        "2704",
+        0
+      ],
+      "steps": 4,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "normal",
+      "denoise": 1,
+      "model": [
+        "3192",
+        0
+      ],
+      "positive": [
+        "3192",
+        1
+      ],
+      "negative": [
+        "3192",
+        2
+      ],
+      "latent_image": [
+        "3192",
+        3
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "3136": {
+    "inputs": {
+      "samples": [
+        "3135",
+        0
+      ],
+      "vae": [
+        "2855",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "3137": {
+    "inputs": {
+      "text": [
+        "3228",
+        0
+      ],
+      "clip": [
+        "2856",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "3138": {
+    "inputs": {
+      "batch_index": [
+        "3192",
+        4
+      ],
+      "length": 4090,
+      "image": [
+        "3136",
+        0
+      ]
+    },
+    "class_type": "ImageFromBatch",
+    "_meta": {
+      "title": "从批次获取图像"
+    }
+  },
+  "3139": {
+    "inputs": {
+      "mode": "single_speaker",
+      "width": [
+        "2518",
+        3
+      ],
+      "height": [
+        "2518",
+        4
+      ],
+      "length": [
+        "2888",
+        0
+      ],
+      "motion_frame_count": 9,
+      "audio_scale": 1,
+      "model": [
+        "2866",
+        0
+      ],
+      "model_patch": [
+        "2864",
+        0
+      ],
+      "positive": [
+        "3141",
+        0
+      ],
+      "negative": [
+        "3210",
+        0
+      ],
+      "vae": [
+        "2855",
+        0
+      ],
+      "audio_encoder_output_1": [
+        "2871",
+        0
+      ],
+      "clip_vision_output": [
+        "2857",
+        0
+      ],
+      "start_image": [
+        "2518",
+        0
+      ],
+      "previous_frames": [
+        "3172",
+        0
+      ]
+    },
+    "class_type": "WanInfiniteTalkToVideo",
+    "_meta": {
+      "title": "WanInfiniteTalkToVideo"
+    }
+  },
+  "3140": {
+    "inputs": {
+      "samples": [
+        "3191",
+        0
+      ],
+      "vae": [
+        "2855",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "3141": {
+    "inputs": {
+      "text": [
+        "3229",
+        0
+      ],
+      "clip": [
+        "2856",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "3142": {
+    "inputs": {
+      "batch_index": [
+        "3139",
+        4
+      ],
+      "length": 4090,
+      "image": [
+        "3140",
+        0
+      ]
+    },
+    "class_type": "ImageFromBatch",
+    "_meta": {
+      "title": "从批次获取图像"
+    }
+  },
+  "3143": {
+    "inputs": {
+      "mode": "single_speaker",
+      "width": [
+        "2518",
+        3
+      ],
+      "height": [
+        "2518",
+        4
+      ],
+      "length": [
+        "2888",
+        0
+      ],
+      "motion_frame_count": 9,
+      "audio_scale": 1,
+      "model": [
+        "2866",
+        0
+      ],
+      "model_patch": [
+        "2864",
+        0
+      ],
+      "positive": [
+        "3145",
+        0
+      ],
+      "negative": [
+        "3209",
+        0
+      ],
+      "vae": [
+        "2855",
+        0
+      ],
+      "audio_encoder_output_1": [
+        "2871",
+        0
+      ],
+      "clip_vision_output": [
+        "2857",
+        0
+      ],
+      "start_image": [
+        "2518",
+        0
+      ],
+      "previous_frames": [
+        "3173",
+        0
+      ]
+    },
+    "class_type": "WanInfiniteTalkToVideo",
+    "_meta": {
+      "title": "WanInfiniteTalkToVideo"
+    }
+  },
+  "3144": {
+    "inputs": {
+      "samples": [
+        "3190",
+        0
+      ],
+      "vae": [
+        "2855",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "3145": {
+    "inputs": {
+      "text": [
+        "3230",
+        0
+      ],
+      "clip": [
+        "2856",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "3146": {
+    "inputs": {
+      "batch_index": [
+        "3143",
+        4
+      ],
+      "length": 4090,
+      "image": [
+        "3144",
+        0
+      ]
+    },
+    "class_type": "ImageFromBatch",
+    "_meta": {
+      "title": "从批次获取图像"
+    }
+  },
+  "3147": {
+    "inputs": {
+      "seed": [
+        "2704",
+        0
+      ],
+      "steps": 4,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "normal",
+      "denoise": 1,
+      "model": [
+        "3189",
+        0
+      ],
+      "positive": [
+        "3189",
+        1
+      ],
+      "negative": [
+        "3189",
+        2
+      ],
+      "latent_image": [
+        "3189",
+        3
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "3148": {
+    "inputs": {
+      "samples": [
+        "3147",
+        0
+      ],
+      "vae": [
+        "2855",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "3149": {
+    "inputs": {
+      "text": [
+        "3231",
+        0
+      ],
+      "clip": [
+        "2856",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "3150": {
+    "inputs": {
+      "batch_index": [
+        "3189",
+        4
+      ],
+      "length": 4090,
+      "image": [
+        "3148",
+        0
+      ]
+    },
+    "class_type": "ImageFromBatch",
+    "_meta": {
+      "title": "从批次获取图像"
+    }
+  },
+  "3151": {
+    "inputs": {
+      "mode": "single_speaker",
+      "width": [
+        "2518",
+        3
+      ],
+      "height": [
+        "2518",
+        4
+      ],
+      "length": [
+        "2888",
+        0
+      ],
+      "motion_frame_count": 9,
+      "audio_scale": 1,
+      "model": [
+        "2866",
+        0
+      ],
+      "model_patch": [
+        "2864",
+        0
+      ],
+      "positive": [
+        "3153",
+        0
+      ],
+      "negative": [
+        "3207",
+        0
+      ],
+      "vae": [
+        "2855",
+        0
+      ],
+      "audio_encoder_output_1": [
+        "2871",
+        0
+      ],
+      "clip_vision_output": [
+        "2857",
+        0
+      ],
+      "start_image": [
+        "2518",
+        0
+      ],
+      "previous_frames": [
+        "3175",
+        0
+      ]
+    },
+    "class_type": "WanInfiniteTalkToVideo",
+    "_meta": {
+      "title": "WanInfiniteTalkToVideo"
+    }
+  },
+  "3152": {
+    "inputs": {
+      "samples": [
+        "3216",
+        0
+      ],
+      "vae": [
+        "2855",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "3153": {
+    "inputs": {
+      "text": [
+        "3232",
+        0
+      ],
+      "clip": [
+        "2856",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "3154": {
+    "inputs": {
+      "batch_index": [
+        "3151",
+        4
+      ],
+      "length": 4090,
+      "image": [
+        "3152",
+        0
+      ]
+    },
+    "class_type": "ImageFromBatch",
+    "_meta": {
+      "title": "从批次获取图像"
+    }
+  },
+  "3155": {
+    "inputs": {
+      "mode": "single_speaker",
+      "width": [
+        "2518",
+        3
+      ],
+      "height": [
+        "2518",
+        4
+      ],
+      "length": [
+        "2888",
+        0
+      ],
+      "motion_frame_count": 9,
+      "audio_scale": 1,
+      "model": [
+        "2866",
+        0
+      ],
+      "model_patch": [
+        "2864",
+        0
+      ],
+      "positive": [
+        "3157",
+        0
+      ],
+      "negative": [
+        "3206",
+        0
+      ],
+      "vae": [
+        "2855",
+        0
+      ],
+      "audio_encoder_output_1": [
+        "2871",
+        0
+      ],
+      "clip_vision_output": [
+        "2857",
+        0
+      ],
+      "start_image": [
+        "2518",
+        0
+      ],
+      "previous_frames": [
+        "3176",
+        0
+      ]
+    },
+    "class_type": "WanInfiniteTalkToVideo",
+    "_meta": {
+      "title": "WanInfiniteTalkToVideo"
+    }
+  },
+  "3156": {
+    "inputs": {
+      "samples": [
+        "3188",
+        0
+      ],
+      "vae": [
+        "2855",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "3157": {
+    "inputs": {
+      "text": [
+        "3233",
+        0
+      ],
+      "clip": [
+        "2856",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "3158": {
+    "inputs": {
+      "batch_index": [
+        "3155",
+        4
+      ],
+      "length": 4090,
+      "image": [
+        "3156",
+        0
+      ]
+    },
+    "class_type": "ImageFromBatch",
+    "_meta": {
+      "title": "从批次获取图像"
+    }
+  },
+  "3159": {
+    "inputs": {
+      "mode": "single_speaker",
+      "width": [
+        "2518",
+        3
+      ],
+      "height": [
+        "2518",
+        4
+      ],
+      "length": [
+        "2888",
+        0
+      ],
+      "motion_frame_count": 9,
+      "audio_scale": 1,
+      "model": [
+        "2866",
+        0
+      ],
+      "model_patch": [
+        "2864",
+        0
+      ],
+      "positive": [
+        "3161",
+        0
+      ],
+      "negative": [
+        "3205",
+        0
+      ],
+      "vae": [
+        "2855",
+        0
+      ],
+      "audio_encoder_output_1": [
+        "2871",
+        0
+      ],
+      "clip_vision_output": [
+        "2857",
+        0
+      ],
+      "start_image": [
+        "2518",
+        0
+      ],
+      "previous_frames": [
+        "3177",
+        0
+      ]
+    },
+    "class_type": "WanInfiniteTalkToVideo",
+    "_meta": {
+      "title": "WanInfiniteTalkToVideo"
+    }
+  },
+  "3160": {
+    "inputs": {
+      "samples": [
+        "3187",
+        0
+      ],
+      "vae": [
+        "2855",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "3161": {
+    "inputs": {
+      "text": [
+        "3234",
+        0
+      ],
+      "clip": [
+        "2856",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "3162": {
+    "inputs": {
+      "batch_index": [
+        "3159",
+        4
+      ],
+      "length": 4090,
+      "image": [
+        "3160",
+        0
+      ]
+    },
+    "class_type": "ImageFromBatch",
+    "_meta": {
+      "title": "从批次获取图像"
+    }
+  },
+  "3163": {
+    "inputs": {
+      "mode": "single_speaker",
+      "width": [
+        "2518",
+        3
+      ],
+      "height": [
+        "2518",
+        4
+      ],
+      "length": [
+        "2888",
+        0
+      ],
+      "motion_frame_count": 9,
+      "audio_scale": 1,
+      "model": [
+        "2866",
+        0
+      ],
+      "model_patch": [
+        "2864",
+        0
+      ],
+      "positive": [
+        "3165",
+        0
+      ],
+      "negative": [
+        "3204",
+        0
+      ],
+      "vae": [
+        "2855",
+        0
+      ],
+      "audio_encoder_output_1": [
+        "2871",
+        0
+      ],
+      "clip_vision_output": [
+        "2857",
+        0
+      ],
+      "start_image": [
+        "2518",
+        0
+      ],
+      "previous_frames": [
+        "3178",
+        0
+      ]
+    },
+    "class_type": "WanInfiniteTalkToVideo",
+    "_meta": {
+      "title": "WanInfiniteTalkToVideo"
+    }
+  },
+  "3164": {
+    "inputs": {
+      "samples": [
+        "3186",
+        0
+      ],
+      "vae": [
+        "2855",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "3165": {
+    "inputs": {
+      "text": [
+        "3235",
+        0
+      ],
+      "clip": [
+        "2856",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "3166": {
+    "inputs": {
+      "batch_index": [
+        "3163",
+        4
+      ],
+      "length": 4090,
+      "image": [
+        "3164",
+        0
+      ]
+    },
+    "class_type": "ImageFromBatch",
+    "_meta": {
+      "title": "从批次获取图像"
+    }
+  },
+  "3167": {
+    "inputs": {
+      "image1": [
+        "3114",
+        0
+      ],
+      "image2": [
+        "3112",
+        0
+      ]
+    },
+    "class_type": "ImageBatch",
+    "_meta": {
+      "title": "组合图像批次"
+    }
+  },
+  "3168": {
+    "inputs": {
+      "image1": [
+        "3183",
+        0
+      ],
+      "image2": [
+        "3123",
+        0
+      ]
+    },
+    "class_type": "ImageBatch",
+    "_meta": {
+      "title": "组合图像批次"
+    }
+  },
+  "3169": {
+    "inputs": {
+      "image1": [
+        "3168",
+        0
+      ],
+      "image2": [
+        "3127",
+        0
+      ]
+    },
+    "class_type": "ImageBatch",
+    "_meta": {
+      "title": "组合图像批次"
+    }
+  },
+  "3170": {
+    "inputs": {
+      "image1": [
+        "3169",
+        0
+      ],
+      "image2": [
+        "3130",
+        0
+      ]
+    },
+    "class_type": "ImageBatch",
+    "_meta": {
+      "title": "组合图像批次"
+    }
+  },
+  "3171": {
+    "inputs": {
+      "image1": [
+        "3170",
+        0
+      ],
+      "image2": [
+        "3134",
+        0
+      ]
+    },
+    "class_type": "ImageBatch",
+    "_meta": {
+      "title": "组合图像批次"
+    }
+  },
+  "3172": {
+    "inputs": {
+      "image1": [
+        "3171",
+        0
+      ],
+      "image2": [
+        "3138",
+        0
+      ]
+    },
+    "class_type": "ImageBatch",
+    "_meta": {
+      "title": "组合图像批次"
+    }
+  },
+  "3173": {
+    "inputs": {
+      "image1": [
+        "3172",
+        0
+      ],
+      "image2": [
+        "3142",
+        0
+      ]
+    },
+    "class_type": "ImageBatch",
+    "_meta": {
+      "title": "组合图像批次"
+    }
+  },
+  "3174": {
+    "inputs": {
+      "image1": [
+        "3173",
+        0
+      ],
+      "image2": [
+        "3146",
+        0
+      ]
+    },
+    "class_type": "ImageBatch",
+    "_meta": {
+      "title": "组合图像批次"
+    }
+  },
+  "3175": {
+    "inputs": {
+      "image1": [
+        "3174",
+        0
+      ],
+      "image2": [
+        "3150",
+        0
+      ]
+    },
+    "class_type": "ImageBatch",
+    "_meta": {
+      "title": "组合图像批次"
+    }
+  },
+  "3176": {
+    "inputs": {
+      "image1": [
+        "3175",
+        0
+      ],
+      "image2": [
+        "3154",
+        0
+      ]
+    },
+    "class_type": "ImageBatch",
+    "_meta": {
+      "title": "组合图像批次"
+    }
+  },
+  "3177": {
+    "inputs": {
+      "image1": [
+        "3176",
+        0
+      ],
+      "image2": [
+        "3158",
+        0
+      ]
+    },
+    "class_type": "ImageBatch",
+    "_meta": {
+      "title": "组合图像批次"
+    }
+  },
+  "3178": {
+    "inputs": {
+      "image1": [
+        "3177",
+        0
+      ],
+      "image2": [
+        "3162",
+        0
+      ]
+    },
+    "class_type": "ImageBatch",
+    "_meta": {
+      "title": "组合图像批次"
+    }
+  },
+  "3179": {
+    "inputs": {
+      "image1": [
+        "3178",
+        0
+      ],
+      "image2": [
+        "3166",
+        0
+      ]
+    },
+    "class_type": "ImageBatch",
+    "_meta": {
+      "title": "组合图像批次"
+    }
+  },
+  "3180": {
+    "inputs": {
+      "mode": "single_speaker",
+      "width": [
+        "2518",
+        3
+      ],
+      "height": [
+        "2518",
+        4
+      ],
+      "length": [
+        "2888",
+        0
+      ],
+      "motion_frame_count": 9,
+      "audio_scale": 1,
+      "model": [
+        "2866",
+        0
+      ],
+      "model_patch": [
+        "2864",
+        0
+      ],
+      "positive": [
+        "3100",
+        0
+      ],
+      "negative": [
+        "3080",
+        0
+      ],
+      "vae": [
+        "2855",
+        0
+      ],
+      "audio_encoder_output_1": [
+        "2871",
+        0
+      ],
+      "clip_vision_output": [
+        "2857",
+        0
+      ],
+      "start_image": [
+        "2518",
+        0
+      ],
+      "previous_frames": [
+        "3108",
+        0
+      ]
+    },
+    "class_type": "WanInfiniteTalkToVideo",
+    "_meta": {
+      "title": "WanInfiniteTalkToVideo"
+    }
+  },
+  "3181": {
+    "inputs": {
+      "text": [
+        "3219",
+        0
+      ],
+      "clip": [
+        "2856",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "3182": {
+    "inputs": {
+      "mode": "single_speaker",
+      "width": [
+        "2518",
+        3
+      ],
+      "height": [
+        "2518",
+        4
+      ],
+      "length": [
+        "2888",
+        0
+      ],
+      "motion_frame_count": 9,
+      "audio_scale": 1,
+      "model": [
+        "2866",
+        0
+      ],
+      "model_patch": [
+        "2864",
+        0
+      ],
+      "positive": [
+        "3102",
+        0
+      ],
+      "negative": [
+        "3088",
+        0
+      ],
+      "vae": [
+        "2855",
+        0
+      ],
+      "audio_encoder_output_1": [
+        "2871",
+        0
+      ],
+      "clip_vision_output": [
+        "2857",
+        0
+      ],
+      "start_image": [
+        "2518",
+        0
+      ],
+      "previous_frames": [
+        "3107",
+        0
+      ]
+    },
+    "class_type": "WanInfiniteTalkToVideo",
+    "_meta": {
+      "title": "WanInfiniteTalkToVideo"
+    }
+  },
+  "3183": {
+    "inputs": {
+      "image1": [
+        "3167",
+        0
+      ],
+      "image2": [
+        "3118",
+        0
+      ]
+    },
+    "class_type": "ImageBatch",
+    "_meta": {
+      "title": "组合图像批次"
+    }
+  },
+  "3184": {
+    "inputs": {
+      "mode": "single_speaker",
+      "width": [
+        "2518",
+        3
+      ],
+      "height": [
+        "2518",
+        4
+      ],
+      "length": [
+        "2888",
+        0
+      ],
+      "motion_frame_count": 9,
+      "audio_scale": 1,
+      "model": [
+        "2866",
+        0
+      ],
+      "model_patch": [
+        "2864",
+        0
+      ],
+      "positive": [
+        "3113",
+        0
+      ],
+      "negative": [
+        "3200",
+        0
+      ],
+      "vae": [
+        "2855",
+        0
+      ],
+      "audio_encoder_output_1": [
+        "2871",
+        0
+      ],
+      "clip_vision_output": [
+        "2857",
+        0
+      ],
+      "start_image": [
+        "2518",
+        0
+      ],
+      "previous_frames": [
+        "3114",
+        0
+      ]
+    },
+    "class_type": "WanInfiniteTalkToVideo",
+    "_meta": {
+      "title": "WanInfiniteTalkToVideo"
+    }
+  },
+  "3185": {
+    "inputs": {
+      "mode": "single_speaker",
+      "width": [
+        "2518",
+        3
+      ],
+      "height": [
+        "2518",
+        4
+      ],
+      "length": [
+        "2888",
+        0
+      ],
+      "motion_frame_count": 9,
+      "audio_scale": 1,
+      "model": [
+        "2866",
+        0
+      ],
+      "model_patch": [
+        "2864",
+        0
+      ],
+      "positive": [
+        "3117",
+        0
+      ],
+      "negative": [
+        "3201",
+        0
+      ],
+      "vae": [
+        "2855",
+        0
+      ],
+      "audio_encoder_output_1": [
+        "2871",
+        0
+      ],
+      "clip_vision_output": [
+        "2857",
+        0
+      ],
+      "start_image": [
+        "2518",
+        0
+      ],
+      "previous_frames": [
+        "3167",
+        0
+      ]
+    },
+    "class_type": "WanInfiniteTalkToVideo",
+    "_meta": {
+      "title": "WanInfiniteTalkToVideo"
+    }
+  },
+  "3186": {
+    "inputs": {
+      "seed": [
+        "2704",
+        0
+      ],
+      "steps": 4,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "normal",
+      "denoise": 1,
+      "model": [
+        "3163",
+        0
+      ],
+      "positive": [
+        "3163",
+        1
+      ],
+      "negative": [
+        "3163",
+        2
+      ],
+      "latent_image": [
+        "3163",
+        3
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "3187": {
+    "inputs": {
+      "seed": [
+        "2704",
+        0
+      ],
+      "steps": 4,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "normal",
+      "denoise": 1,
+      "model": [
+        "3159",
+        0
+      ],
+      "positive": [
+        "3159",
+        1
+      ],
+      "negative": [
+        "3159",
+        2
+      ],
+      "latent_image": [
+        "3159",
+        3
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "3188": {
+    "inputs": {
+      "seed": [
+        "2704",
+        0
+      ],
+      "steps": 4,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "normal",
+      "denoise": 1,
+      "model": [
+        "3155",
+        0
+      ],
+      "positive": [
+        "3155",
+        1
+      ],
+      "negative": [
+        "3155",
+        2
+      ],
+      "latent_image": [
+        "3155",
+        3
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "3189": {
+    "inputs": {
+      "mode": "single_speaker",
+      "width": [
+        "2518",
+        3
+      ],
+      "height": [
+        "2518",
+        4
+      ],
+      "length": [
+        "2888",
+        0
+      ],
+      "motion_frame_count": 9,
+      "audio_scale": 1,
+      "model": [
+        "2866",
+        0
+      ],
+      "model_patch": [
+        "2864",
+        0
+      ],
+      "positive": [
+        "3149",
+        0
+      ],
+      "negative": [
+        "3208",
+        0
+      ],
+      "vae": [
+        "2855",
+        0
+      ],
+      "audio_encoder_output_1": [
+        "2871",
+        0
+      ],
+      "clip_vision_output": [
+        "2857",
+        0
+      ],
+      "start_image": [
+        "2518",
+        0
+      ],
+      "previous_frames": [
+        "3174",
+        0
+      ]
+    },
+    "class_type": "WanInfiniteTalkToVideo",
+    "_meta": {
+      "title": "WanInfiniteTalkToVideo"
+    }
+  },
+  "3190": {
+    "inputs": {
+      "seed": [
+        "2704",
+        0
+      ],
+      "steps": 4,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "normal",
+      "denoise": 1,
+      "model": [
+        "3143",
+        0
+      ],
+      "positive": [
+        "3143",
+        1
+      ],
+      "negative": [
+        "3143",
+        2
+      ],
+      "latent_image": [
+        "3143",
+        3
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "3191": {
+    "inputs": {
+      "seed": [
+        "2704",
+        0
+      ],
+      "steps": 4,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "normal",
+      "denoise": 1,
+      "model": [
+        "3139",
+        0
+      ],
+      "positive": [
+        "3139",
+        1
+      ],
+      "negative": [
+        "3139",
+        2
+      ],
+      "latent_image": [
+        "3139",
+        3
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "3192": {
+    "inputs": {
+      "mode": "single_speaker",
+      "width": [
+        "2518",
+        3
+      ],
+      "height": [
+        "2518",
+        4
+      ],
+      "length": [
+        "2888",
+        0
+      ],
+      "motion_frame_count": 9,
+      "audio_scale": 1,
+      "model": [
+        "2866",
+        0
+      ],
+      "model_patch": [
+        "2864",
+        0
+      ],
+      "positive": [
+        "3137",
+        0
+      ],
+      "negative": [
+        "3211",
+        0
+      ],
+      "vae": [
+        "2855",
+        0
+      ],
+      "audio_encoder_output_1": [
+        "2871",
+        0
+      ],
+      "clip_vision_output": [
+        "2857",
+        0
+      ],
+      "start_image": [
+        "2518",
+        0
+      ],
+      "previous_frames": [
+        "3171",
+        0
+      ]
+    },
+    "class_type": "WanInfiniteTalkToVideo",
+    "_meta": {
+      "title": "WanInfiniteTalkToVideo"
+    }
+  },
+  "3193": {
+    "inputs": {
+      "seed": [
+        "2704",
+        0
+      ],
+      "steps": 4,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "normal",
+      "denoise": 1,
+      "model": [
+        "3131",
+        0
+      ],
+      "positive": [
+        "3131",
+        1
+      ],
+      "negative": [
+        "3131",
+        2
+      ],
+      "latent_image": [
+        "3131",
+        3
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "3194": {
+    "inputs": {
+      "text": [
+        "3109",
+        0
+      ],
+      "clip": [
+        "2856",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "3195": {
+    "inputs": {
+      "seed": [
+        "2704",
+        0
+      ],
+      "steps": 4,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "normal",
+      "denoise": 1,
+      "model": [
+        "3197",
+        0
+      ],
+      "positive": [
+        "3197",
+        1
+      ],
+      "negative": [
+        "3197",
+        2
+      ],
+      "latent_image": [
+        "3197",
+        3
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "3196": {
+    "inputs": {
+      "mode": "single_speaker",
+      "width": [
+        "2518",
+        3
+      ],
+      "height": [
+        "2518",
+        4
+      ],
+      "length": [
+        "2888",
+        0
+      ],
+      "motion_frame_count": 9,
+      "audio_scale": 1,
+      "model": [
+        "2866",
+        0
+      ],
+      "model_patch": [
+        "2864",
+        0
+      ],
+      "positive": [
+        "3126",
+        0
+      ],
+      "negative": [
+        "3203",
+        0
+      ],
+      "vae": [
+        "2855",
+        0
+      ],
+      "audio_encoder_output_1": [
+        "2871",
+        0
+      ],
+      "clip_vision_output": [
+        "2857",
+        0
+      ],
+      "start_image": [
+        "2518",
+        0
+      ],
+      "previous_frames": [
+        "3168",
+        0
+      ]
+    },
+    "class_type": "WanInfiniteTalkToVideo",
+    "_meta": {
+      "title": "WanInfiniteTalkToVideo"
+    }
+  },
+  "3197": {
+    "inputs": {
+      "mode": "single_speaker",
+      "width": [
+        "2518",
+        3
+      ],
+      "height": [
+        "2518",
+        4
+      ],
+      "length": [
+        "2888",
+        0
+      ],
+      "motion_frame_count": 9,
+      "audio_scale": 1,
+      "model": [
+        "2866",
+        0
+      ],
+      "model_patch": [
+        "2864",
+        0
+      ],
+      "positive": [
+        "3129",
+        0
+      ],
+      "negative": [
+        "3213",
+        0
+      ],
+      "vae": [
+        "2855",
+        0
+      ],
+      "audio_encoder_output_1": [
+        "2871",
+        0
+      ],
+      "clip_vision_output": [
+        "2857",
+        0
+      ],
+      "start_image": [
+        "2518",
+        0
+      ],
+      "previous_frames": [
+        "3169",
+        0
+      ]
+    },
+    "class_type": "WanInfiniteTalkToVideo",
+    "_meta": {
+      "title": "WanInfiniteTalkToVideo"
+    }
+  },
+  "3198": {
+    "inputs": {
+      "seed": [
+        "2704",
+        0
+      ],
+      "steps": 4,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "normal",
+      "denoise": 1,
+      "model": [
+        "3214",
+        0
+      ],
+      "positive": [
+        "3214",
+        1
+      ],
+      "negative": [
+        "3214",
+        2
+      ],
+      "latent_image": [
+        "3214",
+        3
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "3199": {
+    "inputs": {
+      "text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "clip": [
+        "2856",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "3200": {
+    "inputs": {
+      "text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "clip": [
+        "2856",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "3201": {
+    "inputs": {
+      "text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "clip": [
+        "2856",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "3202": {
+    "inputs": {
+      "text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "clip": [
+        "2856",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "3203": {
+    "inputs": {
+      "text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "clip": [
+        "2856",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "3204": {
+    "inputs": {
+      "text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "clip": [
+        "2856",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "3205": {
+    "inputs": {
+      "text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "clip": [
+        "2856",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "3206": {
+    "inputs": {
+      "text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "clip": [
+        "2856",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "3207": {
+    "inputs": {
+      "text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "clip": [
+        "2856",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "3208": {
+    "inputs": {
+      "text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "clip": [
+        "2856",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "3209": {
+    "inputs": {
+      "text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "clip": [
+        "2856",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "3210": {
+    "inputs": {
+      "text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "clip": [
+        "2856",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "3211": {
+    "inputs": {
+      "text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "clip": [
+        "2856",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "3212": {
+    "inputs": {
+      "text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "clip": [
+        "2856",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "3213": {
+    "inputs": {
+      "text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "clip": [
+        "2856",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "3214": {
+    "inputs": {
+      "mode": "single_speaker",
+      "width": [
+        "2518",
+        3
+      ],
+      "height": [
+        "2518",
+        4
+      ],
+      "length": [
+        "2888",
+        0
+      ],
+      "motion_frame_count": 9,
+      "audio_scale": 1,
+      "model": [
+        "2866",
+        0
+      ],
+      "model_patch": [
+        "2864",
+        0
+      ],
+      "positive": [
+        "3103",
+        0
+      ],
+      "negative": [
+        "3199",
+        0
+      ],
+      "vae": [
+        "2855",
+        0
+      ],
+      "audio_encoder_output_1": [
+        "2871",
+        0
+      ],
+      "clip_vision_output": [
+        "2857",
+        0
+      ],
+      "start_image": [
+        "2518",
+        0
+      ],
+      "previous_frames": [
+        "3104",
+        0
+      ]
+    },
+    "class_type": "WanInfiniteTalkToVideo",
+    "_meta": {
+      "title": "WanInfiniteTalkToVideo"
+    }
+  },
+  "3215": {
+    "inputs": {
+      "index": [
+        "3076",
+        0
+      ],
+      "value0": [
+        "3108",
+        0
+      ],
+      "value1": [
+        "3236",
+        0
+      ],
+      "value2": [
+        "3237",
+        0
+      ],
+      "value3": [
+        "3107",
+        0
+      ],
+      "value4": [
+        "3104",
+        0
+      ],
+      "value5": [
+        "3114",
+        0
+      ],
+      "value6": [
+        "3167",
+        0
+      ],
+      "value7": [
+        "3183",
+        0
+      ],
+      "value8": [
+        "3168",
+        0
+      ],
+      "value9": [
+        "3169",
+        0
+      ],
+      "value10": [
+        "3170",
+        0
+      ],
+      "value11": [
+        "3171",
+        0
+      ],
+      "value12": [
+        "3172",
+        0
+      ],
+      "value13": [
+        "3173",
+        0
+      ],
+      "value14": [
+        "3174",
+        0
+      ],
+      "value15": [
+        "3175",
+        0
+      ],
+      "value16": [
+        "3176",
+        0
+      ],
+      "value17": [
+        "3177",
+        0
+      ],
+      "value18": [
+        "3178",
+        0
+      ],
+      "value19": [
+        "3179",
+        0
+      ]
+    },
+    "class_type": "easy anythingIndexSwitch",
+    "_meta": {
+      "title": "编号切换"
+    }
+  },
+  "3216": {
+    "inputs": {
+      "seed": [
+        "2704",
+        0
+      ],
+      "steps": 4,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "normal",
+      "denoise": 1,
+      "model": [
+        "3151",
+        0
+      ],
+      "positive": [
+        "3151",
+        1
+      ],
+      "negative": [
+        "3151",
+        2
+      ],
+      "latent_image": [
+        "3151",
+        3
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "3217": {
+    "inputs": {
+      "index": 1,
+      "any": [
+        "255",
+        0
+      ]
+    },
+    "class_type": "easy indexAnything",
+    "_meta": {
+      "title": "任何索引"
+    }
+  },
+  "3218": {
+    "inputs": {
+      "index": 2,
+      "any": [
+        "255",
+        0
+      ]
+    },
+    "class_type": "easy indexAnything",
+    "_meta": {
+      "title": "任何索引"
+    }
+  },
+  "3219": {
+    "inputs": {
+      "index": 3,
+      "any": [
+        "255",
+        0
+      ]
+    },
+    "class_type": "easy indexAnything",
+    "_meta": {
+      "title": "任何索引"
+    }
+  },
+  "3220": {
+    "inputs": {
+      "index": 4,
+      "any": [
+        "255",
+        0
+      ]
+    },
+    "class_type": "easy indexAnything",
+    "_meta": {
+      "title": "任何索引"
+    }
+  },
+  "3221": {
+    "inputs": {
+      "index": 5,
+      "any": [
+        "255",
+        0
+      ]
+    },
+    "class_type": "easy indexAnything",
+    "_meta": {
+      "title": "任何索引"
+    }
+  },
+  "3222": {
+    "inputs": {
+      "index": 6,
+      "any": [
+        "255",
+        0
+      ]
+    },
+    "class_type": "easy indexAnything",
+    "_meta": {
+      "title": "任何索引"
+    }
+  },
+  "3223": {
+    "inputs": {
+      "index": 7,
+      "any": [
+        "255",
+        0
+      ]
+    },
+    "class_type": "easy indexAnything",
+    "_meta": {
+      "title": "任何索引"
+    }
+  },
+  "3224": {
+    "inputs": {
+      "index": 8,
+      "any": [
+        "255",
+        0
+      ]
+    },
+    "class_type": "easy indexAnything",
+    "_meta": {
+      "title": "任何索引"
+    }
+  },
+  "3225": {
+    "inputs": {
+      "index": 9,
+      "any": [
+        "255",
+        0
+      ]
+    },
+    "class_type": "easy indexAnything",
+    "_meta": {
+      "title": "任何索引"
+    }
+  },
+  "3226": {
+    "inputs": {
+      "index": 10,
+      "any": [
+        "255",
+        0
+      ]
+    },
+    "class_type": "easy indexAnything",
+    "_meta": {
+      "title": "任何索引"
+    }
+  },
+  "3227": {
+    "inputs": {
+      "index": 11,
+      "any": [
+        "255",
+        0
+      ]
+    },
+    "class_type": "easy indexAnything",
+    "_meta": {
+      "title": "任何索引"
+    }
+  },
+  "3228": {
+    "inputs": {
+      "index": 12,
+      "any": [
+        "255",
+        0
+      ]
+    },
+    "class_type": "easy indexAnything",
+    "_meta": {
+      "title": "任何索引"
+    }
+  },
+  "3229": {
+    "inputs": {
+      "index": 13,
+      "any": [
+        "255",
+        0
+      ]
+    },
+    "class_type": "easy indexAnything",
+    "_meta": {
+      "title": "任何索引"
+    }
+  },
+  "3230": {
+    "inputs": {
+      "index": 14,
+      "any": [
+        "255",
+        0
+      ]
+    },
+    "class_type": "easy indexAnything",
+    "_meta": {
+      "title": "任何索引"
+    }
+  },
+  "3231": {
+    "inputs": {
+      "index": 15,
+      "any": [
+        "255",
+        0
+      ]
+    },
+    "class_type": "easy indexAnything",
+    "_meta": {
+      "title": "任何索引"
+    }
+  },
+  "3232": {
+    "inputs": {
+      "index": 16,
+      "any": [
+        "255",
+        0
+      ]
+    },
+    "class_type": "easy indexAnything",
+    "_meta": {
+      "title": "任何索引"
+    }
+  },
+  "3233": {
+    "inputs": {
+      "index": 17,
+      "any": [
+        "255",
+        0
+      ]
+    },
+    "class_type": "easy indexAnything",
+    "_meta": {
+      "title": "任何索引"
+    }
+  },
+  "3234": {
+    "inputs": {
+      "index": 18,
+      "any": [
+        "255",
+        0
+      ]
+    },
+    "class_type": "easy indexAnything",
+    "_meta": {
+      "title": "任何索引"
+    }
+  },
+  "3235": {
+    "inputs": {
+      "index": 19,
+      "any": [
+        "255",
+        0
+      ]
+    },
+    "class_type": "easy indexAnything",
+    "_meta": {
+      "title": "任何索引"
+    }
+  },
+  "3236": {
+    "inputs": {
+      "image1": [
+        "3108",
+        0
+      ],
+      "image2": [
+        "3094",
+        0
+      ]
+    },
+    "class_type": "ImageBatch",
+    "_meta": {
+      "title": "组合图像批次"
+    }
+  },
+  "3237": {
+    "inputs": {
+      "image1": [
+        "3236",
+        0
+      ],
+      "image2": [
+        "3106",
+        0
+      ]
+    },
+    "class_type": "ImageBatch",
+    "_meta": {
+      "title": "组合图像批次"
+    }
+  },
+  "3238": {
+    "inputs": {
+      "Number": "832"
+    },
+    "class_type": "Int",
+    "_meta": {
+      "title": "Int"
+    },
+    "t": {
+      "title": "生成视频长边"
+    }
+  },
+  "3241": {
+    "inputs": {
+      "offload_model": true,
+      "offload_cache": true,
+      "anything": [
+        "3215",
+        0
+      ]
+    },
+    "class_type": "VRAMCleanup",
+    "_meta": {
+      "title": "🎈VRAM-Cleanup"
+    }
+  },
+  "3242": {
+    "inputs": {
+      "clean_file_cache": true,
+      "clean_processes": true,
+      "clean_dlls": true,
+      "retry_times": 3,
+      "anything": [
+        "3241",
+        0
+      ]
+    },
+    "class_type": "RAMCleanup",
+    "_meta": {
+      "title": "🎈RAM-Cleanup"
+    }
+  },
+  "_api_config": {
+    "customLabels": {
+      "221:image": "上传图像",
+      "255:prompt": "人物动作描述 (prompt)",
+      "255:start_index": "人物动作描述 (start_index)",
+      "255:max_rows": "人物动作描述 (max_rows)",
+      "255:remove_empty_lines": "人物动作描述 (remove_empty_lines)",
+      "458:filename_prefix": "文件名前缀",
+      "458:loop_count": "loop_count",
+      "458:format": "format",
+      "458:pix_fmt": "pix_fmt",
+      "458:crf": "crf",
+      "458:save_metadata": "save_metadata",
+      "458:trim_to_audio": "trim_to_audio",
+      "458:pingpong": "pingpong",
+      "458:save_output": "save_output",
+      "2518:aspect_ratio": "aspect_ratio",
+      "2518:proportional_width": "proportional_width",
+      "2518:proportional_height": "proportional_height",
+      "2518:fit": "fit",
+      "2518:method": "method",
+      "2518:round_to_multiple": "round_to_multiple",
+      "2518:scale_to_side": "scale_to_side",
+      "2518:background_color": "background_color",
+      "2704:seed": "随机种子",
+      "2856:type": "type",
+      "2856:device": "device",
+      "2857:crop": "crop",
+      "2866:weight_dtype": "weight_dtype",
+      "2888:value": "value",
+      "2893:text": "提示词",
+      "2900:audio": "参考音频 0",
+      "2900:start_time": "开始时间默认0，如果从第5秒开始就写5",
+      "2900:duration": "结束时间可写30就是前30秒, 默认0为不截取，最大90秒",
+      "3068:lufs": "lufs",
+      "3069:value": "value",
+      "3070:expression": "expression",
+      "3071:value": "value",
+      "3072:expression": "expression",
+      "3073:b": "b",
+      "3073:operation": "operation",
+      "3074:expression": "expression",
+      "3075:cmp": "cmp",
+      "3077:value": "value",
+      "3078:b": "b",
+      "3078:operation": "operation",
+      "3079:text": "提示词",
+      "3080:text": "提示词",
+      "3081:steps": "迭代步数",
+      "3081:cfg": "CFG Scale",
+      "3081:denoise": "denoise",
+      "3082:text": "提示词",
+      "3083:steps": "迭代步数",
+      "3083:cfg": "CFG Scale",
+      "3083:denoise": "denoise",
+      "3084:mode": "mode",
+      "3084:motion_frame_count": "motion_frame_count",
+      "3084:audio_scale": "audio_scale",
+      "3085:text": "提示词",
+      "3086:steps": "迭代步数",
+      "3086:cfg": "CFG Scale",
+      "3086:denoise": "denoise",
+      "3087:mode": "mode",
+      "3087:motion_frame_count": "motion_frame_count",
+      "3087:audio_scale": "audio_scale",
+      "3088:text": "提示词",
+      "3089:steps": "迭代步数",
+      "3089:cfg": "CFG Scale",
+      "3089:denoise": "denoise",
+      "3093:mode": "mode",
+      "3093:motion_frame_count": "motion_frame_count",
+      "3093:audio_scale": "audio_scale",
+      "3094:length": "length",
+      "3095:steps": "迭代步数",
+      "3095:cfg": "CFG Scale",
+      "3095:denoise": "denoise",
+      "3097:length": "length",
+      "3098:length": "length",
+      "3105:length": "length",
+      "3106:length": "length",
+      "3109:index": "index",
+      "3110:steps": "迭代步数",
+      "3110:cfg": "CFG Scale",
+      "3110:denoise": "denoise",
+      "3112:length": "length",
+      "3115:steps": "迭代步数",
+      "3115:cfg": "CFG Scale",
+      "3115:denoise": "denoise",
+      "3118:length": "length",
+      "3119:steps": "迭代步数",
+      "3119:cfg": "CFG Scale",
+      "3119:denoise": "denoise",
+      "3120:mode": "mode",
+      "3120:motion_frame_count": "motion_frame_count",
+      "3120:audio_scale": "audio_scale",
+      "3123:length": "length",
+      "3124:steps": "迭代步数",
+      "3124:cfg": "CFG Scale",
+      "3124:denoise": "denoise",
+      "3127:length": "length",
+      "3130:length": "length",
+      "3131:mode": "mode",
+      "3131:motion_frame_count": "motion_frame_count",
+      "3131:audio_scale": "audio_scale",
+      "3134:length": "length",
+      "3135:steps": "迭代步数",
+      "3135:cfg": "CFG Scale",
+      "3135:denoise": "denoise",
+      "3138:length": "length",
+      "3139:mode": "mode",
+      "3139:motion_frame_count": "motion_frame_count",
+      "3139:audio_scale": "audio_scale",
+      "3142:length": "length",
+      "3143:mode": "mode",
+      "3143:motion_frame_count": "motion_frame_count",
+      "3143:audio_scale": "audio_scale",
+      "3146:length": "length",
+      "3147:steps": "迭代步数",
+      "3147:cfg": "CFG Scale",
+      "3147:denoise": "denoise",
+      "3150:length": "length",
+      "3151:mode": "mode",
+      "3151:motion_frame_count": "motion_frame_count",
+      "3151:audio_scale": "audio_scale",
+      "3154:length": "length",
+      "3155:mode": "mode",
+      "3155:motion_frame_count": "motion_frame_count",
+      "3155:audio_scale": "audio_scale",
+      "3158:length": "length",
+      "3159:mode": "mode",
+      "3159:motion_frame_count": "motion_frame_count",
+      "3159:audio_scale": "audio_scale",
+      "3162:length": "length",
+      "3163:mode": "mode",
+      "3163:motion_frame_count": "motion_frame_count",
+      "3163:audio_scale": "audio_scale",
+      "3166:length": "length",
+      "3180:mode": "mode",
+      "3180:motion_frame_count": "motion_frame_count",
+      "3180:audio_scale": "audio_scale",
+      "3182:mode": "mode",
+      "3182:motion_frame_count": "motion_frame_count",
+      "3182:audio_scale": "audio_scale",
+      "3184:mode": "mode",
+      "3184:motion_frame_count": "motion_frame_count",
+      "3184:audio_scale": "audio_scale",
+      "3185:mode": "mode",
+      "3185:motion_frame_count": "motion_frame_count",
+      "3185:audio_scale": "audio_scale",
+      "3186:steps": "迭代步数",
+      "3186:cfg": "CFG Scale",
+      "3186:denoise": "denoise",
+      "3187:steps": "迭代步数",
+      "3187:cfg": "CFG Scale",
+      "3187:denoise": "denoise",
+      "3188:steps": "迭代步数",
+      "3188:cfg": "CFG Scale",
+      "3188:denoise": "denoise",
+      "3189:mode": "mode",
+      "3189:motion_frame_count": "motion_frame_count",
+      "3189:audio_scale": "audio_scale",
+      "3190:steps": "迭代步数",
+      "3190:cfg": "CFG Scale",
+      "3190:denoise": "denoise",
+      "3191:steps": "迭代步数",
+      "3191:cfg": "CFG Scale",
+      "3191:denoise": "denoise",
+      "3192:mode": "mode",
+      "3192:motion_frame_count": "motion_frame_count",
+      "3192:audio_scale": "audio_scale",
+      "3193:steps": "迭代步数",
+      "3193:cfg": "CFG Scale",
+      "3193:denoise": "denoise",
+      "3195:steps": "迭代步数",
+      "3195:cfg": "CFG Scale",
+      "3195:denoise": "denoise",
+      "3196:mode": "mode",
+      "3196:motion_frame_count": "motion_frame_count",
+      "3196:audio_scale": "audio_scale",
+      "3197:mode": "mode",
+      "3197:motion_frame_count": "motion_frame_count",
+      "3197:audio_scale": "audio_scale",
+      "3198:steps": "迭代步数",
+      "3198:cfg": "CFG Scale",
+      "3198:denoise": "denoise",
+      "3199:text": "提示词",
+      "3200:text": "提示词",
+      "3201:text": "提示词",
+      "3202:text": "提示词",
+      "3203:text": "提示词",
+      "3204:text": "提示词",
+      "3205:text": "提示词",
+      "3206:text": "提示词",
+      "3207:text": "提示词",
+      "3208:text": "提示词",
+      "3209:text": "提示词",
+      "3210:text": "提示词",
+      "3211:text": "提示词",
+      "3212:text": "提示词",
+      "3213:text": "提示词",
+      "3214:mode": "mode",
+      "3214:motion_frame_count": "motion_frame_count",
+      "3214:audio_scale": "audio_scale",
+      "3216:steps": "迭代步数",
+      "3216:cfg": "CFG Scale",
+      "3216:denoise": "denoise",
+      "3217:index": "index",
+      "3218:index": "index",
+      "3219:index": "index",
+      "3220:index": "index",
+      "3221:index": "index",
+      "3222:index": "index",
+      "3223:index": "index",
+      "3224:index": "index",
+      "3225:index": "index",
+      "3226:index": "index",
+      "3227:index": "index",
+      "3228:index": "index",
+      "3229:index": "index",
+      "3230:index": "index",
+      "3231:index": "index",
+      "3232:index": "index",
+      "3233:index": "index",
+      "3234:index": "index",
+      "3235:index": "index",
+      "3238:Number": "生成视频长边 (Number)",
+      "3241:offload_model": "offload_model",
+      "3241:offload_cache": "offload_cache",
+      "3242:clean_file_cache": "clean_file_cache",
+      "3242:clean_processes": "clean_processes",
+      "3242:clean_dlls": "clean_dlls",
+      "3242:retry_times": "retry_times"
+    },
+    "enabledParams": {
+      "221:image": true,
+      "255:prompt": true,
+      "255:start_index": false,
+      "255:max_rows": false,
+      "255:remove_empty_lines": false,
+      "458:filename_prefix": false,
+      "458:loop_count": false,
+      "458:format": false,
+      "458:pix_fmt": false,
+      "458:crf": false,
+      "458:save_metadata": false,
+      "458:trim_to_audio": false,
+      "458:pingpong": false,
+      "458:save_output": false,
+      "2518:aspect_ratio": false,
+      "2518:proportional_width": false,
+      "2518:proportional_height": false,
+      "2518:fit": false,
+      "2518:method": false,
+      "2518:round_to_multiple": false,
+      "2518:scale_to_side": false,
+      "2518:background_color": false,
+      "2704:seed": false,
+      "2856:type": false,
+      "2856:device": false,
+      "2857:crop": false,
+      "2866:weight_dtype": false,
+      "2888:value": false,
+      "2893:text": false,
+      "2900:audio": true,
+      "2900:start_time": true,
+      "2900:duration": true,
+      "3068:lufs": false,
+      "3069:value": false,
+      "3070:expression": false,
+      "3071:value": false,
+      "3072:expression": false,
+      "3073:b": false,
+      "3073:operation": false,
+      "3074:expression": false,
+      "3075:cmp": false,
+      "3077:value": false,
+      "3078:b": false,
+      "3078:operation": false,
+      "3079:text": false,
+      "3080:text": false,
+      "3081:steps": false,
+      "3081:cfg": false,
+      "3081:denoise": false,
+      "3082:text": false,
+      "3083:steps": false,
+      "3083:cfg": false,
+      "3083:denoise": false,
+      "3084:mode": false,
+      "3084:motion_frame_count": false,
+      "3084:audio_scale": false,
+      "3085:text": false,
+      "3086:steps": false,
+      "3086:cfg": false,
+      "3086:denoise": false,
+      "3087:mode": false,
+      "3087:motion_frame_count": false,
+      "3087:audio_scale": false,
+      "3088:text": false,
+      "3089:steps": false,
+      "3089:cfg": false,
+      "3089:denoise": false,
+      "3093:mode": false,
+      "3093:motion_frame_count": false,
+      "3093:audio_scale": false,
+      "3094:length": false,
+      "3095:steps": false,
+      "3095:cfg": false,
+      "3095:denoise": false,
+      "3097:length": false,
+      "3098:length": false,
+      "3105:length": false,
+      "3106:length": false,
+      "3109:index": false,
+      "3110:steps": false,
+      "3110:cfg": false,
+      "3110:denoise": false,
+      "3112:length": false,
+      "3115:steps": false,
+      "3115:cfg": false,
+      "3115:denoise": false,
+      "3118:length": false,
+      "3119:steps": false,
+      "3119:cfg": false,
+      "3119:denoise": false,
+      "3120:mode": false,
+      "3120:motion_frame_count": false,
+      "3120:audio_scale": false,
+      "3123:length": false,
+      "3124:steps": false,
+      "3124:cfg": false,
+      "3124:denoise": false,
+      "3127:length": false,
+      "3130:length": false,
+      "3131:mode": false,
+      "3131:motion_frame_count": false,
+      "3131:audio_scale": false,
+      "3134:length": false,
+      "3135:steps": false,
+      "3135:cfg": false,
+      "3135:denoise": false,
+      "3138:length": false,
+      "3139:mode": false,
+      "3139:motion_frame_count": false,
+      "3139:audio_scale": false,
+      "3142:length": false,
+      "3143:mode": false,
+      "3143:motion_frame_count": false,
+      "3143:audio_scale": false,
+      "3146:length": false,
+      "3147:steps": false,
+      "3147:cfg": false,
+      "3147:denoise": false,
+      "3150:length": false,
+      "3151:mode": false,
+      "3151:motion_frame_count": false,
+      "3151:audio_scale": false,
+      "3154:length": false,
+      "3155:mode": false,
+      "3155:motion_frame_count": false,
+      "3155:audio_scale": false,
+      "3158:length": false,
+      "3159:mode": false,
+      "3159:motion_frame_count": false,
+      "3159:audio_scale": false,
+      "3162:length": false,
+      "3163:mode": false,
+      "3163:motion_frame_count": false,
+      "3163:audio_scale": false,
+      "3166:length": false,
+      "3180:mode": false,
+      "3180:motion_frame_count": false,
+      "3180:audio_scale": false,
+      "3182:mode": false,
+      "3182:motion_frame_count": false,
+      "3182:audio_scale": false,
+      "3184:mode": false,
+      "3184:motion_frame_count": false,
+      "3184:audio_scale": false,
+      "3185:mode": false,
+      "3185:motion_frame_count": false,
+      "3185:audio_scale": false,
+      "3186:steps": false,
+      "3186:cfg": false,
+      "3186:denoise": false,
+      "3187:steps": false,
+      "3187:cfg": false,
+      "3187:denoise": false,
+      "3188:steps": false,
+      "3188:cfg": false,
+      "3188:denoise": false,
+      "3189:mode": false,
+      "3189:motion_frame_count": false,
+      "3189:audio_scale": false,
+      "3190:steps": false,
+      "3190:cfg": false,
+      "3190:denoise": false,
+      "3191:steps": false,
+      "3191:cfg": false,
+      "3191:denoise": false,
+      "3192:mode": false,
+      "3192:motion_frame_count": false,
+      "3192:audio_scale": false,
+      "3193:steps": false,
+      "3193:cfg": false,
+      "3193:denoise": false,
+      "3195:steps": false,
+      "3195:cfg": false,
+      "3195:denoise": false,
+      "3196:mode": false,
+      "3196:motion_frame_count": false,
+      "3196:audio_scale": false,
+      "3197:mode": false,
+      "3197:motion_frame_count": false,
+      "3197:audio_scale": false,
+      "3198:steps": false,
+      "3198:cfg": false,
+      "3198:denoise": false,
+      "3199:text": false,
+      "3200:text": false,
+      "3201:text": false,
+      "3202:text": false,
+      "3203:text": false,
+      "3204:text": false,
+      "3205:text": false,
+      "3206:text": false,
+      "3207:text": false,
+      "3208:text": false,
+      "3209:text": false,
+      "3210:text": false,
+      "3211:text": false,
+      "3212:text": false,
+      "3213:text": false,
+      "3214:mode": false,
+      "3214:motion_frame_count": false,
+      "3214:audio_scale": false,
+      "3216:steps": false,
+      "3216:cfg": false,
+      "3216:denoise": false,
+      "3217:index": false,
+      "3218:index": false,
+      "3219:index": false,
+      "3220:index": false,
+      "3221:index": false,
+      "3222:index": false,
+      "3223:index": false,
+      "3224:index": false,
+      "3225:index": false,
+      "3226:index": false,
+      "3227:index": false,
+      "3228:index": false,
+      "3229:index": false,
+      "3230:index": false,
+      "3231:index": false,
+      "3232:index": false,
+      "3233:index": false,
+      "3234:index": false,
+      "3235:index": false,
+      "3238:Number": true,
+      "3241:offload_model": false,
+      "3241:offload_cache": false,
+      "3242:clean_file_cache": false,
+      "3242:clean_processes": false,
+      "3242:clean_dlls": false,
+      "3242:retry_times": false
+    },
+    "formValues": {
+      "221:image": null,
+      "255:prompt": "对着镜头唱歌，双手轻垂身侧，微微低头，神情落寞\n对着镜头唱歌，单手轻扶脸颊，眉眼低垂，面露忧伤\n对着镜头唱歌，双手交叠放在身前，身体微颤，眼神深情怅然\n对着镜头唱歌，抬手轻触眉眼，头部微侧，神情哀伤\n对着镜头唱歌，手臂自然轻晃，眉头微蹙，眼底满是柔情与惆怅\n对着镜头唱歌，单手按在胸口，微微仰头，情绪沉静伤感\n对着镜头唱歌，双手松弛下垂，肩膀微收，眼神黯淡温柔\n对着镜头唱歌，指尖轻抵下唇，目光放空，神态忧郁\n对着镜头唱歌，身体小幅轻晃，双手缓缓抬起又落下，面露怅惘\n对着镜头唱歌，单手搭在肩头，眉眼低垂，神情隐忍又深情\n对着镜头唱歌，双手轻垂身侧，微微低头，神情落寞\n对着镜头唱歌，单手轻扶脸颊，眉眼低垂，面露忧伤\n对着镜头唱歌，双手交叠放在身前，身体微颤，眼神深情怅然\n对着镜头唱歌，抬手轻触眉眼，头部微侧，神情哀伤\n对着镜头唱歌，手臂自然轻晃，眉头微蹙，眼底满是柔情与惆怅\n对着镜头唱歌，单手按在胸口，微微仰头，情绪沉静伤感\n对着镜头唱歌，双手松弛下垂，肩膀微收，眼神黯淡温柔\n对着镜头唱歌，指尖轻抵下唇，目光放空，神态忧郁\n对着镜头唱歌，身体小幅轻晃，双手缓缓抬起又落下，面露怅惘\n对着镜头唱歌，单手搭在肩头，眉眼低垂，神情隐忍又深情",
+      "255:start_index": 0,
+      "255:max_rows": 1000,
+      "255:remove_empty_lines": "",
+      "458:filename_prefix": "InfiniteTalk",
+      "458:loop_count": 0,
+      "458:format": "video/h264-mp4",
+      "458:pix_fmt": "yuv420p",
+      "458:crf": 14,
+      "458:save_metadata": false,
+      "458:trim_to_audio": true,
+      "458:pingpong": false,
+      "458:save_output": true,
+      "2518:aspect_ratio": "original",
+      "2518:proportional_width": 1,
+      "2518:proportional_height": 1,
+      "2518:fit": "crop",
+      "2518:method": "lanczos",
+      "2518:round_to_multiple": "32",
+      "2518:scale_to_side": "longest",
+      "2518:background_color": "#000000",
+      "2704:seed": -1,
+      "2856:type": "wan",
+      "2856:device": "default",
+      "2857:crop": "center",
+      "2866:weight_dtype": "default",
+      "2888:value": 121,
+      "2893:text": "9",
+      "2900:audio": null,
+      "2900:start_time": 0,
+      "2900:duration": 0,
+      "3068:lufs": -23,
+      "3069:value": 9,
+      "3070:expression": "a/1000",
+      "3071:value": 25,
+      "3072:expression": "a*b",
+      "3073:b": 1,
+      "3073:operation": "subtract",
+      "3074:expression": "ceil(a/(b-9))",
+      "3075:cmp": "a > b",
+      "3077:value": 19,
+      "3078:b": 1,
+      "3078:operation": "add",
+      "3079:text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "3080:text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "3081:steps": 4,
+      "3081:cfg": 1,
+      "3081:denoise": 1,
+      "3082:text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "3083:steps": 4,
+      "3083:cfg": 1,
+      "3083:denoise": 1,
+      "3084:mode": "single_speaker",
+      "3084:motion_frame_count": 9,
+      "3084:audio_scale": 1,
+      "3085:text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "3086:steps": 4,
+      "3086:cfg": 1,
+      "3086:denoise": 1,
+      "3087:mode": "single_speaker",
+      "3087:motion_frame_count": 9,
+      "3087:audio_scale": 1,
+      "3088:text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "3089:steps": 4,
+      "3089:cfg": 1,
+      "3089:denoise": 1,
+      "3093:mode": "single_speaker",
+      "3093:motion_frame_count": 9,
+      "3093:audio_scale": 1,
+      "3094:length": 4090,
+      "3095:steps": 4,
+      "3095:cfg": 1,
+      "3095:denoise": 1,
+      "3097:length": 4090,
+      "3098:length": 4090,
+      "3105:length": 4090,
+      "3106:length": 4090,
+      "3109:index": 0,
+      "3110:steps": 4,
+      "3110:cfg": 1,
+      "3110:denoise": 1,
+      "3112:length": 4090,
+      "3115:steps": 4,
+      "3115:cfg": 1,
+      "3115:denoise": 1,
+      "3118:length": 4090,
+      "3119:steps": 4,
+      "3119:cfg": 1,
+      "3119:denoise": 1,
+      "3120:mode": "single_speaker",
+      "3120:motion_frame_count": 9,
+      "3120:audio_scale": 1,
+      "3123:length": 4090,
+      "3124:steps": 4,
+      "3124:cfg": 1,
+      "3124:denoise": 1,
+      "3127:length": 4090,
+      "3130:length": 4090,
+      "3131:mode": "single_speaker",
+      "3131:motion_frame_count": 9,
+      "3131:audio_scale": 1,
+      "3134:length": 4090,
+      "3135:steps": 4,
+      "3135:cfg": 1,
+      "3135:denoise": 1,
+      "3138:length": 4090,
+      "3139:mode": "single_speaker",
+      "3139:motion_frame_count": 9,
+      "3139:audio_scale": 1,
+      "3142:length": 4090,
+      "3143:mode": "single_speaker",
+      "3143:motion_frame_count": 9,
+      "3143:audio_scale": 1,
+      "3146:length": 4090,
+      "3147:steps": 4,
+      "3147:cfg": 1,
+      "3147:denoise": 1,
+      "3150:length": 4090,
+      "3151:mode": "single_speaker",
+      "3151:motion_frame_count": 9,
+      "3151:audio_scale": 1,
+      "3154:length": 4090,
+      "3155:mode": "single_speaker",
+      "3155:motion_frame_count": 9,
+      "3155:audio_scale": 1,
+      "3158:length": 4090,
+      "3159:mode": "single_speaker",
+      "3159:motion_frame_count": 9,
+      "3159:audio_scale": 1,
+      "3162:length": 4090,
+      "3163:mode": "single_speaker",
+      "3163:motion_frame_count": 9,
+      "3163:audio_scale": 1,
+      "3166:length": 4090,
+      "3180:mode": "single_speaker",
+      "3180:motion_frame_count": 9,
+      "3180:audio_scale": 1,
+      "3182:mode": "single_speaker",
+      "3182:motion_frame_count": 9,
+      "3182:audio_scale": 1,
+      "3184:mode": "single_speaker",
+      "3184:motion_frame_count": 9,
+      "3184:audio_scale": 1,
+      "3185:mode": "single_speaker",
+      "3185:motion_frame_count": 9,
+      "3185:audio_scale": 1,
+      "3186:steps": 4,
+      "3186:cfg": 1,
+      "3186:denoise": 1,
+      "3187:steps": 4,
+      "3187:cfg": 1,
+      "3187:denoise": 1,
+      "3188:steps": 4,
+      "3188:cfg": 1,
+      "3188:denoise": 1,
+      "3189:mode": "single_speaker",
+      "3189:motion_frame_count": 9,
+      "3189:audio_scale": 1,
+      "3190:steps": 4,
+      "3190:cfg": 1,
+      "3190:denoise": 1,
+      "3191:steps": 4,
+      "3191:cfg": 1,
+      "3191:denoise": 1,
+      "3192:mode": "single_speaker",
+      "3192:motion_frame_count": 9,
+      "3192:audio_scale": 1,
+      "3193:steps": 4,
+      "3193:cfg": 1,
+      "3193:denoise": 1,
+      "3195:steps": 4,
+      "3195:cfg": 1,
+      "3195:denoise": 1,
+      "3196:mode": "single_speaker",
+      "3196:motion_frame_count": 9,
+      "3196:audio_scale": 1,
+      "3197:mode": "single_speaker",
+      "3197:motion_frame_count": 9,
+      "3197:audio_scale": 1,
+      "3198:steps": 4,
+      "3198:cfg": 1,
+      "3198:denoise": 1,
+      "3199:text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "3200:text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "3201:text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "3202:text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "3203:text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "3204:text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "3205:text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "3206:text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "3207:text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "3208:text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "3209:text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "3210:text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "3211:text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "3212:text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "3213:text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "3214:mode": "single_speaker",
+      "3214:motion_frame_count": 9,
+      "3214:audio_scale": 1,
+      "3216:steps": 4,
+      "3216:cfg": 1,
+      "3216:denoise": 1,
+      "3217:index": 1,
+      "3218:index": 2,
+      "3219:index": 3,
+      "3220:index": 4,
+      "3221:index": 5,
+      "3222:index": 6,
+      "3223:index": 7,
+      "3224:index": 8,
+      "3225:index": 9,
+      "3226:index": 10,
+      "3227:index": 11,
+      "3228:index": 12,
+      "3229:index": 13,
+      "3230:index": 14,
+      "3231:index": 15,
+      "3232:index": 16,
+      "3233:index": 17,
+      "3234:index": 18,
+      "3235:index": 19,
+      "3238:Number": "832",
+      "3241:offload_model": true,
+      "3241:offload_cache": true,
+      "3242:clean_file_cache": true,
+      "3242:clean_processes": true,
+      "3242:clean_dlls": true,
+      "3242:retry_times": 3
+    },
+    "mediaOrder": [
+      "221:image",
+      "2900:audio"
+    ],
+    "mediaOrderSource": "auto",
+    "apiNames": {
+      "221:image": "ref_image_0",
+      "255:prompt": "prompt",
+      "255:start_index": "start_index",
+      "255:max_rows": "max_rows",
+      "255:remove_empty_lines": "remove_empty_lines",
+      "458:filename_prefix": "filename_prefix",
+      "458:loop_count": "loop_count",
+      "458:format": "format",
+      "458:pix_fmt": "pix_fmt",
+      "458:crf": "crf",
+      "458:save_metadata": "save_metadata",
+      "458:trim_to_audio": "trim_to_audio",
+      "458:pingpong": "pingpong",
+      "458:save_output": "save_output",
+      "2518:aspect_ratio": "aspect_ratio",
+      "2518:proportional_width": "proportional_width",
+      "2518:proportional_height": "proportional_height",
+      "2518:fit": "fit",
+      "2518:method": "method",
+      "2518:round_to_multiple": "round_to_multiple",
+      "2518:scale_to_side": "scale_to_side",
+      "2518:background_color": "background_color",
+      "2704:seed": "seed",
+      "2856:type": "type",
+      "2856:device": "device",
+      "2857:crop": "crop",
+      "2866:weight_dtype": "weight_dtype",
+      "2888:value": "value",
+      "2893:text": "prompt_2",
+      "2900:audio": "ref_audio_0",
+      "2900:start_time": "start_time",
+      "2900:duration": "duration",
+      "3068:lufs": "lufs",
+      "3069:value": "value_2",
+      "3070:expression": "expression",
+      "3071:value": "value_3",
+      "3072:expression": "expression_2",
+      "3073:b": "b",
+      "3073:operation": "operation",
+      "3074:expression": "expression_3",
+      "3075:cmp": "cmp",
+      "3077:value": "value_4",
+      "3078:b": "b_2",
+      "3078:operation": "operation_2",
+      "3079:text": "prompt_3",
+      "3080:text": "prompt_4",
+      "3081:steps": "steps",
+      "3081:cfg": "cfg",
+      "3081:denoise": "denoise",
+      "3082:text": "prompt_5",
+      "3083:steps": "steps_2",
+      "3083:cfg": "cfg_2",
+      "3083:denoise": "denoise_2",
+      "3084:mode": "mode",
+      "3084:motion_frame_count": "motion_frame_count",
+      "3084:audio_scale": "audio_scale",
+      "3085:text": "prompt_6",
+      "3086:steps": "steps_3",
+      "3086:cfg": "cfg_3",
+      "3086:denoise": "denoise_3",
+      "3087:mode": "mode_2",
+      "3087:motion_frame_count": "motion_frame_count_2",
+      "3087:audio_scale": "audio_scale_2",
+      "3088:text": "prompt_7",
+      "3089:steps": "steps_4",
+      "3089:cfg": "cfg_4",
+      "3089:denoise": "denoise_4",
+      "3093:mode": "mode_3",
+      "3093:motion_frame_count": "motion_frame_count_3",
+      "3093:audio_scale": "audio_scale_3",
+      "3094:length": "length",
+      "3095:steps": "steps_5",
+      "3095:cfg": "cfg_5",
+      "3095:denoise": "denoise_5",
+      "3097:length": "length_2",
+      "3098:length": "length_3",
+      "3105:length": "length_4",
+      "3106:length": "length_5",
+      "3109:index": "index",
+      "3110:steps": "steps_6",
+      "3110:cfg": "cfg_6",
+      "3110:denoise": "denoise_6",
+      "3112:length": "length_6",
+      "3115:steps": "steps_7",
+      "3115:cfg": "cfg_7",
+      "3115:denoise": "denoise_7",
+      "3118:length": "length_7",
+      "3119:steps": "steps_8",
+      "3119:cfg": "cfg_8",
+      "3119:denoise": "denoise_8",
+      "3120:mode": "mode_4",
+      "3120:motion_frame_count": "motion_frame_count_4",
+      "3120:audio_scale": "audio_scale_4",
+      "3123:length": "length_8",
+      "3124:steps": "steps_9",
+      "3124:cfg": "cfg_9",
+      "3124:denoise": "denoise_9",
+      "3127:length": "length_9",
+      "3130:length": "length_10",
+      "3131:mode": "mode_5",
+      "3131:motion_frame_count": "motion_frame_count_5",
+      "3131:audio_scale": "audio_scale_5",
+      "3134:length": "length_11",
+      "3135:steps": "steps_10",
+      "3135:cfg": "cfg_10",
+      "3135:denoise": "denoise_10",
+      "3138:length": "length_12",
+      "3139:mode": "mode_6",
+      "3139:motion_frame_count": "motion_frame_count_6",
+      "3139:audio_scale": "audio_scale_6",
+      "3142:length": "length_13",
+      "3143:mode": "mode_7",
+      "3143:motion_frame_count": "motion_frame_count_7",
+      "3143:audio_scale": "audio_scale_7",
+      "3146:length": "length_14",
+      "3147:steps": "steps_11",
+      "3147:cfg": "cfg_11",
+      "3147:denoise": "denoise_11",
+      "3150:length": "length_15",
+      "3151:mode": "mode_8",
+      "3151:motion_frame_count": "motion_frame_count_8",
+      "3151:audio_scale": "audio_scale_8",
+      "3154:length": "length_16",
+      "3155:mode": "mode_9",
+      "3155:motion_frame_count": "motion_frame_count_9",
+      "3155:audio_scale": "audio_scale_9",
+      "3158:length": "length_17",
+      "3159:mode": "mode_10",
+      "3159:motion_frame_count": "motion_frame_count_10",
+      "3159:audio_scale": "audio_scale_10",
+      "3162:length": "length_18",
+      "3163:mode": "mode_11",
+      "3163:motion_frame_count": "motion_frame_count_11",
+      "3163:audio_scale": "audio_scale_11",
+      "3166:length": "length_19",
+      "3180:mode": "mode_12",
+      "3180:motion_frame_count": "motion_frame_count_12",
+      "3180:audio_scale": "audio_scale_12",
+      "3182:mode": "mode_13",
+      "3182:motion_frame_count": "motion_frame_count_13",
+      "3182:audio_scale": "audio_scale_13",
+      "3184:mode": "mode_14",
+      "3184:motion_frame_count": "motion_frame_count_14",
+      "3184:audio_scale": "audio_scale_14",
+      "3185:mode": "mode_15",
+      "3185:motion_frame_count": "motion_frame_count_15",
+      "3185:audio_scale": "audio_scale_15",
+      "3186:steps": "steps_12",
+      "3186:cfg": "cfg_12",
+      "3186:denoise": "denoise_12",
+      "3187:steps": "steps_13",
+      "3187:cfg": "cfg_13",
+      "3187:denoise": "denoise_13",
+      "3188:steps": "steps_14",
+      "3188:cfg": "cfg_14",
+      "3188:denoise": "denoise_14",
+      "3189:mode": "mode_16",
+      "3189:motion_frame_count": "motion_frame_count_16",
+      "3189:audio_scale": "audio_scale_16",
+      "3190:steps": "steps_15",
+      "3190:cfg": "cfg_15",
+      "3190:denoise": "denoise_15",
+      "3191:steps": "steps_16",
+      "3191:cfg": "cfg_16",
+      "3191:denoise": "denoise_16",
+      "3192:mode": "mode_17",
+      "3192:motion_frame_count": "motion_frame_count_17",
+      "3192:audio_scale": "audio_scale_17",
+      "3193:steps": "steps_17",
+      "3193:cfg": "cfg_17",
+      "3193:denoise": "denoise_17",
+      "3195:steps": "steps_18",
+      "3195:cfg": "cfg_18",
+      "3195:denoise": "denoise_18",
+      "3196:mode": "mode_18",
+      "3196:motion_frame_count": "motion_frame_count_18",
+      "3196:audio_scale": "audio_scale_18",
+      "3197:mode": "mode_19",
+      "3197:motion_frame_count": "motion_frame_count_19",
+      "3197:audio_scale": "audio_scale_19",
+      "3198:steps": "steps_19",
+      "3198:cfg": "cfg_19",
+      "3198:denoise": "denoise_19",
+      "3199:text": "prompt_8",
+      "3200:text": "prompt_9",
+      "3201:text": "prompt_10",
+      "3202:text": "prompt_11",
+      "3203:text": "prompt_12",
+      "3204:text": "prompt_13",
+      "3205:text": "prompt_14",
+      "3206:text": "prompt_15",
+      "3207:text": "prompt_16",
+      "3208:text": "prompt_17",
+      "3209:text": "prompt_18",
+      "3210:text": "prompt_19",
+      "3211:text": "prompt_20",
+      "3212:text": "prompt_21",
+      "3213:text": "prompt_22",
+      "3214:mode": "mode_20",
+      "3214:motion_frame_count": "motion_frame_count_20",
+      "3214:audio_scale": "audio_scale_20",
+      "3216:steps": "steps_20",
+      "3216:cfg": "cfg_20",
+      "3216:denoise": "denoise_20",
+      "3217:index": "index_2",
+      "3218:index": "index_3",
+      "3219:index": "index_4",
+      "3220:index": "index_5",
+      "3221:index": "index_6",
+      "3222:index": "index_7",
+      "3223:index": "index_8",
+      "3224:index": "index_9",
+      "3225:index": "index_10",
+      "3226:index": "index_11",
+      "3227:index": "index_12",
+      "3228:index": "index_13",
+      "3229:index": "index_14",
+      "3230:index": "index_15",
+      "3231:index": "index_16",
+      "3232:index": "index_17",
+      "3233:index": "index_18",
+      "3234:index": "index_19",
+      "3235:index": "index_20",
+      "3238:Number": "Number",
+      "3241:offload_model": "offload_model",
+      "3241:offload_cache": "offload_cache",
+      "3242:clean_file_cache": "clean_file_cache",
+      "3242:clean_processes": "clean_processes",
+      "3242:clean_dlls": "clean_dlls",
+      "3242:retry_times": "retry_times"
+    }
+  }
+}

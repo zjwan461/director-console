@@ -1,0 +1,38 @@
+id: h3.t2v
+name: 文生视频
+badge: 起步
+category: video
+output_kind: video
+order: 10
+desc: 只用文字描述，直接生成一段带声音的视频。
+hint: 适合试镜、空镜、氛围片。H3 单次建议不超过 15 秒；秒数会按 24fps 的 4n+1 帧网格向上取整。
+workflow: API-U03-minimax_h3_light2v-文生视频加速版API-V2.json
+timeout: 3600
+placeholders:
+  image: blank-image.png
+  video: blank-video.mp4
+  audio: blank-audio.mp3
+fields:
+  - key: prompt
+    bind: "139:prompt"
+    type: textarea
+    label: 画面描述
+    rows: 8
+    required: true
+    assist: t2v
+    placeholder: 例：雨夜霓虹的巷口，穿黑色风衣的女人回头，慢镜，电影感，冷蓝色调
+  - key: size
+    type: size
+    label: 画幅
+    mode: wh
+    width: "120:自定义宽"
+    height: "120:自定义高"
+    default_aspect: "16:9"
+    default_megapixels: 0.4
+  - key: duration
+    bind: "141:value"
+    type: duration
+    label: 时长（秒）
+    default: 5
+    min: 1
+    max: 15

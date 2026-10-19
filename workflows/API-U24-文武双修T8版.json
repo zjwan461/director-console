@@ -1,0 +1,1395 @@
+{
+  "1": {
+    "inputs": {
+      "vae_name": "minimax_h3_video_vae_fp16.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "H3 video VAE"
+    }
+  },
+  "2": {
+    "inputs": {
+      "vae_name": "minimax_h3_audio_vae_fp32.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "H3 audio VAE"
+    }
+  },
+  "3": {
+    "inputs": {
+      "clip_name": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+      "type": "minimax",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "H3 CLIP"
+    }
+  },
+  "4": {
+    "inputs": {
+      "unet_name": "minimax/minimax_h3_hybrid_fl2va_ref2va_b25-49-int8.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "H3 FL2VA"
+    }
+  },
+  "5": {
+    "inputs": {
+      "lora_name": "minimax/minimax_h3_fl2v_turbo_4step_v1.2_768p_comfyui_bf16.safetensors",
+      "strength_model": 1,
+      "model": [
+        "4",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderBypassModelOnly",
+    "_meta": {
+      "title": "LightX2V FL2V Turbo · corrected alpha8 · quantized-model bypass"
+    }
+  },
+  "8": {
+    "inputs": {
+      "steps": 8,
+      "shift_video": 12,
+      "shift_audio": 3,
+      "sampler_name": "dual_clock_euler",
+      "scheduler": "native_flow",
+      "model": [
+        "112",
+        0
+      ],
+      "av_latent": [
+        "95",
+        1
+      ]
+    },
+    "class_type": "MiniMaxH3DualClockSamplerT8",
+    "_meta": {
+      "title": "LOW upstream I2V sampler contract · shift 12/3"
+    }
+  },
+  "9": {
+    "inputs": {
+      "base_steps": 9,
+      "coarse_steps": 4,
+      "refine_steps": 5,
+      "model": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "MiniMaxH3LearnedTwoPassParityPlanT8Advanced",
+    "_meta": {
+      "title": "Published LBH schedule · simple8 split4 + refine3"
+    }
+  },
+  "10": {
+    "inputs": {
+      "model": [
+        "8",
+        0
+      ],
+      "conditioning": [
+        "95",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "LOW guider"
+    }
+  },
+  "11": {
+    "inputs": {
+      "noise_seed": 683072603085674
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "LOW noise"
+    }
+  },
+  "12": {
+    "inputs": {
+      "noise": [
+        "11",
+        0
+      ],
+      "guider": [
+        "10",
+        0
+      ],
+      "sampler": [
+        "8",
+        1
+      ],
+      "sigmas": [
+        "9",
+        0
+      ],
+      "latent_image": [
+        "95",
+        1
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "PASS 1 - consume denoised_output"
+    }
+  },
+  "13": {
+    "inputs": {
+      "model_name": "minimax_h3_latent_upscaler_3d_fp16.safetensors",
+      "size_mode": "scale_by",
+      "scale_by": [
+        "54",
+        0
+      ],
+      "target_megapixels": 1,
+      "target_width": 1280,
+      "target_height": 704,
+      "aspect_policy": "preserve_source",
+      "max_anisotropy": 1.05,
+      "precision": "fp16",
+      "release_policy": "offload_after",
+      "av_latent": [
+        "12",
+        1
+      ]
+    },
+    "class_type": "MiniMaxH3LearnedLatentUpscaleT8Advanced",
+    "_meta": {
+      "title": "Upstream-default learned 3D latent upscale · 2x"
+    }
+  },
+  "15": {
+    "inputs": {
+      "audio_policy": "auto",
+      "second_pass_audio_source": "legacy_policy",
+      "second_pass_audio_strength": 0,
+      "learned_latent": [
+        "13",
+        0
+      ],
+      "highres_template": [
+        "96",
+        1
+      ],
+      "positive": [
+        "96",
+        0
+      ]
+    },
+    "class_type": "MiniMaxH3TwoPassLatentReconcileT8Advanced",
+    "_meta": {
+      "title": "Validate and reconcile HIGH contract"
+    }
+  },
+  "16": {
+    "inputs": {
+      "shift_video": 12,
+      "shift_audio": 3,
+      "enable_tail": false,
+      "extra_tail_steps": 1,
+      "tail_spacing": "video_sigma_linear",
+      "enable_model_time_bias": false,
+      "bias": -0.025,
+      "bias_start_progress": 0.7,
+      "bias_end_progress": 0.95,
+      "bias_domain": "video_sigma",
+      "enable_stg": false,
+      "stg_scale": 0.35,
+      "stg_double_blocks": "25",
+      "stg_start_progress": 0.25,
+      "stg_end_progress": 0.85,
+      "enable_restart": false,
+      "restart_video_sigma": 0.15,
+      "restart_steps": 3,
+      "restart_seed": 857785005933163,
+      "model": [
+        "113",
+        0
+      ],
+      "av_latent": [
+        "15",
+        0
+      ],
+      "refine_sigmas": [
+        "9",
+        1
+      ]
+    },
+    "class_type": "MiniMaxH3TwoPassDetailMixerT8Advanced",
+    "_meta": {
+      "title": "HIGH upstream refine · optional Tail/Bias/STG/Restart off by default"
+    }
+  },
+  "17": {
+    "inputs": {
+      "model": [
+        "16",
+        0
+      ],
+      "conditioning": [
+        "15",
+        1
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "HIGH guider"
+    }
+  },
+  "19": {
+    "inputs": {
+      "noise": [
+        "11",
+        0
+      ],
+      "guider": [
+        "17",
+        0
+      ],
+      "sampler": [
+        "16",
+        1
+      ],
+      "sigmas": [
+        "16",
+        2
+      ],
+      "latent_image": [
+        "15",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "PASS 2 · decode output, not denoised_output"
+    }
+  },
+  "20": {
+    "inputs": {
+      "av_latent": [
+        "19",
+        0
+      ],
+      "video_vae": [
+        "1",
+        0
+      ],
+      "audio_vae": [
+        "2",
+        0
+      ]
+    },
+    "class_type": "MiniMaxH3AVDecodeT8",
+    "_meta": {
+      "title": "Decode HIGH AV"
+    }
+  },
+  "21": {
+    "inputs": {
+      "frame_rate": 24,
+      "loop_count": 0,
+      "filename_prefix": "comfyui",
+      "format": "video/h264-mp4",
+      "pix_fmt": "yuv420p",
+      "crf": 16,
+      "save_metadata": false,
+      "trim_to_audio": false,
+      "pingpong": false,
+      "save_output": true,
+      "images": [
+        "106",
+        0
+      ],
+      "audio": [
+        "20",
+        1
+      ]
+    },
+    "class_type": "VHS_VideoCombine",
+    "_meta": {
+      "title": "Save synchronized MP4"
+    }
+  },
+  "27": {
+    "inputs": {
+      "value": 15
+    },
+    "class_type": "PrimitiveFloat",
+    "_meta": {
+      "title": "Float (duration)"
+    },
+    "t": {
+      "title": "时长"
+    }
+  },
+  "28": {
+    "inputs": {
+      "prompt": "subject_definitions:\n- <Subject 1>: A cold-featured East Asian young female warrior with flawless pale skin, black straight bangs above her brows, and waist-length straight black hair with subtle dark teal tips. She wears a black high-gloss leather cropped jacket, black turtleneck base layer, pleated leather battle skirt with leg straps and bronze metal buckles, half-finger tactical gloves, and knee-high combat boots with dark red stitching. She wields a massive, heavy mechanical greatsword featuring a dark-gray armored spine, mechanical hydraulic joints, and razor-sharp silver edges. When activated, the sword's inner mechanics ignite into orange-white superheated thermal glow and compressed orange-gold energy.\n- <Subject 2>: An apocalyptic surrealist desert wasteland featuring sun-scorched earth, crumbling stone arch ruins, weathered utility poles, background wind turbines, volumetric dust clouds, and flying debris under hazy natural sunlight.\n- <Subject 3>: Global visual rendering style featuring Unreal Engine 5.4 Path Tracing aesthetic, Lumen global illumination, Nanite geometry detail, PBR physical material response with 35mm Kodak film grain, high-gloss leather highlights, metallic weathering, heat-wave air refraction, and 3-part hybrid combat effects (50% heavy sword compression shockwaves, 30% white-orange carbonization burn and ash, 20% sandstorm fluid dynamics with melted glass particles).\n- <Subject 4>: Superheated orange-white thermal explosion effects consisting of hyper-dense volumetric smoke, high-velocity molten sparks, floating glowing ash particles, expanding spherical sonic-boom shockwaves, heat-refracting air distortion ripples, and cascading magma-like fissure energy cracks.\n- <Subject 5>: Massive industrial mechanical quad-legged titan behemoth featuring heavily weathered red armor plates, exposed mechanical joints, massive dark hydraulic pistons, and a blinding, glowing orange-red molten energy reactor core embedded directly in its chest center.\n- <Subject 6>: Densely packed swarms of quadrupedal mechanical arachnid drone units with high-gloss dark steel and crimson-red armor plating, glowing red visor optics, articulated mechanical spider legs, low-slung aggressive swarm movement, and mounted high-frequency plasma micro-missile launchers firing dense torrents of glowing energy projectiles.\n\nsummary:\nAn expanded 17.5-second multi-shot combat sequence showcasing <Subject 1> weaving and slicing through overwhelmingly dense swarms of <Subject 6> and engaging <Subject 5> on <Subject 2>. The sequence features an intense barrage of enemy projectile fire, fluid weaving sword strikes, a side-profile glance as she snaps her fingers to initiate a delayed blanket explosion, and a titan showdown where she overcharges her blade, detonates the mech's core, and stands facing away into the horizon in 1.0x real-time speed. Paired with dynamic ambiental soundscapes, continuous heavy combat Foley, layered explosion booms, and an epic cinematic orchestra score.\n\nretention_analysis:\n<Subject 1> maintains her facial structure, pale skin, black bangs with teal hair tips, black leather tactical battle attire, and orange-white superheated mechanical greatsword across all 35 shots. <Subject 2> preserves the desert ruins, wind turbines, sand dunes, and dust haze. <Subject 3> ensures consistent UE5.4 Path Tracing CG aesthetic, PBR materials, and 3-part energy physics. <Subject 4> retains the fiery thermal explosion physics. <Subject 5> reflects the red armored mechanical titan with its chest reactor. <Subject 6> maintains the quadrupedal mechanical red arachnid drone swarm with enhanced projectile barrage capabilities.\n\ndetailed_description:\nThe target video is a 17.5-second high-pacing combat sequence consisting of 35 rapid cinematic shot cuts rendered in raw 1.0x real-time speed with dynamic camera moves, 3-part hybrid energy trails, high shutter clarity, heat-wave refraction, and zero slow-motion.\n\n[Shot 01] (00:00.000 - 00:00.500): Extreme low-angle tracking shot of <Subject 1> sliding across sun-scorched sand, dragging her greatsword, leaving a deep furrow of melted glass particles while dodging incoming plasma projectile trails from <Subject 6>.\n[Shot 02] (00:00.500 - 00:01.000): Medium side shot of <Subject 1> sprinting through desert haze, weaving dynamically between hundreds of swarming arachnid drones of <Subject 6> as plasma bursts detonate around her feet.\n[Shot 03] (00:01.000 - 00:01.500): Dynamic wide tracking shot as she swings a 50% super-compressed fan-shaped orange-gold arc, slicing through a dense cluster of mechanical drones of <Subject 6>.\n[Shot 04] (00:01.500 - 00:02.000): Low-angle camera tracking behind <Subject 1> weaving right and left through endless rows of crawling drones on <Subject 2>, parrying close-range plasma fire with her heavy blade.\n[Shot 05] (00:02.000 - 00:02.500): Center close-up on <Subject 1> leaping through a dense barrage of heat-refracting thermal projectiles, her leather jacket gleaming under <Subject 3>.\n[Shot 06] (00:02.500 - 00:03.000): Low-angle view looking up as she soars high into the sky, holding her glowing mechanical greatsword with both hands above the incoming missile streams.\n[Shot 07] (00:03.000 - 00:03.500): Low tracking shot of <Subject 1> landing directly in the center of the dense drone swarm, unleashing a 360-degree whirlwind flame slash that shreds dozens of surrounding red armor units into flying embers.\n[Shot 08] (00:03.500 - 00:04.000): Skyward camera view of <Subject 1> suspended at the apex of a second leap, raising her superheated sword as orange-white hydraulic mechanisms pump furiously.\n[Shot 09] (00:04.000 - 00:04.500): High-angle crane shot looking down as a massive vertical beam of golden compressed sword qi slams into the desert floor, vaporizing a giant wave of oncoming arachnid drones.\n[Shot 10] (00:04.500 - 00:05.000): Low-angle centered shot of <Subject 1> planting her sword into a cracked, glowing seal on the ground, sending high-pressure thermal shockwaves tearing through the front line of <Subject 6>.\n[Shot 11] (00:05.000 - 00:05.500): Fast-paced over-the-shoulder tracking shot as <Subject 1> dashes deep into the thickest part of <Subject 6>, slicing metal legs and deflective hulls with rapid low-cleave strikes.\n[Shot 12] (00:05.500 - 00:06.000): High-speed side tracking shot following <Subject 1> zig-zagging fluidly between massive waves of mechanical spider units while continuous plasma artillery blasts explode in her wake.\n[Shot 13] (00:06.000 - 00:06.500): Mid-shot vaulting off the back of an armored drone, deflecting three high-velocity energy projectiles in mid-air with the broadside of her glowing blade.\n[Shot 14] (00:06.500 - 00:07.000): Cinematic profile medium shot: camera pans tightly to her side as <Subject 1> turns her head looking backward over her shoulder (side-profile glance), her sharp eyes glinting cold and expressionless as her gloved hand executes a crisp finger snap.\n[Shot 15] (00:07.000 - 00:07.500): Ultra-wide shockwave shot: a brief beat after her finger snap, an overcharged thermal chain-reaction triggers across the entire swarm field, detonating all surrounding mechanical drones of <Subject 6> into a vast ocean of massive fireballs.\n[Shot 16] (00:07.500 - 00:08.000): Full-body front tracking shot as <Subject 1> walks forward calmly past the erupting explosion cloud, her teal-tipped hair fluttering as she drags her glowing greatsword along the sand.\n[Shot 17] (00:08.000 - 00:08.500): Wide shot with <Subject 1> walking forward as a giant cloud of volumetric smoke and sand settles over distant wind turbines.\n[Shot 18] (00:08.500 - 00:09.000): Rear wide shot looking toward crumbling stone arch ruins on <Subject 2> as heavy mechanical thuds shake the desert ground.\n[Shot 19] (00:09.000 - 00:09.500): Low-angle wide shot as the red mechanical titan behemoth of <Subject 5> steps forward with massive hydraulic legs, crushing dust and rock beneath it.\n[Shot 20] (00:09.500 - 00:10.000): Low-angle shot behind <Subject 1> readies her sword as hydraulic gears glow and sparks flare from her blade edges.\n[Shot 21] (00:10.000 - 00:10.500): Over-the-shoulder view of <Subject 1> standing defiant as the glowing orange chest reactor of <Subject 5> looms directly above her.\n[Shot 22] (00:10.500 - 00:11.000): Low-angle view looking past <Subject 1> as <Subject 5> slams down a giant red mechanical limb, sending a massive cloud of sand blasting into the frame.\n[Shot 23] (00:11.000 - 00:11.500): Rear low shot as <Subject 1> activates a glowing orange shield barrier to absorb and deflect the massive mechanical fist impact of <Subject 5>.\n[Shot 24] (00:11.500 - 00:12.000): Ultra-low tracking shot following <Subject 1> sliding under the quad-legged chassis of <Subject 5>, dragging her trailing superheated blade with intense heat refraction.\n[Shot 25] (00:12.000 - 00:12.500): Fast dolly shot under the red armored underbelly of <Subject 5> as <Subject 1> shoots past at extreme speed, leaving a glowing thermal trail on the desert sand.\n[Shot 26] (00:12.500 - 00:13.000): Close-up shot of the glowing molten chest reactor of <Subject 5> pulsing furiously and tracking her position.\n[Shot 27] (00:13.000 - 00:13.500): Low side shot of <Subject 1> sliding on the sand and pivoting her leather boots to regain firm footing.\n[Shot 28] (00:13.500 - 00:14.000): Low-angle shot from behind as <Subject 1> leaps high toward the glowing orange core in the chest of <Subject 5>.\n[Shot 29] (00:14.000 - 00:14.500): High-angle shot as she drives her raised greatsword straight down into the chest core of <Subject 5>, creating white-orange burn scars that spread across its red armor plating.\n[Shot 30] (00:14.500 - 00:15.000): Extreme close-up of the greatsword embedding deep into the central energy core of <Subject 5>; <Subject 1> pulls the trigger mechanism on the handle, forcing internal hydraulic pumps to inject superheated thermal energy into the core.\n[Shot 31] (00:15.000 - 00:15.500): Low-angle upward shot as blinding white-orange power surges violently through the red armor seams of <Subject 5>, causing high-pressure plasma vents to blow off exterior metal plates.\n[Shot 32] (00:15.500 - 00:16.000): Tracking shot of <Subject 1> vaulting backward off the exploding chest chassis of <Subject 5>, performing a mid-air backflip through <Subject 4> with her black leather jacket and hair fluttering amidst flying armor fragments.\n[Shot 33] (00:16.000 - 00:16.500): Wide shockwave shot as the chest reactor core of <Subject 5> completely detonates into <Subject 4>, generating a massive 360-degree spherical ring of super-heated air that vaporizes surrounding rock ruins into dust.\n[Shot 34] (00:16.500 - 00:17.000): Low-angle wide establishing shot as the massive red mechanical frame of <Subject 5> collapses forward, cracking into glowing carbonized metal wreckage and hot ash clouds on the desert sand.\n[Shot 35] (00:17.000 - 00:17.500): Low-angle rear view focusing on <Subject 1> standing with her back turned to the camera, her black leather jacket and teal-tipped hair swaying gently in the desert breeze; she rests her greatsword as its superheated edge gradually cools down to dark steel, facing away into the desolate horizon while ash and smoke fall around her under <Subject 3>.\n\noverall_soundscape:\n- Diegetic Sound & Foley: Deep hydraulic mechanical clicks, sharp metallic sword unsheathing rings, crisp leather jacket movement rustles, heavy combat boot footfalls on sand and crushed rock, high-velocity plasma projectile whistling, metallic blade deflections, mechanical drone limb snapping, high-pressure hydraulic gear whining, and a sharp glove finger-snap click.\n- Explosions & Impact Sound Effects: Continuous low-frequency ground-shattering plasma explosions, high-energy thermal sizzle, massive multi-stage delayed chain-reaction explosion booms, supersonic shockwave crackles, tearing metal armor plates, high-velocity thermal core energy injection hiss, mega-reactor detonation blast reverberation, and deep bass sub-woofers accompanying collapsing titan metal debris.\n- Environmental Audio: Low howling desert wind dynamics, sandstorm grain whistling, crackling air heat distortion, falling hot ash debris drops, crumbling stone masonry reverberations, and distant wind turbine hums echoing across the open wasteland.\n\nnon_diegetic_music:\nHigh-tempo cinematic battle soundtrack featuring fast aggressive hybrid orchestral percussion, driving industrial synth brass, frantic rhythmic taiko drums, rising sub-bass drops, and sharp high-tension string ostinatos that swell continuously during the drone swarm combat, drop to a brief sudden muted silence at the finger snap (00:06.800), explode into an immense bass drop for the mega detonation, and conclude with an epic, low-pitched melancholic brass motif as the titan falls."
+    },
+    "class_type": "CR Prompt Text",
+    "_meta": {
+      "title": "⚙️ CR Prompt Text"
+    }
+  },
+  "29": {
+    "inputs": {
+      "aspect_ratio": "16:9 (Widescreen)",
+      "megapixels": 0.4,
+      "multiple": 32
+    },
+    "class_type": "ResolutionSelector",
+    "_meta": {
+      "title": "分辨率选择器"
+    },
+    "t": {
+      "title": "1采分辨率默认0.4太高会失败"
+    }
+  },
+  "30": {
+    "inputs": {
+      "expression": "max(5, round(a * 24)) + (5 - (max(5, round(a * 24)) % 17)) % 17",
+      "values.a": [
+        "27",
+        0
+      ]
+    },
+    "class_type": "ComfyMathExpression",
+    "_meta": {
+      "title": "数学表达式"
+    }
+  },
+  "32": {
+    "inputs": {
+      "model": [
+        "5",
+        0
+      ]
+    },
+    "class_type": "MiniMaxH3MemoryEfficientSageAttentionPatch",
+    "_meta": {
+      "title": "MiniMax H3 Mem Eff Sage Attention Patch"
+    }
+  },
+  "33": {
+    "inputs": {
+      "attention": "pytorch attention",
+      "model": [
+        "32",
+        0
+      ]
+    },
+    "class_type": "ModelAttentionBackend",
+    "_meta": {
+      "title": "ModelAttentionBackend"
+    }
+  },
+  "44": {
+    "inputs": {
+      "lora_name": "minimax/minimax_h3_turbo_4step_10ErosMax_test4_pruned_curveproj1025_exp_v001-T8.safetensors",
+      "strength_model": 0.7000000000000002,
+      "model": [
+        "47",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "LoRA加载器（仅模型）"
+    }
+  },
+  "45": {
+    "inputs": {
+      "lora_name": "minimax/Motion_Repair.safetensors",
+      "strength_model": 0.7000000000000002,
+      "model": [
+        "50",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "LoRA加载器（仅模型）"
+    }
+  },
+  "46": {
+    "inputs": {
+      "lora_name": "minimax/Motion_Repair.safetensors",
+      "strength_model": 0.20000000000000004,
+      "model": [
+        "44",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "LoRA加载器（仅模型）"
+    }
+  },
+  "47": {
+    "inputs": {
+      "lora_name": "minimax/minimax_h3_turbo_v4_step600_ema_DasiwaREF2VAHybridV1_0_curveproj1025_compat_v001.safetensors",
+      "strength_model": 0.5000000000000001,
+      "model": [
+        "53",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderBypassModelOnly",
+    "_meta": {
+      "title": "LightX2V FL2V Turbo · corrected alpha8 · quantized-model bypass"
+    }
+  },
+  "48": {
+    "inputs": {
+      "lora_name": "minimax/MinimaxH3真实电影质感V0.1.safetensors",
+      "strength_model": 0.5000000000000001,
+      "model": [
+        "45",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "LoRA加载器（仅模型）"
+    }
+  },
+  "49": {
+    "inputs": {
+      "lora_name": "minimax/MinimaxH3真实电影质感V0.1.safetensors",
+      "strength_model": 0.20000000000000004,
+      "model": [
+        "46",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "LoRA加载器（仅模型）"
+    }
+  },
+  "50": {
+    "inputs": {
+      "lora_name": "minimax/minimax_h3_turbo_4step_10ErosMax_test4_pruned_curveproj1025_exp_v001-T8.safetensors",
+      "strength_model": 0.5000000000000001,
+      "model": [
+        "51",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "LoRA加载器（仅模型）"
+    }
+  },
+  "51": {
+    "inputs": {
+      "lora_name": "minimax/minimax_h3_turbo_v4_step600_ema_DasiwaREF2VAHybridV1_0_curveproj1025_compat_v001.safetensors",
+      "strength_model": 0.9000000000000001,
+      "model": [
+        "52",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderBypassModelOnly",
+    "_meta": {
+      "title": "LightX2V FL2V Turbo · corrected alpha8 · quantized-model bypass"
+    }
+  },
+  "52": {
+    "inputs": {
+      "lora_name": "minimax/H3_Combat_V2.safetensors",
+      "strength_model": 0.7000000000000002,
+      "model": [
+        "33",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "LoRA加载器（仅模型）"
+    }
+  },
+  "53": {
+    "inputs": {
+      "lora_name": "minimax/H3_Combat_V2.safetensors",
+      "strength_model": 0.4900000000000001,
+      "model": [
+        "33",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "LoRA加载器（仅模型）"
+    }
+  },
+  "54": {
+    "inputs": {
+      "value": 1.5
+    },
+    "class_type": "PrimitiveFloat",
+    "_meta": {
+      "title": "2采放大倍率"
+    },
+    "t": {
+      "title": "2采倍率"
+    }
+  },
+  "58": {
+    "inputs": {
+      "image": "3.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像3"
+    }
+  },
+  "59": {
+    "inputs": {
+      "image": "autodl-gptimg2-i2i-20260902-00-44-jfl88.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像4"
+    }
+  },
+  "60": {
+    "inputs": {
+      "image": "a_r2c2_04.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像5"
+    }
+  },
+  "61": {
+    "inputs": {
+      "image": "b_r3c2_06.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像6"
+    }
+  },
+  "62": {
+    "inputs": {
+      "image": "b_r4c1_07.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像7"
+    }
+  },
+  "63": {
+    "inputs": {
+      "image": "b_r4c2_08.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像8"
+    }
+  },
+  "64": {
+    "inputs": {
+      "image": "zealman-blank-image.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像9"
+    }
+  },
+  "65": {
+    "inputs": {
+      "image": "b_r1c2_02.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像2"
+    }
+  },
+  "66": {
+    "inputs": {
+      "image": "1.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像1"
+    }
+  },
+  "95": {
+    "inputs": {
+      "prompt": [
+        "28",
+        0
+      ],
+      "width": [
+        "29",
+        0
+      ],
+      "height": [
+        "29",
+        1
+      ],
+      "length": [
+        "30",
+        1
+      ],
+      "task_type": "Ref2VA",
+      "audio_mode": "native",
+      "audio_denoise_strength": 1,
+      "add_source_as_reference": false,
+      "prompt_primary_audio_ordinal": 0,
+      "strict_prompt_tags": true,
+      "ref_image_size": "match",
+      "reference_video_policy": "official_2_to_15s",
+      "allow_above_reference_area": false,
+      "clip": [
+        "3",
+        0
+      ],
+      "video_vae": [
+        "1",
+        0
+      ],
+      "audio_vae": [
+        "2",
+        0
+      ],
+      "ref_images.ref_image_0": [
+        "66",
+        0
+      ],
+      "ref_images.ref_image_1": [
+        "65",
+        0
+      ],
+      "ref_images.ref_image_2": [
+        "58",
+        0
+      ],
+      "ref_images.ref_image_3": [
+        "59",
+        0
+      ],
+      "ref_images.ref_image_4": [
+        "60",
+        0
+      ],
+      "ref_images.ref_image_5": [
+        "61",
+        0
+      ],
+      "ref_images.ref_image_6": [
+        "62",
+        0
+      ],
+      "ref_images.ref_image_7": [
+        "63",
+        0
+      ],
+      "ref_images.ref_image_8": [
+        "64",
+        0
+      ],
+      "ref_audios.ref_audio_0": [
+        "107",
+        0
+      ],
+      "ref_audios.ref_audio_1": [
+        "108",
+        0
+      ],
+      "ref_audios.ref_audio_2": [
+        "109",
+        0
+      ]
+    },
+    "class_type": "MiniMaxH3AudioConditioningT8",
+    "_meta": {
+      "title": "LOW Conditioning 736x416"
+    }
+  },
+  "96": {
+    "inputs": {
+      "prompt": [
+        "28",
+        0
+      ],
+      "width": [
+        "13",
+        1
+      ],
+      "height": [
+        "13",
+        2
+      ],
+      "length": [
+        "30",
+        1
+      ],
+      "task_type": "Ref2VA",
+      "audio_mode": "native",
+      "audio_denoise_strength": 1,
+      "add_source_as_reference": false,
+      "prompt_primary_audio_ordinal": 0,
+      "strict_prompt_tags": true,
+      "ref_image_size": "match",
+      "reference_video_policy": "official_2_to_15s",
+      "allow_above_reference_area": false,
+      "clip": [
+        "3",
+        0
+      ],
+      "video_vae": [
+        "1",
+        0
+      ],
+      "audio_vae": [
+        "2",
+        0
+      ],
+      "ref_images.ref_image_0": [
+        "66",
+        0
+      ],
+      "ref_images.ref_image_1": [
+        "65",
+        0
+      ],
+      "ref_images.ref_image_2": [
+        "58",
+        0
+      ],
+      "ref_images.ref_image_3": [
+        "59",
+        0
+      ],
+      "ref_images.ref_image_4": [
+        "60",
+        0
+      ],
+      "ref_images.ref_image_5": [
+        "61",
+        0
+      ],
+      "ref_images.ref_image_6": [
+        "62",
+        0
+      ],
+      "ref_images.ref_image_7": [
+        "63",
+        0
+      ],
+      "ref_images.ref_image_8": [
+        "64",
+        0
+      ],
+      "ref_audios.ref_audio_0": [
+        "107",
+        0
+      ],
+      "ref_audios.ref_audio_1": [
+        "108",
+        0
+      ],
+      "ref_audios.ref_audio_2": [
+        "109",
+        0
+      ]
+    },
+    "class_type": "MiniMaxH3AudioConditioningT8",
+    "_meta": {
+      "title": "HIGH Conditioning · width/height auto-linked from upscaler"
+    }
+  },
+  "106": {
+    "inputs": {
+      "offload_model": true,
+      "offload_cache": true,
+      "anything": [
+        "20",
+        0
+      ]
+    },
+    "class_type": "VRAMCleanup",
+    "_meta": {
+      "title": "🎈VRAM-Cleanup"
+    }
+  },
+  "107": {
+    "inputs": {
+      "audio": "zealman-blank-audio.mp3",
+      "start_time": 0,
+      "duration": 10
+    },
+    "class_type": "VHS_LoadAudioUpload",
+    "_meta": {
+      "title": "Load Audio (Upload)🎥🅥🅗🅢"
+    }
+  },
+  "108": {
+    "inputs": {
+      "audio": "zealman-blank-audio.mp3",
+      "start_time": 0,
+      "duration": 10
+    },
+    "class_type": "VHS_LoadAudioUpload",
+    "_meta": {
+      "title": "Load Audio (Upload)🎥🅥🅗🅢"
+    }
+  },
+  "109": {
+    "inputs": {
+      "audio": "zealman-blank-audio.mp3",
+      "start_time": 0,
+      "duration": 10
+    },
+    "class_type": "VHS_LoadAudioUpload",
+    "_meta": {
+      "title": "Load Audio (Upload)🎥🅥🅗🅢"
+    }
+  },
+  "112": {
+    "inputs": {
+      "max_resolution": 1024,
+      "jpeg_quality": 80,
+      "suppress_default_preview": true,
+      "preview_frames": [
+        "30",
+        1
+      ],
+      "preview_fps": 12,
+      "tiny_vae": "taeh3.safetensors",
+      "model": [
+        "48",
+        0
+      ]
+    },
+    "class_type": "ModelPreviewOverrideKJ",
+    "_meta": {
+      "title": "Model Preview Override"
+    }
+  },
+  "113": {
+    "inputs": {
+      "max_resolution": 1024,
+      "jpeg_quality": 80,
+      "suppress_default_preview": true,
+      "preview_frames": [
+        "30",
+        1
+      ],
+      "preview_fps": 12,
+      "tiny_vae": "taeh3.safetensors",
+      "model": [
+        "49",
+        0
+      ]
+    },
+    "class_type": "ModelPreviewOverrideKJ",
+    "_meta": {
+      "title": "Model Preview Override"
+    }
+  },
+  "_api_config": {
+    "customLabels": {
+      "3:type": "type",
+      "3:device": "device",
+      "4:weight_dtype": "weight_dtype",
+      "5:strength_model": "strength_model",
+      "8:steps": "迭代步数",
+      "8:shift_video": "shift_video",
+      "8:shift_audio": "shift_audio",
+      "9:base_steps": "base_steps",
+      "9:coarse_steps": "coarse_steps",
+      "9:refine_steps": "refine_steps",
+      "11:noise_seed": "noise_seed",
+      "13:size_mode": "size_mode",
+      "13:target_megapixels": "target_megapixels",
+      "13:target_width": "target_width",
+      "13:target_height": "target_height",
+      "13:aspect_policy": "aspect_policy",
+      "13:max_anisotropy": "max_anisotropy",
+      "13:precision": "precision",
+      "13:release_policy": "release_policy",
+      "15:audio_policy": "audio_policy",
+      "15:second_pass_audio_source": "second_pass_audio_source",
+      "15:second_pass_audio_strength": "second_pass_audio_strength",
+      "16:shift_video": "shift_video",
+      "16:shift_audio": "shift_audio",
+      "16:enable_tail": "enable_tail",
+      "16:extra_tail_steps": "extra_tail_steps",
+      "16:tail_spacing": "tail_spacing",
+      "16:enable_model_time_bias": "enable_model_time_bias",
+      "16:bias": "bias",
+      "16:bias_start_progress": "bias_start_progress",
+      "16:bias_end_progress": "bias_end_progress",
+      "16:bias_domain": "bias_domain",
+      "16:enable_stg": "enable_stg",
+      "16:stg_scale": "stg_scale",
+      "16:stg_double_blocks": "stg_double_blocks",
+      "16:stg_start_progress": "stg_start_progress",
+      "16:stg_end_progress": "stg_end_progress",
+      "16:enable_restart": "enable_restart",
+      "16:restart_video_sigma": "restart_video_sigma",
+      "16:restart_steps": "restart_steps",
+      "16:restart_seed": "restart_seed",
+      "21:filename_prefix": "文件名前缀",
+      "21:frame_rate": "frame_rate",
+      "21:loop_count": "loop_count",
+      "21:format": "format",
+      "21:pix_fmt": "pix_fmt",
+      "21:crf": "crf",
+      "21:save_metadata": "save_metadata",
+      "21:trim_to_audio": "trim_to_audio",
+      "21:pingpong": "pingpong",
+      "21:save_output": "save_output",
+      "27:value": "时长 (value)",
+      "28:prompt": "提示词",
+      "29:aspect_ratio": "1采分辨率默认0.4太高会失败 (aspect_ratio)",
+      "29:megapixels": "1采分辨率默认0.4太高会失败 (megapixels)",
+      "29:multiple": "1采分辨率默认0.4太高会失败 (multiple)",
+      "30:expression": "expression",
+      "33:attention": "attention",
+      "44:strength_model": "strength_model",
+      "45:strength_model": "strength_model",
+      "46:strength_model": "strength_model",
+      "47:strength_model": "strength_model",
+      "48:lora_name": "lora_name",
+      "48:strength_model": "strength_model",
+      "49:lora_name": "lora_name",
+      "49:strength_model": "strength_model",
+      "50:strength_model": "strength_model",
+      "51:strength_model": "strength_model",
+      "52:strength_model": "strength_model",
+      "53:strength_model": "strength_model",
+      "54:value": "2采倍率 (value)",
+      "58:image": "参考图 2",
+      "59:image": "参考图 3",
+      "60:image": "参考图 4",
+      "61:image": "参考图 5",
+      "62:image": "参考图 6",
+      "63:image": "参考图 7",
+      "64:image": "参考图 8",
+      "65:image": "参考图 1",
+      "66:image": "参考图 0",
+      "95:task_type": "task_type",
+      "95:audio_mode": "audio_mode",
+      "95:audio_denoise_strength": "audio_denoise_strength",
+      "95:add_source_as_reference": "add_source_as_reference",
+      "95:prompt_primary_audio_ordinal": "prompt_primary_audio_ordinal",
+      "95:strict_prompt_tags": "strict_prompt_tags",
+      "95:ref_image_size": "ref_image_size",
+      "95:reference_video_policy": "reference_video_policy",
+      "95:allow_above_reference_area": "allow_above_reference_area",
+      "96:task_type": "task_type",
+      "96:audio_mode": "audio_mode",
+      "96:audio_denoise_strength": "audio_denoise_strength",
+      "96:add_source_as_reference": "add_source_as_reference",
+      "96:prompt_primary_audio_ordinal": "prompt_primary_audio_ordinal",
+      "96:strict_prompt_tags": "strict_prompt_tags",
+      "96:ref_image_size": "ref_image_size",
+      "96:reference_video_policy": "reference_video_policy",
+      "96:allow_above_reference_area": "allow_above_reference_area",
+      "106:offload_model": "offload_model",
+      "106:offload_cache": "offload_cache",
+      "107:audio": "参考音频 0",
+      "107:start_time": "start_time",
+      "107:duration": "duration",
+      "108:audio": "参考音频 1",
+      "108:start_time": "start_time",
+      "108:duration": "duration",
+      "109:audio": "参考音频 2",
+      "109:start_time": "start_time",
+      "109:duration": "duration",
+      "112:max_resolution": "max_resolution",
+      "112:jpeg_quality": "jpeg_quality",
+      "112:suppress_default_preview": "suppress_default_preview",
+      "112:preview_fps": "preview_fps",
+      "113:max_resolution": "max_resolution",
+      "113:jpeg_quality": "jpeg_quality",
+      "113:suppress_default_preview": "suppress_default_preview",
+      "113:preview_fps": "preview_fps"
+    },
+    "enabledParams": {
+      "3:type": false,
+      "3:device": false,
+      "4:weight_dtype": false,
+      "5:strength_model": false,
+      "8:steps": false,
+      "8:shift_video": false,
+      "8:shift_audio": false,
+      "9:base_steps": false,
+      "9:coarse_steps": false,
+      "9:refine_steps": false,
+      "11:noise_seed": true,
+      "13:size_mode": false,
+      "13:target_megapixels": false,
+      "13:target_width": false,
+      "13:target_height": false,
+      "13:aspect_policy": false,
+      "13:max_anisotropy": false,
+      "13:precision": false,
+      "13:release_policy": false,
+      "15:audio_policy": false,
+      "15:second_pass_audio_source": false,
+      "15:second_pass_audio_strength": false,
+      "16:shift_video": false,
+      "16:shift_audio": false,
+      "16:enable_tail": false,
+      "16:extra_tail_steps": false,
+      "16:tail_spacing": false,
+      "16:enable_model_time_bias": false,
+      "16:bias": false,
+      "16:bias_start_progress": false,
+      "16:bias_end_progress": false,
+      "16:bias_domain": false,
+      "16:enable_stg": false,
+      "16:stg_scale": false,
+      "16:stg_double_blocks": false,
+      "16:stg_start_progress": false,
+      "16:stg_end_progress": false,
+      "16:enable_restart": false,
+      "16:restart_video_sigma": false,
+      "16:restart_steps": false,
+      "16:restart_seed": false,
+      "21:filename_prefix": false,
+      "21:frame_rate": false,
+      "21:loop_count": false,
+      "21:format": false,
+      "21:pix_fmt": false,
+      "21:crf": false,
+      "21:save_metadata": false,
+      "21:trim_to_audio": false,
+      "21:pingpong": false,
+      "21:save_output": false,
+      "27:value": true,
+      "28:prompt": true,
+      "29:aspect_ratio": true,
+      "29:megapixels": true,
+      "29:multiple": false,
+      "30:expression": false,
+      "33:attention": false,
+      "44:strength_model": false,
+      "45:strength_model": false,
+      "46:strength_model": false,
+      "47:strength_model": false,
+      "48:lora_name": false,
+      "48:strength_model": false,
+      "49:lora_name": false,
+      "49:strength_model": false,
+      "50:strength_model": false,
+      "51:strength_model": false,
+      "52:strength_model": false,
+      "53:strength_model": false,
+      "54:value": true,
+      "58:image": true,
+      "59:image": true,
+      "60:image": true,
+      "61:image": true,
+      "62:image": true,
+      "63:image": true,
+      "64:image": true,
+      "65:image": true,
+      "66:image": true,
+      "95:task_type": false,
+      "95:audio_mode": false,
+      "95:audio_denoise_strength": false,
+      "95:add_source_as_reference": false,
+      "95:prompt_primary_audio_ordinal": false,
+      "95:strict_prompt_tags": false,
+      "95:ref_image_size": false,
+      "95:reference_video_policy": false,
+      "95:allow_above_reference_area": false,
+      "96:task_type": false,
+      "96:audio_mode": false,
+      "96:audio_denoise_strength": false,
+      "96:add_source_as_reference": false,
+      "96:prompt_primary_audio_ordinal": false,
+      "96:strict_prompt_tags": false,
+      "96:ref_image_size": false,
+      "96:reference_video_policy": false,
+      "96:allow_above_reference_area": false,
+      "106:offload_model": false,
+      "106:offload_cache": false,
+      "107:audio": true,
+      "107:start_time": false,
+      "107:duration": false,
+      "108:audio": true,
+      "108:start_time": false,
+      "108:duration": false,
+      "109:audio": true,
+      "109:start_time": false,
+      "109:duration": false,
+      "112:max_resolution": false,
+      "112:jpeg_quality": false,
+      "112:suppress_default_preview": false,
+      "112:preview_fps": false,
+      "113:max_resolution": false,
+      "113:jpeg_quality": false,
+      "113:suppress_default_preview": false,
+      "113:preview_fps": false
+    },
+    "formValues": {
+      "3:type": "minimax",
+      "3:device": "default",
+      "4:weight_dtype": "default",
+      "5:strength_model": 1,
+      "8:steps": 8,
+      "8:shift_video": 12,
+      "8:shift_audio": 3,
+      "9:base_steps": 9,
+      "9:coarse_steps": 4,
+      "9:refine_steps": 5,
+      "11:noise_seed": 683072603085674,
+      "13:size_mode": "scale_by",
+      "13:target_megapixels": 1,
+      "13:target_width": 1280,
+      "13:target_height": 704,
+      "13:aspect_policy": "preserve_source",
+      "13:max_anisotropy": 1.05,
+      "13:precision": "fp16",
+      "13:release_policy": "offload_after",
+      "15:audio_policy": "auto",
+      "15:second_pass_audio_source": "legacy_policy",
+      "15:second_pass_audio_strength": 0,
+      "16:shift_video": 12,
+      "16:shift_audio": 3,
+      "16:enable_tail": false,
+      "16:extra_tail_steps": 1,
+      "16:tail_spacing": "video_sigma_linear",
+      "16:enable_model_time_bias": false,
+      "16:bias": -0.025,
+      "16:bias_start_progress": 0.7,
+      "16:bias_end_progress": 0.95,
+      "16:bias_domain": "video_sigma",
+      "16:enable_stg": false,
+      "16:stg_scale": 0.35,
+      "16:stg_double_blocks": "25",
+      "16:stg_start_progress": 0.25,
+      "16:stg_end_progress": 0.85,
+      "16:enable_restart": false,
+      "16:restart_video_sigma": 0.15,
+      "16:restart_steps": 3,
+      "16:restart_seed": 857785005933163,
+      "21:filename_prefix": "comfyui",
+      "21:frame_rate": 24,
+      "21:loop_count": 0,
+      "21:format": "video/h265-mp4",
+      "21:pix_fmt": "yuv420p10le",
+      "21:crf": 16,
+      "21:save_metadata": false,
+      "21:trim_to_audio": false,
+      "21:pingpong": false,
+      "21:save_output": true,
+      "27:value": 15,
+      "28:prompt": "subject_definitions:\n- <Subject 1>: A cold-featured East Asian young female warrior with flawless pale skin, black straight bangs above her brows, and waist-length straight black hair with subtle dark teal tips. She wears a black high-gloss leather cropped jacket, black turtleneck base layer, pleated leather battle skirt with leg straps and bronze metal buckles, half-finger tactical gloves, and knee-high combat boots with dark red stitching. She wields a massive, heavy mechanical greatsword featuring a dark-gray armored spine, mechanical hydraulic joints, and razor-sharp silver edges. When activated, the sword's inner mechanics ignite into orange-white superheated thermal glow and compressed orange-gold energy.\n- <Subject 2>: An apocalyptic surrealist desert wasteland featuring sun-scorched earth, crumbling stone arch ruins, weathered utility poles, background wind turbines, volumetric dust clouds, and flying debris under hazy natural sunlight.\n- <Subject 3>: Global visual rendering style featuring Unreal Engine 5.4 Path Tracing aesthetic, Lumen global illumination, Nanite geometry detail, PBR physical material response with 35mm Kodak film grain, high-gloss leather highlights, metallic weathering, heat-wave air refraction, and 3-part hybrid combat effects (50% heavy sword compression shockwaves, 30% white-orange carbonization burn and ash, 20% sandstorm fluid dynamics with melted glass particles).\n- <Subject 4>: Superheated orange-white thermal explosion effects consisting of hyper-dense volumetric smoke, high-velocity molten sparks, floating glowing ash particles, expanding spherical sonic-boom shockwaves, heat-refracting air distortion ripples, and cascading magma-like fissure energy cracks.\n- <Subject 5>: Massive industrial mechanical quad-legged titan behemoth featuring heavily weathered red armor plates, exposed mechanical joints, massive dark hydraulic pistons, and a blinding, glowing orange-red molten energy reactor core embedded directly in its chest center.\n- <Subject 6>: Densely packed swarms of quadrupedal mechanical arachnid drone units with high-gloss dark steel and crimson-red armor plating, glowing red visor optics, articulated mechanical spider legs, low-slung aggressive swarm movement, and mounted high-frequency plasma micro-missile launchers firing dense torrents of glowing energy projectiles.\n\nsummary:\nAn expanded 17.5-second multi-shot combat sequence showcasing <Subject 1> weaving and slicing through overwhelmingly dense swarms of <Subject 6> and engaging <Subject 5> on <Subject 2>. The sequence features an intense barrage of enemy projectile fire, fluid weaving sword strikes, a side-profile glance as she snaps her fingers to initiate a delayed blanket explosion, and a titan showdown where she overcharges her blade, detonates the mech's core, and stands facing away into the horizon in 1.0x real-time speed. Paired with dynamic ambiental soundscapes, continuous heavy combat Foley, layered explosion booms, and an epic cinematic orchestra score.\n\nretention_analysis:\n<Subject 1> maintains her facial structure, pale skin, black bangs with teal hair tips, black leather tactical battle attire, and orange-white superheated mechanical greatsword across all 35 shots. <Subject 2> preserves the desert ruins, wind turbines, sand dunes, and dust haze. <Subject 3> ensures consistent UE5.4 Path Tracing CG aesthetic, PBR materials, and 3-part energy physics. <Subject 4> retains the fiery thermal explosion physics. <Subject 5> reflects the red armored mechanical titan with its chest reactor. <Subject 6> maintains the quadrupedal mechanical red arachnid drone swarm with enhanced projectile barrage capabilities.\n\ndetailed_description:\nThe target video is a 17.5-second high-pacing combat sequence consisting of 35 rapid cinematic shot cuts rendered in raw 1.0x real-time speed with dynamic camera moves, 3-part hybrid energy trails, high shutter clarity, heat-wave refraction, and zero slow-motion.\n\n[Shot 01] (00:00.000 - 00:00.500): Extreme low-angle tracking shot of <Subject 1> sliding across sun-scorched sand, dragging her greatsword, leaving a deep furrow of melted glass particles while dodging incoming plasma projectile trails from <Subject 6>.\n[Shot 02] (00:00.500 - 00:01.000): Medium side shot of <Subject 1> sprinting through desert haze, weaving dynamically between hundreds of swarming arachnid drones of <Subject 6> as plasma bursts detonate around her feet.\n[Shot 03] (00:01.000 - 00:01.500): Dynamic wide tracking shot as she swings a 50% super-compressed fan-shaped orange-gold arc, slicing through a dense cluster of mechanical drones of <Subject 6>.\n[Shot 04] (00:01.500 - 00:02.000): Low-angle camera tracking behind <Subject 1> weaving right and left through endless rows of crawling drones on <Subject 2>, parrying close-range plasma fire with her heavy blade.\n[Shot 05] (00:02.000 - 00:02.500): Center close-up on <Subject 1> leaping through a dense barrage of heat-refracting thermal projectiles, her leather jacket gleaming under <Subject 3>.\n[Shot 06] (00:02.500 - 00:03.000): Low-angle view looking up as she soars high into the sky, holding her glowing mechanical greatsword with both hands above the incoming missile streams.\n[Shot 07] (00:03.000 - 00:03.500): Low tracking shot of <Subject 1> landing directly in the center of the dense drone swarm, unleashing a 360-degree whirlwind flame slash that shreds dozens of surrounding red armor units into flying embers.\n[Shot 08] (00:03.500 - 00:04.000): Skyward camera view of <Subject 1> suspended at the apex of a second leap, raising her superheated sword as orange-white hydraulic mechanisms pump furiously.\n[Shot 09] (00:04.000 - 00:04.500): High-angle crane shot looking down as a massive vertical beam of golden compressed sword qi slams into the desert floor, vaporizing a giant wave of oncoming arachnid drones.\n[Shot 10] (00:04.500 - 00:05.000): Low-angle centered shot of <Subject 1> planting her sword into a cracked, glowing seal on the ground, sending high-pressure thermal shockwaves tearing through the front line of <Subject 6>.\n[Shot 11] (00:05.000 - 00:05.500): Fast-paced over-the-shoulder tracking shot as <Subject 1> dashes deep into the thickest part of <Subject 6>, slicing metal legs and deflective hulls with rapid low-cleave strikes.\n[Shot 12] (00:05.500 - 00:06.000): High-speed side tracking shot following <Subject 1> zig-zagging fluidly between massive waves of mechanical spider units while continuous plasma artillery blasts explode in her wake.\n[Shot 13] (00:06.000 - 00:06.500): Mid-shot vaulting off the back of an armored drone, deflecting three high-velocity energy projectiles in mid-air with the broadside of her glowing blade.\n[Shot 14] (00:06.500 - 00:07.000): Cinematic profile medium shot: camera pans tightly to her side as <Subject 1> turns her head looking backward over her shoulder (side-profile glance), her sharp eyes glinting cold and expressionless as her gloved hand executes a crisp finger snap.\n[Shot 15] (00:07.000 - 00:07.500): Ultra-wide shockwave shot: a brief beat after her finger snap, an overcharged thermal chain-reaction triggers across the entire swarm field, detonating all surrounding mechanical drones of <Subject 6> into a vast ocean of massive fireballs.\n[Shot 16] (00:07.500 - 00:08.000): Full-body front tracking shot as <Subject 1> walks forward calmly past the erupting explosion cloud, her teal-tipped hair fluttering as she drags her glowing greatsword along the sand.\n[Shot 17] (00:08.000 - 00:08.500): Wide shot with <Subject 1> walking forward as a giant cloud of volumetric smoke and sand settles over distant wind turbines.\n[Shot 18] (00:08.500 - 00:09.000): Rear wide shot looking toward crumbling stone arch ruins on <Subject 2> as heavy mechanical thuds shake the desert ground.\n[Shot 19] (00:09.000 - 00:09.500): Low-angle wide shot as the red mechanical titan behemoth of <Subject 5> steps forward with massive hydraulic legs, crushing dust and rock beneath it.\n[Shot 20] (00:09.500 - 00:10.000): Low-angle shot behind <Subject 1> readies her sword as hydraulic gears glow and sparks flare from her blade edges.\n[Shot 21] (00:10.000 - 00:10.500): Over-the-shoulder view of <Subject 1> standing defiant as the glowing orange chest reactor of <Subject 5> looms directly above her.\n[Shot 22] (00:10.500 - 00:11.000): Low-angle view looking past <Subject 1> as <Subject 5> slams down a giant red mechanical limb, sending a massive cloud of sand blasting into the frame.\n[Shot 23] (00:11.000 - 00:11.500): Rear low shot as <Subject 1> activates a glowing orange shield barrier to absorb and deflect the massive mechanical fist impact of <Subject 5>.\n[Shot 24] (00:11.500 - 00:12.000): Ultra-low tracking shot following <Subject 1> sliding under the quad-legged chassis of <Subject 5>, dragging her trailing superheated blade with intense heat refraction.\n[Shot 25] (00:12.000 - 00:12.500): Fast dolly shot under the red armored underbelly of <Subject 5> as <Subject 1> shoots past at extreme speed, leaving a glowing thermal trail on the desert sand.\n[Shot 26] (00:12.500 - 00:13.000): Close-up shot of the glowing molten chest reactor of <Subject 5> pulsing furiously and tracking her position.\n[Shot 27] (00:13.000 - 00:13.500): Low side shot of <Subject 1> sliding on the sand and pivoting her leather boots to regain firm footing.\n[Shot 28] (00:13.500 - 00:14.000): Low-angle shot from behind as <Subject 1> leaps high toward the glowing orange core in the chest of <Subject 5>.\n[Shot 29] (00:14.000 - 00:14.500): High-angle shot as she drives her raised greatsword straight down into the chest core of <Subject 5>, creating white-orange burn scars that spread across its red armor plating.\n[Shot 30] (00:14.500 - 00:15.000): Extreme close-up of the greatsword embedding deep into the central energy core of <Subject 5>; <Subject 1> pulls the trigger mechanism on the handle, forcing internal hydraulic pumps to inject superheated thermal energy into the core.\n[Shot 31] (00:15.000 - 00:15.500): Low-angle upward shot as blinding white-orange power surges violently through the red armor seams of <Subject 5>, causing high-pressure plasma vents to blow off exterior metal plates.\n[Shot 32] (00:15.500 - 00:16.000): Tracking shot of <Subject 1> vaulting backward off the exploding chest chassis of <Subject 5>, performing a mid-air backflip through <Subject 4> with her black leather jacket and hair fluttering amidst flying armor fragments.\n[Shot 33] (00:16.000 - 00:16.500): Wide shockwave shot as the chest reactor core of <Subject 5> completely detonates into <Subject 4>, generating a massive 360-degree spherical ring of super-heated air that vaporizes surrounding rock ruins into dust.\n[Shot 34] (00:16.500 - 00:17.000): Low-angle wide establishing shot as the massive red mechanical frame of <Subject 5> collapses forward, cracking into glowing carbonized metal wreckage and hot ash clouds on the desert sand.\n[Shot 35] (00:17.000 - 00:17.500): Low-angle rear view focusing on <Subject 1> standing with her back turned to the camera, her black leather jacket and teal-tipped hair swaying gently in the desert breeze; she rests her greatsword as its superheated edge gradually cools down to dark steel, facing away into the desolate horizon while ash and smoke fall around her under <Subject 3>.\n\noverall_soundscape:\n- Diegetic Sound & Foley: Deep hydraulic mechanical clicks, sharp metallic sword unsheathing rings, crisp leather jacket movement rustles, heavy combat boot footfalls on sand and crushed rock, high-velocity plasma projectile whistling, metallic blade deflections, mechanical drone limb snapping, high-pressure hydraulic gear whining, and a sharp glove finger-snap click.\n- Explosions & Impact Sound Effects: Continuous low-frequency ground-shattering plasma explosions, high-energy thermal sizzle, massive multi-stage delayed chain-reaction explosion booms, supersonic shockwave crackles, tearing metal armor plates, high-velocity thermal core energy injection hiss, mega-reactor detonation blast reverberation, and deep bass sub-woofers accompanying collapsing titan metal debris.\n- Environmental Audio: Low howling desert wind dynamics, sandstorm grain whistling, crackling air heat distortion, falling hot ash debris drops, crumbling stone masonry reverberations, and distant wind turbine hums echoing across the open wasteland.\n\nnon_diegetic_music:\nHigh-tempo cinematic battle soundtrack featuring fast aggressive hybrid orchestral percussion, driving industrial synth brass, frantic rhythmic taiko drums, rising sub-bass drops, and sharp high-tension string ostinatos that swell continuously during the drone swarm combat, drop to a brief sudden muted silence at the finger snap (00:06.800), explode into an immense bass drop for the mega detonation, and conclude with an epic, low-pitched melancholic brass motif as the titan falls.",
+      "29:aspect_ratio": "16:9 (Widescreen)",
+      "29:megapixels": 0.4,
+      "29:multiple": 32,
+      "30:expression": "max(5, round(a * 24)) + (5 - (max(5, round(a * 24)) % 17)) % 17",
+      "33:attention": "pytorch attention",
+      "44:strength_model": 0.7000000000000002,
+      "45:strength_model": 0.7000000000000002,
+      "46:strength_model": 0.20000000000000004,
+      "47:strength_model": 0.5000000000000001,
+      "48:lora_name": "minimax/MinimaxH3真实电影质感V0.1.safetensors",
+      "48:strength_model": 0.5000000000000001,
+      "49:lora_name": "minimax/MinimaxH3真实电影质感V0.1.safetensors",
+      "49:strength_model": 0.20000000000000004,
+      "50:strength_model": 0.5000000000000001,
+      "51:strength_model": 0.9000000000000001,
+      "52:strength_model": 0.7000000000000002,
+      "53:strength_model": 0.4900000000000001,
+      "54:value": 1.5,
+      "58:image": null,
+      "59:image": null,
+      "60:image": null,
+      "61:image": null,
+      "62:image": null,
+      "63:image": null,
+      "64:image": null,
+      "65:image": null,
+      "66:image": null,
+      "95:task_type": "Ref2VA",
+      "95:audio_mode": "native",
+      "95:audio_denoise_strength": 1,
+      "95:add_source_as_reference": false,
+      "95:prompt_primary_audio_ordinal": 0,
+      "95:strict_prompt_tags": true,
+      "95:ref_image_size": "match",
+      "95:reference_video_policy": "official_2_to_15s",
+      "95:allow_above_reference_area": false,
+      "96:task_type": "Ref2VA",
+      "96:audio_mode": "native",
+      "96:audio_denoise_strength": 1,
+      "96:add_source_as_reference": false,
+      "96:prompt_primary_audio_ordinal": 0,
+      "96:strict_prompt_tags": true,
+      "96:ref_image_size": "match",
+      "96:reference_video_policy": "official_2_to_15s",
+      "96:allow_above_reference_area": false,
+      "106:offload_model": true,
+      "106:offload_cache": true,
+      "107:audio": null,
+      "107:start_time": 0,
+      "107:duration": 10,
+      "108:audio": null,
+      "108:start_time": 0,
+      "108:duration": 10,
+      "109:audio": null,
+      "109:start_time": 0,
+      "109:duration": 10,
+      "112:max_resolution": 1024,
+      "112:jpeg_quality": 80,
+      "112:suppress_default_preview": true,
+      "112:preview_fps": 12,
+      "113:max_resolution": 1024,
+      "113:jpeg_quality": 80,
+      "113:suppress_default_preview": true,
+      "113:preview_fps": 12
+    },
+    "mediaOrder": [
+      "66:image",
+      "65:image",
+      "58:image",
+      "59:image",
+      "60:image",
+      "61:image",
+      "62:image",
+      "63:image",
+      "64:image",
+      "107:audio",
+      "108:audio",
+      "109:audio"
+    ],
+    "mediaOrderSource": "auto",
+    "apiNames": {
+      "3:type": "type",
+      "3:device": "device",
+      "4:weight_dtype": "weight_dtype",
+      "5:strength_model": "strength_model",
+      "8:steps": "steps",
+      "8:shift_video": "shift_video",
+      "8:shift_audio": "shift_audio",
+      "9:base_steps": "base_steps",
+      "9:coarse_steps": "coarse_steps",
+      "9:refine_steps": "refine_steps",
+      "11:noise_seed": "noise_seed",
+      "13:size_mode": "size_mode",
+      "13:target_megapixels": "target_megapixels",
+      "13:target_width": "target_width",
+      "13:target_height": "target_height",
+      "13:aspect_policy": "aspect_policy",
+      "13:max_anisotropy": "max_anisotropy",
+      "13:precision": "precision",
+      "13:release_policy": "release_policy",
+      "15:audio_policy": "audio_policy",
+      "15:second_pass_audio_source": "second_pass_audio_source",
+      "15:second_pass_audio_strength": "second_pass_audio_strength",
+      "16:shift_video": "shift_video_2",
+      "16:shift_audio": "shift_audio_2",
+      "16:enable_tail": "enable_tail",
+      "16:extra_tail_steps": "extra_tail_steps",
+      "16:tail_spacing": "tail_spacing",
+      "16:enable_model_time_bias": "enable_model_time_bias",
+      "16:bias": "bias",
+      "16:bias_start_progress": "bias_start_progress",
+      "16:bias_end_progress": "bias_end_progress",
+      "16:bias_domain": "bias_domain",
+      "16:enable_stg": "enable_stg",
+      "16:stg_scale": "stg_scale",
+      "16:stg_double_blocks": "stg_double_blocks",
+      "16:stg_start_progress": "stg_start_progress",
+      "16:stg_end_progress": "stg_end_progress",
+      "16:enable_restart": "enable_restart",
+      "16:restart_video_sigma": "restart_video_sigma",
+      "16:restart_steps": "restart_steps",
+      "16:restart_seed": "restart_seed",
+      "21:filename_prefix": "filename_prefix",
+      "21:frame_rate": "frame_rate",
+      "21:loop_count": "loop_count",
+      "21:format": "format",
+      "21:pix_fmt": "pix_fmt",
+      "21:crf": "crf",
+      "21:save_metadata": "save_metadata",
+      "21:trim_to_audio": "trim_to_audio",
+      "21:pingpong": "pingpong",
+      "21:save_output": "save_output",
+      "27:value": "value",
+      "28:prompt": "prompt",
+      "29:aspect_ratio": "aspect_ratio",
+      "29:megapixels": "megapixels",
+      "29:multiple": "multiple",
+      "30:expression": "expression",
+      "33:attention": "attention",
+      "44:strength_model": "strength_model_2",
+      "45:strength_model": "strength_model_3",
+      "46:strength_model": "strength_model_4",
+      "47:strength_model": "strength_model_5",
+      "48:lora_name": "lora_name",
+      "48:strength_model": "strength_model_6",
+      "49:lora_name": "lora_name_2",
+      "49:strength_model": "strength_model_7",
+      "50:strength_model": "strength_model_8",
+      "51:strength_model": "strength_model_9",
+      "52:strength_model": "strength_model_10",
+      "53:strength_model": "strength_model_11",
+      "54:value": "value_2",
+      "58:image": "ref_image_2",
+      "59:image": "ref_image_3",
+      "60:image": "ref_image_4",
+      "61:image": "ref_image_5",
+      "62:image": "ref_image_6",
+      "63:image": "ref_image_7",
+      "64:image": "ref_image_8",
+      "65:image": "ref_image_1",
+      "66:image": "ref_image_0",
+      "95:task_type": "task_type",
+      "95:audio_mode": "audio_mode",
+      "95:audio_denoise_strength": "audio_denoise_strength",
+      "95:add_source_as_reference": "add_source_as_reference",
+      "95:prompt_primary_audio_ordinal": "prompt_primary_audio_ordinal",
+      "95:strict_prompt_tags": "strict_prompt_tags",
+      "95:ref_image_size": "ref_image_size",
+      "95:reference_video_policy": "reference_video_policy",
+      "95:allow_above_reference_area": "allow_above_reference_area",
+      "96:task_type": "task_type_2",
+      "96:audio_mode": "audio_mode_2",
+      "96:audio_denoise_strength": "audio_denoise_strength_2",
+      "96:add_source_as_reference": "add_source_as_reference_2",
+      "96:prompt_primary_audio_ordinal": "prompt_primary_audio_ordinal_2",
+      "96:strict_prompt_tags": "strict_prompt_tags_2",
+      "96:ref_image_size": "ref_image_size_2",
+      "96:reference_video_policy": "reference_video_policy_2",
+      "96:allow_above_reference_area": "allow_above_reference_area_2",
+      "106:offload_model": "offload_model",
+      "106:offload_cache": "offload_cache",
+      "107:audio": "ref_audio_0",
+      "107:start_time": "start_time",
+      "107:duration": "duration",
+      "108:audio": "ref_audio_1",
+      "108:start_time": "start_time_2",
+      "108:duration": "duration_2",
+      "109:audio": "ref_audio_2",
+      "109:start_time": "start_time_3",
+      "109:duration": "duration_3",
+      "112:max_resolution": "max_resolution",
+      "112:jpeg_quality": "jpeg_quality",
+      "112:suppress_default_preview": "suppress_default_preview",
+      "112:preview_fps": "preview_fps",
+      "113:max_resolution": "max_resolution_2",
+      "113:jpeg_quality": "jpeg_quality_2",
+      "113:suppress_default_preview": "suppress_default_preview_2",
+      "113:preview_fps": "preview_fps_2"
+    }
+  }
+}

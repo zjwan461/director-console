@@ -1,0 +1,42 @@
+app:
+  host: 127.0.0.1
+  port: 6200
+
+# ComfyUI 连接方式：mock（无显卡跑通链路）| local（本机启动）| ssh（远程机）| external（已有服务）
+comfy:
+  mode: mock
+  base_url: http://127.0.0.1:8188
+  timeout: 30
+  # 是否读取系统代理（HTTP_PROXY/HTTPS_PROXY）。云端地址走公司代理时改成 true；
+  # 本机/局域网直连建议 false，避免代理配置异常导致连不上。
+  trust_env: false
+
+  local:
+    # Windows 开发示例：D:/ComfyUI_windows_portable/ComfyUI
+    # Linux 示例：/root/ComfyUI
+    workdir: D:/ComfyUI
+    python: python
+    args: ["main.py", "--listen", "127.0.0.1", "--port", "8188"]
+    env:
+      # CUDA_VISIBLE_DEVICES: "0"
+      # PYTORCH_CUDA_ALLOC_CONF: "expandable_segments:True"
+
+  ssh:
+    host: ""
+    port: 22
+    user: root
+    start: "bash /root/ComfyUI/start.sh"
+    stop: "pkill -f 'python.*main.py'"
+    status: "pgrep -f 'python.*main.py' | head -n1"
+    log: "tail -n 200 /root/ComfyUI/comfyui.log"
+
+# 提示词助手（OpenAI 兼容接口）。留空则界面只提示、不调用。
+ai:
+  base_url: https://www.autodl.art/api/v1
+  api_key: ""
+  model: ""
+
+ui:
+  # 旧面板 / ComfyUI 作为「高级模式」入口，填了才显示
+  advanced_panel: ""
+  comfy_web: "http://127.0.0.1:8188"

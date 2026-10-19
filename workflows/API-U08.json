@@ -1,0 +1,870 @@
+{
+  "2": {
+    "inputs": {
+      "clip_name": "qwen3vl_32b_minimax_h3_int8_convrot.safetensors",
+      "type": "minimax",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "Load CLIP  -  Qwen3-VL-32B NVFP4, 15.7 GB (smallest)"
+    }
+  },
+  "3": {
+    "inputs": {
+      "vae_name": "minimax_h3_video_vae_int8_convrot.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load VAE (video)  -  5.2 GB, tiles internally"
+    }
+  },
+  "4": {
+    "inputs": {
+      "vae_name": "minimax_h3_audio_vae_fp32.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load VAE (audio)  -  0.6 GB"
+    }
+  },
+  "5": {
+    "inputs": {
+      "shift_video": 12,
+      "shift_audio": 3,
+      "model": [
+        "24",
+        0
+      ]
+    },
+    "class_type": "MiniMaxH3SigmaShift",
+    "_meta": {
+      "title": "MiniMax H3 Sigma Shift  (12 / 3 = model default)"
+    }
+  },
+  "7": {
+    "inputs": {
+      "aspect_ratio": "16:9 (Widescreen)",
+      "megapixels": 0.4,
+      "multiple": 32
+    },
+    "class_type": "ResolutionSelector",
+    "_meta": {
+      "title": "Resolution  -  0.56 MP 1:1 = 768x768 (H3 native short edge)"
+    },
+    "t": {
+      "title": "1采-只改宽高比"
+    }
+  },
+  "8": {
+    "inputs": {
+      "value": 10
+    },
+    "class_type": "PrimitiveFloat",
+    "_meta": {
+      "title": "Duration (seconds)  -  2.0 = 56 frames"
+    }
+  },
+  "9": {
+    "inputs": {
+      "expression": "max(5, round(a * 24)) + (5 - (max(5, round(a * 24)) % 17)) % 17",
+      "values.a": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "ComfyMathExpression",
+    "_meta": {
+      "title": "seconds -> frame count on the 17k+5 grid"
+    }
+  },
+  "11": {
+    "inputs": {
+      "noise_seed": 806661161901022
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "随机噪波"
+    }
+  },
+  "12": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "K采样器选择"
+    }
+  },
+  "14": {
+    "inputs": {
+      "model": [
+        "5",
+        0
+      ],
+      "conditioning": [
+        "108",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "基本引导器"
+    }
+  },
+  "15": {
+    "inputs": {
+      "noise": [
+        "11",
+        0
+      ],
+      "guider": [
+        "14",
+        0
+      ],
+      "sampler": [
+        "12",
+        0
+      ],
+      "sigmas": [
+        "30",
+        0
+      ],
+      "latent_image": [
+        "108",
+        1
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "自定义采样器（高级）"
+    }
+  },
+  "16": {
+    "inputs": {
+      "samples": [
+        "86",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "17": {
+    "inputs": {
+      "samples": [
+        "15",
+        0
+      ],
+      "vae": [
+        "4",
+        0
+      ]
+    },
+    "class_type": "VAEDecodeAudio",
+    "_meta": {
+      "title": "VAE解码（音频）"
+    }
+  },
+  "24": {
+    "inputs": {
+      "model_name": "minimax/minimax_h3_fused_refdelta_r1024_turbo8_mystic07_int8_convrot.safetensors",
+      "weight_dtype": "default",
+      "compute_dtype": "default",
+      "patch_cublaslinear": false,
+      "sage_attention": "auto",
+      "enable_fp16_accumulation": true
+    },
+    "class_type": "DiffusionModelLoaderKJ",
+    "_meta": {
+      "title": "Diffusion Model Loader KJ"
+    }
+  },
+  "30": {
+    "inputs": {
+      "sigmas": "0.9999166, 0.9728326, 0.9230769, 0.8, 0.0"
+    },
+    "class_type": "ManualSigmas",
+    "_meta": {
+      "title": "自定义Sigmas"
+    }
+  },
+  "81": {
+    "inputs": {
+      "aspect_ratio": "16:9 (Widescreen)",
+      "megapixels": 1,
+      "multiple": 32
+    },
+    "class_type": "ResolutionSelector",
+    "_meta": {
+      "title": "Resolution  UPSCALED -  0.56 MP 1:1 = 768x768 (H3 native short edge)"
+    },
+    "t": {
+      "title": "2采和1采宽高比要一致"
+    }
+  },
+  "82": {
+    "inputs": {
+      "model_name": "minimax_h3_latent_upscaler_3d_fp16.safetensors",
+      "width": [
+        "81",
+        0
+      ],
+      "height": [
+        "81",
+        1
+      ],
+      "device": "cuda",
+      "precision": "fp16",
+      "offload_model": true
+    },
+    "class_type": "MMH3LatentUpscaleWithModelParams",
+    "_meta": {
+      "title": "MMH3 潜空间放大（模型参数）"
+    }
+  },
+  "83": {
+    "inputs": {
+      "scheduler": "simple",
+      "steps": 1,
+      "denoise": 0.2,
+      "model": [
+        "5",
+        0
+      ]
+    },
+    "class_type": "BasicScheduler",
+    "_meta": {
+      "title": "基本调度器"
+    }
+  },
+  "84": {
+    "inputs": {
+      "sampler_name": "sa_solver"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "K采样器选择"
+    }
+  },
+  "85": {
+    "inputs": {
+      "noise_seed": 311931200060222
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "随机噪波"
+    }
+  },
+  "86": {
+    "inputs": {
+      "cfg": 1,
+      "model": [
+        "5",
+        0
+      ],
+      "conditioning": [
+        "93",
+        0
+      ],
+      "latent": [
+        "15",
+        0
+      ],
+      "noise": [
+        "85",
+        0
+      ],
+      "sampler": [
+        "84",
+        0
+      ],
+      "sigmas": [
+        "83",
+        0
+      ],
+      "latent_upscale_param": [
+        "82",
+        0
+      ]
+    },
+    "class_type": "MMH3UltimateUpscale",
+    "_meta": {
+      "title": "MMH3 终极放大"
+    }
+  },
+  "93": {
+    "inputs": {
+      "prompt": [
+        "110",
+        0
+      ],
+      "width": [
+        "81",
+        0
+      ],
+      "height": [
+        "81",
+        1
+      ],
+      "length": [
+        "9",
+        1
+      ],
+      "ref_image_size": "match",
+      "clip": [
+        "2",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ],
+      "audio_vae": [
+        "4",
+        0
+      ]
+    },
+    "class_type": "MiniMaxH3ReferenceToVideo",
+    "_meta": {
+      "title": "MiniMax H3 Reference to Video"
+    }
+  },
+  "103": {
+    "inputs": {
+      "value": "subject_definitions:\n\n<Subject 1> is the East Asian woman from the left side of <Picture 1>, featuring hyper-detailed realistic skin texture, long wavy dark brown hair tied in a half-up ponytail, wearing a light lime-green form-fitting long-sleeved mock-neck athletic top, tight brown high-waisted yoga leggings, white crew socks with striped and floral accent details, white thick-soled chunky sneakers, with voluptuous hourglass body proportions featuring a significantly fuller bust line and prominent curvy glute silhouette while maintaining her facial features and visual design from the reference image.\n\n<Subject 2> is the muscular Xianxia warrior mage from the right side of <Picture 1>, featuring intense dark eyes, thick eyebrows, a full dark beard and mustache, a red ritual mark on his forehead, long flowing dark hair bound by an ornate golden headpiece, an open-chested beige silk combat robe revealing a heavily defined muscular torso, ornate bronze-and-gold carved pauldrons and vambraces, a large oversized black prayer bead necklace draped across his neck and waist, a gold filigree belt with hanging tassel pendants, and realistic human skin texture with glowing spark motes exactly from the reference image.\n\n<Subject 3> is a clear baby milk bottle filled with white milk, used as the central prop in the interaction.\n\n<Audio 2> is the voice-timbre reference for <Subject 2> (S1).\n<Audio 1> is the voice-timbre reference for <Subject 1> (S2).\n\n\nsummary:\n\n[reference generation + audio reference] The target video is a short live-action cinematic fantasy scene in a sunlit lakeside park. <Subject 1>, featuring a voluptuous hourglass figure with enhanced bust and glute proportions, stands with her back to the camera, resting one leg on a park bench while stretching her hamstrings in form-fitting leggings and holding <Subject 3>. <Subject 2> walks up from behind to ask for a baby bottle, prompting <Subject 1> to turn around, hand him the bottle, and dismiss him. <Subject 2> becomes happy and thanks her. <Picture 1> provides the visual reference for both <Subject 1> and <Subject 2>, while <Audio 1> and <Audio 2> provide their respective voice references.\n\n\nretention_analysis:\n\n<Subject 1> (appears in [Shot 1], [Shot 2]): fully_preserved - preserve her long wavy hair, lime-green athletic top, brown high-waisted yoga leggings, white sneakers, facial features, voluptuous hourglass figure with a prominent bust line and curvy glute silhouette from the updated description.\n\n<Subject 2> (appears in [Shot 1], [Shot 2], [Shot 3]): fully_preserved - preserve his character identity, dark beard, forehead mark, golden headpiece, open-chested combat robe, bronze pauldrons, oversized prayer beads, muscular physique, and realistic live-action human appearance from <Picture 1>.\n\n<Subject 3> (appears in [Shot 1], [Shot 2], [Shot 3]): modified - replace the cigarette with a clear baby milk bottle as the central prop, maintaining consistent scale and positioning during the exchange.\n\n<Audio 1>: reference - its vocal timbre guides the dialogue delivery of <Subject 1> without copying the original signal.\n\n<Audio 2>: reference - its vocal timbre guides the dialogue delivery of <Subject 2> without copying the original signal.\n\n\ndetailed_description:\n\nThe target video uses a realistic, cinematic live-action fantasy film style with crisp daylight, natural lake water reflections, realistic athletic fabric and metallic textures, fine skin pore details, subtle depth of field, fluid 1.0x real-time human movement, and simple editorial cuts. The outdoor lakeside park environment features clear blue skies, green grassy lawns, park benches, distant trees, and calm water as seen in <Picture 1>. Keep the visual design of both referenced characters consistent throughout. Use distinct shot changes rather than smooth cinematic camera movement.\n\n[Shot 1] A medium-full shot in a sunny lakeside park clearing. The shot is framed from behind <Subject 1>, the woman in athletic yoga wear, as she stands facing away from the camera. She rests her right sneaker high on the seat of a wooden park bench, leaning her torso forward to stretch her hamstring. Her back, narrow waist, and voluptuous full glutes—tightly sculpted in her brown high-waisted yoga leggings—are prominently centered in the frame. She casually holds <Subject 3> by its cap in one hand near her hip. <Subject 2>, the muscular warrior mage in his open silk robe and bronze pauldrons, walks up from behind into the frame. As he approaches her, <Subject 2> (S1), using the voice timbre referenced from <Audio 2>, politely asks, <d>[Chinese] 小姐姐，我家娃饿哭了，你可有吃食？</d>\n\n[Shot 2] At 00:02.000, cut to a medium close-up focused on <Subject 1> as she lowers her leg from the bench and pivots her body around to face the camera and <Subject 2>, highlighting her full, voluptuous bust silhouette under the tight lime-green top. Looking mildly puzzled yet relaxed, she casually extends <Subject 3> toward him with her hand. Her expression remains calm and slightly exhausted after her workout. <Subject 1> (S2), using the voice timbre referenced from <Audio 1>, says casually, <d>[Chinese] 给，热的，拿去给宝宝吧。</d> Keep the baby bottle clearly visible as it is handed over.\n\n[Shot 3] At 00:03.700, cut to a medium close-up of <Subject 2>. He immediately becomes cheerful after receiving <Subject 3>. His stern eyes brighten, his bearded face lights up with a broad grin, and he cradles the baby bottle carefully in his large bronze-armored hand. He gives a small enthusiastic nod toward <Subject 1> and says brightly, <d>[Chinese] 谢谢小姐姐，一会还你奶瓶</d> End on his happy, beaming expression.\n\nCamera and editing: medium-full rear-angle shot framing her leg-on-bench stretch pose for the opening, hard cut to a medium close-up as <Subject 1> turns around, then hard cut to a medium close-up focused on <Subject 2>. No wide establishing shot, no smooth panning, no orbiting camera, and no long continuous camera movement.\n\nVisual style: cinematic realistic live-action, high dynamic range, natural depth-of-field blur, crisp realistic micro-expressions, authentic fabric and leather folds, soft sunlight contrast, consistent character proportions and clothing details.\n\n\noverall_soundscape:\n\nLakeside park outdoor ambience, gentle water lap against the shore, soft breeze rustling tree leaves, shoe scraping on wooden bench plank, subtle heavy footsteps on grass, stretch fabric tension, armor creak, and faint sloshing sound inside the milk bottle. Keep both character voices clean and clearly separated. No overlapping dialogue.\n\n\nnon_diegetic_music:\n\nLight relaxed acoustic guitar fused with subtle traditional flute notes, creating a warm, slightly comedic, and lighthearted mood."
+    },
+    "class_type": "PrimitiveStringMultiline",
+    "_meta": {
+      "title": "Reference Prompt"
+    }
+  },
+  "104": {
+    "inputs": {
+      "image": "yj.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "105": {
+    "inputs": {
+      "image": "fs.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "108": {
+    "inputs": {
+      "prompt": [
+        "103",
+        0
+      ],
+      "width": [
+        "7",
+        0
+      ],
+      "height": [
+        "7",
+        1
+      ],
+      "length": [
+        "9",
+        1
+      ],
+      "ref_image_size": "match",
+      "clip": [
+        "2",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ],
+      "audio_vae": [
+        "4",
+        0
+      ],
+      "ref_images.ref_image_0": [
+        "104",
+        0
+      ],
+      "ref_images.ref_image_1": [
+        "105",
+        0
+      ],
+      "ref_images.ref_image_2": [
+        "139",
+        0
+      ],
+      "ref_images.ref_image_3": [
+        "140",
+        0
+      ],
+      "ref_images.ref_image_4": [
+        "141",
+        0
+      ],
+      "ref_images.ref_image_5": [
+        "142",
+        0
+      ],
+      "ref_images.ref_image_6": [
+        "143",
+        0
+      ],
+      "ref_images.ref_image_7": [
+        "144",
+        0
+      ],
+      "ref_images.ref_image_8": [
+        "145",
+        0
+      ],
+      "ref_audios.ref_audio_0": [
+        "136",
+        0
+      ],
+      "ref_audios.ref_audio_1": [
+        "137",
+        0
+      ],
+      "ref_audios.ref_audio_2": [
+        "138",
+        0
+      ]
+    },
+    "class_type": "MiniMaxH3ReferenceToVideo",
+    "_meta": {
+      "title": "MiniMax H3 Reference to Video"
+    }
+  },
+  "110": {
+    "inputs": {
+      "string_a": "Upscale the video with crisp and detail",
+      "string_b": [
+        "103",
+        0
+      ],
+      "delimiter": ","
+    },
+    "class_type": "StringConcatenate",
+    "_meta": {
+      "title": "连接"
+    }
+  },
+  "117": {
+    "inputs": {
+      "offload_model": true,
+      "offload_cache": true,
+      "anything": [
+        "16",
+        0
+      ]
+    },
+    "class_type": "VRAMCleanup",
+    "_meta": {
+      "title": "🎈VRAM-Cleanup"
+    }
+  },
+  "124": {
+    "inputs": {
+      "frame_rate": 24,
+      "loop_count": 0,
+      "filename_prefix": "comfyui",
+      "format": "video/h264-mp4",
+      "pix_fmt": "yuv420p",
+      "crf": 16,
+      "save_metadata": false,
+      "trim_to_audio": false,
+      "pingpong": false,
+      "save_output": true,
+      "images": [
+        "117",
+        0
+      ],
+      "audio": [
+        "17",
+        0
+      ]
+    },
+    "class_type": "VHS_VideoCombine",
+    "_meta": {
+      "title": "Video Combine 🎥🅥🅗🅢"
+    }
+  },
+  "136": {
+    "inputs": {
+      "audio": "1.mp3",
+      "start_time": 0,
+      "duration": 10
+    },
+    "class_type": "VHS_LoadAudioUpload",
+    "_meta": {
+      "title": "Load Audio (Upload)🎥🅥🅗🅢"
+    }
+  },
+  "137": {
+    "inputs": {
+      "audio": "2.mp3",
+      "start_time": 0,
+      "duration": 10
+    },
+    "class_type": "VHS_LoadAudioUpload",
+    "_meta": {
+      "title": "Load Audio (Upload)🎥🅥🅗🅢"
+    }
+  },
+  "138": {
+    "inputs": {
+      "audio": "zealman-blank-audio.mp3",
+      "start_time": 0,
+      "duration": 10
+    },
+    "class_type": "VHS_LoadAudioUpload",
+    "_meta": {
+      "title": "Load Audio (Upload)🎥🅥🅗🅢"
+    }
+  },
+  "139": {
+    "inputs": {
+      "image": "zealman-blank-image.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "140": {
+    "inputs": {
+      "image": "zealman-blank-image.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "141": {
+    "inputs": {
+      "image": "zealman-blank-image.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "142": {
+    "inputs": {
+      "image": "zealman-blank-image.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "143": {
+    "inputs": {
+      "image": "zealman-blank-image.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "144": {
+    "inputs": {
+      "image": "zealman-blank-image.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "145": {
+    "inputs": {
+      "image": "zealman-blank-image.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "_api_config": {
+    "customLabels": {
+      "2:type": "type",
+      "2:device": "device",
+      "5:shift_video": "shift_video",
+      "5:shift_audio": "shift_audio",
+      "7:aspect_ratio": "1采-只改宽高比 (aspect_ratio)",
+      "7:megapixels": "1采-只改宽高比 (megapixels)",
+      "7:multiple": "1采-只改宽高比 (multiple)",
+      "8:value": "value",
+      "9:expression": "expression",
+      "11:noise_seed": "noise_seed",
+      "24:weight_dtype": "weight_dtype",
+      "24:compute_dtype": "compute_dtype",
+      "24:patch_cublaslinear": "patch_cublaslinear",
+      "24:sage_attention": "sage_attention",
+      "24:enable_fp16_accumulation": "enable_fp16_accumulation",
+      "30:sigmas": "sigmas",
+      "81:aspect_ratio": "2采和1采宽高比要一致 (aspect_ratio)",
+      "81:megapixels": "2采和1采宽高比要一致 (megapixels)",
+      "81:multiple": "2采和1采宽高比要一致 (multiple)",
+      "82:device": "device",
+      "82:precision": "precision",
+      "82:offload_model": "offload_model",
+      "83:steps": "迭代步数",
+      "83:denoise": "denoise",
+      "85:noise_seed": "noise_seed",
+      "86:cfg": "CFG Scale",
+      "93:ref_image_size": "ref_image_size",
+      "103:value": "提示词",
+      "104:image": "参考图 0",
+      "105:image": "参考图 1",
+      "108:ref_image_size": "ref_image_size",
+      "110:string_a": "string_a",
+      "110:delimiter": "delimiter",
+      "117:offload_model": "offload_model",
+      "117:offload_cache": "offload_cache",
+      "124:filename_prefix": "文件名前缀",
+      "124:frame_rate": "frame_rate",
+      "124:loop_count": "loop_count",
+      "124:format": "format",
+      "124:pix_fmt": "pix_fmt",
+      "124:crf": "crf",
+      "124:save_metadata": "save_metadata",
+      "124:trim_to_audio": "trim_to_audio",
+      "124:pingpong": "pingpong",
+      "124:save_output": "save_output",
+      "136:audio": "参考音频 0",
+      "136:start_time": "start_time",
+      "136:duration": "duration",
+      "137:audio": "参考音频 1",
+      "137:start_time": "start_time",
+      "137:duration": "duration",
+      "138:audio": "参考音频 2",
+      "138:start_time": "start_time",
+      "138:duration": "duration",
+      "139:image": "参考图 2",
+      "140:image": "参考图 3",
+      "141:image": "参考图 4",
+      "142:image": "参考图 5",
+      "143:image": "参考图 6",
+      "144:image": "参考图 7",
+      "145:image": "参考图 8"
+    },
+    "enabledParams": {
+      "2:type": false,
+      "2:device": false,
+      "5:shift_video": false,
+      "5:shift_audio": false,
+      "7:aspect_ratio": true,
+      "7:megapixels": true,
+      "7:multiple": false,
+      "8:value": true,
+      "9:expression": false,
+      "11:noise_seed": false,
+      "24:weight_dtype": false,
+      "24:compute_dtype": false,
+      "24:patch_cublaslinear": false,
+      "24:sage_attention": false,
+      "24:enable_fp16_accumulation": false,
+      "30:sigmas": false,
+      "81:aspect_ratio": true,
+      "81:megapixels": true,
+      "81:multiple": false,
+      "82:device": false,
+      "82:precision": false,
+      "82:offload_model": false,
+      "83:steps": false,
+      "83:denoise": false,
+      "85:noise_seed": false,
+      "86:cfg": false,
+      "93:ref_image_size": false,
+      "103:value": true,
+      "104:image": true,
+      "105:image": true,
+      "108:ref_image_size": false,
+      "110:string_a": false,
+      "110:delimiter": false,
+      "117:offload_model": false,
+      "117:offload_cache": false,
+      "124:filename_prefix": false,
+      "124:frame_rate": false,
+      "124:loop_count": false,
+      "124:format": false,
+      "124:pix_fmt": false,
+      "124:crf": false,
+      "124:save_metadata": false,
+      "124:trim_to_audio": false,
+      "124:pingpong": false,
+      "124:save_output": false,
+      "136:audio": true,
+      "136:start_time": false,
+      "136:duration": false,
+      "137:audio": true,
+      "137:start_time": false,
+      "137:duration": false,
+      "138:audio": true,
+      "138:start_time": false,
+      "138:duration": false,
+      "139:image": true,
+      "140:image": true,
+      "141:image": true,
+      "142:image": true,
+      "143:image": true,
+      "144:image": true,
+      "145:image": true
+    },
+    "formValues": {
+      "2:type": "minimax",
+      "2:device": "default",
+      "5:shift_video": 12,
+      "5:shift_audio": 3,
+      "7:aspect_ratio": "16:9 (Widescreen)",
+      "7:megapixels": 0.4,
+      "7:multiple": 32,
+      "8:value": 10,
+      "9:expression": "max(5, round(a * 24)) + (5 - (max(5, round(a * 24)) % 17)) % 17",
+      "11:noise_seed": 806661161901022,
+      "24:weight_dtype": "default",
+      "24:compute_dtype": "default",
+      "24:patch_cublaslinear": false,
+      "24:sage_attention": "auto",
+      "24:enable_fp16_accumulation": true,
+      "30:sigmas": "0.9999166, 0.9728326, 0.9230769, 0.8, 0.0",
+      "81:aspect_ratio": "16:9 (Widescreen)",
+      "81:megapixels": 1,
+      "81:multiple": 32,
+      "82:device": "cuda",
+      "82:precision": "fp16",
+      "82:offload_model": true,
+      "83:steps": 1,
+      "83:denoise": 0.2,
+      "85:noise_seed": 311931200060222,
+      "86:cfg": 1,
+      "93:ref_image_size": "match",
+      "103:value": "subject_definitions:\n\n<Subject 1> is the East Asian woman from the left side of <Picture 1>, featuring hyper-detailed realistic skin texture, long wavy dark brown hair tied in a half-up ponytail, wearing a light lime-green form-fitting long-sleeved mock-neck athletic top, tight brown high-waisted yoga leggings, white crew socks with striped and floral accent details, white thick-soled chunky sneakers, with voluptuous hourglass body proportions featuring a significantly fuller bust line and prominent curvy glute silhouette while maintaining her facial features and visual design from the reference image.\n\n<Subject 2> is the muscular Xianxia warrior mage from the right side of <Picture 1>, featuring intense dark eyes, thick eyebrows, a full dark beard and mustache, a red ritual mark on his forehead, long flowing dark hair bound by an ornate golden headpiece, an open-chested beige silk combat robe revealing a heavily defined muscular torso, ornate bronze-and-gold carved pauldrons and vambraces, a large oversized black prayer bead necklace draped across his neck and waist, a gold filigree belt with hanging tassel pendants, and realistic human skin texture with glowing spark motes exactly from the reference image.\n\n<Subject 3> is a clear baby milk bottle filled with white milk, used as the central prop in the interaction.\n\n<Audio 2> is the voice-timbre reference for <Subject 2> (S1).\n<Audio 1> is the voice-timbre reference for <Subject 1> (S2).\n\n\nsummary:\n\n[reference generation + audio reference] The target video is a short live-action cinematic fantasy scene in a sunlit lakeside park. <Subject 1>, featuring a voluptuous hourglass figure with enhanced bust and glute proportions, stands with her back to the camera, resting one leg on a park bench while stretching her hamstrings in form-fitting leggings and holding <Subject 3>. <Subject 2> walks up from behind to ask for a baby bottle, prompting <Subject 1> to turn around, hand him the bottle, and dismiss him. <Subject 2> becomes happy and thanks her. <Picture 1> provides the visual reference for both <Subject 1> and <Subject 2>, while <Audio 1> and <Audio 2> provide their respective voice references.\n\n\nretention_analysis:\n\n<Subject 1> (appears in [Shot 1], [Shot 2]): fully_preserved - preserve her long wavy hair, lime-green athletic top, brown high-waisted yoga leggings, white sneakers, facial features, voluptuous hourglass figure with a prominent bust line and curvy glute silhouette from the updated description.\n\n<Subject 2> (appears in [Shot 1], [Shot 2], [Shot 3]): fully_preserved - preserve his character identity, dark beard, forehead mark, golden headpiece, open-chested combat robe, bronze pauldrons, oversized prayer beads, muscular physique, and realistic live-action human appearance from <Picture 1>.\n\n<Subject 3> (appears in [Shot 1], [Shot 2], [Shot 3]): modified - replace the cigarette with a clear baby milk bottle as the central prop, maintaining consistent scale and positioning during the exchange.\n\n<Audio 1>: reference - its vocal timbre guides the dialogue delivery of <Subject 1> without copying the original signal.\n\n<Audio 2>: reference - its vocal timbre guides the dialogue delivery of <Subject 2> without copying the original signal.\n\n\ndetailed_description:\n\nThe target video uses a realistic, cinematic live-action fantasy film style with crisp daylight, natural lake water reflections, realistic athletic fabric and metallic textures, fine skin pore details, subtle depth of field, fluid 1.0x real-time human movement, and simple editorial cuts. The outdoor lakeside park environment features clear blue skies, green grassy lawns, park benches, distant trees, and calm water as seen in <Picture 1>. Keep the visual design of both referenced characters consistent throughout. Use distinct shot changes rather than smooth cinematic camera movement.\n\n[Shot 1] A medium-full shot in a sunny lakeside park clearing. The shot is framed from behind <Subject 1>, the woman in athletic yoga wear, as she stands facing away from the camera. She rests her right sneaker high on the seat of a wooden park bench, leaning her torso forward to stretch her hamstring. Her back, narrow waist, and voluptuous full glutes—tightly sculpted in her brown high-waisted yoga leggings—are prominently centered in the frame. She casually holds <Subject 3> by its cap in one hand near her hip. <Subject 2>, the muscular warrior mage in his open silk robe and bronze pauldrons, walks up from behind into the frame. As he approaches her, <Subject 2> (S1), using the voice timbre referenced from <Audio 2>, politely asks, <d>[Chinese] 小姐姐，我家娃饿哭了，你可有吃食？</d>\n\n[Shot 2] At 00:02.000, cut to a medium close-up focused on <Subject 1> as she lowers her leg from the bench and pivots her body around to face the camera and <Subject 2>, highlighting her full, voluptuous bust silhouette under the tight lime-green top. Looking mildly puzzled yet relaxed, she casually extends <Subject 3> toward him with her hand. Her expression remains calm and slightly exhausted after her workout. <Subject 1> (S2), using the voice timbre referenced from <Audio 1>, says casually, <d>[Chinese] 给，热的，拿去给宝宝吧。</d> Keep the baby bottle clearly visible as it is handed over.\n\n[Shot 3] At 00:03.700, cut to a medium close-up of <Subject 2>. He immediately becomes cheerful after receiving <Subject 3>. His stern eyes brighten, his bearded face lights up with a broad grin, and he cradles the baby bottle carefully in his large bronze-armored hand. He gives a small enthusiastic nod toward <Subject 1> and says brightly, <d>[Chinese] 谢谢小姐姐，一会还你奶瓶</d> End on his happy, beaming expression.\n\nCamera and editing: medium-full rear-angle shot framing her leg-on-bench stretch pose for the opening, hard cut to a medium close-up as <Subject 1> turns around, then hard cut to a medium close-up focused on <Subject 2>. No wide establishing shot, no smooth panning, no orbiting camera, and no long continuous camera movement.\n\nVisual style: cinematic realistic live-action, high dynamic range, natural depth-of-field blur, crisp realistic micro-expressions, authentic fabric and leather folds, soft sunlight contrast, consistent character proportions and clothing details.\n\n\noverall_soundscape:\n\nLakeside park outdoor ambience, gentle water lap against the shore, soft breeze rustling tree leaves, shoe scraping on wooden bench plank, subtle heavy footsteps on grass, stretch fabric tension, armor creak, and faint sloshing sound inside the milk bottle. Keep both character voices clean and clearly separated. No overlapping dialogue.\n\n\nnon_diegetic_music:\n\nLight relaxed acoustic guitar fused with subtle traditional flute notes, creating a warm, slightly comedic, and lighthearted mood.",
+      "104:image": null,
+      "105:image": null,
+      "108:ref_image_size": "match",
+      "110:string_a": "Upscale the video with crisp and detail",
+      "110:delimiter": ",",
+      "117:offload_model": true,
+      "117:offload_cache": true,
+      "124:filename_prefix": "comfyui",
+      "124:frame_rate": 24,
+      "124:loop_count": 0,
+      "124:format": "video/h264-mp4",
+      "124:pix_fmt": "yuv420p",
+      "124:crf": 16,
+      "124:save_metadata": false,
+      "124:trim_to_audio": false,
+      "124:pingpong": false,
+      "124:save_output": true,
+      "136:audio": null,
+      "136:start_time": 0,
+      "136:duration": 10,
+      "137:audio": null,
+      "137:start_time": 0,
+      "137:duration": 10,
+      "138:audio": null,
+      "138:start_time": 0,
+      "138:duration": 10,
+      "139:image": null,
+      "140:image": null,
+      "141:image": null,
+      "142:image": null,
+      "143:image": null,
+      "144:image": null,
+      "145:image": null
+    },
+    "mediaOrder": [
+      "104:image",
+      "105:image",
+      "139:image",
+      "140:image",
+      "141:image",
+      "142:image",
+      "143:image",
+      "144:image",
+      "145:image",
+      "136:audio",
+      "137:audio",
+      "138:audio"
+    ],
+    "mediaOrderSource": "auto",
+    "apiNames": {
+      "2:type": "type",
+      "2:device": "device",
+      "5:shift_video": "shift_video",
+      "5:shift_audio": "shift_audio",
+      "7:aspect_ratio": "aspect_ratio",
+      "7:megapixels": "megapixels",
+      "7:multiple": "multiple",
+      "8:value": "value",
+      "9:expression": "expression",
+      "11:noise_seed": "noise_seed",
+      "24:weight_dtype": "weight_dtype",
+      "24:compute_dtype": "compute_dtype",
+      "24:patch_cublaslinear": "patch_cublaslinear",
+      "24:sage_attention": "sage_attention",
+      "24:enable_fp16_accumulation": "enable_fp16_accumulation",
+      "30:sigmas": "sigmas",
+      "81:aspect_ratio": "aspect_ratio_2",
+      "81:megapixels": "megapixels_2",
+      "81:multiple": "multiple_2",
+      "82:device": "device_2",
+      "82:precision": "precision",
+      "82:offload_model": "offload_model",
+      "83:steps": "steps",
+      "83:denoise": "denoise",
+      "85:noise_seed": "noise_seed_2",
+      "86:cfg": "cfg",
+      "93:ref_image_size": "ref_image_size",
+      "103:value": "prompt",
+      "104:image": "ref_image_0",
+      "105:image": "ref_image_1",
+      "108:ref_image_size": "ref_image_size_2",
+      "110:string_a": "string_a",
+      "110:delimiter": "delimiter",
+      "117:offload_model": "offload_model_2",
+      "117:offload_cache": "offload_cache",
+      "124:filename_prefix": "filename_prefix",
+      "124:frame_rate": "frame_rate",
+      "124:loop_count": "loop_count",
+      "124:format": "format",
+      "124:pix_fmt": "pix_fmt",
+      "124:crf": "crf",
+      "124:save_metadata": "save_metadata",
+      "124:trim_to_audio": "trim_to_audio",
+      "124:pingpong": "pingpong",
+      "124:save_output": "save_output",
+      "136:audio": "ref_audio_0",
+      "136:start_time": "start_time",
+      "136:duration": "duration",
+      "137:audio": "ref_audio_1",
+      "137:start_time": "start_time_2",
+      "137:duration": "duration_2",
+      "138:audio": "ref_audio_2",
+      "138:start_time": "start_time_3",
+      "138:duration": "duration_3",
+      "139:image": "ref_image_2",
+      "140:image": "ref_image_3",
+      "141:image": "ref_image_4",
+      "142:image": "ref_image_5",
+      "143:image": "ref_image_6",
+      "144:image": "ref_image_7",
+      "145:image": "ref_image_8"
+    }
+  }
+}

@@ -1,0 +1,800 @@
+{
+  "52": {
+    "inputs": {
+      "image": "_root_output_realanime_zlora_v1_samples_1764437172276__000005000_4.jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "57": {
+    "inputs": {
+      "add_noise": "enable",
+      "noise_seed": [
+        "82",
+        0
+      ],
+      "steps": 6,
+      "cfg": 1.5,
+      "sampler_name": "euler_ancestral",
+      "scheduler": "simple",
+      "start_at_step": 0,
+      "end_at_step": 3,
+      "return_with_leftover_noise": "enable",
+      "model": [
+        "131:54",
+        0
+      ],
+      "positive": [
+        "132:50",
+        0
+      ],
+      "negative": [
+        "132:50",
+        1
+      ],
+      "latent_image": [
+        "132:50",
+        2
+      ]
+    },
+    "class_type": "KSamplerAdvanced",
+    "_meta": {
+      "title": "K采样器（高级）"
+    }
+  },
+  "58": {
+    "inputs": {
+      "add_noise": "disable",
+      "noise_seed": 0,
+      "steps": 6,
+      "cfg": 1.5,
+      "sampler_name": "euler_ancestral",
+      "scheduler": "simple",
+      "start_at_step": 3,
+      "end_at_step": 10000,
+      "return_with_leftover_noise": "disable",
+      "model": [
+        "131:55",
+        0
+      ],
+      "positive": [
+        "132:50",
+        0
+      ],
+      "negative": [
+        "132:50",
+        1
+      ],
+      "latent_image": [
+        "57",
+        0
+      ]
+    },
+    "class_type": "KSamplerAdvanced",
+    "_meta": {
+      "title": "K采样器（高级）"
+    }
+  },
+  "77": {
+    "inputs": {
+      "frame_rate": 30,
+      "loop_count": 0,
+      "filename_prefix": "20260328/image_",
+      "format": "video/h264-mp4",
+      "pix_fmt": "yuv420p",
+      "crf": 19,
+      "save_metadata": true,
+      "trim_to_audio": false,
+      "pingpong": false,
+      "save_output": true,
+      "images": [
+        "132:75",
+        0
+      ]
+    },
+    "class_type": "VHS_VideoCombine",
+    "_meta": {
+      "title": "Video Combine 🎥🅥🅗🅢"
+    }
+  },
+  "81": {
+    "inputs": {
+      "filename_prefix": "20260328/image_",
+      "images": [
+        "132:79",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "保存图像"
+    }
+  },
+  "82": {
+    "inputs": {
+      "seed": 594731366764946
+    },
+    "class_type": "Seed (rgthree)",
+    "_meta": {
+      "title": "Seed (rgthree)"
+    }
+  },
+  "88": {
+    "inputs": {
+      "value": "第 1 秒：特写聚焦于红发少女的左肩，一枚蓝色的盾形图腾纹身清晰呈现，纹身边缘锐利、色彩饱满，肩头皮肤细腻光滑，白衬衫的领口微微敞开。\n第 2 秒：镜头缓慢上移，掠过精致的金色垂坠耳环，少女的侧脸轮廓柔和，棕褐色的眼眸深邃静谧，几缕红发轻柔地拂过脸颊。\n第 3 秒：中景展示少女回眸的瞬间，眼神清澈，长长的睫毛微微颤动，红色的长发如瀑布般顺滑垂落，发丝光泽感极强。\n第 4 秒：镜头逐渐拉远，展现出少女的整体身形，她微微侧身站立，姿态优雅，背景虚化呈现出柔和的光斑，营造出梦幻的氛围。\n第 5 秒：画面定格在少女的半身特写，光影柔和地打在她的脸上，红发与蓝纹形成鲜明对比，整体画面唯美而宁静。"
+    },
+    "class_type": "PrimitiveStringMultiline",
+    "_meta": {
+      "title": "Positive"
+    },
+    "me": {
+      "title": "提示词"
+    }
+  },
+  "116": {
+    "inputs": {
+      "value": 5
+    },
+    "class_type": "INTConstant",
+    "_meta": {
+      "title": "INT Constant"
+    }
+  },
+  "125": {
+    "inputs": {
+      "value": 1024
+    },
+    "class_type": "INTConstant",
+    "_meta": {
+      "title": "INT Constant"
+    },
+    "me": {
+      "title": "边长"
+    }
+  },
+  "131:66": {
+    "inputs": {
+      "enable_fp16_accumulation": true,
+      "model": [
+        "131:65",
+        0
+      ]
+    },
+    "class_type": "ModelPatchTorchSettings",
+    "_meta": {
+      "title": "Model Patch Torch Settings"
+    }
+  },
+  "131:54": {
+    "inputs": {
+      "shift": 8.000000000000002,
+      "model": [
+        "131:66",
+        0
+      ]
+    },
+    "class_type": "ModelSamplingSD3",
+    "_meta": {
+      "title": "采样算法（SD3）"
+    }
+  },
+  "131:38": {
+    "inputs": {
+      "clip_name": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+      "type": "wan",
+      "device": "cpu"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "加载CLIP"
+    }
+  },
+  "131:39": {
+    "inputs": {
+      "vae_name": "wan_2.1_vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "加载VAE"
+    }
+  },
+  "131:37": {
+    "inputs": {
+      "unet_name": "Wan/smoothMixWan22I2VT2V_i2vHigh.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "UNet加载器"
+    }
+  },
+  "131:56": {
+    "inputs": {
+      "unet_name": "Wan/smoothMixWan22I2VT2V_i2vLow.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "UNet加载器"
+    }
+  },
+  "131:65": {
+    "inputs": {
+      "sage_attention": "sageattn_qk_int8_pv_fp16_triton",
+      "allow_compile": false,
+      "model": [
+        "131:37",
+        0
+      ]
+    },
+    "class_type": "PathchSageAttentionKJ",
+    "_meta": {
+      "title": "Patch Sage Attention KJ"
+    }
+  },
+  "131:67": {
+    "inputs": {
+      "sage_attention": "sageattn_qk_int8_pv_fp16_triton",
+      "allow_compile": false,
+      "model": [
+        "131:56",
+        0
+      ]
+    },
+    "class_type": "PathchSageAttentionKJ",
+    "_meta": {
+      "title": "Patch Sage Attention KJ"
+    }
+  },
+  "131:55": {
+    "inputs": {
+      "shift": 8.000000000000002,
+      "model": [
+        "131:68",
+        0
+      ]
+    },
+    "class_type": "ModelSamplingSD3",
+    "_meta": {
+      "title": "采样算法（SD3）"
+    }
+  },
+  "131:68": {
+    "inputs": {
+      "enable_fp16_accumulation": true,
+      "model": [
+        "131:67",
+        0
+      ]
+    },
+    "class_type": "ModelPatchTorchSettings",
+    "_meta": {
+      "title": "Model Patch Torch Settings"
+    }
+  },
+  "132:73": {
+    "inputs": {
+      "anything": [
+        "132:8",
+        0
+      ]
+    },
+    "class_type": "easy cleanGpuUsed",
+    "_meta": {
+      "title": "清理显存占用"
+    }
+  },
+  "132:8": {
+    "inputs": {
+      "samples": [
+        "58",
+        0
+      ],
+      "vae": [
+        "131:39",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "132:90": {
+    "inputs": {
+      "text": [
+        "132:84",
+        0
+      ],
+      "clip": [
+        "131:38",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "132:84": {
+    "inputs": {
+      "string_a": "",
+      "string_b": [
+        "88",
+        0
+      ],
+      "delimiter": ""
+    },
+    "class_type": "StringConcatenate",
+    "_meta": {
+      "title": "连接"
+    }
+  },
+  "132:74": {
+    "inputs": {
+      "upscale_method": "lanczos",
+      "scale_by": 2.0000000000000004,
+      "image": [
+        "132:73",
+        0
+      ]
+    },
+    "class_type": "ImageScaleBy",
+    "_meta": {
+      "title": "缩放图像（比例）"
+    }
+  },
+  "132:75": {
+    "inputs": {
+      "ckpt_name": "rife49.pth",
+      "clear_cache_after_n_frames": 10,
+      "multiplier": 2,
+      "fast_mode": false,
+      "ensemble": true,
+      "scale_factor": 1,
+      "dtype": "float32",
+      "torch_compile": false,
+      "batch_size": 1,
+      "frames": [
+        "132:76",
+        0
+      ]
+    },
+    "class_type": "RIFE VFI",
+    "_meta": {
+      "title": "RIFE VFI (recommend rife47 and rife49)"
+    }
+  },
+  "132:89": {
+    "inputs": {
+      "text": "第 1 秒：特写聚焦于红发少女的左肩，一枚蓝色的盾形图腾纹身清晰呈现，纹身边缘锐利、色彩饱满，肩头皮肤细腻光滑，白衬衫的领口微微敞开。\n第 2 秒：镜头缓慢上移，掠过精致的金色垂坠耳环，少女的侧脸轮廓柔和，棕褐色的眼眸深邃静谧，几缕红发轻柔地拂过脸颊。\n第 3 秒：中景展示少女回眸的瞬间，眼神清澈，长长的睫毛微微颤动，红色的长发如瀑布般顺滑垂落，发丝光泽感极强。\n第 4 秒：镜头逐渐拉远，展现出少女的整体身形，她微微侧身站立，姿态优雅，背景虚化呈现出柔和的光斑，营造出梦幻的氛围。\n第 5 秒：画面定格在少女的半身特写，光影柔和地打在她的脸上，红发与蓝纹形成鲜明对比，整体画面唯美而宁静。",
+      "anything": [
+        "132:84",
+        0
+      ]
+    },
+    "class_type": "easy showAnything",
+    "_meta": {
+      "title": "展示任何"
+    }
+  },
+  "132:7": {
+    "inputs": {
+      "text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走, censored, mosaic censoring, bar censor, pixelated, glowing, bloom, blurry, out of focus, low detail, bad anatomy, ugly, overexposed, underexposed, distorted face, extra limbs, cartoonish, 3d render artifacts, duplicate people, unnatural lighting, bad composition, missing shadows, low resolution, poorly textured, glitch, noise, grain, static, motionless, still frame, overall grayish, worst quality, low quality, JPEG compression artifacts, subtitles, stylized, artwork, painting, illustration, cluttered background, many people in background, three legs, walking backward, zoom out, zoom in, mouth speaking, moving mouth, talking, speaking, mute speaking, unnatural skin tone, discolored eyelid, red eyelids, red upper eyelids, no red eyeshadow, closed eyes, no wide-open innocent eyes, poorly drawn hands, extra fingers, fused fingers, poorly drawn face, deformed, disfigured, malformed limbs, thighs, fog, mist, voluminous eyelashes, blush,",
+      "clip": [
+        "131:38",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "132:124": {
+    "inputs": {
+      "aspect_ratio": "original",
+      "proportional_width": 1,
+      "proportional_height": 1,
+      "fit": "letterbox",
+      "method": "lanczos",
+      "round_to_multiple": "16",
+      "scale_to_side": "longest",
+      "scale_to_length": [
+        "125",
+        0
+      ],
+      "background_color": "#000000",
+      "image": [
+        "52",
+        0
+      ]
+    },
+    "class_type": "LayerUtility: ImageScaleByAspectRatio V2",
+    "_meta": {
+      "title": "图层工具：按宽高比缩放 V2"
+    }
+  },
+  "132:50": {
+    "inputs": {
+      "width": [
+        "132:124",
+        3
+      ],
+      "height": [
+        "132:124",
+        4
+      ],
+      "length": [
+        "132:114",
+        0
+      ],
+      "batch_size": 1,
+      "positive": [
+        "132:90",
+        0
+      ],
+      "negative": [
+        "132:7",
+        0
+      ],
+      "vae": [
+        "131:39",
+        0
+      ],
+      "start_image": [
+        "132:124",
+        0
+      ]
+    },
+    "class_type": "WanImageToVideo",
+    "_meta": {
+      "title": "图像到视频（Wan）"
+    }
+  },
+  "132:114": {
+    "inputs": {
+      "expression": "a*16+1",
+      "a": [
+        "116",
+        0
+      ]
+    },
+    "class_type": "MathExpression|pysssss",
+    "_meta": {
+      "title": "Math Expression 🐍"
+    }
+  },
+  "132:78": {
+    "inputs": {
+      "from_direction": "end",
+      "count": 1,
+      "image": [
+        "132:8",
+        0
+      ]
+    },
+    "class_type": "Pick From Batch (mtb)",
+    "_meta": {
+      "title": "Pick From Batch (mtb)"
+    }
+  },
+  "132:79": {
+    "inputs": {
+      "upscale_method": "lanczos",
+      "scale_by": 2.0000000000000004,
+      "image": [
+        "132:78",
+        0
+      ]
+    },
+    "class_type": "ImageScaleBy",
+    "_meta": {
+      "title": "缩放图像（比例）"
+    }
+  },
+  "132:76": {
+    "inputs": {
+      "anything": [
+        "132:74",
+        0
+      ]
+    },
+    "class_type": "easy cleanGpuUsed",
+    "_meta": {
+      "title": "清理显存占用"
+    }
+  },
+  "_api_config": {
+    "customLabels": {
+      "52:image": "参考图 0",
+      "57:steps": "迭代步数",
+      "57:cfg": "CFG Scale",
+      "57:add_noise": "add_noise",
+      "57:start_at_step": "start_at_step",
+      "57:end_at_step": "end_at_step",
+      "57:return_with_leftover_noise": "return_with_leftover_noise",
+      "58:steps": "迭代步数",
+      "58:cfg": "CFG Scale",
+      "58:add_noise": "add_noise",
+      "58:noise_seed": "noise_seed",
+      "58:start_at_step": "start_at_step",
+      "58:end_at_step": "end_at_step",
+      "58:return_with_leftover_noise": "return_with_leftover_noise",
+      "77:filename_prefix": "文件名前缀",
+      "77:frame_rate": "frame_rate",
+      "77:loop_count": "loop_count",
+      "77:format": "format",
+      "77:pix_fmt": "pix_fmt",
+      "77:crf": "crf",
+      "77:save_metadata": "save_metadata",
+      "77:trim_to_audio": "trim_to_audio",
+      "77:pingpong": "pingpong",
+      "77:save_output": "save_output",
+      "81:filename_prefix": "文件名前缀",
+      "82:seed": "随机种子",
+      "88:value": "value",
+      "116:value": "秒数",
+      "125:value": "边长 (value)",
+      "131:66:enable_fp16_accumulation": "enable_fp16_accumulation",
+      "131:54:shift": "shift",
+      "131:38:type": "type",
+      "131:38:device": "device",
+      "131:37:weight_dtype": "weight_dtype",
+      "131:56:weight_dtype": "weight_dtype",
+      "131:65:sage_attention": "sage_attention",
+      "131:65:allow_compile": "allow_compile",
+      "131:67:sage_attention": "sage_attention",
+      "131:67:allow_compile": "allow_compile",
+      "131:55:shift": "shift",
+      "131:68:enable_fp16_accumulation": "enable_fp16_accumulation",
+      "132:84:string_a": "string_a",
+      "132:84:delimiter": "delimiter",
+      "132:74:upscale_method": "upscale_method",
+      "132:74:scale_by": "scale_by",
+      "132:75:batch_size": "批次大小",
+      "132:75:clear_cache_after_n_frames": "clear_cache_after_n_frames",
+      "132:75:multiplier": "multiplier",
+      "132:75:fast_mode": "fast_mode",
+      "132:75:ensemble": "ensemble",
+      "132:75:scale_factor": "scale_factor",
+      "132:75:dtype": "dtype",
+      "132:75:torch_compile": "torch_compile",
+      "132:89:text": "提示词",
+      "132:7:text": "提示词",
+      "132:124:aspect_ratio": "aspect_ratio",
+      "132:124:proportional_width": "proportional_width",
+      "132:124:proportional_height": "proportional_height",
+      "132:124:fit": "fit",
+      "132:124:method": "method",
+      "132:124:round_to_multiple": "round_to_multiple",
+      "132:124:scale_to_side": "scale_to_side",
+      "132:124:background_color": "background_color",
+      "132:50:batch_size": "批次大小",
+      "132:114:expression": "expression",
+      "132:78:from_direction": "from_direction",
+      "132:78:count": "count",
+      "132:79:upscale_method": "upscale_method",
+      "132:79:scale_by": "scale_by"
+    },
+    "enabledParams": {
+      "52:image": true,
+      "57:steps": false,
+      "57:cfg": false,
+      "57:add_noise": false,
+      "57:start_at_step": false,
+      "57:end_at_step": false,
+      "57:return_with_leftover_noise": false,
+      "58:steps": false,
+      "58:cfg": false,
+      "58:add_noise": false,
+      "58:noise_seed": false,
+      "58:start_at_step": false,
+      "58:end_at_step": false,
+      "58:return_with_leftover_noise": false,
+      "77:filename_prefix": false,
+      "77:frame_rate": false,
+      "77:loop_count": false,
+      "77:format": false,
+      "77:pix_fmt": false,
+      "77:crf": false,
+      "77:save_metadata": false,
+      "77:trim_to_audio": false,
+      "77:pingpong": false,
+      "77:save_output": false,
+      "81:filename_prefix": false,
+      "82:seed": true,
+      "88:value": true,
+      "116:value": true,
+      "125:value": true,
+      "131:66:enable_fp16_accumulation": false,
+      "131:54:shift": false,
+      "131:38:type": false,
+      "131:38:device": false,
+      "131:37:weight_dtype": false,
+      "131:56:weight_dtype": false,
+      "131:65:sage_attention": false,
+      "131:65:allow_compile": false,
+      "131:67:sage_attention": false,
+      "131:67:allow_compile": false,
+      "131:55:shift": false,
+      "131:68:enable_fp16_accumulation": false,
+      "132:84:string_a": false,
+      "132:84:delimiter": false,
+      "132:74:upscale_method": false,
+      "132:74:scale_by": false,
+      "132:75:batch_size": false,
+      "132:75:clear_cache_after_n_frames": false,
+      "132:75:multiplier": false,
+      "132:75:fast_mode": false,
+      "132:75:ensemble": false,
+      "132:75:scale_factor": false,
+      "132:75:dtype": false,
+      "132:75:torch_compile": false,
+      "132:89:text": false,
+      "132:7:text": false,
+      "132:124:aspect_ratio": false,
+      "132:124:proportional_width": false,
+      "132:124:proportional_height": false,
+      "132:124:fit": false,
+      "132:124:method": false,
+      "132:124:round_to_multiple": false,
+      "132:124:scale_to_side": false,
+      "132:124:background_color": false,
+      "132:50:batch_size": false,
+      "132:114:expression": false,
+      "132:78:from_direction": false,
+      "132:78:count": false,
+      "132:79:upscale_method": false,
+      "132:79:scale_by": false
+    },
+    "formValues": {
+      "52:image": null,
+      "57:steps": 6,
+      "57:cfg": 1.5,
+      "57:add_noise": "enable",
+      "57:start_at_step": 0,
+      "57:end_at_step": 3,
+      "57:return_with_leftover_noise": "enable",
+      "58:steps": 6,
+      "58:cfg": 1.5,
+      "58:add_noise": "disable",
+      "58:noise_seed": 0,
+      "58:start_at_step": 3,
+      "58:end_at_step": 10000,
+      "58:return_with_leftover_noise": "disable",
+      "77:filename_prefix": "20260328/image_",
+      "77:frame_rate": 30,
+      "77:loop_count": 0,
+      "77:format": "video/h264-mp4",
+      "77:pix_fmt": "yuv420p",
+      "77:crf": 19,
+      "77:save_metadata": true,
+      "77:trim_to_audio": false,
+      "77:pingpong": false,
+      "77:save_output": true,
+      "81:filename_prefix": "20260328/image_",
+      "82:seed": 594731366764946,
+      "88:value": "第 1 秒：特写聚焦于红发少女的左肩，一枚蓝色的盾形图腾纹身清晰呈现，纹身边缘锐利、色彩饱满，肩头皮肤细腻光滑，白衬衫的领口微微敞开。\n第 2 秒：镜头缓慢上移，掠过精致的金色垂坠耳环，少女的侧脸轮廓柔和，棕褐色的眼眸深邃静谧，几缕红发轻柔地拂过脸颊。\n第 3 秒：中景展示少女回眸的瞬间，眼神清澈，长长的睫毛微微颤动，红色的长发如瀑布般顺滑垂落，发丝光泽感极强。\n第 4 秒：镜头逐渐拉远，展现出少女的整体身形，她微微侧身站立，姿态优雅，背景虚化呈现出柔和的光斑，营造出梦幻的氛围。\n第 5 秒：画面定格在少女的半身特写，光影柔和地打在她的脸上，红发与蓝纹形成鲜明对比，整体画面唯美而宁静。",
+      "116:value": 5,
+      "125:value": 1024,
+      "131:66:enable_fp16_accumulation": true,
+      "131:54:shift": 8.000000000000002,
+      "131:38:type": "wan",
+      "131:38:device": "cpu",
+      "131:37:weight_dtype": "default",
+      "131:56:weight_dtype": "default",
+      "131:65:sage_attention": "sageattn_qk_int8_pv_fp16_triton",
+      "131:65:allow_compile": false,
+      "131:67:sage_attention": "sageattn_qk_int8_pv_fp16_triton",
+      "131:67:allow_compile": false,
+      "131:55:shift": 8.000000000000002,
+      "131:68:enable_fp16_accumulation": true,
+      "132:84:string_a": "",
+      "132:84:delimiter": "",
+      "132:74:upscale_method": "lanczos",
+      "132:74:scale_by": 2.0000000000000004,
+      "132:75:batch_size": 1,
+      "132:75:clear_cache_after_n_frames": 10,
+      "132:75:multiplier": 2,
+      "132:75:fast_mode": false,
+      "132:75:ensemble": true,
+      "132:75:scale_factor": 1,
+      "132:75:dtype": "float32",
+      "132:75:torch_compile": false,
+      "132:89:text": "第 1 秒：特写聚焦于红发少女的左肩，一枚蓝色的盾形图腾纹身清晰呈现，纹身边缘锐利、色彩饱满，肩头皮肤细腻光滑，白衬衫的领口微微敞开。\n第 2 秒：镜头缓慢上移，掠过精致的金色垂坠耳环，少女的侧脸轮廓柔和，棕褐色的眼眸深邃静谧，几缕红发轻柔地拂过脸颊。\n第 3 秒：中景展示少女回眸的瞬间，眼神清澈，长长的睫毛微微颤动，红色的长发如瀑布般顺滑垂落，发丝光泽感极强。\n第 4 秒：镜头逐渐拉远，展现出少女的整体身形，她微微侧身站立，姿态优雅，背景虚化呈现出柔和的光斑，营造出梦幻的氛围。\n第 5 秒：画面定格在少女的半身特写，光影柔和地打在她的脸上，红发与蓝纹形成鲜明对比，整体画面唯美而宁静。",
+      "132:7:text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走, censored, mosaic censoring, bar censor, pixelated, glowing, bloom, blurry, out of focus, low detail, bad anatomy, ugly, overexposed, underexposed, distorted face, extra limbs, cartoonish, 3d render artifacts, duplicate people, unnatural lighting, bad composition, missing shadows, low resolution, poorly textured, glitch, noise, grain, static, motionless, still frame, overall grayish, worst quality, low quality, JPEG compression artifacts, subtitles, stylized, artwork, painting, illustration, cluttered background, many people in background, three legs, walking backward, zoom out, zoom in, mouth speaking, moving mouth, talking, speaking, mute speaking, unnatural skin tone, discolored eyelid, red eyelids, red upper eyelids, no red eyeshadow, closed eyes, no wide-open innocent eyes, poorly drawn hands, extra fingers, fused fingers, poorly drawn face, deformed, disfigured, malformed limbs, thighs, fog, mist, voluminous eyelashes, blush,",
+      "132:124:aspect_ratio": "original",
+      "132:124:proportional_width": 1,
+      "132:124:proportional_height": 1,
+      "132:124:fit": "letterbox",
+      "132:124:method": "lanczos",
+      "132:124:round_to_multiple": "16",
+      "132:124:scale_to_side": "longest",
+      "132:124:background_color": "#000000",
+      "132:50:batch_size": 1,
+      "132:114:expression": "a*16+1",
+      "132:78:from_direction": "end",
+      "132:78:count": 1,
+      "132:79:upscale_method": "lanczos",
+      "132:79:scale_by": 2.0000000000000004
+    },
+    "mediaOrder": [
+      "52:image"
+    ],
+    "mediaOrderSource": "auto",
+    "apiNames": {
+      "52:image": "ref_image_0",
+      "57:steps": "steps",
+      "57:cfg": "cfg",
+      "57:add_noise": "add_noise",
+      "57:start_at_step": "start_at_step",
+      "57:end_at_step": "end_at_step",
+      "57:return_with_leftover_noise": "return_with_leftover_noise",
+      "58:steps": "steps_2",
+      "58:cfg": "cfg_2",
+      "58:add_noise": "add_noise_2",
+      "58:noise_seed": "noise_seed",
+      "58:start_at_step": "start_at_step_2",
+      "58:end_at_step": "end_at_step_2",
+      "58:return_with_leftover_noise": "return_with_leftover_noise_2",
+      "77:filename_prefix": "filename_prefix",
+      "77:frame_rate": "frame_rate",
+      "77:loop_count": "loop_count",
+      "77:format": "format",
+      "77:pix_fmt": "pix_fmt",
+      "77:crf": "crf",
+      "77:save_metadata": "save_metadata",
+      "77:trim_to_audio": "trim_to_audio",
+      "77:pingpong": "pingpong",
+      "77:save_output": "save_output",
+      "81:filename_prefix": "filename_prefix_2",
+      "82:seed": "seed",
+      "88:value": "prompt",
+      "116:value": "value",
+      "125:value": "value_2",
+      "131:66:enable_fp16_accumulation": "enable_fp16_accumulation",
+      "131:54:shift": "shift",
+      "131:38:type": "type",
+      "131:38:device": "device",
+      "131:37:weight_dtype": "weight_dtype",
+      "131:56:weight_dtype": "weight_dtype_2",
+      "131:65:sage_attention": "sage_attention",
+      "131:65:allow_compile": "allow_compile",
+      "131:67:sage_attention": "sage_attention_2",
+      "131:67:allow_compile": "allow_compile_2",
+      "131:55:shift": "shift_2",
+      "131:68:enable_fp16_accumulation": "enable_fp16_accumulation_2",
+      "132:84:string_a": "string_a",
+      "132:84:delimiter": "delimiter",
+      "132:74:upscale_method": "upscale_method",
+      "132:74:scale_by": "scale_by",
+      "132:75:batch_size": "batch_size_2",
+      "132:75:clear_cache_after_n_frames": "clear_cache_after_n_frames",
+      "132:75:multiplier": "multiplier",
+      "132:75:fast_mode": "fast_mode",
+      "132:75:ensemble": "ensemble",
+      "132:75:scale_factor": "scale_factor",
+      "132:75:dtype": "dtype",
+      "132:75:torch_compile": "torch_compile",
+      "132:89:text": "prompt_3",
+      "132:7:text": "prompt_2",
+      "132:124:aspect_ratio": "aspect_ratio",
+      "132:124:proportional_width": "proportional_width",
+      "132:124:proportional_height": "proportional_height",
+      "132:124:fit": "fit",
+      "132:124:method": "method",
+      "132:124:round_to_multiple": "round_to_multiple",
+      "132:124:scale_to_side": "scale_to_side",
+      "132:124:background_color": "background_color",
+      "132:50:batch_size": "batch_size",
+      "132:114:expression": "expression",
+      "132:78:from_direction": "from_direction",
+      "132:78:count": "count",
+      "132:79:upscale_method": "upscale_method_2",
+      "132:79:scale_by": "scale_by_2"
+    }
+  }
+}

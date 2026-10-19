@@ -1,0 +1,773 @@
+{
+  "119": {
+    "inputs": {
+      "vae_name": "minimax_h3_video_vae_fp16.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "加载VAE"
+    }
+  },
+  "120": {
+    "inputs": {
+      "vae_name": "minimax_h3_audio_vae_fp32.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "加载VAE"
+    }
+  },
+  "121": {
+    "inputs": {
+      "samples": [
+        "1306",
+        0
+      ],
+      "vae": [
+        "120",
+        0
+      ]
+    },
+    "class_type": "VAEDecodeAudio",
+    "_meta": {
+      "title": "VAE解码（音频）"
+    }
+  },
+  "128": {
+    "inputs": {
+      "clip_name": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+      "type": "minimax",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "加载CLIP"
+    }
+  },
+  "131": {
+    "inputs": {
+      "expression": "max(5, round(a * 24)) + (5 - (max(5, round(a * 24)) % 17)) % 17",
+      "values.a": [
+        "132",
+        0
+      ]
+    },
+    "class_type": "ComfyMathExpression",
+    "_meta": {
+      "title": "数学表达式"
+    }
+  },
+  "132": {
+    "inputs": {
+      "value": 5
+    },
+    "class_type": "PrimitiveFloat",
+    "_meta": {
+      "title": "Video Duration"
+    },
+    "t": {
+      "title": "秒数"
+    }
+  },
+  "136": {
+    "inputs": {
+      "prompt": [
+        "664",
+        0
+      ],
+      "width": [
+        "665",
+        1
+      ],
+      "height": [
+        "665",
+        2
+      ],
+      "length": [
+        "131",
+        1
+      ],
+      "ref_image_size": "max",
+      "clip": [
+        "128",
+        0
+      ],
+      "vae": [
+        "119",
+        0
+      ],
+      "audio_vae": [
+        "120",
+        0
+      ],
+      "ref_images.ref_image_0": [
+        "137",
+        0
+      ],
+      "ref_images.ref_image_1": [
+        "139",
+        0
+      ],
+      "ref_images.ref_image_2": [
+        "144",
+        0
+      ],
+      "ref_images.ref_image_3": [
+        "151",
+        0
+      ],
+      "ref_images.ref_image_4": [
+        "653",
+        0
+      ],
+      "ref_images.ref_image_5": [
+        "654",
+        0
+      ],
+      "ref_images.ref_image_6": [
+        "655",
+        0
+      ],
+      "ref_images.ref_image_7": [
+        "656",
+        0
+      ],
+      "ref_images.ref_image_8": [
+        "657",
+        0
+      ]
+    },
+    "class_type": "MiniMaxH3ReferenceToVideo",
+    "_meta": {
+      "title": "MiniMax H3 Reference to Video"
+    }
+  },
+  "137": {
+    "inputs": {
+      "image": "Untitled(3).jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "139": {
+    "inputs": {
+      "image": "Untitled(1).jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "142": {
+    "inputs": {
+      "seed": 731242627237534
+    },
+    "class_type": "easy seed",
+    "_meta": {
+      "title": "Click \"Manual Random Seed\" to start Gens!"
+    }
+  },
+  "144": {
+    "inputs": {
+      "image": "Untitled(4).jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "151": {
+    "inputs": {
+      "image": "Untitled(2).jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "620": {
+    "inputs": {
+      "unet_name": "minimax/minimax_h3_ref2va_pruned_int8_convrot.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "UNet加载器"
+    }
+  },
+  "653": {
+    "inputs": {
+      "image": "Untitled(5).jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "654": {
+    "inputs": {
+      "image": "Untitled(10).jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "655": {
+    "inputs": {
+      "image": "AI Generated Layer (2).png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "656": {
+    "inputs": {
+      "image": "Untitled(7).jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "657": {
+    "inputs": {
+      "image": "Untitled.jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "664": {
+    "inputs": {
+      "prompt": "subject_definitions:\n<Subject 1> is the young woman from <Picture 1>, serving as the blue-robed woman, with a pale complexion, long black hair arranged in an elaborate updo with side-falling strands, blue floral hair ornaments and delicate dangling chains, refined eye makeup, red lips, gold-and-blue earrings, layered necklaces, and an ornate blue-and-gold fitted bodice beneath translucent pale-blue wide sleeves and a long flowing skirt.\n<Subject 2> is the young man from <Picture 2>, serving as the black-robed man, with a pale complexion, long black hair tied high with a dark hair ornament, loose strands framing his face, straight brows, a calm serious expression, and layered black traditional robes with gray embroidered trim, wide sleeves, a waist belt with hanging metal ornaments, and dark wrist-covering fabric.\n<Subject 3> is the woman from <Picture 3>, serving as the red-robed woman, with a fair complexion, long black hair half tied into an updo with red floral hair ornaments and dangling beads, soft natural makeup, pearl-like earrings, a red embroidered collar, layered crimson robes with wide sleeves, a dark decorated waist sash, and long trailing red fabric ribbons.\n<Subject 4> is the snow-forest environment from <Picture 4>, serving as the meeting location, with a large dark-barked tree on the left, snow-covered branches densely filled with vivid red plum blossoms, a pale blue-white forest receding into mist, an uneven snowy ground, and continuously falling snow.\n\nsummary:\n[reference generation] Create a five-second cinematic Chinese fantasy encounter in a snowy plum-blossom forest: the blue-robed woman and black-robed man find the red-robed woman near the flowering tree, exchange urgent yet warm dialogue, and offer to help her prepare food, with strong character continuity and a poetic winter atmosphere.\n\nretention_analysis:\n<Subject 1> (appears in [Shot 1], [Shot 2], [Shot 3]): fully_preserved - the pale complexion, elaborate black updo, blue floral ornaments, dangling jewelry, blue-and-gold bodice, translucent pale-blue sleeves, and long blue skirt are retained; only the pose, walking direction, and facial expression change.\n<Subject 2> (appears in [Shot 1], [Shot 2], [Shot 3]): fully_preserved - the long tied black hair, pale serious face, layered black robes, gray embroidered trim, broad sleeves, waist belt, hanging ornaments, and dark wrist coverings are retained; only his movement and expression change.\n<Subject 3> (appears in [Shot 2], [Shot 3]): fully_preserved - the red floral hair ornaments, long black hair, pearl-like earrings, crimson embroidered robes, dark sash, wide sleeves, and trailing red ribbons are retained; only her initial facing direction and speaking gesture change.\n<Subject 4> (appears in [Shot 1], [Shot 2], [Shot 3]): fully_preserved - the dark-barked plum tree, snow-covered red blossoms, misty blue-white forest, snowy ground, and falling snow are retained as the continuous environment; only framing and depth emphasis change.\n\ndetailed_description:\nCinematic high-detail Chinese fantasy drama, with a cool blue-white winter palette contrasted by saturated red blossoms and crimson robes. Use soft diffused snowfall light, shallow atmospheric depth, graceful controlled camera movement, realistic fabric motion, and seamless continuity between the four reference images.\n[Shot 1] A wide establishing shot shows the snow-covered forest path receding into pale mist, with the large red-plum tree anchoring the left side of the frame. <Subject 1> and <Subject 2> enter from the lower right and walk carefully through ankle-deep snow toward the distant flowering tree; her translucent blue sleeves and ribbons trail in the wind, while his black robes hang heavily and his long hair moves slightly. Snowflakes cross the lens in the foreground. The camera makes a slow forward dolly of moderate distance, keeping both figures in a balanced two-shot. Footsteps compress the snow, fabric rustles, and cold wind moves through bare branches. <Subject 4> supplies the full snowy plum-forest setting, while the visible costumes and silhouettes follow <Picture 1> and <Picture 2>.\n[Shot 2] At 00:01.700, cut to a medium-wide view beneath the plum tree. <Subject 3> stands several meters ahead near the center-left, partially framed by red blossoms, facing away from the approaching pair; her crimson sleeves and long trailing ribbons overlap the snowy ground. <Subject 1> and <Subject 2> stop in the right midground, visibly relieved. The camera slowly tracks left and pushes in, revealing the spatial relationship among all three characters. <Subject 1> (S1) steps forward, raises one hand slightly, and says with emotional relief, <d>[Chinese] 师姐，我终于找到你了。</d> Snowfall remains steady, with branches creaking softly and boots shifting in the snow. The character identities and costume details remain locked to <Picture 1>, <Picture 2>, and <Picture 3>.\n[Shot 3] At 00:03.250, a medium shot begins as <Subject 3> turns toward them, her face becoming clearly visible between red blossoms. She offers a gentle but practical expression and gathers one wide sleeve near her waist. <Subject 3> (S2) turns toward the pair and says, <d>[Chinese] 你们来了，群主刚睡下，我正准备给群主做饭去。</d> The camera performs a small clockwise arc around her, then widens to include the other two. <Subject 1> and <Subject 2> step beside her and lean forward together. \n<Subject 2> (S3) shout together, <d>[Chinese] 师姐我也来帮忙！</d> Their voices echo lightly through the forest as snow lands on their sleeves; the red blossoms, blue robe, black robe, and white landscape form the final balanced tableau.\n\noverall_soundscape:\nContinuous soft snowfall, a light wintry breeze passing through plum branches, occasional branch creaks, muted footsteps compressing powdery snow, gentle robe and sleeve rustling, and subtle snow displacement beneath the characters. Dialogue is clear and naturally reverberates in the open forest.\n\nnon_diegetic_music:\nN/A"
+    },
+    "class_type": "CR Prompt Text",
+    "_meta": {
+      "title": "⚙️ CR Prompt Text"
+    },
+    "t": {
+      "title": "提示词"
+    }
+  },
+  "665": {
+    "inputs": {
+      "预设分辨率": "自定义",
+      "横竖对调": false,
+      "批量大小": 1,
+      "自定义宽": 1344,
+      "自定义高": 768,
+      "缩放倍数": "32"
+    },
+    "class_type": "WJILatentPreset",
+    "_meta": {
+      "title": "📐 Latent预设 (Empty Latent Preset)"
+    }
+  },
+  "677": {
+    "inputs": {
+      "max_resolution": 1024,
+      "jpeg_quality": 100,
+      "suppress_default_preview": true,
+      "preview_frames": [
+        "131",
+        1
+      ],
+      "preview_fps": 11,
+      "tiny_vae": "taeh3.safetensors",
+      "model": [
+        "1313",
+        0
+      ]
+    },
+    "class_type": "ModelPreviewOverrideKJ",
+    "_meta": {
+      "title": "Model Preview Override"
+    }
+  },
+  "710": {
+    "inputs": {
+      "lora_name": "minimax/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors",
+      "strength_model": 0.75,
+      "model": [
+        "748",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "LoRA加载器（仅模型）"
+    }
+  },
+  "718": {
+    "inputs": {
+      "select": 2,
+      "model_1": [
+        "748",
+        0
+      ],
+      "model_2": [
+        "710",
+        0
+      ]
+    },
+    "class_type": "Model Switch (JPS)",
+    "_meta": {
+      "title": "Model Switch (JPS)"
+    }
+  },
+  "725": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "K采样器选择"
+    }
+  },
+  "727": {
+    "inputs": {
+      "noise_seed": [
+        "142",
+        0
+      ]
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "随机噪波"
+    }
+  },
+  "728": {
+    "inputs": {
+      "scheduler": "beta",
+      "steps": 8,
+      "denoise": 1,
+      "model": [
+        "677",
+        0
+      ]
+    },
+    "class_type": "BasicScheduler",
+    "_meta": {
+      "title": "基本调度器"
+    }
+  },
+  "729": {
+    "inputs": {
+      "model": [
+        "677",
+        0
+      ],
+      "conditioning": [
+        "136",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "基本引导器"
+    }
+  },
+  "730": {
+    "inputs": {
+      "noise": [
+        "727",
+        0
+      ],
+      "guider": [
+        "729",
+        0
+      ],
+      "sampler": [
+        "725",
+        0
+      ],
+      "sigmas": [
+        "1315",
+        0
+      ],
+      "latent_image": [
+        "136",
+        1
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "自定义采样器（高级）"
+    }
+  },
+  "732": {
+    "inputs": {
+      "frame_rate": 24,
+      "loop_count": 0,
+      "filename_prefix": "comfyui",
+      "format": "video/h264-mp4",
+      "pix_fmt": "yuv420p",
+      "crf": 16,
+      "save_metadata": false,
+      "trim_to_audio": false,
+      "pingpong": false,
+      "save_output": true,
+      "images": [
+        "1314",
+        0
+      ],
+      "audio": [
+        "121",
+        0
+      ]
+    },
+    "class_type": "VHS_VideoCombine",
+    "_meta": {
+      "title": "Video Combine 🎥🅥🅗🅢"
+    }
+  },
+  "748": {
+    "inputs": {
+      "attention": "comfy kitchen attention",
+      "model": [
+        "620",
+        0
+      ]
+    },
+    "class_type": "ModelAttentionBackend",
+    "_meta": {
+      "title": "ModelAttentionBackend"
+    }
+  },
+  "1306": {
+    "inputs": {
+      "offload_model": true,
+      "offload_cache": true,
+      "anything": [
+        "730",
+        0
+      ]
+    },
+    "class_type": "VRAMCleanup",
+    "_meta": {
+      "title": "🎈VRAM-Cleanup"
+    }
+  },
+  "1307": {
+    "inputs": {
+      "samples": [
+        "1306",
+        0
+      ],
+      "vae": [
+        "119",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "1312": {
+    "inputs": {
+      "head_chunks": 4,
+      "model": [
+        "718",
+        0
+      ]
+    },
+    "class_type": "MiniMaxLowVRAMAttention",
+    "_meta": {
+      "title": "MiniMax H3 Low VRAM Attention"
+    }
+  },
+  "1313": {
+    "inputs": {
+      "chunks": 2,
+      "seq_threshold": 4096,
+      "model": [
+        "1312",
+        0
+      ]
+    },
+    "class_type": "MiniMaxChunkFeedForward",
+    "_meta": {
+      "title": "MiniMax H3 Chunk FeedForward"
+    }
+  },
+  "1314": {
+    "inputs": {
+      "clean_file_cache": true,
+      "clean_processes": true,
+      "clean_dlls": true,
+      "retry_times": 3,
+      "anything": [
+        "1307",
+        0
+      ]
+    },
+    "class_type": "RAMCleanup",
+    "_meta": {
+      "title": "🎈RAM-Cleanup"
+    }
+  },
+  "1315": {
+    "inputs": {
+      "sigmas": [
+        "728",
+        0
+      ],
+      "extra_steps": 2,
+      "start_at_sigma": 0.65,
+      "end_at_sigma": 0,
+      "spacing": "cosine"
+    },
+    "class_type": "H3SigmaRefiner",
+    "_meta": {
+      "title": "H3 Sigma Refiner"
+    }
+  },
+  "_api_config": {
+    "customLabels": {
+      "128:type": "type",
+      "128:device": "device",
+      "131:expression": "expression",
+      "132:value": "秒数 (value)",
+      "136:ref_image_size": "ref_image_size",
+      "137:image": "参考图 0",
+      "139:image": "参考图 1",
+      "142:seed": "随机种子",
+      "144:image": "参考图 2",
+      "151:image": "参考图 3",
+      "620:weight_dtype": "weight_dtype",
+      "653:image": "参考图 4",
+      "654:image": "参考图 5",
+      "655:image": "参考图 6",
+      "656:image": "参考图 7",
+      "657:image": "参考图 8",
+      "664:prompt": "提示词 (prompt)",
+      "665:预设分辨率": "预设分辨率",
+      "665:横竖对调": "横竖对调",
+      "665:批量大小": "批量大小",
+      "665:自定义宽": "自定义宽",
+      "665:自定义高": "自定义高",
+      "665:缩放倍数": "缩放倍数",
+      "677:max_resolution": "max_resolution",
+      "677:jpeg_quality": "jpeg_quality",
+      "677:suppress_default_preview": "suppress_default_preview",
+      "677:preview_fps": "preview_fps",
+      "710:strength_model": "strength_model",
+      "718:select": "select",
+      "728:steps": "迭代步数",
+      "728:denoise": "denoise",
+      "732:filename_prefix": "文件名前缀",
+      "732:frame_rate": "frame_rate",
+      "732:loop_count": "loop_count",
+      "732:format": "format",
+      "732:pix_fmt": "pix_fmt",
+      "732:crf": "crf",
+      "732:save_metadata": "save_metadata",
+      "732:trim_to_audio": "trim_to_audio",
+      "732:pingpong": "pingpong",
+      "732:save_output": "save_output",
+      "748:attention": "attention",
+      "1306:offload_model": "offload_model",
+      "1306:offload_cache": "offload_cache",
+      "1312:head_chunks": "head_chunks",
+      "1313:chunks": "chunks",
+      "1313:seq_threshold": "seq_threshold",
+      "1314:clean_file_cache": "clean_file_cache",
+      "1314:clean_processes": "clean_processes",
+      "1314:clean_dlls": "clean_dlls",
+      "1314:retry_times": "retry_times",
+      "1315:extra_steps": "extra_steps",
+      "1315:start_at_sigma": "start_at_sigma",
+      "1315:end_at_sigma": "end_at_sigma",
+      "1315:spacing": "spacing"
+    },
+    "enabledParams": {
+      "128:type": false,
+      "128:device": false,
+      "131:expression": false,
+      "132:value": true,
+      "136:ref_image_size": false,
+      "137:image": true,
+      "139:image": true,
+      "142:seed": false,
+      "144:image": true,
+      "151:image": true,
+      "620:weight_dtype": false,
+      "653:image": true,
+      "654:image": true,
+      "655:image": true,
+      "656:image": true,
+      "657:image": true,
+      "664:prompt": true,
+      "665:预设分辨率": false,
+      "665:横竖对调": false,
+      "665:批量大小": false,
+      "665:自定义宽": true,
+      "665:自定义高": true,
+      "665:缩放倍数": false,
+      "677:max_resolution": false,
+      "677:jpeg_quality": false,
+      "677:suppress_default_preview": false,
+      "677:preview_fps": false,
+      "710:strength_model": false,
+      "718:select": false,
+      "728:steps": false,
+      "728:denoise": false,
+      "732:filename_prefix": false,
+      "732:frame_rate": false,
+      "732:loop_count": false,
+      "732:format": false,
+      "732:pix_fmt": false,
+      "732:crf": false,
+      "732:save_metadata": false,
+      "732:trim_to_audio": false,
+      "732:pingpong": false,
+      "732:save_output": false,
+      "748:attention": false,
+      "1306:offload_model": false,
+      "1306:offload_cache": false,
+      "1312:head_chunks": false,
+      "1313:chunks": false,
+      "1313:seq_threshold": false,
+      "1314:clean_file_cache": false,
+      "1314:clean_processes": false,
+      "1314:clean_dlls": false,
+      "1314:retry_times": false,
+      "1315:extra_steps": false,
+      "1315:start_at_sigma": false,
+      "1315:end_at_sigma": false,
+      "1315:spacing": false
+    },
+    "formValues": {
+      "128:type": "minimax",
+      "128:device": "default",
+      "131:expression": "max(5, round(a * 24)) + (5 - (max(5, round(a * 24)) % 17)) % 17",
+      "132:value": 5,
+      "136:ref_image_size": "max",
+      "137:image": null,
+      "139:image": null,
+      "142:seed": 731242627237534,
+      "144:image": null,
+      "151:image": null,
+      "620:weight_dtype": "default",
+      "653:image": null,
+      "654:image": null,
+      "655:image": null,
+      "656:image": null,
+      "657:image": null,
+      "664:prompt": "subject_definitions:\n<Subject 1> is the young woman from <Picture 1>, serving as the blue-robed woman, with a pale complexion, long black hair arranged in an elaborate updo with side-falling strands, blue floral hair ornaments and delicate dangling chains, refined eye makeup, red lips, gold-and-blue earrings, layered necklaces, and an ornate blue-and-gold fitted bodice beneath translucent pale-blue wide sleeves and a long flowing skirt.\n<Subject 2> is the young man from <Picture 2>, serving as the black-robed man, with a pale complexion, long black hair tied high with a dark hair ornament, loose strands framing his face, straight brows, a calm serious expression, and layered black traditional robes with gray embroidered trim, wide sleeves, a waist belt with hanging metal ornaments, and dark wrist-covering fabric.\n<Subject 3> is the woman from <Picture 3>, serving as the red-robed woman, with a fair complexion, long black hair half tied into an updo with red floral hair ornaments and dangling beads, soft natural makeup, pearl-like earrings, a red embroidered collar, layered crimson robes with wide sleeves, a dark decorated waist sash, and long trailing red fabric ribbons.\n<Subject 4> is the snow-forest environment from <Picture 4>, serving as the meeting location, with a large dark-barked tree on the left, snow-covered branches densely filled with vivid red plum blossoms, a pale blue-white forest receding into mist, an uneven snowy ground, and continuously falling snow.\n\nsummary:\n[reference generation] Create a five-second cinematic Chinese fantasy encounter in a snowy plum-blossom forest: the blue-robed woman and black-robed man find the red-robed woman near the flowering tree, exchange urgent yet warm dialogue, and offer to help her prepare food, with strong character continuity and a poetic winter atmosphere.\n\nretention_analysis:\n<Subject 1> (appears in [Shot 1], [Shot 2], [Shot 3]): fully_preserved - the pale complexion, elaborate black updo, blue floral ornaments, dangling jewelry, blue-and-gold bodice, translucent pale-blue sleeves, and long blue skirt are retained; only the pose, walking direction, and facial expression change.\n<Subject 2> (appears in [Shot 1], [Shot 2], [Shot 3]): fully_preserved - the long tied black hair, pale serious face, layered black robes, gray embroidered trim, broad sleeves, waist belt, hanging ornaments, and dark wrist coverings are retained; only his movement and expression change.\n<Subject 3> (appears in [Shot 2], [Shot 3]): fully_preserved - the red floral hair ornaments, long black hair, pearl-like earrings, crimson embroidered robes, dark sash, wide sleeves, and trailing red ribbons are retained; only her initial facing direction and speaking gesture change.\n<Subject 4> (appears in [Shot 1], [Shot 2], [Shot 3]): fully_preserved - the dark-barked plum tree, snow-covered red blossoms, misty blue-white forest, snowy ground, and falling snow are retained as the continuous environment; only framing and depth emphasis change.\n\ndetailed_description:\nCinematic high-detail Chinese fantasy drama, with a cool blue-white winter palette contrasted by saturated red blossoms and crimson robes. Use soft diffused snowfall light, shallow atmospheric depth, graceful controlled camera movement, realistic fabric motion, and seamless continuity between the four reference images.\n[Shot 1] A wide establishing shot shows the snow-covered forest path receding into pale mist, with the large red-plum tree anchoring the left side of the frame. <Subject 1> and <Subject 2> enter from the lower right and walk carefully through ankle-deep snow toward the distant flowering tree; her translucent blue sleeves and ribbons trail in the wind, while his black robes hang heavily and his long hair moves slightly. Snowflakes cross the lens in the foreground. The camera makes a slow forward dolly of moderate distance, keeping both figures in a balanced two-shot. Footsteps compress the snow, fabric rustles, and cold wind moves through bare branches. <Subject 4> supplies the full snowy plum-forest setting, while the visible costumes and silhouettes follow <Picture 1> and <Picture 2>.\n[Shot 2] At 00:01.700, cut to a medium-wide view beneath the plum tree. <Subject 3> stands several meters ahead near the center-left, partially framed by red blossoms, facing away from the approaching pair; her crimson sleeves and long trailing ribbons overlap the snowy ground. <Subject 1> and <Subject 2> stop in the right midground, visibly relieved. The camera slowly tracks left and pushes in, revealing the spatial relationship among all three characters. <Subject 1> (S1) steps forward, raises one hand slightly, and says with emotional relief, <d>[Chinese] 师姐，我终于找到你了。</d> Snowfall remains steady, with branches creaking softly and boots shifting in the snow. The character identities and costume details remain locked to <Picture 1>, <Picture 2>, and <Picture 3>.\n[Shot 3] At 00:03.250, a medium shot begins as <Subject 3> turns toward them, her face becoming clearly visible between red blossoms. She offers a gentle but practical expression and gathers one wide sleeve near her waist. <Subject 3> (S2) turns toward the pair and says, <d>[Chinese] 你们来了，群主刚睡下，我正准备给群主做饭去。</d> The camera performs a small clockwise arc around her, then widens to include the other two. <Subject 1> and <Subject 2> step beside her and lean forward together. \n<Subject 2> (S3) shout together, <d>[Chinese] 师姐我也来帮忙！</d> Their voices echo lightly through the forest as snow lands on their sleeves; the red blossoms, blue robe, black robe, and white landscape form the final balanced tableau.\n\noverall_soundscape:\nContinuous soft snowfall, a light wintry breeze passing through plum branches, occasional branch creaks, muted footsteps compressing powdery snow, gentle robe and sleeve rustling, and subtle snow displacement beneath the characters. Dialogue is clear and naturally reverberates in the open forest.\n\nnon_diegetic_music:\nN/A",
+      "665:预设分辨率": "自定义",
+      "665:横竖对调": false,
+      "665:批量大小": 1,
+      "665:自定义宽": 1344,
+      "665:自定义高": 768,
+      "665:缩放倍数": "32",
+      "677:max_resolution": 1024,
+      "677:jpeg_quality": 100,
+      "677:suppress_default_preview": true,
+      "677:preview_fps": 11,
+      "710:strength_model": 0.75,
+      "718:select": 2,
+      "728:steps": 8,
+      "728:denoise": 1,
+      "732:filename_prefix": "comfyui",
+      "732:frame_rate": 24,
+      "732:loop_count": 0,
+      "732:format": "video/h264-mp4",
+      "732:pix_fmt": "yuv420p",
+      "732:crf": 16,
+      "732:save_metadata": false,
+      "732:trim_to_audio": false,
+      "732:pingpong": false,
+      "732:save_output": true,
+      "748:attention": "comfy kitchen attention",
+      "1306:offload_model": true,
+      "1306:offload_cache": true,
+      "1312:head_chunks": 4,
+      "1313:chunks": 2,
+      "1313:seq_threshold": 4096,
+      "1314:clean_file_cache": true,
+      "1314:clean_processes": true,
+      "1314:clean_dlls": true,
+      "1314:retry_times": 3,
+      "1315:extra_steps": 2,
+      "1315:start_at_sigma": 0.65,
+      "1315:end_at_sigma": 0,
+      "1315:spacing": "cosine"
+    },
+    "mediaOrder": [
+      "137:image",
+      "139:image",
+      "144:image",
+      "151:image",
+      "653:image",
+      "654:image",
+      "655:image",
+      "656:image",
+      "657:image"
+    ],
+    "mediaOrderSource": "auto",
+    "apiNames": {
+      "128:type": "type",
+      "128:device": "device",
+      "131:expression": "expression",
+      "132:value": "value",
+      "136:ref_image_size": "ref_image_size",
+      "137:image": "ref_image_0",
+      "139:image": "ref_image_1",
+      "142:seed": "seed",
+      "144:image": "ref_image_2",
+      "151:image": "ref_image_3",
+      "620:weight_dtype": "weight_dtype",
+      "653:image": "ref_image_4",
+      "654:image": "ref_image_5",
+      "655:image": "ref_image_6",
+      "656:image": "ref_image_7",
+      "657:image": "ref_image_8",
+      "664:prompt": "prompt",
+      "665:预设分辨率": "param_2",
+      "665:横竖对调": "param",
+      "665:批量大小": "param_3",
+      "665:自定义宽": "param_4",
+      "665:自定义高": "param_5",
+      "665:缩放倍数": "param_6",
+      "677:max_resolution": "max_resolution",
+      "677:jpeg_quality": "jpeg_quality",
+      "677:suppress_default_preview": "suppress_default_preview",
+      "677:preview_fps": "preview_fps",
+      "710:strength_model": "strength_model",
+      "718:select": "select",
+      "728:steps": "steps",
+      "728:denoise": "denoise",
+      "732:filename_prefix": "filename_prefix",
+      "732:frame_rate": "frame_rate",
+      "732:loop_count": "loop_count",
+      "732:format": "format",
+      "732:pix_fmt": "pix_fmt",
+      "732:crf": "crf",
+      "732:save_metadata": "save_metadata",
+      "732:trim_to_audio": "trim_to_audio",
+      "732:pingpong": "pingpong",
+      "732:save_output": "save_output",
+      "748:attention": "attention",
+      "1306:offload_model": "offload_model",
+      "1306:offload_cache": "offload_cache",
+      "1312:head_chunks": "head_chunks",
+      "1313:chunks": "chunks",
+      "1313:seq_threshold": "seq_threshold",
+      "1314:clean_file_cache": "clean_file_cache",
+      "1314:clean_processes": "clean_processes",
+      "1314:clean_dlls": "clean_dlls",
+      "1314:retry_times": "retry_times",
+      "1315:extra_steps": "extra_steps",
+      "1315:start_at_sigma": "start_at_sigma",
+      "1315:end_at_sigma": "end_at_sigma",
+      "1315:spacing": "spacing"
+    }
+  }
+}

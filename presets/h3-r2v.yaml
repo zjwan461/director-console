@@ -1,0 +1,51 @@
+id: h3.r2v
+name: 多参考生成
+badge: 角色一致
+category: video
+output_kind: video
+order: 40
+desc: 上传最多 3 张参考图（人物/服装/场景），按描述生成一段视频。
+hint: 想让同一角色跨镜头稳定，就把角色图放第 1 张，并在描述里写清「保持和参考图一致」。
+workflow: API-U01-minimax_h3_基础版API.json
+timeout: 3600
+placeholders:
+  image: blank-image.png
+  video: blank-video.mp4
+  audio: blank-audio.mp3
+fields:
+  - key: ref_1
+    bind: "137:image"
+    type: image
+    label: 参考图 1
+    required: true
+  - key: ref_2
+    bind: "139:image"
+    type: image
+    label: 参考图 2（可选）
+  - key: ref_3
+    bind: "141:image"
+    type: image
+    label: 参考图 3（可选）
+  - key: prompt
+    bind: "146:prompt"
+    type: textarea
+    label: 画面描述
+    rows: 8
+    required: true
+    assist: r2v
+    placeholder: 例：<Picture 1> 的女子站在雪中寺庙前，镜头缓慢推近，冷调日光
+  - key: size
+    type: size
+    label: 画幅
+    mode: wh
+    width: "145:自定义宽"
+    height: "145:自定义高"
+    default_aspect: "16:9"
+    default_megapixels: 0.4
+  - key: duration
+    bind: "147:value"
+    type: duration
+    label: 时长（秒）
+    default: 5
+    min: 1
+    max: 15

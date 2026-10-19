@@ -1,0 +1,739 @@
+{
+  "677": {
+    "inputs": {
+      "max_resolution": 1024,
+      "jpeg_quality": 80,
+      "suppress_default_preview": true,
+      "preview_frames": [
+        "3892",
+        21
+      ],
+      "preview_fps": 12,
+      "tiny_vae": "taeh3.safetensors",
+      "model": [
+        "3886",
+        0
+      ],
+      "vae": [
+        "3939",
+        2
+      ]
+    },
+    "class_type": "ModelPreviewOverrideKJ",
+    "_meta": {
+      "title": "Model Preview Override"
+    }
+  },
+  "732": {
+    "inputs": {
+      "frame_rate": 24,
+      "loop_count": 0,
+      "filename_prefix": "comfyui",
+      "format": "video/h264-mp4",
+      "pix_fmt": "yuv420p",
+      "crf": 16,
+      "save_metadata": false,
+      "trim_to_audio": false,
+      "pingpong": false,
+      "save_output": true,
+      "images": [
+        "3956",
+        0
+      ],
+      "audio": [
+        "3953",
+        0
+      ]
+    },
+    "class_type": "VHS_VideoCombine",
+    "_meta": {
+      "title": "Video Combine 🎥🅥🅗🅢"
+    }
+  },
+  "3886": {
+    "inputs": {
+      "chunks": 2,
+      "seq_threshold": 4096,
+      "model": [
+        "3968",
+        0
+      ]
+    },
+    "class_type": "MiniMaxChunkFeedForward",
+    "_meta": {
+      "title": "MiniMax H3 Chunk FeedForward"
+    }
+  },
+  "3892": {
+    "inputs": {
+      "fps": 24,
+      "video_trim_seconds": "auto",
+      "audio_trim_seconds": "auto",
+      "image_max_side": "auto",
+      "video_max_side": "512",
+      "prompt": "subject_definitions:\n<Subject 1> 是 <Picture 1> 中的蓝衣年轻女子，多视图角色设定，高盘黑发配蓝色花饰与垂珠金链，肤色白，红唇，蓝金刺绣抹胸式上衣，裸露肩臂，半透明蓝灰长袖，层叠金蓝项链，蓝色长裙带金绣与腰间垂链。\n<Subject 2> 是 <Picture 2> 中的黑袍年轻男子，多视图角色设定，黑发高马尾，头顶银色冠饰，五官轮廓清楚，肤色白，黑袍银绣，白领内衬，宽袖，深色腰带配银扣与垂饰。\n<Subject 3> 是 <Picture 3> 中的红衣年轻女子，多视图角色设定，黑发半盘并留长发披后，红花与珠串发饰，肤色白，红唇，珍珠耳坠，深红汉服金绣宽袖，深色内襟，深色腰封配金属饰与流苏。\n<Subject 4> 是 <Picture 4> 中的雪中寺庙环境拼图：左上是远景，雪山与雪松之间的红墙殿宇群和多层宝塔，雪地上有脚印；右上是山门正面，两侧石狮、红灯笼、积雪台阶与脚印；左下是内院，中央石灯，尽头多层宝塔，红柱回廊，地面积雪；右下是檐下近景，斗拱积雪、悬着的铜铃与大红灯笼。晴日，冷调，雪停。\n\nsummary:\n[reference generation] 做一条十五秒、四镜的古装短片：两名女子走过雪中山门，在内院与一名男子会合，最后落在屋檐、铜铃与灯笼上，由男声旁白收束。\n\nretention_analysis:\n<Subject 1> (appears in [Shot 1], [Shot 2], [Shot 3]): fully_preserved - 高盘黑发、蓝色花饰、蓝金刺绣上衣与半透明长袖、蓝色长裙保持不变，只有朝向和步态改变。\n<Subject 2> (appears in [Shot 3]): fully_preserved - 高马尾、银色冠饰、黑袍银绣与腰带垂饰保持不变，只有步行与停步改变。\n<Subject 3> (appears in [Shot 1], [Shot 2], [Shot 3]): fully_preserved - 红花发饰、深红金绣汉服与深色腰封保持不变，只有朝向和步态改变。\n<Subject 4> (appears in [Shot 1], [Shot 2], [Shot 3], [Shot 4]): fully_preserved - 左上远景用于 [Shot 1]，右上山门用于 [Shot 2]，左下内院用于 [Shot 3]，右下檐下铜铃与红灯笼用于 [Shot 4]，积雪、红墙与殿宇布局不变。\n\ndetailed_description:\n古装剧摄影，画面清楚，冷调冬日，日光柔和漫射，运镜慢而幅度小。晴雪，雪停，地面是踩实的雪。\n[Shot 1] 取 <Subject 4> 左上格的殿宇远景作后景，中远景，两人位于画面下半、离镜头约数步。调用 <Subject 1> 与 <Subject 3> 的背面：<Subject 1> 在左，蓝金衣与垂袖清楚；<Subject 3> 在右，深红宽袖清楚。她们并肩朝远处殿宇走，每一步踩进雪里。日光从镜头左上方来，雪地亮，两人背侧留着仍能看清的阴影。Push In at slow speed with small amplitude。踩雪声随落步出现。走了约一步后，<Subject 1> 把脸略转向右侧的 <Subject 3>。<Subject 1> (S1) 低声说出，<d>[Chinese] 师姐，我们就快要到了。</d> 结束时两人仍朝殿宇方向走，未进门。\n[Shot 2] At 00:03.500, 取 <Subject 4> 右上格的山门。中景，石狮与红灯笼在门两侧，积雪台阶在脚下。起幅承接上一镜的去向：<Subject 1> 与 <Subject 3> 已在门前左侧，先各落一步，衣袖被风掀起一点，再向画面右侧的门洞走。日光仍从镜头左上方来，门柱在两人右侧投下窄阴影。Pan Right at slow speed with small amplitude，跟着她们的步伐，幅度只到门洞边缘。踩雪声继续，只在落步时出现。<Subject 3> (S2) 应声说出，<d>[Chinese] 是啊，但愿群主起来了。</d> 结束时两人停在门洞左侧、尚未跨进院内。\n[Shot 3] At 00:07.000, 取 <Subject 4> 左下格的内院。中景，石灯在画面中部偏后，宝塔在尽头。日光从镜头左上方来，红柱与雪地分界清楚。<Subject 1> 与 <Subject 3> 从画面左侧进入，走到石灯近侧停下，两人相距约一步；<Subject 3> 面向右侧。<Subject 2> 从画面右侧走来，黑袍银绣与高马尾与 <Picture 2> 一致，在相距约两步处停下，嘴角抬起，目光对着 <Subject 1>。Static Shot。风只轻动衣摆，这一镜不单独出现踩雪声。停稳后 <Subject 3> (S2) 说出，<d>[Chinese] 师弟，群主起来了吗？</d> <Subject 2> (S3) 接着说出，<d>[Chinese] 师姐，你们终于来了，群主在里面等你们好久了。</d> 结束时三人停在院中，没有再迈步。\n[Shot 4] At 00:12.000, 取 <Subject 4> 右下格。近景对着屋檐，斗拱积雪、铜铃与大红灯笼同时在画里，画面中没有人。日光从镜头左上方来，瓦上的雪亮，铃在阴影里仍可辨。Static Shot。一只鸽子从檐边振翅飞出画外，铜铃轻轻一晃。一名男声旁白 (S4) 以画外音说出，<d>[Chinese] 故事就从这里开始。</d> 结束时檐、铃、灯笼仍在，鸽子已经离开画面。\n\noverall_soundscape:\n雪地与空院的低底噪贯穿四镜，风贴着屋檐和松枝，细而不断。踩雪声只在 [Shot 1] 与 [Shot 2] 的落步时出现，步停则停。[Shot 3] 只留风声与衣料轻响。[Shot 4] 鸽子振翅一次，铜铃短促一响，之后回到风声。对白贴近、清楚，室外有一点开阔的回声。\n\nnon_diegetic_music:\n低音量的长音铺底，配很轻的传统弦乐，速度慢，音量平稳，全片保持沉思，不出现旋律高潮。",
+      "seconds": 15,
+      "aspect_ratio": "16:9 (Widescreen)",
+      "megapixels": 1.2,
+      "multiple": 32,
+      "ref_image_0": "Untitled(3).jpg",
+      "ref_image_1": "Untitled(1).jpg",
+      "ref_image_2": "Untitled(4).jpg",
+      "ref_image_3": "snowtp.png",
+      "ref_image_4": "zealman-blank-image.png",
+      "ref_image_5": "zealman-blank-image.png",
+      "ref_image_6": "zealman-blank-image.png",
+      "ref_image_7": "zealman-blank-image.png",
+      "ref_image_8": "zealman-blank-image.png",
+      "ref_audio_0": "zealman-blank-audio.mp3",
+      "ref_audio_1": "zealman-blank-audio.mp3",
+      "ref_audio_2": "zealman-blank-audio.mp3"
+    },
+    "class_type": "ZealmanH3PickReferenceMedia",
+    "_meta": {
+      "title": "ZealmanH3素材选择"
+    }
+  },
+  "3939": {
+    "inputs": {
+      "unet_name": "minimax/Minimax-h3_Singularity_ref2va_v1.3_int8.safetensors",
+      "weight_dtype": "default",
+      "clip_name": "qwen3vl_32b_minimax_h3_int8_convrot.safetensors",
+      "clip_device": "default",
+      "video_vae": "minimax_h3_video_vae_int8_convrot.safetensors",
+      "audio_vae": "minimax_h3_audio_vae_fp32.safetensors",
+      "attention": "comfy kitchen attention",
+      "lora_1": {
+        "on": true,
+        "lora": "minimax/minimax_h3_turbo_v4_step600_ema_pruned_comfyui.safetensors",
+        "strength": 1
+      },
+      "lora_2": {
+        "on": true,
+        "lora": "minimax/davham_cinema-h3-Euler-simple-0.8.safetensors",
+        "strength": 0.6
+      },
+      "lora_3": {
+        "on": false,
+        "lora": "minimax/H3_Combat_V2.safetensors",
+        "strength": 0.65
+      },
+      "lora_4": {
+        "on": false,
+        "lora": "minimax/Motion_Repair_V2.safetensors",
+        "strength": 0.35
+      },
+      "lora_5": {
+        "on": false,
+        "lora": "minimax/H3_Fight_Flow_V1.safetensors",
+        "strength": 0.35
+      },
+      "lora_6": {
+        "on": false,
+        "lora": "minimax/motion_speed_slider_mmh3_v1.1.safetensors",
+        "strength": 3
+      }
+    },
+    "class_type": "ZealmanH3ModelLoader",
+    "_meta": {
+      "title": "ZealmanH3模型加载"
+    }
+  },
+  "3950": {
+    "inputs": {
+      "prompt": [
+        "3892",
+        18
+      ],
+      "width": [
+        "3892",
+        19
+      ],
+      "height": [
+        "3892",
+        20
+      ],
+      "length": [
+        "3892",
+        21
+      ],
+      "ref_image_size": "max",
+      "clip": [
+        "3939",
+        1
+      ],
+      "vae": [
+        "3939",
+        2
+      ],
+      "audio_vae": [
+        "3939",
+        3
+      ],
+      "ref_images.ref_image_0": [
+        "3892",
+        0
+      ],
+      "ref_images.ref_image_1": [
+        "3892",
+        1
+      ],
+      "ref_images.ref_image_2": [
+        "3892",
+        2
+      ],
+      "ref_images.ref_image_3": [
+        "3892",
+        3
+      ],
+      "ref_images.ref_image_4": [
+        "3892",
+        4
+      ],
+      "ref_images.ref_image_5": [
+        "3892",
+        5
+      ],
+      "ref_images.ref_image_6": [
+        "3892",
+        6
+      ],
+      "ref_videos.ref_video_0": [
+        "3892",
+        9
+      ],
+      "ref_videos.ref_video_1": [
+        "3892",
+        10
+      ],
+      "ref_videos.ref_video_2": [
+        "3892",
+        11
+      ],
+      "ref_audios.ref_audio_0": [
+        "3892",
+        15
+      ],
+      "ref_audios.ref_audio_1": [
+        "3892",
+        16
+      ],
+      "ref_audios.ref_audio_2": [
+        "3892",
+        17
+      ],
+      "ref_images.ref_image_7": [
+        "3892",
+        7
+      ],
+      "ref_images.ref_image_8": [
+        "3892",
+        8
+      ]
+    },
+    "class_type": "MiniMaxH3ReferenceToVideo",
+    "_meta": {
+      "title": "MiniMax H3 参考生成视频"
+    }
+  },
+  "3951": {
+    "inputs": {
+      "distilled_adapter": "t8_compat/MiniMaxH3_SemanticBridge_v1_T8_Compat.safetensors",
+      "alpha": 0.1,
+      "magnitude_match": "per_token",
+      "conditioning": [
+        "3950",
+        0
+      ]
+    },
+    "class_type": "SenseNovaH3DistilledBridge",
+    "_meta": {
+      "title": "MiniMax H3 Semantic Bridge"
+    }
+  },
+  "3952": {
+    "inputs": {
+      "offload_model": true,
+      "offload_cache": true,
+      "anything": [
+        "3977",
+        0
+      ]
+    },
+    "class_type": "VRAMCleanup",
+    "_meta": {
+      "title": "🎈VRAM-Cleanup"
+    }
+  },
+  "3953": {
+    "inputs": {
+      "samples": [
+        "3952",
+        0
+      ],
+      "vae": [
+        "3939",
+        3
+      ]
+    },
+    "class_type": "VAEDecodeAudio",
+    "_meta": {
+      "title": "VAE解码（音频）"
+    }
+  },
+  "3954": {
+    "inputs": {
+      "sampler_name": "er_sde"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "K采样器选择"
+    }
+  },
+  "3956": {
+    "inputs": {
+      "tiling": true,
+      "tile_size": 256,
+      "tile_overlap": 64,
+      "output_device": "cpu",
+      "temporal_tiling": false,
+      "temporal_tile_frames": 85,
+      "temporal_context_frames": 39,
+      "seam_warning_threshold": 0.02,
+      "samples": [
+        "3952",
+        0
+      ],
+      "vae": [
+        "3939",
+        2
+      ]
+    },
+    "class_type": "MiniMaxH3VAEDecodeFast",
+    "_meta": {
+      "title": "MiniMax H3 VAE Decode (fast)"
+    }
+  },
+  "3967": {
+    "inputs": {
+      "scheduler": "simple",
+      "steps": 8,
+      "denoise": 1,
+      "model": [
+        "677",
+        0
+      ]
+    },
+    "class_type": "BasicScheduler",
+    "_meta": {
+      "title": "基本调度器"
+    }
+  },
+  "3968": {
+    "inputs": {
+      "selection": "sol-attn",
+      "selection.tau": 1.3,
+      "start_percent": 0.2,
+      "end_percent": 1,
+      "dense_blocks": "",
+      "min_tokens": 12288,
+      "extra_tokens": 256,
+      "sink_conditioning": "exact_kv_and_rows",
+      "verbose": true,
+      "model": [
+        "3939",
+        0
+      ]
+    },
+    "class_type": "BlockSparseAttention",
+    "_meta": {
+      "title": "模型稀疏注意力"
+    }
+  },
+  "3973": {
+    "inputs": {
+      "conditioning": [
+        "3950",
+        0
+      ]
+    },
+    "class_type": "ConditioningZeroOut",
+    "_meta": {
+      "title": "条件零化"
+    }
+  },
+  "3974": {
+    "inputs": {
+      "extra_steps": 1,
+      "start_at_sigma": 0.7,
+      "end_at_sigma": 0,
+      "spacing": "cosine",
+      "sigmas": [
+        "3967",
+        0
+      ]
+    },
+    "class_type": "H3SigmaRefiner",
+    "_meta": {
+      "title": "H3 Sigma Refiner"
+    }
+  },
+  "3976": {
+    "inputs": {
+      "model": [
+        "677",
+        0
+      ],
+      "conditioning": [
+        "3951",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "基本引导器"
+    }
+  },
+  "3977": {
+    "inputs": {
+      "noise": [
+        "3978",
+        0
+      ],
+      "guider": [
+        "3976",
+        0
+      ],
+      "sampler": [
+        "3954",
+        0
+      ],
+      "sigmas": [
+        "3974",
+        0
+      ],
+      "latent_image": [
+        "3950",
+        1
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "自定义采样器（高级）"
+    }
+  },
+  "3978": {
+    "inputs": {
+      "noise_seed": 270662856799090
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "随机噪波"
+    }
+  },
+  "_api_config": {
+    "customLabels": {
+      "677:max_resolution": "max_resolution",
+      "677:jpeg_quality": "jpeg_quality",
+      "677:suppress_default_preview": "suppress_default_preview",
+      "677:preview_fps": "preview_fps",
+      "732:filename_prefix": "文件名前缀",
+      "732:frame_rate": "frame_rate",
+      "732:loop_count": "loop_count",
+      "732:format": "format",
+      "732:pix_fmt": "pix_fmt",
+      "732:crf": "crf",
+      "732:save_metadata": "save_metadata",
+      "732:trim_to_audio": "trim_to_audio",
+      "732:pingpong": "pingpong",
+      "732:save_output": "save_output",
+      "3886:chunks": "chunks",
+      "3886:seq_threshold": "seq_threshold",
+      "3892:ref_image_0": "图像 ref_image_0",
+      "3892:ref_image_1": "图像 ref_image_1",
+      "3892:ref_image_2": "图像 ref_image_2",
+      "3892:ref_image_3": "图像 ref_image_3",
+      "3892:ref_image_4": "图像 ref_image_4",
+      "3892:ref_image_5": "图像 ref_image_5",
+      "3892:ref_image_6": "图像 ref_image_6",
+      "3892:ref_image_7": "图像 ref_image_7",
+      "3892:ref_image_8": "图像 ref_image_8",
+      "3892:ref_audio_0": "音频 ref_audio_0",
+      "3892:ref_audio_1": "音频 ref_audio_1",
+      "3892:ref_audio_2": "音频 ref_audio_2",
+      "3892:prompt": "提示词",
+      "3892:fps": "fps",
+      "3892:video_trim_seconds": "video_trim_seconds",
+      "3892:audio_trim_seconds": "audio_trim_seconds",
+      "3892:image_max_side": "image_max_side",
+      "3892:video_max_side": "video_max_side",
+      "3892:seconds": "seconds",
+      "3892:aspect_ratio": "aspect_ratio",
+      "3892:megapixels": "megapixels",
+      "3892:multiple": "multiple",
+      "3939:weight_dtype": "weight_dtype",
+      "3939:clip_device": "clip_device",
+      "3939:attention": "attention",
+      "3950:ref_image_size": "ref_image_size",
+      "3951:alpha": "alpha",
+      "3951:magnitude_match": "magnitude_match",
+      "3952:offload_model": "offload_model",
+      "3952:offload_cache": "offload_cache",
+      "3956:tiling": "tiling",
+      "3956:tile_size": "tile_size",
+      "3956:tile_overlap": "tile_overlap",
+      "3956:output_device": "output_device",
+      "3956:temporal_tiling": "temporal_tiling",
+      "3956:temporal_tile_frames": "temporal_tile_frames",
+      "3956:temporal_context_frames": "temporal_context_frames",
+      "3956:seam_warning_threshold": "seam_warning_threshold",
+      "3967:steps": "迭代步数",
+      "3967:denoise": "denoise",
+      "3968:selection": "selection",
+      "3968:selection.tau": "selection.tau",
+      "3968:start_percent": "start_percent",
+      "3968:end_percent": "end_percent",
+      "3968:dense_blocks": "dense_blocks",
+      "3968:min_tokens": "min_tokens",
+      "3968:extra_tokens": "extra_tokens",
+      "3968:sink_conditioning": "sink_conditioning",
+      "3968:verbose": "verbose",
+      "3974:extra_steps": "extra_steps",
+      "3974:start_at_sigma": "start_at_sigma",
+      "3974:end_at_sigma": "end_at_sigma",
+      "3974:spacing": "spacing",
+      "3978:noise_seed": "noise_seed"
+    },
+    "enabledParams": {
+      "677:max_resolution": false,
+      "677:jpeg_quality": false,
+      "677:suppress_default_preview": false,
+      "677:preview_fps": false,
+      "732:filename_prefix": false,
+      "732:frame_rate": false,
+      "732:loop_count": false,
+      "732:format": false,
+      "732:pix_fmt": false,
+      "732:crf": false,
+      "732:save_metadata": false,
+      "732:trim_to_audio": false,
+      "732:pingpong": false,
+      "732:save_output": false,
+      "3886:chunks": false,
+      "3886:seq_threshold": false,
+      "3892:ref_image_0": true,
+      "3892:ref_image_1": true,
+      "3892:ref_image_2": true,
+      "3892:ref_image_3": true,
+      "3892:ref_image_4": true,
+      "3892:ref_image_5": true,
+      "3892:ref_image_6": true,
+      "3892:ref_image_7": true,
+      "3892:ref_image_8": true,
+      "3892:ref_audio_0": true,
+      "3892:ref_audio_1": true,
+      "3892:ref_audio_2": true,
+      "3892:prompt": true,
+      "3892:fps": false,
+      "3892:video_trim_seconds": false,
+      "3892:audio_trim_seconds": false,
+      "3892:image_max_side": false,
+      "3892:video_max_side": false,
+      "3892:seconds": true,
+      "3892:aspect_ratio": true,
+      "3892:megapixels": true,
+      "3892:multiple": false,
+      "3939:weight_dtype": false,
+      "3939:clip_device": false,
+      "3939:attention": false,
+      "3950:ref_image_size": false,
+      "3951:alpha": false,
+      "3951:magnitude_match": false,
+      "3952:offload_model": false,
+      "3952:offload_cache": false,
+      "3956:tiling": false,
+      "3956:tile_size": false,
+      "3956:tile_overlap": false,
+      "3956:output_device": false,
+      "3956:temporal_tiling": false,
+      "3956:temporal_tile_frames": false,
+      "3956:temporal_context_frames": false,
+      "3956:seam_warning_threshold": false,
+      "3967:steps": false,
+      "3967:denoise": false,
+      "3968:selection": false,
+      "3968:selection.tau": false,
+      "3968:start_percent": false,
+      "3968:end_percent": false,
+      "3968:dense_blocks": false,
+      "3968:min_tokens": false,
+      "3968:extra_tokens": false,
+      "3968:sink_conditioning": false,
+      "3968:verbose": false,
+      "3974:extra_steps": false,
+      "3974:start_at_sigma": false,
+      "3974:end_at_sigma": false,
+      "3974:spacing": false,
+      "3978:noise_seed": false
+    },
+    "formValues": {
+      "677:max_resolution": 1024,
+      "677:jpeg_quality": 80,
+      "677:suppress_default_preview": true,
+      "677:preview_fps": 12,
+      "732:filename_prefix": "comfyui",
+      "732:frame_rate": 24,
+      "732:loop_count": 0,
+      "732:format": "video/h264-mp4",
+      "732:pix_fmt": "yuv420p",
+      "732:crf": 16,
+      "732:save_metadata": false,
+      "732:trim_to_audio": false,
+      "732:pingpong": false,
+      "732:save_output": true,
+      "3886:chunks": 2,
+      "3886:seq_threshold": 4096,
+      "3892:ref_image_0": null,
+      "3892:ref_image_1": null,
+      "3892:ref_image_2": null,
+      "3892:ref_image_3": null,
+      "3892:ref_image_4": null,
+      "3892:ref_image_5": null,
+      "3892:ref_image_6": null,
+      "3892:ref_image_7": null,
+      "3892:ref_image_8": null,
+      "3892:ref_audio_0": null,
+      "3892:ref_audio_1": null,
+      "3892:ref_audio_2": null,
+      "3892:prompt": "subject_definitions:\n<Subject 1> 是 <Picture 1> 中的蓝衣年轻女子，多视图角色设定，高盘黑发配蓝色花饰与垂珠金链，肤色白，红唇，蓝金刺绣抹胸式上衣，裸露肩臂，半透明蓝灰长袖，层叠金蓝项链，蓝色长裙带金绣与腰间垂链。\n<Subject 2> 是 <Picture 2> 中的黑袍年轻男子，多视图角色设定，黑发高马尾，头顶银色冠饰，五官轮廓清楚，肤色白，黑袍银绣，白领内衬，宽袖，深色腰带配银扣与垂饰。\n<Subject 3> 是 <Picture 3> 中的红衣年轻女子，多视图角色设定，黑发半盘并留长发披后，红花与珠串发饰，肤色白，红唇，珍珠耳坠，深红汉服金绣宽袖，深色内襟，深色腰封配金属饰与流苏。\n<Subject 4> 是 <Picture 4> 中的雪中寺庙环境拼图：左上是远景，雪山与雪松之间的红墙殿宇群和多层宝塔，雪地上有脚印；右上是山门正面，两侧石狮、红灯笼、积雪台阶与脚印；左下是内院，中央石灯，尽头多层宝塔，红柱回廊，地面积雪；右下是檐下近景，斗拱积雪、悬着的铜铃与大红灯笼。晴日，冷调，雪停。\n\nsummary:\n[reference generation] 做一条十五秒、四镜的古装短片：两名女子走过雪中山门，在内院与一名男子会合，最后落在屋檐、铜铃与灯笼上，由男声旁白收束。\n\nretention_analysis:\n<Subject 1> (appears in [Shot 1], [Shot 2], [Shot 3]): fully_preserved - 高盘黑发、蓝色花饰、蓝金刺绣上衣与半透明长袖、蓝色长裙保持不变，只有朝向和步态改变。\n<Subject 2> (appears in [Shot 3]): fully_preserved - 高马尾、银色冠饰、黑袍银绣与腰带垂饰保持不变，只有步行与停步改变。\n<Subject 3> (appears in [Shot 1], [Shot 2], [Shot 3]): fully_preserved - 红花发饰、深红金绣汉服与深色腰封保持不变，只有朝向和步态改变。\n<Subject 4> (appears in [Shot 1], [Shot 2], [Shot 3], [Shot 4]): fully_preserved - 左上远景用于 [Shot 1]，右上山门用于 [Shot 2]，左下内院用于 [Shot 3]，右下檐下铜铃与红灯笼用于 [Shot 4]，积雪、红墙与殿宇布局不变。\n\ndetailed_description:\n古装剧摄影，画面清楚，冷调冬日，日光柔和漫射，运镜慢而幅度小。晴雪，雪停，地面是踩实的雪。\n[Shot 1] 取 <Subject 4> 左上格的殿宇远景作后景，中远景，两人位于画面下半、离镜头约数步。调用 <Subject 1> 与 <Subject 3> 的背面：<Subject 1> 在左，蓝金衣与垂袖清楚；<Subject 3> 在右，深红宽袖清楚。她们并肩朝远处殿宇走，每一步踩进雪里。日光从镜头左上方来，雪地亮，两人背侧留着仍能看清的阴影。Push In at slow speed with small amplitude。踩雪声随落步出现。走了约一步后，<Subject 1> 把脸略转向右侧的 <Subject 3>。<Subject 1> (S1) 低声说出，<d>[Chinese] 师姐，我们就快要到了。</d> 结束时两人仍朝殿宇方向走，未进门。\n[Shot 2] At 00:03.500, 取 <Subject 4> 右上格的山门。中景，石狮与红灯笼在门两侧，积雪台阶在脚下。起幅承接上一镜的去向：<Subject 1> 与 <Subject 3> 已在门前左侧，先各落一步，衣袖被风掀起一点，再向画面右侧的门洞走。日光仍从镜头左上方来，门柱在两人右侧投下窄阴影。Pan Right at slow speed with small amplitude，跟着她们的步伐，幅度只到门洞边缘。踩雪声继续，只在落步时出现。<Subject 3> (S2) 应声说出，<d>[Chinese] 是啊，但愿群主起来了。</d> 结束时两人停在门洞左侧、尚未跨进院内。\n[Shot 3] At 00:07.000, 取 <Subject 4> 左下格的内院。中景，石灯在画面中部偏后，宝塔在尽头。日光从镜头左上方来，红柱与雪地分界清楚。<Subject 1> 与 <Subject 3> 从画面左侧进入，走到石灯近侧停下，两人相距约一步；<Subject 3> 面向右侧。<Subject 2> 从画面右侧走来，黑袍银绣与高马尾与 <Picture 2> 一致，在相距约两步处停下，嘴角抬起，目光对着 <Subject 1>。Static Shot。风只轻动衣摆，这一镜不单独出现踩雪声。停稳后 <Subject 3> (S2) 说出，<d>[Chinese] 师弟，群主起来了吗？</d> <Subject 2> (S3) 接着说出，<d>[Chinese] 师姐，你们终于来了，群主在里面等你们好久了。</d> 结束时三人停在院中，没有再迈步。\n[Shot 4] At 00:12.000, 取 <Subject 4> 右下格。近景对着屋檐，斗拱积雪、铜铃与大红灯笼同时在画里，画面中没有人。日光从镜头左上方来，瓦上的雪亮，铃在阴影里仍可辨。Static Shot。一只鸽子从檐边振翅飞出画外，铜铃轻轻一晃。一名男声旁白 (S4) 以画外音说出，<d>[Chinese] 故事就从这里开始。</d> 结束时檐、铃、灯笼仍在，鸽子已经离开画面。\n\noverall_soundscape:\n雪地与空院的低底噪贯穿四镜，风贴着屋檐和松枝，细而不断。踩雪声只在 [Shot 1] 与 [Shot 2] 的落步时出现，步停则停。[Shot 3] 只留风声与衣料轻响。[Shot 4] 鸽子振翅一次，铜铃短促一响，之后回到风声。对白贴近、清楚，室外有一点开阔的回声。\n\nnon_diegetic_music:\n低音量的长音铺底，配很轻的传统弦乐，速度慢，音量平稳，全片保持沉思，不出现旋律高潮。",
+      "3892:fps": 24,
+      "3892:video_trim_seconds": "auto",
+      "3892:audio_trim_seconds": "auto",
+      "3892:image_max_side": "auto",
+      "3892:video_max_side": "512",
+      "3892:seconds": 15,
+      "3892:aspect_ratio": "16:9 (Widescreen)",
+      "3892:megapixels": 1.2,
+      "3892:multiple": 32,
+      "3939:weight_dtype": "default",
+      "3939:clip_device": "default",
+      "3939:attention": "comfy kitchen attention",
+      "3950:ref_image_size": "max",
+      "3951:alpha": 0.1,
+      "3951:magnitude_match": "per_token",
+      "3952:offload_model": true,
+      "3952:offload_cache": true,
+      "3956:tiling": true,
+      "3956:tile_size": 256,
+      "3956:tile_overlap": 64,
+      "3956:output_device": "cpu",
+      "3956:temporal_tiling": false,
+      "3956:temporal_tile_frames": 85,
+      "3956:temporal_context_frames": 39,
+      "3956:seam_warning_threshold": 0.02,
+      "3967:steps": 8,
+      "3967:denoise": 1,
+      "3968:selection": "sol-attn",
+      "3968:selection.tau": 1.3,
+      "3968:start_percent": 0.2,
+      "3968:end_percent": 1,
+      "3968:dense_blocks": "",
+      "3968:min_tokens": 12288,
+      "3968:extra_tokens": 256,
+      "3968:sink_conditioning": "exact_kv_and_rows",
+      "3968:verbose": true,
+      "3974:extra_steps": 1,
+      "3974:start_at_sigma": 0.7,
+      "3974:end_at_sigma": 0,
+      "3974:spacing": "cosine",
+      "3978:noise_seed": 270662856799090
+    },
+    "mediaOrder": [
+      "3892:ref_image_0",
+      "3892:ref_image_1",
+      "3892:ref_image_2",
+      "3892:ref_image_3",
+      "3892:ref_image_4",
+      "3892:ref_image_5",
+      "3892:ref_image_6",
+      "3892:ref_image_7",
+      "3892:ref_image_8",
+      "3892:ref_audio_0",
+      "3892:ref_audio_1",
+      "3892:ref_audio_2"
+    ],
+    "mediaOrderSource": "auto",
+    "apiNames": {
+      "677:max_resolution": "max_resolution",
+      "677:jpeg_quality": "jpeg_quality",
+      "677:suppress_default_preview": "suppress_default_preview",
+      "677:preview_fps": "preview_fps",
+      "732:filename_prefix": "filename_prefix",
+      "732:frame_rate": "frame_rate",
+      "732:loop_count": "loop_count",
+      "732:format": "format",
+      "732:pix_fmt": "pix_fmt",
+      "732:crf": "crf",
+      "732:save_metadata": "save_metadata",
+      "732:trim_to_audio": "trim_to_audio",
+      "732:pingpong": "pingpong",
+      "732:save_output": "save_output",
+      "3886:chunks": "chunks",
+      "3886:seq_threshold": "seq_threshold",
+      "3892:ref_image_0": "ref_image_0",
+      "3892:ref_image_1": "ref_image_1",
+      "3892:ref_image_2": "ref_image_2",
+      "3892:ref_image_3": "ref_image_3",
+      "3892:ref_image_4": "ref_image_4",
+      "3892:ref_image_5": "ref_image_5",
+      "3892:ref_image_6": "ref_image_6",
+      "3892:ref_image_7": "ref_image_7",
+      "3892:ref_image_8": "ref_image_8",
+      "3892:ref_audio_0": "ref_audio_0",
+      "3892:ref_audio_1": "ref_audio_1",
+      "3892:ref_audio_2": "ref_audio_2",
+      "3892:prompt": "prompt",
+      "3892:fps": "fps",
+      "3892:video_trim_seconds": "video_trim_seconds",
+      "3892:audio_trim_seconds": "audio_trim_seconds",
+      "3892:image_max_side": "image_max_side",
+      "3892:video_max_side": "video_max_side",
+      "3892:seconds": "seconds",
+      "3892:aspect_ratio": "aspect_ratio",
+      "3892:megapixels": "megapixels",
+      "3892:multiple": "multiple",
+      "3939:weight_dtype": "weight_dtype",
+      "3939:clip_device": "clip_device",
+      "3939:attention": "attention",
+      "3950:ref_image_size": "ref_image_size",
+      "3951:alpha": "alpha",
+      "3951:magnitude_match": "magnitude_match",
+      "3952:offload_model": "offload_model",
+      "3952:offload_cache": "offload_cache",
+      "3956:tiling": "tiling",
+      "3956:tile_size": "tile_size",
+      "3956:tile_overlap": "tile_overlap",
+      "3956:output_device": "output_device",
+      "3956:temporal_tiling": "temporal_tiling",
+      "3956:temporal_tile_frames": "temporal_tile_frames",
+      "3956:temporal_context_frames": "temporal_context_frames",
+      "3956:seam_warning_threshold": "seam_warning_threshold",
+      "3967:steps": "steps",
+      "3967:denoise": "denoise",
+      "3968:selection": "selection",
+      "3968:selection.tau": "selection_tau",
+      "3968:start_percent": "start_percent",
+      "3968:end_percent": "end_percent",
+      "3968:dense_blocks": "dense_blocks",
+      "3968:min_tokens": "min_tokens",
+      "3968:extra_tokens": "extra_tokens",
+      "3968:sink_conditioning": "sink_conditioning",
+      "3968:verbose": "verbose",
+      "3974:extra_steps": "extra_steps",
+      "3974:start_at_sigma": "start_at_sigma",
+      "3974:end_at_sigma": "end_at_sigma",
+      "3974:spacing": "spacing",
+      "3978:noise_seed": "noise_seed"
+    }
+  }
+}

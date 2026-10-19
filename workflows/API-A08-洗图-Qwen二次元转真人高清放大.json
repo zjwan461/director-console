@@ -1,0 +1,1306 @@
+{
+  "8": {
+    "inputs": {
+      "samples": [
+        "347",
+        0
+      ],
+      "vae": [
+        "39",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "38": {
+    "inputs": {
+      "clip_name": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "加载CLIP"
+    }
+  },
+  "39": {
+    "inputs": {
+      "vae_name": "qwen_image_vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "加载VAE"
+    }
+  },
+  "78": {
+    "inputs": {
+      "image": "770b3ecc9510b0f8cae0210cd34e3077.jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "88": {
+    "inputs": {
+      "pixels": [
+        "243",
+        0
+      ],
+      "vae": [
+        "39",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE编码"
+    }
+  },
+  "110": {
+    "inputs": {
+      "prompt": [
+        "507",
+        0
+      ],
+      "clip": [
+        "38",
+        0
+      ],
+      "vae": [
+        "510",
+        1
+      ],
+      "image1": [
+        "243",
+        0
+      ]
+    },
+    "class_type": "TextEncodeQwenImageEditPlus",
+    "_meta": {
+      "title": "文本编码（QwenImageEditPlus）"
+    }
+  },
+  "243": {
+    "inputs": {
+      "upscale_method": "nearest-exact",
+      "megapixels": 1,
+      "resolution_steps": 1,
+      "image": [
+        "78",
+        0
+      ]
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "缩放图像（像素）"
+    }
+  },
+  "347": {
+    "inputs": {
+      "seed": 200603788336557,
+      "steps": 8,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 0.8000000000000002,
+      "model": [
+        "444",
+        0
+      ],
+      "positive": [
+        "536",
+        0
+      ],
+      "negative": [
+        "536",
+        1
+      ],
+      "latent_image": [
+        "88",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "420": {
+    "inputs": {
+      "anything": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "easy cleanGpuUsed",
+    "_meta": {
+      "title": "清理显存占用"
+    }
+  },
+  "431": {
+    "inputs": {
+      "lora_name": "Qwen/AnythingtoRealCharacters2511_20.safetensors",
+      "strength_model": 1.0000000000000002,
+      "model": [
+        "446",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "LoRA加载器（仅模型）"
+    }
+  },
+  "439": {
+    "inputs": {
+      "lora_name": "Qwen/BJD娃娃V2.0_04.safetensors",
+      "strength_model": 0.30000000000000004,
+      "model": [
+        "431",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "LoRA加载器（仅模型）"
+    }
+  },
+  "444": {
+    "inputs": {
+      "lora_name": "Qwen/Qwen动漫转写实真人V2_V2.safetensors",
+      "strength_model": 0.30000000000000004,
+      "model": [
+        "439",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "LoRA加载器（仅模型）"
+    }
+  },
+  "446": {
+    "inputs": {
+      "lora_name": "Qwen/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16.safetensors",
+      "strength_model": 1.0000000000000002,
+      "model": [
+        "554",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "LoRA加载器（仅模型）"
+    }
+  },
+  "472": {
+    "inputs": {
+      "model": "ema_vae_fp16.safetensors",
+      "device": "cuda:0",
+      "encode_tiled": true,
+      "encode_tile_size": 1024,
+      "encode_tile_overlap": 128,
+      "decode_tiled": true,
+      "decode_tile_size": 1024,
+      "decode_tile_overlap": 128,
+      "tile_debug": "false",
+      "offload_device": "cpu",
+      "cache_model": false
+    },
+    "class_type": "SeedVR2LoadVAEModel",
+    "_meta": {
+      "title": "SeedVR2 (Down)Load VAE Model"
+    }
+  },
+  "473": {
+    "inputs": {
+      "samples": [
+        "478",
+        0
+      ],
+      "vae": [
+        "493",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "474": {
+    "inputs": {
+      "model": "seedvr2_ema_3b-Q4_K_M.gguf",
+      "device": "cuda:0",
+      "blocks_to_swap": 32,
+      "swap_io_components": true,
+      "offload_device": "cpu",
+      "cache_model": "sdpa",
+      "attention_mode": "sdpa"
+    },
+    "class_type": "SeedVR2LoadDiTModel",
+    "_meta": {
+      "title": "SeedVR2 (Down)Load DiT Model"
+    }
+  },
+  "475": {
+    "inputs": {
+      "conditioning": [
+        "492",
+        0
+      ]
+    },
+    "class_type": "ConditioningZeroOut",
+    "_meta": {
+      "title": "条件零化"
+    }
+  },
+  "477": {
+    "inputs": {
+      "aspect_ratio": "original",
+      "proportional_width": 162,
+      "proportional_height": 1,
+      "fit": "crop",
+      "method": "lanczos",
+      "round_to_multiple": "8",
+      "scale_to_side": "longest",
+      "scale_to_length": 1920,
+      "background_color": "#000000",
+      "image": [
+        "420",
+        0
+      ]
+    },
+    "class_type": "LayerUtility: ImageScaleByAspectRatio V2",
+    "_meta": {
+      "title": "图层工具：按宽高比缩放 V2"
+    }
+  },
+  "478": {
+    "inputs": {
+      "anything": [
+        "487",
+        0
+      ]
+    },
+    "class_type": "easy clearCacheAll",
+    "_meta": {
+      "title": "清除全部缓存"
+    }
+  },
+  "480": {
+    "inputs": {
+      "unet_name": "Zimage/z_image_turbo_int8_convrot.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "UNet加载器"
+    }
+  },
+  "481": {
+    "inputs": {
+      "upscale_method": "lanczos",
+      "scale_by": 0.5000000000000001,
+      "image": [
+        "473",
+        0
+      ]
+    },
+    "class_type": "ImageScaleBy",
+    "_meta": {
+      "title": "缩放图像（比例）"
+    }
+  },
+  "482": {
+    "inputs": {
+      "seed": 3818167944,
+      "resolution": 2048,
+      "max_resolution": 3800,
+      "batch_size": 5,
+      "uniform_batch_size": false,
+      "color_correction": "lab",
+      "temporal_overlap": 16,
+      "prepend_frames": 0,
+      "input_noise_scale": 0.15000000000000002,
+      "latent_noise_scale": 0,
+      "offload_device": "cpu",
+      "enable_debug": true,
+      "image": [
+        "481",
+        0
+      ],
+      "dit": [
+        "474",
+        0
+      ],
+      "vae": [
+        "472",
+        0
+      ]
+    },
+    "class_type": "SeedVR2VideoUpscaler",
+    "_meta": {
+      "title": "SeedVR2 Video Upscaler (v2.5.24)"
+    }
+  },
+  "484": {
+    "inputs": {
+      "seed": 331884161949230,
+      "steps": 5,
+      "cfg": 1,
+      "sampler_name": "dpmpp_2m_sde",
+      "scheduler": "FlowMatchEulerDiscreteScheduler",
+      "denoise": 0.010000000000000002,
+      "model": [
+        "480",
+        0
+      ],
+      "positive": [
+        "492",
+        0
+      ],
+      "negative": [
+        "475",
+        0
+      ],
+      "latent_image": [
+        "495",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "487": {
+    "inputs": {
+      "seed": 210,
+      "steps": 10,
+      "cfg": 1.6,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 0.30000000000000004,
+      "model": [
+        "480",
+        0
+      ],
+      "positive": [
+        "492",
+        0
+      ],
+      "negative": [
+        "475",
+        0
+      ],
+      "latent_image": [
+        "484",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "489": {
+    "inputs": {
+      "clip_name": "qwen_3_4b_int8_convrot.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "加载CLIP"
+    }
+  },
+  "492": {
+    "inputs": {
+      "text": [
+        "562",
+        0
+      ],
+      "clip": [
+        "489",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "493": {
+    "inputs": {
+      "vae_name": "flux_ultra_vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "加载VAE"
+    }
+  },
+  "495": {
+    "inputs": {
+      "pixels": [
+        "477",
+        0
+      ],
+      "vae": [
+        "493",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE编码"
+    }
+  },
+  "507": {
+    "inputs": {
+      "delimiter": "",
+      "string1": [
+        "546",
+        0
+      ],
+      "string2": [
+        "510",
+        0
+      ]
+    },
+    "class_type": "JoinStrings",
+    "_meta": {
+      "title": "Join Strings"
+    }
+  },
+  "510": {
+    "inputs": {
+      "signal": [
+        "562",
+        0
+      ],
+      "value": [
+        "39",
+        0
+      ]
+    },
+    "class_type": "ImpactExecutionOrderController",
+    "_meta": {
+      "title": "Execution Order Controller"
+    }
+  },
+  "526": {
+    "inputs": {
+      "control_net_name": "Qwen-Image-ControlNet-Union.safetensors"
+    },
+    "class_type": "ControlNetLoader",
+    "_meta": {
+      "title": "加载ControlNet模型"
+    }
+  },
+  "527": {
+    "inputs": {
+      "preprocessor": "DWPreprocessor",
+      "resolution": 1024,
+      "image": [
+        "528",
+        0
+      ]
+    },
+    "class_type": "AIO_Preprocessor",
+    "_meta": {
+      "title": "AIO Aux Preprocessor"
+    }
+  },
+  "528": {
+    "inputs": {
+      "upscale_method": "lanczos",
+      "megapixels": 1,
+      "resolution_steps": 1,
+      "image": [
+        "243",
+        0
+      ]
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "缩放图像（像素）"
+    }
+  },
+  "531": {
+    "inputs": {
+      "type": "auto",
+      "control_net": [
+        "526",
+        0
+      ]
+    },
+    "class_type": "SetUnionControlNetType",
+    "_meta": {
+      "title": "设置UnionControlNet类型"
+    }
+  },
+  "532": {
+    "inputs": {
+      "preprocessor": "DepthAnythingV2Preprocessor",
+      "resolution": 1024,
+      "image": [
+        "528",
+        0
+      ]
+    },
+    "class_type": "AIO_Preprocessor",
+    "_meta": {
+      "title": "AIO Aux Preprocessor"
+    }
+  },
+  "533": {
+    "inputs": {
+      "images": [
+        "532",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "预览图像"
+    }
+  },
+  "536": {
+    "inputs": {
+      "strength": 1.0000000000000002,
+      "start_percent": 0,
+      "end_percent": 1,
+      "positive": [
+        "539",
+        0
+      ],
+      "negative": [
+        "540",
+        0
+      ],
+      "control_net": [
+        "531",
+        0
+      ],
+      "image": [
+        "532",
+        0
+      ],
+      "vae": [
+        "39",
+        0
+      ]
+    },
+    "class_type": "ControlNetApplyAdvanced",
+    "_meta": {
+      "title": "应用ControlNet（旧版高级）"
+    }
+  },
+  "539": {
+    "inputs": {
+      "reference_latents_method": "index_timestep_zero",
+      "conditioning": [
+        "110",
+        0
+      ]
+    },
+    "class_type": "FluxKontextMultiReferenceLatentMethod",
+    "_meta": {
+      "title": "FluxKontext多参考潜在方法"
+    }
+  },
+  "540": {
+    "inputs": {
+      "reference_latents_method": "index_timestep_zero",
+      "conditioning": [
+        "541",
+        0
+      ]
+    },
+    "class_type": "FluxKontextMultiReferenceLatentMethod",
+    "_meta": {
+      "title": "FluxKontext多参考潜在方法"
+    }
+  },
+  "541": {
+    "inputs": {
+      "prompt": "",
+      "clip": [
+        "38",
+        0
+      ],
+      "vae": [
+        "39",
+        0
+      ],
+      "image": [
+        "243",
+        0
+      ]
+    },
+    "class_type": "TextEncodeQwenImageEdit",
+    "_meta": {
+      "title": "文本编码（QwenImageEdit）"
+    }
+  },
+  "546": {
+    "inputs": {
+      "text": "transform the image to realistic photograph，动漫转BJD娃娃，动漫转写实真人,和原图一样的表情控制，电影级光影"
+    },
+    "class_type": "Text Multiline",
+    "_meta": {
+      "title": "Text Multiline"
+    }
+  },
+  "554": {
+    "inputs": {
+      "unet_name": "qwen/qwen_image_edit_2511_int8_convrot.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "UNet加载器"
+    }
+  },
+  "560": {
+    "inputs": {
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "预览图像"
+    }
+  },
+  "562": {
+    "inputs": {
+      "text_0": "```text\n[SUBJECT], stunningly beautiful realistic woman with long flowing lavender hair, wearing a sexy red Christmas outfit with white fur trim, bell necklace, black belt, and white thigh-high stockings, posing on white bed sheets, [EYES], pink eyes looking directly into camera with intense piercing gaze, heavy blush on cheeks, slightly open mouth with tongue sticking out playfully, detailed iris texture, prominent catchlights in pupils, glossy lips, realistic skin texture with visible pores and subsurface scattering, [ENVIRONMENT], minimal background, soft white bed sheets, clean bright aesthetic, [LIGHTING], soft diffused lighting, high key photography, bright studio light, Rembrandt lighting, volumetric rays, [STYLE], masterpiece, best quality, photorealistic, 8k resolution, sharp focus, cinematic portrait, ultra-detailed, raw photo\n```",
+      "text": [
+        "563",
+        0
+      ]
+    },
+    "class_type": "ShowText|pysssss",
+    "_meta": {
+      "title": "Show Text 🐍"
+    }
+  },
+  "563": {
+    "inputs": {
+      "preset_prompt": "Normal - Describe",
+      "custom_prompt": "",
+      "system_prompt": "# Role\n你是一位专精于 **Flux.1/Midjourney 视觉逆向工程 (Visual Reverse-Engineer)** 的 AI 专家。你的核心能力是从参考图中提取这一秒的“光影灵魂”与“质感参数”，并将其转化为高精度的英文 Prompt。\n**特别使命**：你的 Prompt 将用于 **Image-to-Real-Person (人像转真人)** 任务。这意味着你必须对 **人物主体**，尤其是 **眼睛 (The Windows of the Soul)** 进行显微镜级别的分析与重建，确保生成的人物具有真实的“神韵”和明确的“镜头感”。\n# Goal\n当我发送一张图片时，请分析其视觉特征，输出一段**模块化、高权重的英文 Prompt**。\n这段 Prompt 旨在让 AI 复刻原图的**光影氛围与艺术风格**，同时确保人物（[SUBJECT]）转化为具有极高真实感、眼神有穿透力的真人/写实形象。\n# Analysis Framework (分析维度)\n## 0. Subject & Eyes (重中之重：主体与眼神)\n这是转绘成败的关键。请极其详尽地描述：\n*   **Eye Interaction (视线与神韵)**: \n    *   *Direct Gaze (破壁)*: Looking directly into camera, eye contact, piercing gaze, intense focus.\n    *   *Off-Camera (旁观)*: Looking away, gazing at distance, lost in thought, side profile glance.\n    *   *Expression*: Describe the micro-emotion in the eyes (e.g., deadpan, alluring, tearing, fierce).\n*   **Eye Structure (物理细节)**: Detailed iris (虹膜纹理), catchlights (眼神光/反光), symmetric eyes, sharp focus on eyes, moisture in eyes (湿润感), clearly defined eyelashes.\n*   **Skin & Realism (皮肤与真实感)**: Skin texture, pores, subversive realism, vellus hair (绒毛), imperfections (moles, freckles), subsurface scattering (SSS泛红感).\n## 1. Environment (场景构建)\n*   **Context**: 背景是虚化还是清晰？是具体的（Concrete Cafe, Neon Street）还是抽象的（Solid Color, Gradient, Abstract Shapes）？\n*   **Material**: 画面中占主导的材质（Chrome, Silk, Rough Concrete, Matte Plastic）。\n## 2. Lighting (光影布局 - 决定立体感)\n*   **Direction**: Front lighting (平光), Side lighting (侧光/显瘦), Backlighting (逆光/轮廓光), Rembrandt lighting (伦勃朗光).\n*   **Quality**: Hard shadows (硬阴影/高对比), Soft diffusion (柔光/影棚感), Volumetric lighting (体积光/丁达尔效应).\n*   **Special**: Cinematic lighting, neon rim light, natural window light.\n## 3. Color & Mood (调色与胶片感)\n*   **Palette**: 具体的配色方案 (e.g., Teal and Orange, Pastel Goth, Monochromatic Red).\n*   **Vibe**: Moody, Ethereal, Cyberpunk, Vintage, Minimalist.\n## 4. Photography/Art Style (摄影参数)\n*   **Camera**: Shot on 35mm, 85mm portrait lens, Macro lens.\n*   **Aperture/DoF**: f/1.8 (shallow depth of field, bokeh background), f/8 (everything in focus).\n*   **Texture**: Film grain (ISO 400), polaroid texture, clean digital look.\n*   **Engine (如果是风格化)**: Unreal Engine 5 render, Octane Render, Ray Tracing.\n# Output Rules\n1.  **Format**: 输出唯一的 Prompt 代码块，不包含任何解释性文字。\n2.  **Order**: 必须遵循 `[SUBJECT] + [Eyes/Face Details] + [Environment] + [Lighting/Style]` 的顺序。\n3.  **Keywords**: 使用逗号分隔的英文短语。\n4.  **Keyword Hacks**: 自动混入 `best quality`, `photorealistic`, `masterpiece`, `sharp focus` 等增效词。\n# Trigger Example\n**User Input**: [发送一张二次元大头贴]\n**Your Output**:\n```text\n[SUBJECT], stunningly beautiful real human portrait, extremely detailed eyes, looking directly into camera with piercing gaze, catchlights in pupils, detailed iris texture, natural skin texture with visible pores, soft peach fuzz, 35mm photography, soft studio lighting, rembrandt lighting, bokeh background, muted pastel colors, dreamy atmosphere, 8k resolution, hyperrealistic, best quality",
+      "inference_mode": "images",
+      "max_frames": 24,
+      "max_size": 256,
+      "seed": 941221084117913,
+      "force_offload": false,
+      "save_states": false,
+      "llama_model": [
+        "565",
+        0
+      ],
+      "parameters": [
+        "564",
+        0
+      ],
+      "images": [
+        "243",
+        0
+      ]
+    },
+    "class_type": "llama_cpp_instruct_adv",
+    "_meta": {
+      "title": "Llama-cpp Instruct"
+    }
+  },
+  "564": {
+    "inputs": {
+      "max_tokens": 1024,
+      "top_k": 30,
+      "top_p": 0.9,
+      "min_p": 0.05,
+      "typical_p": 1,
+      "temperature": 0.8,
+      "repeat_penalty": 1,
+      "frequency_penalty": 0,
+      "present_penalty": 1,
+      "mirostat_mode": 0,
+      "mirostat_eta": 0.1,
+      "mirostat_tau": 5,
+      "state_uid": 0
+    },
+    "class_type": "llama_cpp_parameters",
+    "_meta": {
+      "title": "Llama-cpp Parameters"
+    }
+  },
+  "565": {
+    "inputs": {
+      "model": "Qwen3.6-35B-A3B-UD-Q2_K_XL.gguf",
+      "mmproj": "mmproj-Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive-f16.gguf",
+      "chat_handler": "Qwen3.5",
+      "n_ctx": 8192,
+      "vram_limit": -1,
+      "image_min_tokens": 0,
+      "image_max_tokens": 0,
+      "load_mtp": false
+    },
+    "class_type": "llama_cpp_model_loader",
+    "_meta": {
+      "title": "Llama-cpp Model Loader"
+    }
+  },
+  "566": {
+    "inputs": {
+      "offload_model": true,
+      "offload_cache": true,
+      "anything": [
+        "482",
+        0
+      ]
+    },
+    "class_type": "VRAMCleanup",
+    "_meta": {
+      "title": "🎈VRAM-Cleanup"
+    }
+  },
+  "567": {
+    "inputs": {
+      "clean_file_cache": true,
+      "clean_processes": true,
+      "clean_dlls": true,
+      "retry_times": 3,
+      "anything": [
+        "566",
+        0
+      ]
+    },
+    "class_type": "RAMCleanup",
+    "_meta": {
+      "title": "🎈RAM-Cleanup"
+    }
+  },
+  "568": {
+    "inputs": {
+      "filename_prefix": "ComfyUI",
+      "images": [
+        "567",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "保存图像"
+    }
+  },
+  "_api_config": {
+    "customLabels": {
+      "38:type": "type",
+      "38:device": "device",
+      "78:image": "参考图 0",
+      "243:upscale_method": "upscale_method",
+      "243:megapixels": "megapixels",
+      "243:resolution_steps": "resolution_steps",
+      "347:seed": "随机种子",
+      "347:steps": "迭代步数",
+      "347:cfg": "CFG Scale",
+      "347:denoise": "denoise",
+      "431:strength_model": "strength_model",
+      "439:lora_name": "lora_name",
+      "439:strength_model": "strength_model",
+      "444:lora_name": "lora_name",
+      "444:strength_model": "strength_model",
+      "446:strength_model": "strength_model",
+      "472:device": "device",
+      "472:encode_tiled": "encode_tiled",
+      "472:encode_tile_size": "encode_tile_size",
+      "472:encode_tile_overlap": "encode_tile_overlap",
+      "472:decode_tiled": "decode_tiled",
+      "472:decode_tile_size": "decode_tile_size",
+      "472:decode_tile_overlap": "decode_tile_overlap",
+      "472:tile_debug": "tile_debug",
+      "472:offload_device": "offload_device",
+      "472:cache_model": "cache_model",
+      "474:model": "model",
+      "474:device": "device",
+      "474:blocks_to_swap": "blocks_to_swap",
+      "474:swap_io_components": "swap_io_components",
+      "474:offload_device": "offload_device",
+      "474:cache_model": "cache_model",
+      "474:attention_mode": "attention_mode",
+      "477:aspect_ratio": "aspect_ratio",
+      "477:proportional_width": "proportional_width",
+      "477:proportional_height": "proportional_height",
+      "477:fit": "fit",
+      "477:method": "method",
+      "477:round_to_multiple": "round_to_multiple",
+      "477:scale_to_side": "scale_to_side",
+      "477:scale_to_length": "scale_to_length",
+      "477:background_color": "background_color",
+      "480:weight_dtype": "weight_dtype",
+      "481:upscale_method": "upscale_method",
+      "481:scale_by": "scale_by",
+      "482:seed": "随机种子",
+      "482:batch_size": "批次大小",
+      "482:resolution": "resolution",
+      "482:max_resolution": "max_resolution",
+      "482:uniform_batch_size": "uniform_batch_size",
+      "482:color_correction": "color_correction",
+      "482:temporal_overlap": "temporal_overlap",
+      "482:prepend_frames": "prepend_frames",
+      "482:input_noise_scale": "input_noise_scale",
+      "482:latent_noise_scale": "latent_noise_scale",
+      "482:offload_device": "offload_device",
+      "482:enable_debug": "enable_debug",
+      "484:seed": "随机种子",
+      "484:steps": "迭代步数",
+      "484:cfg": "CFG Scale",
+      "484:denoise": "denoise",
+      "487:seed": "随机种子",
+      "487:steps": "迭代步数",
+      "487:cfg": "CFG Scale",
+      "487:denoise": "denoise",
+      "489:type": "type",
+      "489:device": "device",
+      "507:delimiter": "delimiter",
+      "527:preprocessor": "preprocessor",
+      "527:resolution": "resolution",
+      "528:upscale_method": "upscale_method",
+      "528:megapixels": "megapixels",
+      "528:resolution_steps": "resolution_steps",
+      "531:type": "type",
+      "532:preprocessor": "preprocessor",
+      "532:resolution": "resolution",
+      "536:strength": "strength",
+      "536:start_percent": "start_percent",
+      "536:end_percent": "end_percent",
+      "539:reference_latents_method": "reference_latents_method",
+      "540:reference_latents_method": "reference_latents_method",
+      "541:prompt": "prompt",
+      "546:text": "提示词",
+      "554:weight_dtype": "weight_dtype",
+      "562:text_0": "text_0",
+      "563:seed": "随机种子",
+      "563:preset_prompt": "preset_prompt",
+      "563:custom_prompt": "custom_prompt",
+      "563:system_prompt": "system_prompt",
+      "563:inference_mode": "inference_mode",
+      "563:max_frames": "max_frames",
+      "563:max_size": "max_size",
+      "563:force_offload": "force_offload",
+      "563:save_states": "save_states",
+      "564:max_tokens": "max_tokens",
+      "564:top_k": "top_k",
+      "564:top_p": "top_p",
+      "564:min_p": "min_p",
+      "564:typical_p": "typical_p",
+      "564:temperature": "temperature",
+      "564:repeat_penalty": "repeat_penalty",
+      "564:frequency_penalty": "frequency_penalty",
+      "564:present_penalty": "present_penalty",
+      "564:mirostat_mode": "mirostat_mode",
+      "564:mirostat_eta": "mirostat_eta",
+      "564:mirostat_tau": "mirostat_tau",
+      "564:state_uid": "state_uid",
+      "565:model": "model",
+      "565:mmproj": "mmproj",
+      "565:chat_handler": "chat_handler",
+      "565:n_ctx": "n_ctx",
+      "565:vram_limit": "vram_limit",
+      "565:image_min_tokens": "image_min_tokens",
+      "565:image_max_tokens": "image_max_tokens",
+      "565:load_mtp": "load_mtp",
+      "566:offload_model": "offload_model",
+      "566:offload_cache": "offload_cache",
+      "567:clean_file_cache": "clean_file_cache",
+      "567:clean_processes": "clean_processes",
+      "567:clean_dlls": "clean_dlls",
+      "567:retry_times": "retry_times",
+      "568:filename_prefix": "文件名前缀"
+    },
+    "enabledParams": {
+      "38:type": false,
+      "38:device": false,
+      "78:image": true,
+      "243:upscale_method": false,
+      "243:megapixels": false,
+      "243:resolution_steps": false,
+      "347:seed": true,
+      "347:steps": false,
+      "347:cfg": false,
+      "347:denoise": false,
+      "431:strength_model": false,
+      "439:lora_name": false,
+      "439:strength_model": false,
+      "444:lora_name": false,
+      "444:strength_model": false,
+      "446:strength_model": false,
+      "472:device": false,
+      "472:encode_tiled": false,
+      "472:encode_tile_size": false,
+      "472:encode_tile_overlap": false,
+      "472:decode_tiled": false,
+      "472:decode_tile_size": false,
+      "472:decode_tile_overlap": false,
+      "472:tile_debug": false,
+      "472:offload_device": false,
+      "472:cache_model": false,
+      "474:model": false,
+      "474:device": false,
+      "474:blocks_to_swap": false,
+      "474:swap_io_components": false,
+      "474:offload_device": false,
+      "474:cache_model": false,
+      "474:attention_mode": false,
+      "477:aspect_ratio": false,
+      "477:proportional_width": false,
+      "477:proportional_height": false,
+      "477:fit": false,
+      "477:method": false,
+      "477:round_to_multiple": false,
+      "477:scale_to_side": false,
+      "477:scale_to_length": false,
+      "477:background_color": false,
+      "480:weight_dtype": false,
+      "481:upscale_method": false,
+      "481:scale_by": false,
+      "482:seed": false,
+      "482:batch_size": false,
+      "482:resolution": false,
+      "482:max_resolution": false,
+      "482:uniform_batch_size": false,
+      "482:color_correction": false,
+      "482:temporal_overlap": false,
+      "482:prepend_frames": false,
+      "482:input_noise_scale": false,
+      "482:latent_noise_scale": false,
+      "482:offload_device": false,
+      "482:enable_debug": false,
+      "484:seed": false,
+      "484:steps": false,
+      "484:cfg": false,
+      "484:denoise": false,
+      "487:seed": false,
+      "487:steps": false,
+      "487:cfg": false,
+      "487:denoise": false,
+      "489:type": false,
+      "489:device": false,
+      "507:delimiter": false,
+      "527:preprocessor": false,
+      "527:resolution": false,
+      "528:upscale_method": false,
+      "528:megapixels": false,
+      "528:resolution_steps": false,
+      "531:type": false,
+      "532:preprocessor": false,
+      "532:resolution": false,
+      "536:strength": false,
+      "536:start_percent": false,
+      "536:end_percent": false,
+      "539:reference_latents_method": false,
+      "540:reference_latents_method": false,
+      "541:prompt": false,
+      "546:text": false,
+      "554:weight_dtype": false,
+      "562:text_0": false,
+      "563:seed": false,
+      "563:preset_prompt": false,
+      "563:custom_prompt": false,
+      "563:system_prompt": false,
+      "563:inference_mode": false,
+      "563:max_frames": false,
+      "563:max_size": false,
+      "563:force_offload": false,
+      "563:save_states": false,
+      "564:max_tokens": false,
+      "564:top_k": false,
+      "564:top_p": false,
+      "564:min_p": false,
+      "564:typical_p": false,
+      "564:temperature": false,
+      "564:repeat_penalty": false,
+      "564:frequency_penalty": false,
+      "564:present_penalty": false,
+      "564:mirostat_mode": false,
+      "564:mirostat_eta": false,
+      "564:mirostat_tau": false,
+      "564:state_uid": false,
+      "565:model": false,
+      "565:mmproj": false,
+      "565:chat_handler": false,
+      "565:n_ctx": false,
+      "565:vram_limit": false,
+      "565:image_min_tokens": false,
+      "565:image_max_tokens": false,
+      "565:load_mtp": false,
+      "566:offload_model": false,
+      "566:offload_cache": false,
+      "567:clean_file_cache": false,
+      "567:clean_processes": false,
+      "567:clean_dlls": false,
+      "567:retry_times": false,
+      "568:filename_prefix": false
+    },
+    "formValues": {
+      "38:type": "qwen_image",
+      "38:device": "default",
+      "78:image": null,
+      "243:upscale_method": "nearest-exact",
+      "243:megapixels": 1,
+      "243:resolution_steps": 1,
+      "347:seed": 3782365220,
+      "347:steps": 8,
+      "347:cfg": 1,
+      "347:denoise": 0.8000000000000002,
+      "431:strength_model": 1.0000000000000002,
+      "439:lora_name": "Qwen/BJD娃娃V2.0_04.safetensors",
+      "439:strength_model": 0.30000000000000004,
+      "444:lora_name": "Qwen/Qwen动漫转写实真人V2_V2.safetensors",
+      "444:strength_model": 0.30000000000000004,
+      "446:strength_model": 1.0000000000000002,
+      "472:device": "cuda:0",
+      "472:encode_tiled": true,
+      "472:encode_tile_size": 1024,
+      "472:encode_tile_overlap": 128,
+      "472:decode_tiled": true,
+      "472:decode_tile_size": 1024,
+      "472:decode_tile_overlap": 128,
+      "472:tile_debug": "false",
+      "472:offload_device": "cpu",
+      "472:cache_model": false,
+      "474:model": "seedvr2_ema_3b-Q4_K_M.gguf",
+      "474:device": "cuda:0",
+      "474:blocks_to_swap": 32,
+      "474:swap_io_components": true,
+      "474:offload_device": "cpu",
+      "474:cache_model": "sdpa",
+      "474:attention_mode": "sdpa",
+      "477:aspect_ratio": "original",
+      "477:proportional_width": 162,
+      "477:proportional_height": 1,
+      "477:fit": "crop",
+      "477:method": "lanczos",
+      "477:round_to_multiple": "8",
+      "477:scale_to_side": "longest",
+      "477:scale_to_length": 1920,
+      "477:background_color": "#000000",
+      "480:weight_dtype": "default",
+      "481:upscale_method": "lanczos",
+      "481:scale_by": 0.5000000000000001,
+      "482:seed": 3818167944,
+      "482:batch_size": 5,
+      "482:resolution": 2048,
+      "482:max_resolution": 3800,
+      "482:uniform_batch_size": false,
+      "482:color_correction": "lab",
+      "482:temporal_overlap": 16,
+      "482:prepend_frames": 0,
+      "482:input_noise_scale": 0.15000000000000002,
+      "482:latent_noise_scale": 0,
+      "482:offload_device": "cpu",
+      "482:enable_debug": true,
+      "484:seed": 331884161949230,
+      "484:steps": 5,
+      "484:cfg": 1,
+      "484:denoise": 0.010000000000000002,
+      "487:seed": 210,
+      "487:steps": 10,
+      "487:cfg": 1.6,
+      "487:denoise": 0.30000000000000004,
+      "489:type": "qwen_image",
+      "489:device": "default",
+      "507:delimiter": "",
+      "527:preprocessor": "DWPreprocessor",
+      "527:resolution": 1024,
+      "528:upscale_method": "lanczos",
+      "528:megapixels": 1,
+      "528:resolution_steps": 1,
+      "531:type": "auto",
+      "532:preprocessor": "DepthAnythingV2Preprocessor",
+      "532:resolution": 1024,
+      "536:strength": 1.0000000000000002,
+      "536:start_percent": 0,
+      "536:end_percent": 1,
+      "539:reference_latents_method": "index_timestep_zero",
+      "540:reference_latents_method": "index_timestep_zero",
+      "541:prompt": "",
+      "546:text": "transform the image to realistic photograph，动漫转BJD娃娃，动漫转写实真人,和原图一样的表情控制，电影级光影",
+      "554:weight_dtype": "default",
+      "562:text_0": "```text\n[SUBJECT], stunningly beautiful realistic woman with long flowing lavender hair, wearing a sexy red Christmas outfit with white fur trim, bell necklace, black belt, and white thigh-high stockings, posing on white bed sheets, [EYES], pink eyes looking directly into camera with intense piercing gaze, heavy blush on cheeks, slightly open mouth with tongue sticking out playfully, detailed iris texture, prominent catchlights in pupils, glossy lips, realistic skin texture with visible pores and subsurface scattering, [ENVIRONMENT], minimal background, soft white bed sheets, clean bright aesthetic, [LIGHTING], soft diffused lighting, high key photography, bright studio light, Rembrandt lighting, volumetric rays, [STYLE], masterpiece, best quality, photorealistic, 8k resolution, sharp focus, cinematic portrait, ultra-detailed, raw photo\n```",
+      "563:seed": 941221084117913,
+      "563:preset_prompt": "Normal - Describe",
+      "563:custom_prompt": "",
+      "563:system_prompt": "# Role\n你是一位专精于 **Flux.1/Midjourney 视觉逆向工程 (Visual Reverse-Engineer)** 的 AI 专家。你的核心能力是从参考图中提取这一秒的“光影灵魂”与“质感参数”，并将其转化为高精度的英文 Prompt。\n**特别使命**：你的 Prompt 将用于 **Image-to-Real-Person (人像转真人)** 任务。这意味着你必须对 **人物主体**，尤其是 **眼睛 (The Windows of the Soul)** 进行显微镜级别的分析与重建，确保生成的人物具有真实的“神韵”和明确的“镜头感”。\n# Goal\n当我发送一张图片时，请分析其视觉特征，输出一段**模块化、高权重的英文 Prompt**。\n这段 Prompt 旨在让 AI 复刻原图的**光影氛围与艺术风格**，同时确保人物（[SUBJECT]）转化为具有极高真实感、眼神有穿透力的真人/写实形象。\n# Analysis Framework (分析维度)\n## 0. Subject & Eyes (重中之重：主体与眼神)\n这是转绘成败的关键。请极其详尽地描述：\n*   **Eye Interaction (视线与神韵)**: \n    *   *Direct Gaze (破壁)*: Looking directly into camera, eye contact, piercing gaze, intense focus.\n    *   *Off-Camera (旁观)*: Looking away, gazing at distance, lost in thought, side profile glance.\n    *   *Expression*: Describe the micro-emotion in the eyes (e.g., deadpan, alluring, tearing, fierce).\n*   **Eye Structure (物理细节)**: Detailed iris (虹膜纹理), catchlights (眼神光/反光), symmetric eyes, sharp focus on eyes, moisture in eyes (湿润感), clearly defined eyelashes.\n*   **Skin & Realism (皮肤与真实感)**: Skin texture, pores, subversive realism, vellus hair (绒毛), imperfections (moles, freckles), subsurface scattering (SSS泛红感).\n## 1. Environment (场景构建)\n*   **Context**: 背景是虚化还是清晰？是具体的（Concrete Cafe, Neon Street）还是抽象的（Solid Color, Gradient, Abstract Shapes）？\n*   **Material**: 画面中占主导的材质（Chrome, Silk, Rough Concrete, Matte Plastic）。\n## 2. Lighting (光影布局 - 决定立体感)\n*   **Direction**: Front lighting (平光), Side lighting (侧光/显瘦), Backlighting (逆光/轮廓光), Rembrandt lighting (伦勃朗光).\n*   **Quality**: Hard shadows (硬阴影/高对比), Soft diffusion (柔光/影棚感), Volumetric lighting (体积光/丁达尔效应).\n*   **Special**: Cinematic lighting, neon rim light, natural window light.\n## 3. Color & Mood (调色与胶片感)\n*   **Palette**: 具体的配色方案 (e.g., Teal and Orange, Pastel Goth, Monochromatic Red).\n*   **Vibe**: Moody, Ethereal, Cyberpunk, Vintage, Minimalist.\n## 4. Photography/Art Style (摄影参数)\n*   **Camera**: Shot on 35mm, 85mm portrait lens, Macro lens.\n*   **Aperture/DoF**: f/1.8 (shallow depth of field, bokeh background), f/8 (everything in focus).\n*   **Texture**: Film grain (ISO 400), polaroid texture, clean digital look.\n*   **Engine (如果是风格化)**: Unreal Engine 5 render, Octane Render, Ray Tracing.\n# Output Rules\n1.  **Format**: 输出唯一的 Prompt 代码块，不包含任何解释性文字。\n2.  **Order**: 必须遵循 `[SUBJECT] + [Eyes/Face Details] + [Environment] + [Lighting/Style]` 的顺序。\n3.  **Keywords**: 使用逗号分隔的英文短语。\n4.  **Keyword Hacks**: 自动混入 `best quality`, `photorealistic`, `masterpiece`, `sharp focus` 等增效词。\n# Trigger Example\n**User Input**: [发送一张二次元大头贴]\n**Your Output**:\n```text\n[SUBJECT], stunningly beautiful real human portrait, extremely detailed eyes, looking directly into camera with piercing gaze, catchlights in pupils, detailed iris texture, natural skin texture with visible pores, soft peach fuzz, 35mm photography, soft studio lighting, rembrandt lighting, bokeh background, muted pastel colors, dreamy atmosphere, 8k resolution, hyperrealistic, best quality",
+      "563:inference_mode": "images",
+      "563:max_frames": 24,
+      "563:max_size": 256,
+      "563:force_offload": false,
+      "563:save_states": false,
+      "564:max_tokens": 1024,
+      "564:top_k": 30,
+      "564:top_p": 0.9,
+      "564:min_p": 0.05,
+      "564:typical_p": 1,
+      "564:temperature": 0.8,
+      "564:repeat_penalty": 1,
+      "564:frequency_penalty": 0,
+      "564:present_penalty": 1,
+      "564:mirostat_mode": 0,
+      "564:mirostat_eta": 0.1,
+      "564:mirostat_tau": 5,
+      "564:state_uid": 0,
+      "565:model": "Qwen3.6-35B-A3B-UD-Q2_K_XL.gguf",
+      "565:mmproj": "mmproj-Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive-f16.gguf",
+      "565:chat_handler": "Qwen3.5",
+      "565:n_ctx": 8192,
+      "565:vram_limit": -1,
+      "565:image_min_tokens": 0,
+      "565:image_max_tokens": 0,
+      "565:load_mtp": false,
+      "566:offload_model": true,
+      "566:offload_cache": true,
+      "567:clean_file_cache": true,
+      "567:clean_processes": true,
+      "567:clean_dlls": true,
+      "567:retry_times": 3,
+      "568:filename_prefix": "ComfyUI"
+    },
+    "mediaOrder": [
+      "78:image"
+    ],
+    "mediaOrderSource": "auto",
+    "apiNames": {
+      "38:type": "type",
+      "38:device": "device",
+      "78:image": "ref_image_0",
+      "243:upscale_method": "upscale_method",
+      "243:megapixels": "megapixels",
+      "243:resolution_steps": "resolution_steps",
+      "347:seed": "seed",
+      "347:steps": "steps",
+      "347:cfg": "cfg",
+      "347:denoise": "denoise",
+      "431:strength_model": "strength_model",
+      "439:lora_name": "lora_name",
+      "439:strength_model": "strength_model_2",
+      "444:lora_name": "lora_name_2",
+      "444:strength_model": "strength_model_3",
+      "446:strength_model": "strength_model_4",
+      "472:device": "device_2",
+      "472:encode_tiled": "encode_tiled",
+      "472:encode_tile_size": "encode_tile_size",
+      "472:encode_tile_overlap": "encode_tile_overlap",
+      "472:decode_tiled": "decode_tiled",
+      "472:decode_tile_size": "decode_tile_size",
+      "472:decode_tile_overlap": "decode_tile_overlap",
+      "472:tile_debug": "tile_debug",
+      "472:offload_device": "offload_device",
+      "472:cache_model": "cache_model",
+      "474:model": "model",
+      "474:device": "device_3",
+      "474:blocks_to_swap": "blocks_to_swap",
+      "474:swap_io_components": "swap_io_components",
+      "474:offload_device": "offload_device_2",
+      "474:cache_model": "cache_model_2",
+      "474:attention_mode": "attention_mode",
+      "477:aspect_ratio": "aspect_ratio",
+      "477:proportional_width": "proportional_width",
+      "477:proportional_height": "proportional_height",
+      "477:fit": "fit",
+      "477:method": "method",
+      "477:round_to_multiple": "round_to_multiple",
+      "477:scale_to_side": "scale_to_side",
+      "477:scale_to_length": "scale_to_length",
+      "477:background_color": "background_color",
+      "480:weight_dtype": "weight_dtype",
+      "481:upscale_method": "upscale_method_2",
+      "481:scale_by": "scale_by",
+      "482:seed": "seed_2",
+      "482:batch_size": "batch_size",
+      "482:resolution": "resolution",
+      "482:max_resolution": "max_resolution",
+      "482:uniform_batch_size": "uniform_batch_size",
+      "482:color_correction": "color_correction",
+      "482:temporal_overlap": "temporal_overlap",
+      "482:prepend_frames": "prepend_frames",
+      "482:input_noise_scale": "input_noise_scale",
+      "482:latent_noise_scale": "latent_noise_scale",
+      "482:offload_device": "offload_device_3",
+      "482:enable_debug": "enable_debug",
+      "484:seed": "seed_3",
+      "484:steps": "steps_2",
+      "484:cfg": "cfg_2",
+      "484:denoise": "denoise_2",
+      "487:seed": "seed_4",
+      "487:steps": "steps_3",
+      "487:cfg": "cfg_3",
+      "487:denoise": "denoise_3",
+      "489:type": "type_2",
+      "489:device": "device_4",
+      "507:delimiter": "delimiter",
+      "527:preprocessor": "preprocessor",
+      "527:resolution": "resolution_2",
+      "528:upscale_method": "upscale_method_3",
+      "528:megapixels": "megapixels_2",
+      "528:resolution_steps": "resolution_steps_2",
+      "531:type": "type_3",
+      "532:preprocessor": "preprocessor_2",
+      "532:resolution": "resolution_3",
+      "536:strength": "strength",
+      "536:start_percent": "start_percent",
+      "536:end_percent": "end_percent",
+      "539:reference_latents_method": "reference_latents_method",
+      "540:reference_latents_method": "reference_latents_method_2",
+      "541:prompt": "prompt",
+      "546:text": "prompt_2",
+      "554:weight_dtype": "weight_dtype_2",
+      "562:text_0": "text_0",
+      "563:seed": "seed_5",
+      "563:preset_prompt": "preset_prompt",
+      "563:custom_prompt": "custom_prompt",
+      "563:system_prompt": "system_prompt",
+      "563:inference_mode": "inference_mode",
+      "563:max_frames": "max_frames",
+      "563:max_size": "max_size",
+      "563:force_offload": "force_offload",
+      "563:save_states": "save_states",
+      "564:max_tokens": "max_tokens",
+      "564:top_k": "top_k",
+      "564:top_p": "top_p",
+      "564:min_p": "min_p",
+      "564:typical_p": "typical_p",
+      "564:temperature": "temperature",
+      "564:repeat_penalty": "repeat_penalty",
+      "564:frequency_penalty": "frequency_penalty",
+      "564:present_penalty": "present_penalty",
+      "564:mirostat_mode": "mirostat_mode",
+      "564:mirostat_eta": "mirostat_eta",
+      "564:mirostat_tau": "mirostat_tau",
+      "564:state_uid": "state_uid",
+      "565:model": "model_2",
+      "565:mmproj": "mmproj",
+      "565:chat_handler": "chat_handler",
+      "565:n_ctx": "n_ctx",
+      "565:vram_limit": "vram_limit",
+      "565:image_min_tokens": "image_min_tokens",
+      "565:image_max_tokens": "image_max_tokens",
+      "565:load_mtp": "load_mtp",
+      "566:offload_model": "offload_model",
+      "566:offload_cache": "offload_cache",
+      "567:clean_file_cache": "clean_file_cache",
+      "567:clean_processes": "clean_processes",
+      "567:clean_dlls": "clean_dlls",
+      "567:retry_times": "retry_times",
+      "568:filename_prefix": "filename_prefix"
+    }
+  }
+}

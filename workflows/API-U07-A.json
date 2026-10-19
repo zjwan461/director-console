@@ -1,0 +1,885 @@
+{
+  "312": {
+    "inputs": {
+      "value": ""
+    },
+    "class_type": "PrimitiveStringMultiline",
+    "_meta": {
+      "title": "Input Text (Prompt)"
+    }
+  },
+  "316": {
+    "inputs": {
+      "clip_name": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+      "type": "minimax",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "加载CLIP"
+    }
+  },
+  "318": {
+    "inputs": {
+      "vae_name": "minimax_h3_video_vae_fp16.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "加载VAE"
+    }
+  },
+  "319": {
+    "inputs": {
+      "vae_name": "minimax_h3_audio_vae_fp32.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "加载VAE"
+    }
+  },
+  "320": {
+    "inputs": {
+      "model": [
+        "331",
+        0
+      ],
+      "conditioning": [
+        "333",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "基本引导器"
+    }
+  },
+  "321": {
+    "inputs": {
+      "noise_seed": 123456789
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "随机噪波"
+    }
+  },
+  "322": {
+    "inputs": {
+      "noise": [
+        "321",
+        0
+      ],
+      "guider": [
+        "320",
+        0
+      ],
+      "sampler": [
+        "331",
+        1
+      ],
+      "sigmas": [
+        "370",
+        0
+      ],
+      "latent_image": [
+        "333",
+        1
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "自定义采样器（高级）"
+    }
+  },
+  "323": {
+    "inputs": {
+      "value": 15
+    },
+    "class_type": "PrimitiveFloat",
+    "_meta": {
+      "title": "Float (Duration)"
+    }
+  },
+  "324": {
+    "inputs": {
+      "expression": "max(5, round(a * 24)) + (5 - (max(5, round(a * 24)) % 17)) % 17",
+      "values.a": [
+        "323",
+        0
+      ]
+    },
+    "class_type": "ComfyMathExpression",
+    "_meta": {
+      "title": "数学表达式"
+    }
+  },
+  "326": {
+    "inputs": {
+      "model": [
+        "329",
+        0
+      ]
+    },
+    "class_type": "MiniMaxH3MemoryEfficientSageAttentionPatch",
+    "_meta": {
+      "title": "MiniMax H3 Mem Eff Sage Attention Patch"
+    }
+  },
+  "327": {
+    "inputs": {
+      "lora_name": "minimax/minimax_h3_turbo_4步加速_comfyui.safetensors",
+      "strength_model": 1,
+      "model": [
+        "326",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "LoRA加载器（仅模型）"
+    }
+  },
+  "328": {
+    "inputs": {
+      "frame_rate": 24,
+      "loop_count": 0,
+      "filename_prefix": "zdy",
+      "format": "video/h264-mp4",
+      "pix_fmt": "yuv420p",
+      "crf": 19,
+      "save_metadata": false,
+      "trim_to_audio": true,
+      "pingpong": false,
+      "save_output": true,
+      "images": [
+        "330",
+        0
+      ],
+      "audio": [
+        "330",
+        1
+      ]
+    },
+    "class_type": "VHS_VideoCombine",
+    "_meta": {
+      "title": "Video Combine 🎥🅥🅗🅢"
+    }
+  },
+  "329": {
+    "inputs": {
+      "reserved": 1,
+      "mode": "manual",
+      "seed": 551879168075645,
+      "auto_max_reserved": 0,
+      "clean_gpu_before": true,
+      "anything": [
+        "332",
+        0
+      ]
+    },
+    "class_type": "ReservedVRAMSetter",
+    "_meta": {
+      "title": "Set Reserved VRAM(GB) ⚙️"
+    }
+  },
+  "330": {
+    "inputs": {
+      "av_latent": [
+        "322",
+        0
+      ],
+      "video_vae": [
+        "318",
+        0
+      ],
+      "audio_vae": [
+        "319",
+        0
+      ]
+    },
+    "class_type": "MiniMaxH3AVDecodeT8",
+    "_meta": {
+      "title": "MiniMax H3 AV Decode (T8)"
+    }
+  },
+  "331": {
+    "inputs": {
+      "video_steps": 8,
+      "audio_steps": 10,
+      "shift_video": 12,
+      "shift_audio": 3,
+      "model": [
+        "327",
+        0
+      ],
+      "av_latent": [
+        "333",
+        1
+      ]
+    },
+    "class_type": "MiniMaxH3MultiRateSamplerEXPT8",
+    "_meta": {
+      "title": "EXP 4 video / 10 audio (10 full H3 calls)"
+    }
+  },
+  "332": {
+    "inputs": {
+      "unet_name": "minimax/minimax_h3_ref2va_int8_convrot.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "UNet加载器"
+    }
+  },
+  "333": {
+    "inputs": {
+      "prompt": [
+        "312",
+        0
+      ],
+      "width": [
+        "374",
+        1
+      ],
+      "height": [
+        "374",
+        2
+      ],
+      "length": [
+        "324",
+        1
+      ],
+      "task_type": "auto",
+      "audio_mode": "native",
+      "audio_denoise_strength": 1,
+      "add_source_as_reference": false,
+      "prompt_primary_audio_ordinal": 0,
+      "strict_prompt_tags": true,
+      "ref_image_size": "max",
+      "reference_video_policy": "official_2_to_15s",
+      "allow_above_reference_area": false,
+      "clip": [
+        "316",
+        0
+      ],
+      "video_vae": [
+        "318",
+        0
+      ],
+      "audio_vae": [
+        "319",
+        0
+      ],
+      "ref_images.ref_image_0": [
+        "375",
+        0
+      ],
+      "ref_images.ref_image_1": [
+        "376",
+        0
+      ],
+      "ref_images.ref_image_2": [
+        "377",
+        0
+      ],
+      "ref_images.ref_image_3": [
+        "378",
+        0
+      ],
+      "ref_images.ref_image_4": [
+        "379",
+        0
+      ],
+      "ref_images.ref_image_5": [
+        "380",
+        0
+      ],
+      "ref_images.ref_image_6": [
+        "381",
+        0
+      ],
+      "ref_images.ref_image_7": [
+        "382",
+        0
+      ],
+      "ref_images.ref_image_8": [
+        "383",
+        0
+      ],
+      "ref_videos.ref_video_0": [
+        "387",
+        0
+      ],
+      "ref_videos.ref_video_1": [
+        "388",
+        0
+      ],
+      "ref_videos.ref_video_2": [
+        "389",
+        0
+      ],
+      "ref_audios.ref_audio_0": [
+        "384",
+        0
+      ],
+      "ref_audios.ref_audio_1": [
+        "385",
+        0
+      ],
+      "ref_audios.ref_audio_2": [
+        "386",
+        0
+      ]
+    },
+    "class_type": "MiniMaxH3AudioConditioningT8",
+    "_meta": {
+      "title": "MiniMax H3 Audio Conditioning (T8)"
+    }
+  },
+  "370": {
+    "inputs": {
+      "extra_steps": 0,
+      "start_at_sigma": 0.65,
+      "end_at_sigma": 0,
+      "spacing": "cosine",
+      "sigmas": [
+        "331",
+        2
+      ]
+    },
+    "class_type": "H3SigmaRefiner",
+    "_meta": {
+      "title": "H3 Sigma Refiner"
+    }
+  },
+  "374": {
+    "inputs": {
+      "预设分辨率": "自定义",
+      "横竖对调": false,
+      "批量大小": 1,
+      "自定义宽": 768,
+      "自定义高": 1376,
+      "缩放倍数": "32"
+    },
+    "class_type": "WJILatentPreset",
+    "_meta": {
+      "title": "📐 Latent预设 (Empty Latent Preset)"
+    }
+  },
+  "375": {
+    "inputs": {
+      "image": "beach.jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "376": {
+    "inputs": {
+      "image": "beach.jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "377": {
+    "inputs": {
+      "image": "beach.jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "378": {
+    "inputs": {
+      "image": "beach.jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "379": {
+    "inputs": {
+      "image": "beach.jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "380": {
+    "inputs": {
+      "image": "beach.jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "381": {
+    "inputs": {
+      "image": "beach.jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "382": {
+    "inputs": {
+      "image": "beach.jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "383": {
+    "inputs": {
+      "image": "beach.jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "384": {
+    "inputs": {
+      "audio": "AJ.wav"
+    },
+    "class_type": "LoadAudio",
+    "_meta": {
+      "title": "加载音频"
+    }
+  },
+  "385": {
+    "inputs": {
+      "audio": "AJ.wav"
+    },
+    "class_type": "LoadAudio",
+    "_meta": {
+      "title": "加载音频"
+    }
+  },
+  "386": {
+    "inputs": {
+      "audio": "AJ.wav"
+    },
+    "class_type": "LoadAudio",
+    "_meta": {
+      "title": "加载音频"
+    }
+  },
+  "387": {
+    "inputs": {
+      "video": "zdy_tsc_3_4_00002-audio.mp4",
+      "force_rate": 0,
+      "custom_width": 0,
+      "custom_height": 0,
+      "frame_load_cap": 0,
+      "skip_first_frames": 0,
+      "select_every_nth": 1,
+      "format": "AnimateDiff"
+    },
+    "class_type": "VHS_LoadVideo",
+    "_meta": {
+      "title": "Load Video (Upload) 🎥🅥🅗🅢"
+    }
+  },
+  "388": {
+    "inputs": {
+      "video": "zdy_tsc_3_4_00002-audio.mp4",
+      "force_rate": 0,
+      "custom_width": 0,
+      "custom_height": 0,
+      "frame_load_cap": 0,
+      "skip_first_frames": 0,
+      "select_every_nth": 1,
+      "format": "AnimateDiff"
+    },
+    "class_type": "VHS_LoadVideo",
+    "_meta": {
+      "title": "Load Video (Upload) 🎥🅥🅗🅢"
+    }
+  },
+  "389": {
+    "inputs": {
+      "video": "zdy_tsc_3_4_00002-audio.mp4",
+      "force_rate": 0,
+      "custom_width": 0,
+      "custom_height": 0,
+      "frame_load_cap": 0,
+      "skip_first_frames": 0,
+      "select_every_nth": 1,
+      "format": "AnimateDiff"
+    },
+    "class_type": "VHS_LoadVideo",
+    "_meta": {
+      "title": "Load Video (Upload) 🎥🅥🅗🅢"
+    }
+  },
+  "_api_config": {
+    "customLabels": {
+      "312:value": "value",
+      "316:type": "type",
+      "316:device": "device",
+      "321:noise_seed": "noise_seed",
+      "323:value": "value",
+      "324:expression": "expression",
+      "327:lora_name": "lora_name",
+      "327:strength_model": "strength_model",
+      "328:filename_prefix": "文件名前缀",
+      "328:frame_rate": "frame_rate",
+      "328:loop_count": "loop_count",
+      "328:format": "format",
+      "328:pix_fmt": "pix_fmt",
+      "328:crf": "crf",
+      "328:save_metadata": "save_metadata",
+      "328:trim_to_audio": "trim_to_audio",
+      "328:pingpong": "pingpong",
+      "328:save_output": "save_output",
+      "329:seed": "随机种子",
+      "329:reserved": "reserved",
+      "329:mode": "mode",
+      "329:auto_max_reserved": "auto_max_reserved",
+      "329:clean_gpu_before": "clean_gpu_before",
+      "331:video_steps": "video_steps",
+      "331:audio_steps": "audio_steps",
+      "331:shift_video": "shift_video",
+      "331:shift_audio": "shift_audio",
+      "332:weight_dtype": "weight_dtype",
+      "333:task_type": "task_type",
+      "333:audio_mode": "audio_mode",
+      "333:audio_denoise_strength": "audio_denoise_strength",
+      "333:add_source_as_reference": "add_source_as_reference",
+      "333:prompt_primary_audio_ordinal": "prompt_primary_audio_ordinal",
+      "333:strict_prompt_tags": "strict_prompt_tags",
+      "333:ref_image_size": "ref_image_size",
+      "333:reference_video_policy": "reference_video_policy",
+      "333:allow_above_reference_area": "allow_above_reference_area",
+      "370:extra_steps": "extra_steps",
+      "370:start_at_sigma": "start_at_sigma",
+      "370:end_at_sigma": "end_at_sigma",
+      "370:spacing": "spacing",
+      "374:预设分辨率": "预设分辨率",
+      "374:横竖对调": "横竖对调",
+      "374:批量大小": "批量大小",
+      "374:自定义宽": "自定义宽",
+      "374:自定义高": "自定义高",
+      "374:缩放倍数": "缩放倍数",
+      "375:image": "参考图 0",
+      "376:image": "参考图 1",
+      "377:image": "参考图 2",
+      "378:image": "参考图 3",
+      "379:image": "参考图 4",
+      "380:image": "参考图 5",
+      "381:image": "参考图 6",
+      "382:image": "参考图 7",
+      "383:image": "参考图 8",
+      "384:audio": "参考音频 0",
+      "385:audio": "参考音频 1",
+      "386:audio": "参考音频 2",
+      "387:video": "参考视频 0",
+      "387:force_rate": "force_rate",
+      "387:custom_width": "custom_width",
+      "387:custom_height": "custom_height",
+      "387:frame_load_cap": "frame_load_cap",
+      "387:skip_first_frames": "skip_first_frames",
+      "387:select_every_nth": "select_every_nth",
+      "387:format": "format",
+      "388:video": "参考视频 1",
+      "388:force_rate": "force_rate",
+      "388:custom_width": "custom_width",
+      "388:custom_height": "custom_height",
+      "388:frame_load_cap": "frame_load_cap",
+      "388:skip_first_frames": "skip_first_frames",
+      "388:select_every_nth": "select_every_nth",
+      "388:format": "format",
+      "389:video": "参考视频 2",
+      "389:force_rate": "force_rate",
+      "389:custom_width": "custom_width",
+      "389:custom_height": "custom_height",
+      "389:frame_load_cap": "frame_load_cap",
+      "389:skip_first_frames": "skip_first_frames",
+      "389:select_every_nth": "select_every_nth",
+      "389:format": "format"
+    },
+    "enabledParams": {
+      "312:value": true,
+      "316:type": false,
+      "316:device": false,
+      "321:noise_seed": false,
+      "323:value": true,
+      "324:expression": false,
+      "327:lora_name": false,
+      "327:strength_model": false,
+      "328:filename_prefix": false,
+      "328:frame_rate": false,
+      "328:loop_count": false,
+      "328:format": false,
+      "328:pix_fmt": false,
+      "328:crf": false,
+      "328:save_metadata": false,
+      "328:trim_to_audio": false,
+      "328:pingpong": false,
+      "328:save_output": false,
+      "329:seed": false,
+      "329:reserved": false,
+      "329:mode": false,
+      "329:auto_max_reserved": false,
+      "329:clean_gpu_before": false,
+      "331:video_steps": false,
+      "331:audio_steps": false,
+      "331:shift_video": false,
+      "331:shift_audio": false,
+      "332:weight_dtype": false,
+      "333:task_type": false,
+      "333:audio_mode": false,
+      "333:audio_denoise_strength": false,
+      "333:add_source_as_reference": false,
+      "333:prompt_primary_audio_ordinal": false,
+      "333:strict_prompt_tags": false,
+      "333:ref_image_size": false,
+      "333:reference_video_policy": false,
+      "333:allow_above_reference_area": false,
+      "370:extra_steps": false,
+      "370:start_at_sigma": false,
+      "370:end_at_sigma": false,
+      "370:spacing": false,
+      "374:预设分辨率": false,
+      "374:横竖对调": false,
+      "374:批量大小": false,
+      "374:自定义宽": true,
+      "374:自定义高": true,
+      "374:缩放倍数": false,
+      "375:image": true,
+      "376:image": true,
+      "377:image": true,
+      "378:image": true,
+      "379:image": true,
+      "380:image": true,
+      "381:image": true,
+      "382:image": true,
+      "383:image": true,
+      "384:audio": true,
+      "385:audio": true,
+      "386:audio": true,
+      "387:video": true,
+      "387:force_rate": false,
+      "387:custom_width": false,
+      "387:custom_height": false,
+      "387:frame_load_cap": false,
+      "387:skip_first_frames": false,
+      "387:select_every_nth": false,
+      "387:format": false,
+      "388:video": true,
+      "388:force_rate": false,
+      "388:custom_width": false,
+      "388:custom_height": false,
+      "388:frame_load_cap": false,
+      "388:skip_first_frames": false,
+      "388:select_every_nth": false,
+      "388:format": false,
+      "389:video": true,
+      "389:force_rate": false,
+      "389:custom_width": false,
+      "389:custom_height": false,
+      "389:frame_load_cap": false,
+      "389:skip_first_frames": false,
+      "389:select_every_nth": false,
+      "389:format": false
+    },
+    "formValues": {
+      "312:value": "",
+      "316:type": "minimax",
+      "316:device": "default",
+      "321:noise_seed": 123456789,
+      "323:value": 5,
+      "324:expression": "max(5, round(a * 24)) + (5 - (max(5, round(a * 24)) % 17)) % 17",
+      "327:lora_name": "minimax/minimax_h3_turbo_4步加速_comfyui.safetensors",
+      "327:strength_model": 1,
+      "328:filename_prefix": "zdy",
+      "328:frame_rate": 24,
+      "328:loop_count": 0,
+      "328:format": "video/h264-mp4",
+      "328:pix_fmt": "yuv420p",
+      "328:crf": 19,
+      "328:save_metadata": false,
+      "328:trim_to_audio": true,
+      "328:pingpong": false,
+      "328:save_output": true,
+      "329:seed": 551879168075645,
+      "329:reserved": 1,
+      "329:mode": "manual",
+      "329:auto_max_reserved": 0,
+      "329:clean_gpu_before": true,
+      "331:video_steps": 8,
+      "331:audio_steps": 10,
+      "331:shift_video": 12,
+      "331:shift_audio": 3,
+      "332:weight_dtype": "default",
+      "333:task_type": "auto",
+      "333:audio_mode": "native",
+      "333:audio_denoise_strength": 1,
+      "333:add_source_as_reference": false,
+      "333:prompt_primary_audio_ordinal": 0,
+      "333:strict_prompt_tags": true,
+      "333:ref_image_size": "max",
+      "333:reference_video_policy": "official_2_to_15s",
+      "333:allow_above_reference_area": false,
+      "370:extra_steps": 0,
+      "370:start_at_sigma": 0.65,
+      "370:end_at_sigma": 0,
+      "370:spacing": "cosine",
+      "374:预设分辨率": "自定义",
+      "374:横竖对调": false,
+      "374:批量大小": 1,
+      "374:自定义宽": 480,
+      "374:自定义高": 480,
+      "374:缩放倍数": "32",
+      "375:image": null,
+      "376:image": null,
+      "377:image": null,
+      "378:image": null,
+      "379:image": null,
+      "380:image": null,
+      "381:image": null,
+      "382:image": null,
+      "383:image": null,
+      "384:audio": null,
+      "385:audio": null,
+      "386:audio": null,
+      "387:video": null,
+      "387:force_rate": 0,
+      "387:custom_width": 0,
+      "387:custom_height": 0,
+      "387:frame_load_cap": 0,
+      "387:skip_first_frames": 0,
+      "387:select_every_nth": 1,
+      "387:format": "AnimateDiff",
+      "388:video": null,
+      "388:force_rate": 0,
+      "388:custom_width": 0,
+      "388:custom_height": 0,
+      "388:frame_load_cap": 0,
+      "388:skip_first_frames": 0,
+      "388:select_every_nth": 1,
+      "388:format": "AnimateDiff",
+      "389:video": null,
+      "389:force_rate": 0,
+      "389:custom_width": 0,
+      "389:custom_height": 0,
+      "389:frame_load_cap": 0,
+      "389:skip_first_frames": 0,
+      "389:select_every_nth": 1,
+      "389:format": "AnimateDiff"
+    },
+    "mediaOrder": [
+      "375:image",
+      "376:image",
+      "377:image",
+      "378:image",
+      "379:image",
+      "380:image",
+      "381:image",
+      "382:image",
+      "383:image",
+      "384:audio",
+      "385:audio",
+      "386:audio",
+      "387:video",
+      "388:video",
+      "389:video"
+    ],
+    "mediaOrderSource": "auto",
+    "apiNames": {
+      "312:value": "prompt",
+      "316:type": "type",
+      "316:device": "device",
+      "321:noise_seed": "noise_seed",
+      "323:value": "value",
+      "324:expression": "expression",
+      "327:lora_name": "lora_name",
+      "327:strength_model": "strength_model",
+      "328:filename_prefix": "filename_prefix",
+      "328:frame_rate": "frame_rate",
+      "328:loop_count": "loop_count",
+      "328:format": "format",
+      "328:pix_fmt": "pix_fmt",
+      "328:crf": "crf",
+      "328:save_metadata": "save_metadata",
+      "328:trim_to_audio": "trim_to_audio",
+      "328:pingpong": "pingpong",
+      "328:save_output": "save_output",
+      "329:seed": "seed",
+      "329:reserved": "reserved",
+      "329:mode": "mode",
+      "329:auto_max_reserved": "auto_max_reserved",
+      "329:clean_gpu_before": "clean_gpu_before",
+      "331:video_steps": "video_steps",
+      "331:audio_steps": "audio_steps",
+      "331:shift_video": "shift_video",
+      "331:shift_audio": "shift_audio",
+      "332:weight_dtype": "weight_dtype",
+      "333:task_type": "task_type",
+      "333:audio_mode": "audio_mode",
+      "333:audio_denoise_strength": "audio_denoise_strength",
+      "333:add_source_as_reference": "add_source_as_reference",
+      "333:prompt_primary_audio_ordinal": "prompt_primary_audio_ordinal",
+      "333:strict_prompt_tags": "strict_prompt_tags",
+      "333:ref_image_size": "ref_image_size",
+      "333:reference_video_policy": "reference_video_policy",
+      "333:allow_above_reference_area": "allow_above_reference_area",
+      "370:extra_steps": "extra_steps",
+      "370:start_at_sigma": "start_at_sigma",
+      "370:end_at_sigma": "end_at_sigma",
+      "370:spacing": "spacing",
+      "374:预设分辨率": "param_2",
+      "374:横竖对调": "param",
+      "374:批量大小": "param_3",
+      "374:自定义宽": "param_4",
+      "374:自定义高": "param_5",
+      "374:缩放倍数": "param_6",
+      "375:image": "ref_image_0",
+      "376:image": "ref_image_1",
+      "377:image": "ref_image_2",
+      "378:image": "ref_image_3",
+      "379:image": "ref_image_4",
+      "380:image": "ref_image_5",
+      "381:image": "ref_image_6",
+      "382:image": "ref_image_7",
+      "383:image": "ref_image_8",
+      "384:audio": "ref_audio_0",
+      "385:audio": "ref_audio_1",
+      "386:audio": "ref_audio_2",
+      "387:video": "ref_video_0",
+      "387:force_rate": "force_rate",
+      "387:custom_width": "custom_width",
+      "387:custom_height": "custom_height",
+      "387:frame_load_cap": "frame_load_cap",
+      "387:skip_first_frames": "skip_first_frames",
+      "387:select_every_nth": "select_every_nth",
+      "387:format": "format_2",
+      "388:video": "ref_video_1",
+      "388:force_rate": "force_rate_2",
+      "388:custom_width": "custom_width_2",
+      "388:custom_height": "custom_height_2",
+      "388:frame_load_cap": "frame_load_cap_2",
+      "388:skip_first_frames": "skip_first_frames_2",
+      "388:select_every_nth": "select_every_nth_2",
+      "388:format": "format_3",
+      "389:video": "ref_video_2",
+      "389:force_rate": "force_rate_3",
+      "389:custom_width": "custom_width_3",
+      "389:custom_height": "custom_height_3",
+      "389:frame_load_cap": "frame_load_cap_3",
+      "389:skip_first_frames": "skip_first_frames_3",
+      "389:select_every_nth": "select_every_nth_3",
+      "389:format": "format_4"
+    }
+  }
+}

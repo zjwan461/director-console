@@ -1,0 +1,579 @@
+{
+  "29": {
+    "inputs": {
+      "filename_prefix": "COMFYUI",
+      "images": [
+        "103",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "保存图像"
+    }
+  },
+  "51": {
+    "inputs": {
+      "text": [
+        "111",
+        0
+      ],
+      "clip": [
+        "56",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "52": {
+    "inputs": {
+      "width": 1920,
+      "height": 1080,
+      "batch_size": 1
+    },
+    "class_type": "EmptyLatentImage",
+    "_meta": {
+      "title": "空Latent图像"
+    }
+  },
+  "53": {
+    "inputs": {
+      "seed": [
+        "115",
+        0
+      ],
+      "steps": 8,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 1,
+      "model": [
+        "129",
+        0
+      ],
+      "positive": [
+        "51",
+        0
+      ],
+      "negative": [
+        "58",
+        0
+      ],
+      "latent_image": [
+        "52",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "54": {
+    "inputs": {
+      "samples": [
+        "53",
+        0
+      ],
+      "vae": [
+        "57",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "55": {
+    "inputs": {
+      "unet_name": "krea/redcraft2KREA2INT8_11INT8Native.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "UNet加载器"
+    }
+  },
+  "56": {
+    "inputs": {
+      "clip_name": "qwen3vl_4b_uncensored_int8_convrot.safetensors",
+      "type": "krea2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "加载CLIP"
+    }
+  },
+  "57": {
+    "inputs": {
+      "vae_name": "qwen_image_vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "加载VAE"
+    }
+  },
+  "58": {
+    "inputs": {
+      "conditioning": [
+        "51",
+        0
+      ]
+    },
+    "class_type": "ConditioningZeroOut",
+    "_meta": {
+      "title": "条件零化"
+    }
+  },
+  "103": {
+    "inputs": {
+      "offload_model": false,
+      "offload_cache": true,
+      "anything": [
+        "106",
+        0
+      ]
+    },
+    "class_type": "VRAMCleanup",
+    "_meta": {
+      "title": "🎈VRAM-Cleanup"
+    }
+  },
+  "106": {
+    "inputs": {
+      "clean_file_cache": true,
+      "clean_processes": true,
+      "clean_dlls": true,
+      "retry_times": 3,
+      "anything": [
+        "54",
+        0
+      ]
+    },
+    "class_type": "RAMCleanup",
+    "_meta": {
+      "title": "🎈RAM-Cleanup"
+    }
+  },
+  "107": {
+    "inputs": {
+      "text_0": "A professional clean four-view character turnaround benchmark sheet, on a single seamless pure white industrial studio background, no borders, no frames, no dividing lines, no panel edges, no rounded corners anywhere arranged horizontally side-by-side, seamless pure white industrial studio background, no shadows, technical reference model sheet, orthographic views, maximum consistency across all panels.\nCyberpunk beauty portrait subject: A young woman with an edgy, cold avant-garde futuristic aesthetic, wearing a metallic silver slip dress, standing in a neutral pose for anatomical reference.\n\nPanel 1/4 (Head Close-up): Extreme close-up portrait from front, only head and shoulders, razor sharp 8K facial details, perfect reproduction of facial bone structure. Her makeup is sharp and graphic: thick black winged eyeliner extending into sharp cat-eye tails, glossy clear lip gloss with high reflectivity, and a small glowing blue circuit-pattern sticker adhered precisely to the left cheekbone (visible from front). Skin texture is smooth yet realistic with pale cool undertones, showing fine pores and subtle moisture sheen. Hair is sleek, straight, and jet black with distinct silver-gray front highlights that catch the light, falling smoothly over shoulders. Expression is cold, sharp, and confident with a direct gaze. Clean shoulder and neck area fully visible, showcasing a silver metallic choker made of rigid polished alloy links with microscopic surface scratches, snugly fitted around the neck. Studio flat lighting ensures uniform illumination of facial features for clear structural definition.\n\nPanel 2/4 (Front Full Body): Full body front view, neutral standing pose, arms naturally hanging at sides with one hand tucked into the waistband of the skirt (elbow bent slightly inward, fingers gently gripping fabric), straight posture, 1:1 realistic body proportions. The metallic silver slip dress features a bias-cut silhouette that drapes fluidly, composed of highly reflective chrome-like fabric with an iridescent finish that shifts between silver gray, electric cyan, and deep magenta under simulated lighting. The dress has thin spaghetti straps, a straight neckline, and falls to mid-thigh. Visible fine vertical stitching lines along the seams, slight natural wrinkles at the hips and knees indicating soft drape, and subtle surface scuffs on the fabric suggesting underground wear.\n\nPanel 3/4 (Side Full Body): Full body side view (profile), same neutral standing pose, arms naturally at sides, maintaining exact same body proportions and details. The profile highlights the sleek contour of the head, the sharp jawline, and the smooth flow of the straight hair with silver-gray front streaks. The metallic choker is visible as a continuous horizontal band around the neck. The dress drapes closely against the torso, showing the tension of the bias cut along the side seams, with realistic fabric folds cascading down the leg. The hand in the waistband creates a slight indentation in the soft fabric of the skirt.\n\nPanel 4/4 (Back Full Body): Full body back view, same neutral standing pose, arms naturally at sides, maintaining exact same body proportions and details. The back of the head shows the sleek, straight texture of the black hair with silver-gray highlights running down the crown. The metallic choker creates a subtle highlight line across the nape. The dress flows straight down the back with clean vertical seams matching the front, exhibiting consistent iridescent color shifts (silver to dark purple/blue) along the fabric surface. Natural fabric drapes and slight creases are visible at the lower back and thighs, maintaining perfect alignment with the front view's body shape.\n\nGlobal Consistency Constraints:\nPerfect 100% identity consistency across all four panels — identical face, exact same hairstyle (sleek black with silver-gray front highlights) and hair flow, identical body shape and proportions, identical clothing in every angle. Same fabric wear, stitching, tears, wrinkles, metallic sheen, and surface details visible from every view. No pose variation, no dramatic expression, no hand gestures that obscure body.\n\nClothing & Material Details:\nCharacter wearing complete Cyberpunk Editorial Outfit in all views, consisting of: highly reflective chrome-like metallic silver slip dress with iridescent color-shifting properties, rigid polished alloy silver choker with microscopic surface scratches, sleek straight black hair with distinct silver-gray front highlights, small glowing blue circuit-pattern adhesive sticker on cheek, and realistic fabric draping with fine vertical stitching lines. Precise tailoring, visible stitching lines, realistic fabric folds, material wear and tear (subtle scuffs), metallic reflections and matte textures all consistently rendered.\n\nTechnical & Quality Constraints:\n8K ultra sharp resolution, infinite depth of field (F/32), zero bokeh, everything in perfect razor focus, flat diffuse studio lighting with even illumination from all angles, no strong shadows, no ambient color cast, pure technical white background, maximum material detail and surface fidelity, cinematic yet documentary reference style.\nsingle continuous white backdrop with no panel borders or separations.",
+      "text": [
+        "111",
+        0
+      ]
+    },
+    "class_type": "ShowText|pysssss",
+    "_meta": {
+      "title": "Show Text 🐍"
+    }
+  },
+  "108": {
+    "inputs": {
+      "max_tokens": 2048,
+      "top_k": 30,
+      "top_p": 0.9,
+      "min_p": 0.05,
+      "typical_p": 1,
+      "temperature": 0.8,
+      "repeat_penalty": 1,
+      "frequency_penalty": 0,
+      "present_penalty": 1,
+      "mirostat_mode": 0,
+      "mirostat_eta": 0.1,
+      "mirostat_tau": 5,
+      "state_uid": 0
+    },
+    "class_type": "llama_cpp_parameters",
+    "_meta": {
+      "title": "Llama-cpp Parameters"
+    }
+  },
+  "109": {
+    "inputs": {
+      "preset_prompt": "Empty - Nothing",
+      "custom_prompt": [
+        "121",
+        0
+      ],
+      "system_prompt": "Role: 影视级角色视觉真值 (Ground Truth) 提示词生成专家\nObjective: 将用户输入的简短角色设定，转化为结构极度严谨、专为 Krea 2 优化的高质量“四视图角色基准资产 (Character Benchmark Asset)”提示词。\nWorkflow:\n\n解析核心概念：提取用户输入的角色身份、性别、世界观背景及核心特征,如用户未提及面孔需要使用亚洲脸型。\n细节丰满化：根据世界观自动推演符合逻辑的面部特征、发型、服装材质、磨损细节及标志性道具。\n严格映射模板：填入以下为 Krea 2 优化的标准化结构。\n\nOutput Structure & Constraints（必须严格遵循）:\nA professional clean four-view character turnaround benchmark sheet, on a single seamless pure white industrial studio background, no borders, no frames, no dividing lines, no panel edges, no rounded corners anywhere arranged horizontally side-by-side, seamless pure white industrial studio background, no shadows, technical reference model sheet, orthographic views, maximum consistency across all panels.\n[角色核心定义与布局] [在此处结合用户设定，例如：赛博朋克世界的义体强化男黑客]，highly detailed character design reference sheet.\nPanel 1/4 (Head Close-up): Extreme close-up portrait from front, only head and shoulders, razor sharp 8K facial details, perfect reproduction of facial bone structure, [详细描述肤质特征，如：Her makeup is soft yet eye-catching: large, glossy eyes, a delicate pink blush, faint freckles across her cheeks, sharp eyeliner, and smooth gradient lips.], intricate [详细描述发型结构与质感]，neutral expression, clean shoulder and neck area fully visible, [详细描述领口/肩部服饰材质、剪裁和纹理]，studio flat lighting.\nPanel 2/4 (Front Full Body): Full body front view, neutral standing pose, arms naturally hanging at sides, hands relaxed, straight posture, 1:1 realistic body proportions.\nPanel 3/4 (Side Full Body): Full body side view (profile), same neutral standing pose, arms naturally at sides, maintaining exact same body proportions and details.\nPanel 4/4 (Back Full Body): Full body back view, same neutral standing pose, arms naturally at sides, maintaining exact same body proportions and details.\nGlobal Consistency Constraints:\nPerfect 100% identity consistency across all four panels — identical face, exact same hairstyle and hair flow, identical body shape and proportions, identical clothing in every angle. Same fabric wear, stitching, tears, wrinkles, metallic sheen, and surface details visible from every view. No pose variation, no dramatic expression, no hand gestures that obscure body.\nClothing & Material Details:\nCharacter wearing complete [设定风格] outfit in all views, consisting of [列举4-5个具体材质与配件，例如：matte black reinforced tactical jacket with carbon fiber panels, distressed leather pants, exposed cybernetic arm plating, glowing neon circuit accents, heavy combat boots], precise tailoring, visible stitching lines, realistic fabric folds, material wear and tear, metallic reflections and matte textures all consistently rendered.\nTechnical & Quality Constraints:\n8K ultra sharp resolution, infinite depth of field (F/32), zero bokeh, everything in perfect razor focus, flat diffuse studio lighting with even illumination from all angles, no strong shadows, no ambient color cast, pure technical white background, maximum material detail and surface fidelity, cinematic yet documentary reference style.\n**single continuous white backdrop with no panel borders or separations**.\nSystem Instructions:\n\n\n面部和服装描述必须具体到材质名称、物理状态、磨损程度和结构细节。\n最终输出仅包含生成的完整英文提示词，不要输出序言和评论。",
+      "inference_mode": "one by one",
+      "max_frames": 24,
+      "max_size": 256,
+      "seed": 910857068776846,
+      "force_offload": false,
+      "save_states": false,
+      "llama_model": [
+        "110",
+        0
+      ],
+      "parameters": [
+        "108",
+        0
+      ],
+      "queue_handler": [
+        "133",
+        0
+      ]
+    },
+    "class_type": "llama_cpp_instruct_adv",
+    "_meta": {
+      "title": "Llama-cpp Instruct"
+    }
+  },
+  "110": {
+    "inputs": {
+      "model": "Qwen3.5-9B-Uncensored-HauhauCS-Aggressive-Q8_0.gguf",
+      "mmproj": "mmproj-Qwen3.5-9B-Uncensored-HauhauCS-Aggressive-BF16.gguf",
+      "chat_handler": "Qwen3.5",
+      "n_ctx": 8192,
+      "vram_limit": -1,
+      "image_min_tokens": 0,
+      "image_max_tokens": 0,
+      "load_mtp": false
+    },
+    "class_type": "llama_cpp_model_loader",
+    "_meta": {
+      "title": "Llama-cpp Model Loader"
+    }
+  },
+  "111": {
+    "inputs": {
+      "offload_model": false,
+      "offload_cache": true,
+      "anything": [
+        "112",
+        0
+      ]
+    },
+    "class_type": "VRAMCleanup",
+    "_meta": {
+      "title": "🎈VRAM-Cleanup"
+    }
+  },
+  "112": {
+    "inputs": {
+      "clean_file_cache": true,
+      "clean_processes": true,
+      "clean_dlls": true,
+      "retry_times": 3,
+      "anything": [
+        "135",
+        0
+      ]
+    },
+    "class_type": "RAMCleanup",
+    "_meta": {
+      "title": "🎈RAM-Cleanup"
+    }
+  },
+  "115": {
+    "inputs": {
+      "seed": -1
+    },
+    "class_type": "Seed (rgthree)",
+    "_meta": {
+      "title": "Seed (rgthree)"
+    }
+  },
+  "121": {
+    "inputs": {
+      "prompt": "Create an edgy cinematic cyberpunk beauty portrait of a young woman in a metallic silver slip dress, shot in a neon-lit underground passage at night on 35mm Kodak Vision3 500T film, with fine grain, high-contrast dual neon lighting, and cold avant-garde futuristic atmosphere.\nShe has sleek straight hair with silver-gray front highlights, wearing sharp graphic winged eyeliner, glossy clear lip gloss, and a silver metallic choker around her neck. A small glowing blue circuit-pattern sticker rests on her cheekbone. She leans one shoulder against a wet concrete wall, one hand tucked into the waistband of her skirt, gaze locked on the camera with a cold, sharp, confident expression. Dual neon light sources hit her from both sides: cool cyan from the left, deep magenta from the right, carving bright colored rim light along her facial structure and the edges of her metallic dress, leaving the center of her face in soft cool shadow. Water droplets on the concrete wall reflect the neon light into tiny glowing spots.\nThe composition uses a wide cinematic 2.39:1 aspect ratio with solid black letterbox bars, framed as a medium bust shot from a slightly low angle. Shot with a 35mm prime lens at f/1.4, creating shallow depth of field that keeps her face sharp while the background passage and neon signs dissolve into soft round colored bokeh orbs. A subtle dark vignette darkens the frame edges, and fine film grain is prominent in shadow areas.\nLighting is dual-color hard neon side light with no front fill, creating high contrast and dramatic color separation across her face and body. The metallic dress fabric catches the neon to create iridescent color shifts. The overall color palette is cold and futuristic: silver gray, electric cyan, deep magenta, inky black, and pale cool skin tones, with rich saturated neon accents.\nThe visual style is edgy cyberpunk editorial beauty photography, with authentic 35mm night film grain, realistic neon light casting, and zero digital sharpening. "
+    },
+    "class_type": "CR Prompt Text",
+    "_meta": {
+      "title": "⚙️ CR Prompt Text"
+    }
+  },
+  "129": {
+    "inputs": {
+      "lora_name": "krea2/krea2-Cc风情万种-人像.safetensors",
+      "strength_model": 1,
+      "model": [
+        "55",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "LoRA加载器（仅模型）"
+    }
+  },
+  "133": {
+    "inputs": {
+      "value": true
+    },
+    "class_type": "PrimitiveBoolean",
+    "_meta": {
+      "title": "打开提示词优化（False: 无优化 | Ture: 启用优化）"
+    },
+    "t": {
+      "title": "改写三视图提示词优化"
+    }
+  },
+  "135": {
+    "inputs": {
+      "switch": [
+        "133",
+        0
+      ],
+      "on_false": [
+        "121",
+        0
+      ],
+      "on_true": [
+        "109",
+        0
+      ]
+    },
+    "class_type": "ComfySwitchNode",
+    "_meta": {
+      "title": "提示词优化开关"
+    }
+  },
+  "_api_config": {
+    "customLabels": {
+      "29:filename_prefix": "文件名前缀",
+      "52:width": "宽度",
+      "52:height": "高度",
+      "52:batch_size": "批次大小",
+      "53:steps": "迭代步数",
+      "53:cfg": "CFG Scale",
+      "53:denoise": "denoise",
+      "55:weight_dtype": "weight_dtype",
+      "56:type": "type",
+      "56:device": "device",
+      "103:offload_model": "offload_model",
+      "103:offload_cache": "offload_cache",
+      "106:clean_file_cache": "clean_file_cache",
+      "106:clean_processes": "clean_processes",
+      "106:clean_dlls": "clean_dlls",
+      "106:retry_times": "retry_times",
+      "107:text_0": "text_0",
+      "108:max_tokens": "max_tokens",
+      "108:top_k": "top_k",
+      "108:top_p": "top_p",
+      "108:min_p": "min_p",
+      "108:typical_p": "typical_p",
+      "108:temperature": "temperature",
+      "108:repeat_penalty": "repeat_penalty",
+      "108:frequency_penalty": "frequency_penalty",
+      "108:present_penalty": "present_penalty",
+      "108:mirostat_mode": "mirostat_mode",
+      "108:mirostat_eta": "mirostat_eta",
+      "108:mirostat_tau": "mirostat_tau",
+      "108:state_uid": "state_uid",
+      "109:seed": "随机种子",
+      "109:preset_prompt": "preset_prompt",
+      "109:system_prompt": "system_prompt",
+      "109:inference_mode": "inference_mode",
+      "109:max_frames": "max_frames",
+      "109:max_size": "max_size",
+      "109:force_offload": "force_offload",
+      "109:save_states": "save_states",
+      "110:model": "model",
+      "110:mmproj": "mmproj",
+      "110:chat_handler": "chat_handler",
+      "110:n_ctx": "n_ctx",
+      "110:vram_limit": "vram_limit",
+      "110:image_min_tokens": "image_min_tokens",
+      "110:image_max_tokens": "image_max_tokens",
+      "110:load_mtp": "load_mtp",
+      "111:offload_model": "offload_model",
+      "111:offload_cache": "offload_cache",
+      "112:clean_file_cache": "clean_file_cache",
+      "112:clean_processes": "clean_processes",
+      "112:clean_dlls": "clean_dlls",
+      "112:retry_times": "retry_times",
+      "115:seed": "随机种子",
+      "121:prompt": "prompt",
+      "129:lora_name": "lora_name",
+      "129:strength_model": "strength_model",
+      "133:value": "改写三视图提示词优化 (value)"
+    },
+    "enabledParams": {
+      "29:filename_prefix": false,
+      "52:width": true,
+      "52:height": true,
+      "52:batch_size": false,
+      "53:steps": false,
+      "53:cfg": false,
+      "53:denoise": false,
+      "55:weight_dtype": false,
+      "56:type": false,
+      "56:device": false,
+      "103:offload_model": false,
+      "103:offload_cache": false,
+      "106:clean_file_cache": false,
+      "106:clean_processes": false,
+      "106:clean_dlls": false,
+      "106:retry_times": false,
+      "107:text_0": false,
+      "108:max_tokens": false,
+      "108:top_k": false,
+      "108:top_p": false,
+      "108:min_p": false,
+      "108:typical_p": false,
+      "108:temperature": false,
+      "108:repeat_penalty": false,
+      "108:frequency_penalty": false,
+      "108:present_penalty": false,
+      "108:mirostat_mode": false,
+      "108:mirostat_eta": false,
+      "108:mirostat_tau": false,
+      "108:state_uid": false,
+      "109:seed": false,
+      "109:preset_prompt": false,
+      "109:system_prompt": false,
+      "109:inference_mode": false,
+      "109:max_frames": false,
+      "109:max_size": false,
+      "109:force_offload": false,
+      "109:save_states": false,
+      "110:model": false,
+      "110:mmproj": false,
+      "110:chat_handler": false,
+      "110:n_ctx": false,
+      "110:vram_limit": false,
+      "110:image_min_tokens": false,
+      "110:image_max_tokens": false,
+      "110:load_mtp": false,
+      "111:offload_model": false,
+      "111:offload_cache": false,
+      "112:clean_file_cache": false,
+      "112:clean_processes": false,
+      "112:clean_dlls": false,
+      "112:retry_times": false,
+      "115:seed": false,
+      "121:prompt": true,
+      "129:lora_name": false,
+      "129:strength_model": false,
+      "133:value": true
+    },
+    "formValues": {
+      "29:filename_prefix": "COMFYUI",
+      "52:width": 1920,
+      "52:height": 1080,
+      "52:batch_size": 1,
+      "53:steps": 8,
+      "53:cfg": 1,
+      "53:denoise": 1,
+      "55:weight_dtype": "default",
+      "56:type": "krea2",
+      "56:device": "default",
+      "103:offload_model": false,
+      "103:offload_cache": true,
+      "106:clean_file_cache": true,
+      "106:clean_processes": true,
+      "106:clean_dlls": true,
+      "106:retry_times": 3,
+      "107:text_0": "A professional clean four-view character turnaround benchmark sheet, on a single seamless pure white industrial studio background, no borders, no frames, no dividing lines, no panel edges, no rounded corners anywhere arranged horizontally side-by-side, seamless pure white industrial studio background, no shadows, technical reference model sheet, orthographic views, maximum consistency across all panels.\nCyberpunk beauty portrait subject: A young woman with an edgy, cold avant-garde futuristic aesthetic, wearing a metallic silver slip dress, standing in a neutral pose for anatomical reference.\n\nPanel 1/4 (Head Close-up): Extreme close-up portrait from front, only head and shoulders, razor sharp 8K facial details, perfect reproduction of facial bone structure. Her makeup is sharp and graphic: thick black winged eyeliner extending into sharp cat-eye tails, glossy clear lip gloss with high reflectivity, and a small glowing blue circuit-pattern sticker adhered precisely to the left cheekbone (visible from front). Skin texture is smooth yet realistic with pale cool undertones, showing fine pores and subtle moisture sheen. Hair is sleek, straight, and jet black with distinct silver-gray front highlights that catch the light, falling smoothly over shoulders. Expression is cold, sharp, and confident with a direct gaze. Clean shoulder and neck area fully visible, showcasing a silver metallic choker made of rigid polished alloy links with microscopic surface scratches, snugly fitted around the neck. Studio flat lighting ensures uniform illumination of facial features for clear structural definition.\n\nPanel 2/4 (Front Full Body): Full body front view, neutral standing pose, arms naturally hanging at sides with one hand tucked into the waistband of the skirt (elbow bent slightly inward, fingers gently gripping fabric), straight posture, 1:1 realistic body proportions. The metallic silver slip dress features a bias-cut silhouette that drapes fluidly, composed of highly reflective chrome-like fabric with an iridescent finish that shifts between silver gray, electric cyan, and deep magenta under simulated lighting. The dress has thin spaghetti straps, a straight neckline, and falls to mid-thigh. Visible fine vertical stitching lines along the seams, slight natural wrinkles at the hips and knees indicating soft drape, and subtle surface scuffs on the fabric suggesting underground wear.\n\nPanel 3/4 (Side Full Body): Full body side view (profile), same neutral standing pose, arms naturally at sides, maintaining exact same body proportions and details. The profile highlights the sleek contour of the head, the sharp jawline, and the smooth flow of the straight hair with silver-gray front streaks. The metallic choker is visible as a continuous horizontal band around the neck. The dress drapes closely against the torso, showing the tension of the bias cut along the side seams, with realistic fabric folds cascading down the leg. The hand in the waistband creates a slight indentation in the soft fabric of the skirt.\n\nPanel 4/4 (Back Full Body): Full body back view, same neutral standing pose, arms naturally at sides, maintaining exact same body proportions and details. The back of the head shows the sleek, straight texture of the black hair with silver-gray highlights running down the crown. The metallic choker creates a subtle highlight line across the nape. The dress flows straight down the back with clean vertical seams matching the front, exhibiting consistent iridescent color shifts (silver to dark purple/blue) along the fabric surface. Natural fabric drapes and slight creases are visible at the lower back and thighs, maintaining perfect alignment with the front view's body shape.\n\nGlobal Consistency Constraints:\nPerfect 100% identity consistency across all four panels — identical face, exact same hairstyle (sleek black with silver-gray front highlights) and hair flow, identical body shape and proportions, identical clothing in every angle. Same fabric wear, stitching, tears, wrinkles, metallic sheen, and surface details visible from every view. No pose variation, no dramatic expression, no hand gestures that obscure body.\n\nClothing & Material Details:\nCharacter wearing complete Cyberpunk Editorial Outfit in all views, consisting of: highly reflective chrome-like metallic silver slip dress with iridescent color-shifting properties, rigid polished alloy silver choker with microscopic surface scratches, sleek straight black hair with distinct silver-gray front highlights, small glowing blue circuit-pattern adhesive sticker on cheek, and realistic fabric draping with fine vertical stitching lines. Precise tailoring, visible stitching lines, realistic fabric folds, material wear and tear (subtle scuffs), metallic reflections and matte textures all consistently rendered.\n\nTechnical & Quality Constraints:\n8K ultra sharp resolution, infinite depth of field (F/32), zero bokeh, everything in perfect razor focus, flat diffuse studio lighting with even illumination from all angles, no strong shadows, no ambient color cast, pure technical white background, maximum material detail and surface fidelity, cinematic yet documentary reference style.\nsingle continuous white backdrop with no panel borders or separations.",
+      "108:max_tokens": 2048,
+      "108:top_k": 30,
+      "108:top_p": 0.9,
+      "108:min_p": 0.05,
+      "108:typical_p": 1,
+      "108:temperature": 0.8,
+      "108:repeat_penalty": 1,
+      "108:frequency_penalty": 0,
+      "108:present_penalty": 1,
+      "108:mirostat_mode": 0,
+      "108:mirostat_eta": 0.1,
+      "108:mirostat_tau": 5,
+      "108:state_uid": 0,
+      "109:seed": 910857068776846,
+      "109:preset_prompt": "Empty - Nothing",
+      "109:system_prompt": "Role: 影视级角色视觉真值 (Ground Truth) 提示词生成专家\nObjective: 将用户输入的简短角色设定，转化为结构极度严谨、专为 Krea 2 优化的高质量“四视图角色基准资产 (Character Benchmark Asset)”提示词。\nWorkflow:\n\n解析核心概念：提取用户输入的角色身份、性别、世界观背景及核心特征,如用户未提及面孔需要使用亚洲脸型。\n细节丰满化：根据世界观自动推演符合逻辑的面部特征、发型、服装材质、磨损细节及标志性道具。\n严格映射模板：填入以下为 Krea 2 优化的标准化结构。\n\nOutput Structure & Constraints（必须严格遵循）:\nA professional clean four-view character turnaround benchmark sheet, on a single seamless pure white industrial studio background, no borders, no frames, no dividing lines, no panel edges, no rounded corners anywhere arranged horizontally side-by-side, seamless pure white industrial studio background, no shadows, technical reference model sheet, orthographic views, maximum consistency across all panels.\n[角色核心定义与布局] [在此处结合用户设定，例如：赛博朋克世界的义体强化男黑客]，highly detailed character design reference sheet.\nPanel 1/4 (Head Close-up): Extreme close-up portrait from front, only head and shoulders, razor sharp 8K facial details, perfect reproduction of facial bone structure, [详细描述肤质特征，如：Her makeup is soft yet eye-catching: large, glossy eyes, a delicate pink blush, faint freckles across her cheeks, sharp eyeliner, and smooth gradient lips.], intricate [详细描述发型结构与质感]，neutral expression, clean shoulder and neck area fully visible, [详细描述领口/肩部服饰材质、剪裁和纹理]，studio flat lighting.\nPanel 2/4 (Front Full Body): Full body front view, neutral standing pose, arms naturally hanging at sides, hands relaxed, straight posture, 1:1 realistic body proportions.\nPanel 3/4 (Side Full Body): Full body side view (profile), same neutral standing pose, arms naturally at sides, maintaining exact same body proportions and details.\nPanel 4/4 (Back Full Body): Full body back view, same neutral standing pose, arms naturally at sides, maintaining exact same body proportions and details.\nGlobal Consistency Constraints:\nPerfect 100% identity consistency across all four panels — identical face, exact same hairstyle and hair flow, identical body shape and proportions, identical clothing in every angle. Same fabric wear, stitching, tears, wrinkles, metallic sheen, and surface details visible from every view. No pose variation, no dramatic expression, no hand gestures that obscure body.\nClothing & Material Details:\nCharacter wearing complete [设定风格] outfit in all views, consisting of [列举4-5个具体材质与配件，例如：matte black reinforced tactical jacket with carbon fiber panels, distressed leather pants, exposed cybernetic arm plating, glowing neon circuit accents, heavy combat boots], precise tailoring, visible stitching lines, realistic fabric folds, material wear and tear, metallic reflections and matte textures all consistently rendered.\nTechnical & Quality Constraints:\n8K ultra sharp resolution, infinite depth of field (F/32), zero bokeh, everything in perfect razor focus, flat diffuse studio lighting with even illumination from all angles, no strong shadows, no ambient color cast, pure technical white background, maximum material detail and surface fidelity, cinematic yet documentary reference style.\n**single continuous white backdrop with no panel borders or separations**.\nSystem Instructions:\n\n\n面部和服装描述必须具体到材质名称、物理状态、磨损程度和结构细节。\n最终输出仅包含生成的完整英文提示词，不要输出序言和评论。",
+      "109:inference_mode": "one by one",
+      "109:max_frames": 24,
+      "109:max_size": 256,
+      "109:force_offload": false,
+      "109:save_states": false,
+      "110:model": "Qwen3.5-9B-Uncensored-HauhauCS-Aggressive-Q8_0.gguf",
+      "110:mmproj": "mmproj-Qwen3.5-9B-Uncensored-HauhauCS-Aggressive-BF16.gguf",
+      "110:chat_handler": "Qwen3.5",
+      "110:n_ctx": 8192,
+      "110:vram_limit": -1,
+      "110:image_min_tokens": 0,
+      "110:image_max_tokens": 0,
+      "110:load_mtp": false,
+      "111:offload_model": false,
+      "111:offload_cache": true,
+      "112:clean_file_cache": true,
+      "112:clean_processes": true,
+      "112:clean_dlls": true,
+      "112:retry_times": 3,
+      "115:seed": -1,
+      "121:prompt": "Create an edgy cinematic cyberpunk beauty portrait of a young woman in a metallic silver slip dress, shot in a neon-lit underground passage at night on 35mm Kodak Vision3 500T film, with fine grain, high-contrast dual neon lighting, and cold avant-garde futuristic atmosphere.\nShe has sleek straight hair with silver-gray front highlights, wearing sharp graphic winged eyeliner, glossy clear lip gloss, and a silver metallic choker around her neck. A small glowing blue circuit-pattern sticker rests on her cheekbone. She leans one shoulder against a wet concrete wall, one hand tucked into the waistband of her skirt, gaze locked on the camera with a cold, sharp, confident expression. Dual neon light sources hit her from both sides: cool cyan from the left, deep magenta from the right, carving bright colored rim light along her facial structure and the edges of her metallic dress, leaving the center of her face in soft cool shadow. Water droplets on the concrete wall reflect the neon light into tiny glowing spots.\nThe composition uses a wide cinematic 2.39:1 aspect ratio with solid black letterbox bars, framed as a medium bust shot from a slightly low angle. Shot with a 35mm prime lens at f/1.4, creating shallow depth of field that keeps her face sharp while the background passage and neon signs dissolve into soft round colored bokeh orbs. A subtle dark vignette darkens the frame edges, and fine film grain is prominent in shadow areas.\nLighting is dual-color hard neon side light with no front fill, creating high contrast and dramatic color separation across her face and body. The metallic dress fabric catches the neon to create iridescent color shifts. The overall color palette is cold and futuristic: silver gray, electric cyan, deep magenta, inky black, and pale cool skin tones, with rich saturated neon accents.\nThe visual style is edgy cyberpunk editorial beauty photography, with authentic 35mm night film grain, realistic neon light casting, and zero digital sharpening. ",
+      "129:lora_name": "krea2/krea2-Cc风情万种-人像.safetensors",
+      "129:strength_model": 1,
+      "133:value": true
+    },
+    "mediaOrder": [],
+    "mediaOrderSource": "auto",
+    "apiNames": {
+      "29:filename_prefix": "filename_prefix",
+      "52:width": "width",
+      "52:height": "height",
+      "52:batch_size": "batch_size",
+      "53:steps": "steps",
+      "53:cfg": "cfg",
+      "53:denoise": "denoise",
+      "55:weight_dtype": "weight_dtype",
+      "56:type": "type",
+      "56:device": "device",
+      "103:offload_model": "offload_model",
+      "103:offload_cache": "offload_cache",
+      "106:clean_file_cache": "clean_file_cache",
+      "106:clean_processes": "clean_processes",
+      "106:clean_dlls": "clean_dlls",
+      "106:retry_times": "retry_times",
+      "107:text_0": "text_0",
+      "108:max_tokens": "max_tokens",
+      "108:top_k": "top_k",
+      "108:top_p": "top_p",
+      "108:min_p": "min_p",
+      "108:typical_p": "typical_p",
+      "108:temperature": "temperature",
+      "108:repeat_penalty": "repeat_penalty",
+      "108:frequency_penalty": "frequency_penalty",
+      "108:present_penalty": "present_penalty",
+      "108:mirostat_mode": "mirostat_mode",
+      "108:mirostat_eta": "mirostat_eta",
+      "108:mirostat_tau": "mirostat_tau",
+      "108:state_uid": "state_uid",
+      "109:seed": "seed",
+      "109:preset_prompt": "preset_prompt",
+      "109:system_prompt": "system_prompt",
+      "109:inference_mode": "inference_mode",
+      "109:max_frames": "max_frames",
+      "109:max_size": "max_size",
+      "109:force_offload": "force_offload",
+      "109:save_states": "save_states",
+      "110:model": "model",
+      "110:mmproj": "mmproj",
+      "110:chat_handler": "chat_handler",
+      "110:n_ctx": "n_ctx",
+      "110:vram_limit": "vram_limit",
+      "110:image_min_tokens": "image_min_tokens",
+      "110:image_max_tokens": "image_max_tokens",
+      "110:load_mtp": "load_mtp",
+      "111:offload_model": "offload_model_2",
+      "111:offload_cache": "offload_cache_2",
+      "112:clean_file_cache": "clean_file_cache_2",
+      "112:clean_processes": "clean_processes_2",
+      "112:clean_dlls": "clean_dlls_2",
+      "112:retry_times": "retry_times_2",
+      "115:seed": "seed_2",
+      "121:prompt": "prompt",
+      "129:lora_name": "lora_name",
+      "129:strength_model": "strength_model",
+      "133:value": "value"
+    }
+  }
+}

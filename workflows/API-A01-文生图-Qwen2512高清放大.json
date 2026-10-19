@@ -1,0 +1,545 @@
+{
+  "3": {
+    "inputs": {
+      "seed": 27296748841994,
+      "steps": 8,
+      "cfg": 1,
+      "sampler_name": "res_2s",
+      "scheduler": "beta57",
+      "denoise": 1,
+      "model": [
+        "503",
+        0
+      ],
+      "positive": [
+        "187",
+        0
+      ],
+      "negative": [
+        "437",
+        0
+      ],
+      "latent_image": [
+        "118",
+        4
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "3",
+        0
+      ],
+      "vae": [
+        "39",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "38": {
+    "inputs": {
+      "clip_name": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "加载CLIP"
+    }
+  },
+  "39": {
+    "inputs": {
+      "vae_name": "qwen_image_vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "加载VAE"
+    }
+  },
+  "118": {
+    "inputs": {
+      "width": [
+        "515",
+        0
+      ],
+      "height": [
+        "516",
+        0
+      ],
+      "aspect_ratio": "custom",
+      "swap_dimensions": "Off",
+      "upscale_factor": 1,
+      "batch_size": 1
+    },
+    "class_type": "CR SDXL Aspect Ratio",
+    "_meta": {
+      "title": "🔳 CR SDXL Aspect Ratio"
+    }
+  },
+  "165": {
+    "inputs": {
+      "unet_name": "qwen/qwen_image_2512_fp8_e4m3fn.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "UNet加载器"
+    }
+  },
+  "187": {
+    "inputs": {
+      "text": "亚洲女生，真人\nA photo-realistic portrait of a young Asian woman with long black hair, wearing a gray cardigan over a gray t-shirt. the woman is standing in the middle of the image, with her upper body facing the viewer. she has a neutral expression and is looking directly at the camera. her long straight black hair falls down her back, framing her face. the background is blurred, but it appears to be an outdoor setting with trees and greenery. the lighting is soft and natural, highlighting her delicate features and the texture of her hair. the image has a serene and contemplative atmosphere, with the woman's body slightly angled towards the left side of the frame.,naomi",
+      "clip": [
+        "38",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "287": {
+    "inputs": {
+      "lora_name": "Qwen/Qwen-Image-2512-Lightning-4steps-V1.0-fp32.safetensors",
+      "strength_model": 1.0000000000000002,
+      "model": [
+        "165",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "LoRA加载器（仅模型）"
+    }
+  },
+  "341": {
+    "inputs": {
+      "upscale_method": "lanczos",
+      "scale_by": 0.5000000000000001,
+      "image": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "ImageScaleBy",
+    "_meta": {
+      "title": "缩放图像（比例）"
+    }
+  },
+  "437": {
+    "inputs": {
+      "text": "低分辨率，低画质，肢体畸形，手指畸形，画面过饱和，蜡像感，人脸无细节，过度光滑，画面具有AI感。构图混乱。文字模糊，扭曲",
+      "clip": [
+        "38",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "499": {
+    "inputs": {
+      "filename_prefix": "comfyui",
+      "images": [
+        "514",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "保存图像"
+    }
+  },
+  "502": {
+    "inputs": {
+      "lora_name": "Qwen/Kook_Qwen_V3极致真实.safetensors",
+      "strength_model": 0.5000000000000001,
+      "model": [
+        "287",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "LoRA加载器（仅模型）"
+    }
+  },
+  "503": {
+    "inputs": {
+      "lora_name": "Qwen/Kook_Qwen_真实幻想V2.safetensors",
+      "strength_model": 0.8,
+      "model": [
+        "502",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "LoRA加载器（仅模型）"
+    }
+  },
+  "507": {
+    "inputs": {
+      "model": "ema_vae_fp16.safetensors",
+      "device": "cuda:0",
+      "encode_tiled": true,
+      "encode_tile_size": 1024,
+      "encode_tile_overlap": 128,
+      "decode_tiled": true,
+      "decode_tile_size": 1024,
+      "decode_tile_overlap": 128,
+      "tile_debug": "false",
+      "offload_device": "cpu",
+      "cache_model": false
+    },
+    "class_type": "SeedVR2LoadVAEModel",
+    "_meta": {
+      "title": "SeedVR2 (Down)Load VAE Model"
+    }
+  },
+  "508": {
+    "inputs": {
+      "seed": 1128247026,
+      "resolution": 2048,
+      "max_resolution": 4096,
+      "batch_size": 5,
+      "uniform_batch_size": false,
+      "color_correction": "lab",
+      "temporal_overlap": 0,
+      "prepend_frames": 0,
+      "input_noise_scale": 0,
+      "latent_noise_scale": 0,
+      "offload_device": "cpu",
+      "enable_debug": false,
+      "image": [
+        "341",
+        0
+      ],
+      "dit": [
+        "511",
+        0
+      ],
+      "vae": [
+        "507",
+        0
+      ]
+    },
+    "class_type": "SeedVR2VideoUpscaler",
+    "_meta": {
+      "title": "SeedVR2 Video Upscaler (v2.5.24)"
+    }
+  },
+  "511": {
+    "inputs": {
+      "model": "seedvr2_ema_3b_fp16.safetensors",
+      "device": "cuda:0",
+      "blocks_to_swap": 32,
+      "swap_io_components": true,
+      "offload_device": "cpu",
+      "cache_model": "sdpa",
+      "attention_mode": "sdpa"
+    },
+    "class_type": "SeedVR2LoadDiTModel",
+    "_meta": {
+      "title": "SeedVR2 (Down)Load DiT Model"
+    }
+  },
+  "514": {
+    "inputs": {
+      "strength": 100,
+      "brightness": 0,
+      "contrast": 0,
+      "saturation": -10,
+      "red": 0,
+      "green": 0,
+      "blue": 0,
+      "mode": "RGB",
+      "image": [
+        "508",
+        0
+      ]
+    },
+    "class_type": "LayerColor: AutoAdjustV2",
+    "_meta": {
+      "title": "图层颜色：自动调色 V2"
+    }
+  },
+  "515": {
+    "inputs": {
+      "value": 1280
+    },
+    "class_type": "INTConstant",
+    "_meta": {
+      "title": "INT Constant"
+    }
+  },
+  "516": {
+    "inputs": {
+      "value": 720
+    },
+    "class_type": "INTConstant",
+    "_meta": {
+      "title": "INT Constant"
+    }
+  },
+  "_api_config": {
+    "customLabels": {
+      "3:seed": "随机种子",
+      "3:steps": "迭代步数",
+      "3:cfg": "CFG Scale",
+      "3:denoise": "denoise",
+      "38:type": "type",
+      "38:device": "device",
+      "118:batch_size": "批次大小",
+      "118:aspect_ratio": "aspect_ratio",
+      "118:swap_dimensions": "swap_dimensions",
+      "118:upscale_factor": "upscale_factor",
+      "165:weight_dtype": "weight_dtype",
+      "187:text": "提示词",
+      "287:strength_model": "strength_model",
+      "341:upscale_method": "upscale_method",
+      "341:scale_by": "scale_by",
+      "437:text": "提示词",
+      "499:filename_prefix": "文件名前缀",
+      "502:lora_name": "lora_name",
+      "502:strength_model": "strength_model",
+      "503:lora_name": "lora_name",
+      "503:strength_model": "strength_model",
+      "507:device": "device",
+      "507:encode_tiled": "encode_tiled",
+      "507:encode_tile_size": "encode_tile_size",
+      "507:encode_tile_overlap": "encode_tile_overlap",
+      "507:decode_tiled": "decode_tiled",
+      "507:decode_tile_size": "decode_tile_size",
+      "507:decode_tile_overlap": "decode_tile_overlap",
+      "507:tile_debug": "tile_debug",
+      "507:offload_device": "offload_device",
+      "507:cache_model": "cache_model",
+      "508:seed": "随机种子",
+      "508:batch_size": "批次大小",
+      "508:resolution": "resolution",
+      "508:max_resolution": "max_resolution",
+      "508:uniform_batch_size": "uniform_batch_size",
+      "508:color_correction": "color_correction",
+      "508:temporal_overlap": "temporal_overlap",
+      "508:prepend_frames": "prepend_frames",
+      "508:input_noise_scale": "input_noise_scale",
+      "508:latent_noise_scale": "latent_noise_scale",
+      "508:offload_device": "offload_device",
+      "508:enable_debug": "enable_debug",
+      "511:device": "device",
+      "511:blocks_to_swap": "blocks_to_swap",
+      "511:swap_io_components": "swap_io_components",
+      "511:offload_device": "offload_device",
+      "511:cache_model": "cache_model",
+      "511:attention_mode": "attention_mode",
+      "514:strength": "strength",
+      "514:brightness": "brightness",
+      "514:contrast": "contrast",
+      "514:saturation": "saturation",
+      "514:red": "red",
+      "514:green": "green",
+      "514:blue": "blue",
+      "514:mode": "mode",
+      "515:value": "value",
+      "516:value": "value"
+    },
+    "enabledParams": {
+      "3:seed": true,
+      "3:steps": false,
+      "3:cfg": false,
+      "3:denoise": false,
+      "38:type": false,
+      "38:device": false,
+      "118:batch_size": false,
+      "118:aspect_ratio": false,
+      "118:swap_dimensions": false,
+      "118:upscale_factor": false,
+      "165:weight_dtype": false,
+      "187:text": true,
+      "287:strength_model": false,
+      "341:upscale_method": false,
+      "341:scale_by": false,
+      "437:text": true,
+      "499:filename_prefix": false,
+      "502:lora_name": false,
+      "502:strength_model": false,
+      "503:lora_name": false,
+      "503:strength_model": false,
+      "507:device": false,
+      "507:encode_tiled": false,
+      "507:encode_tile_size": false,
+      "507:encode_tile_overlap": false,
+      "507:decode_tiled": false,
+      "507:decode_tile_size": false,
+      "507:decode_tile_overlap": false,
+      "507:tile_debug": false,
+      "507:offload_device": false,
+      "507:cache_model": false,
+      "508:seed": false,
+      "508:batch_size": false,
+      "508:resolution": false,
+      "508:max_resolution": false,
+      "508:uniform_batch_size": false,
+      "508:color_correction": false,
+      "508:temporal_overlap": false,
+      "508:prepend_frames": false,
+      "508:input_noise_scale": false,
+      "508:latent_noise_scale": false,
+      "508:offload_device": false,
+      "508:enable_debug": false,
+      "511:device": false,
+      "511:blocks_to_swap": false,
+      "511:swap_io_components": false,
+      "511:offload_device": false,
+      "511:cache_model": false,
+      "511:attention_mode": false,
+      "514:strength": false,
+      "514:brightness": false,
+      "514:contrast": false,
+      "514:saturation": false,
+      "514:red": false,
+      "514:green": false,
+      "514:blue": false,
+      "514:mode": false,
+      "515:value": true,
+      "516:value": true
+    },
+    "formValues": {
+      "3:seed": 325183347,
+      "3:steps": 8,
+      "3:cfg": 1,
+      "3:denoise": 1,
+      "38:type": "qwen_image",
+      "38:device": "default",
+      "118:batch_size": 1,
+      "118:aspect_ratio": "custom",
+      "118:swap_dimensions": "Off",
+      "118:upscale_factor": 1,
+      "165:weight_dtype": "default",
+      "187:text": "亚洲女生，真人\nA photo-realistic portrait of a young Asian woman with long black hair, wearing a gray cardigan over a gray t-shirt. the woman is standing in the middle of the image, with her upper body facing the viewer. she has a neutral expression and is looking directly at the camera. her long straight black hair falls down her back, framing her face. the background is blurred, but it appears to be an outdoor setting with trees and greenery. the lighting is soft and natural, highlighting her delicate features and the texture of her hair. the image has a serene and contemplative atmosphere, with the woman's body slightly angled towards the left side of the frame.,naomi",
+      "287:strength_model": 1.0000000000000002,
+      "341:upscale_method": "lanczos",
+      "341:scale_by": 0.5000000000000001,
+      "437:text": "低分辨率，低画质，肢体畸形，手指畸形，画面过饱和，蜡像感，人脸无细节，过度光滑，画面具有AI感。构图混乱。文字模糊，扭曲",
+      "499:filename_prefix": "comfyui",
+      "502:lora_name": "Qwen/Kook_Qwen_V3极致真实.safetensors",
+      "502:strength_model": 0.5000000000000001,
+      "503:lora_name": "Qwen/Kook_Qwen_真实幻想V2.safetensors",
+      "503:strength_model": 0.8,
+      "507:device": "cuda:0",
+      "507:encode_tiled": true,
+      "507:encode_tile_size": 1024,
+      "507:encode_tile_overlap": 128,
+      "507:decode_tiled": true,
+      "507:decode_tile_size": 1024,
+      "507:decode_tile_overlap": 128,
+      "507:tile_debug": "false",
+      "507:offload_device": "cpu",
+      "507:cache_model": false,
+      "508:seed": 1128247026,
+      "508:batch_size": 5,
+      "508:resolution": 2048,
+      "508:max_resolution": 4096,
+      "508:uniform_batch_size": false,
+      "508:color_correction": "lab",
+      "508:temporal_overlap": 0,
+      "508:prepend_frames": 0,
+      "508:input_noise_scale": 0,
+      "508:latent_noise_scale": 0,
+      "508:offload_device": "cpu",
+      "508:enable_debug": false,
+      "511:device": "cuda:0",
+      "511:blocks_to_swap": 32,
+      "511:swap_io_components": true,
+      "511:offload_device": "cpu",
+      "511:cache_model": "sdpa",
+      "511:attention_mode": "sdpa",
+      "514:strength": 100,
+      "514:brightness": 0,
+      "514:contrast": 0,
+      "514:saturation": -10,
+      "514:red": 0,
+      "514:green": 0,
+      "514:blue": 0,
+      "514:mode": "RGB",
+      "515:value": 1280,
+      "516:value": 720
+    },
+    "mediaOrder": [],
+    "mediaOrderSource": "auto",
+    "apiNames": {
+      "3:seed": "seed",
+      "3:steps": "steps",
+      "3:cfg": "cfg",
+      "3:denoise": "denoise",
+      "38:type": "type",
+      "38:device": "device",
+      "118:batch_size": "batch_size",
+      "118:aspect_ratio": "aspect_ratio",
+      "118:swap_dimensions": "swap_dimensions",
+      "118:upscale_factor": "upscale_factor",
+      "165:weight_dtype": "weight_dtype",
+      "187:text": "prompt",
+      "287:strength_model": "strength_model",
+      "341:upscale_method": "upscale_method",
+      "341:scale_by": "scale_by",
+      "437:text": "prompt_2",
+      "499:filename_prefix": "filename_prefix",
+      "502:lora_name": "lora_name",
+      "502:strength_model": "strength_model_2",
+      "503:lora_name": "lora_name_2",
+      "503:strength_model": "strength_model_3",
+      "507:device": "device_2",
+      "507:encode_tiled": "encode_tiled",
+      "507:encode_tile_size": "encode_tile_size",
+      "507:encode_tile_overlap": "encode_tile_overlap",
+      "507:decode_tiled": "decode_tiled",
+      "507:decode_tile_size": "decode_tile_size",
+      "507:decode_tile_overlap": "decode_tile_overlap",
+      "507:tile_debug": "tile_debug",
+      "507:offload_device": "offload_device",
+      "507:cache_model": "cache_model",
+      "508:seed": "seed_2",
+      "508:batch_size": "batch_size_2",
+      "508:resolution": "resolution",
+      "508:max_resolution": "max_resolution",
+      "508:uniform_batch_size": "uniform_batch_size",
+      "508:color_correction": "color_correction",
+      "508:temporal_overlap": "temporal_overlap",
+      "508:prepend_frames": "prepend_frames",
+      "508:input_noise_scale": "input_noise_scale",
+      "508:latent_noise_scale": "latent_noise_scale",
+      "508:offload_device": "offload_device_2",
+      "508:enable_debug": "enable_debug",
+      "511:device": "device_3",
+      "511:blocks_to_swap": "blocks_to_swap",
+      "511:swap_io_components": "swap_io_components",
+      "511:offload_device": "offload_device_3",
+      "511:cache_model": "cache_model_2",
+      "511:attention_mode": "attention_mode",
+      "514:strength": "strength",
+      "514:brightness": "brightness",
+      "514:contrast": "contrast",
+      "514:saturation": "saturation",
+      "514:red": "red",
+      "514:green": "green",
+      "514:blue": "blue",
+      "514:mode": "mode",
+      "515:value": "value",
+      "516:value": "value_2"
+    }
+  }
+}

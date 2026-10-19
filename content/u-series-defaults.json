@@ -1,0 +1,1663 @@
+{
+  "_comment": "U 系列快捷生成。只改本文件 u-series-defaults9.json；/root/zealman-app/u-series-defaults.json 为只读软链，由管理员从外部指向本文件或 AutoDL 存储。改后刷新页面即可，不必重建前端。禁止在开发目录 autodl-fs/zealman-autodl-app 放置 u-series-defaults.json。变体键：u2 / u4(页面 U1) / u05 / u6 / u9=U9 V4O OLD 原版 / u9n=U9 V4N NEW 新版 / u11 / u11v2=图音生视频原声版 / u17 / u08 / u24 / u30 / u00，u1 是 u4 的别名。新增模型：复制 _exampleNewModel 到 modelOptions.ref2va 或 fl2va（CLIP 则复制到 clipOptions），改 key/file/label/sizeGB。绿项推荐看 recommend.unet/clip 的 tiers；neverRecommended:true 永不进绿项。 LoRA 的 adaln：none=不含 AdaLN 完整/剪枝都能挂；full=入维2688；pruned=入维8。和当前底模对不上的会在下拉禁用。adalnFruit：🔸完整、🔹剪枝、◽通用。 底模 adaln 来自本机 safetensors 实测，不靠文件名。提示词优化云端模型改顶层 aiModels / aiDefaultModel / aiEndpoint（OpenAI 兼容 https://www.autodl.art/api/v1）；前端会与内置清单并集，避免只读软链未同步时缺项。顶层 forceVramCleanupBeforeVae 控制工具条「🎈VAE前清理」默认开关（提交时插入节点，不改磁盘工作流）；变体可覆盖。顶层 composerJobQueueMax 控制快捷生成本地任务队列上限（进行中+排队，默认 5，硬顶 50，改后刷新即可）。",
+  "_exampleNewModel": {
+    "key": "ref2va_my_int8",
+    "file": "minimax_h3_ref2va_my_int8.safetensors",
+    "tier": "pruned_int8",
+    "label": "my_int8 · 自定义 INT8（19.5G）",
+    "sizeGB": 19.5,
+    "quant": "int8",
+    "source": "社区",
+    "note": "复制到 modelOptions.ref2va。tier 对上 recommend.unet 的 tiers 才会成为绿项；若用新 tier 名，把该名加进对应显存档的 tiers。neverRecommended:true 则只出现在下拉、不参与推荐。minArch 例如 blackwell 时非该架构会标红，但仍可选。",
+    "neverRecommended": false,
+    "adaln": "pruned"
+  },
+  "adalnFruit": {
+    "_comment": "底模/LoRA 下拉标记。🔸完整 AdaLN；🔹剪枝 AdaLN；◽不含 AdaLN（两边都能挂）。同标记可配，◽万能。改后刷新即可。",
+    "full": "🔸",
+    "pruned": "🔹",
+    "none": "◽"
+  },
+  "forceVramCleanupBeforeVae": false,
+  "maxDurationSeconds": 30,
+  "composerJobQueueMax": 50,
+  "aiEndpoint": "https://www.autodl.art/api/v1",
+  "aiDefaultModel": "gpt-5.6-luna",
+  "aiModels": [
+    "gpt-5.6-luna",
+    "gpt-5.6-terra",
+    "gpt-5.6-sol",
+    "DeepSeek-V4.1-Flash"
+  ],
+  "accelModeDefaultSteps": {
+    "1": "20",
+    "2": "8"
+  },
+  "loraOptions": [
+    {
+      "key": "turbo_4step",
+      "label": "turbo_4步加速_comfyui",
+      "file": "minimax/minimax_h3_turbo_4步加速_comfyui.safetensors",
+      "author": "larryvrh",
+      "adaln": "full"
+    },
+    {
+      "key": "turbo_4step_ema",
+      "label": "turbo_4步加速ema_comfyui",
+      "file": "minimax/minimax_h3_turbo_4步加速ema_comfyui.safetensors",
+      "author": "larryvrh",
+      "adaln": "full"
+    },
+    {
+      "key": "fl2v_turbo_8step_v1",
+      "label": "fl2v_turbo_8step_v1.0_comfyui_bf16",
+      "file": "minimax/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors",
+      "author": "LightX2V",
+      "adaln": "none"
+    },
+    {
+      "key": "fl2v_turbo_8step_v1_768p",
+      "label": "fl2v_turbo_8step_v1.0_768p_comfyui_bf16",
+      "file": "minimax/minimax_h3_fl2v_turbo_8step_v1.0_768p_comfyui_bf16.safetensors",
+      "author": "LightX2V",
+      "adaln": "none"
+    },
+    {
+      "key": "fl2v_turbo_4step_v1_768p",
+      "label": "fl2v_turbo_4step_v1.0_768p_comfyui_bf16",
+      "file": "minimax/minimax_h3_fl2v_turbo_4step_v1.0_768p_comfyui_bf16.safetensors",
+      "author": "LightX2V",
+      "adaln": "none"
+    },
+    {
+      "key": "fl2v_turbo_4step_v1_1_768p",
+      "label": "fl2v_turbo_4step_v1.1_768p_comfyui_bf16",
+      "file": "minimax/minimax_h3_fl2v_turbo_4step_v1.1_768p_comfyui_bf16.safetensors",
+      "author": "LightX2V",
+      "adaln": "none"
+    },
+    {
+      "key": "fl2v_turbo_4step_v1_2_768p",
+      "label": "fl2v_turbo_4step_v1.2_768p_comfyui_bf16",
+      "file": "minimax/minimax_h3_fl2v_turbo_4step_v1.2_768p_comfyui_bf16.safetensors",
+      "author": "LightX2V",
+      "adaln": "none"
+    },
+    {
+      "key": "fl2v_lightx2v_turbo_4step_v01",
+      "label": "fl2v_lightx2v_turbo_4step_v0.1_rank21",
+      "file": "minimax/minimax_h3_fl2v_lightx2v_turbo_4step_v0.1_comfy_resized_avg_rank_21_bf16.safetensors",
+      "author": "LightX2V",
+      "adaln": "none"
+    },
+    {
+      "key": "fl2v_lightx2v_turbo_8step_v1_rank24",
+      "label": "fl2v_lightx2v_turbo_8step_v1.0_rank24",
+      "file": "minimax/minimax_h3_fl2v_lightx2v_turbo_8step_v1.0_resized_avg_rank_24_bf16.safetensors",
+      "author": "LightX2V",
+      "adaln": "none"
+    },
+    {
+      "key": "fl2v_lightx2v_turbo_4step_v1_768p_rank31",
+      "label": "fl2v_lightx2v_turbo_4step_v1.0_768p_rank31",
+      "file": "minimax/minimax_h3_fl2v_lightx2v_turbo_4step_v1.0_768p_resized_avg_rank_31_bf16.safetensors",
+      "author": "LightX2V",
+      "adaln": "none"
+    },
+    {
+      "key": "ref2v_lightx2v_turbo_4step_v01_rank20",
+      "label": "ref2v_lightx2v_turbo_4step_v0.1_rank20",
+      "file": "minimax/minimax_h3_ref2v_lightx2v_turbo_4step_v0.1_resized_avg_rank_20_bf16.safetensors",
+      "author": "LightX2V",
+      "adaln": "none"
+    },
+    {
+      "key": "ref2v_turbo_4step_v01",
+      "label": "ref2v_turbo_4step_v0.1_comfyui_bf16",
+      "file": "minimax/minimax_h3_ref2v_turbo_4step_v0.1_comfyui_bf16.safetensors",
+      "author": "LightX2V",
+      "adaln": "none"
+    },
+    {
+      "key": "ref2v_turbo_8step_v1_768p",
+      "label": "ref2v_turbo_8step_v1.0_768p_comfyui_bf16",
+      "file": "minimax/minimax_h3_ref2v_turbo_8step_v1.0_768p_comfyui_bf16.safetensors",
+      "author": "LightX2V",
+      "adaln": "none"
+    },
+    {
+      "key": "turbo_4step_diffusion_model",
+      "label": "turbo_4step_diffusion_model",
+      "file": "minimax/minimax_h3_turbo_4step_diffusion_model.safetensors",
+      "author": "larryvrh",
+      "adaln": "full"
+    },
+    {
+      "key": "v4_step600_ema_pruned",
+      "label": "turbo_v4_step600_ema_pruned_comfyui",
+      "file": "minimax/minimax_h3_turbo_v4_step600_ema_pruned_comfyui.safetensors",
+      "author": "larryvrh",
+      "keyStyle": "comfy",
+      "adaln": "none"
+    },
+    {
+      "key": "fl2v_lightx2v_turbo_4step_v01_comfy",
+      "label": "fl2v_lightx2v_turbo_4step_v0.1_comfy",
+      "file": "minimax/minimax_h3_fl2v_lightx2v_turbo_4step_v0.1_comfy.safetensors",
+      "author": "LightX2V",
+      "adaln": "none"
+    },
+    {
+      "key": "ref_lora_rank256",
+      "label": "ref_lora_rank_256_bf16",
+      "file": "minimax/minimax_h3_ref_lora_rank_256_bf16.safetensors",
+      "author": "Kijai",
+      "adaln": "pruned"
+    },
+    {
+      "key": "combat_lora",
+      "label": "MiniMax_H3_Combat_LoRA",
+      "file": "minimax/MiniMax_H3_Combat_LoRA.safetensors",
+      "author": "Combat",
+      "adaln": "none"
+    },
+    {
+      "key": "h3_combat_v2",
+      "label": "H3_Combat_V2",
+      "file": "minimax/H3_Combat_V2.safetensors",
+      "author": "Combat",
+      "adaln": "none"
+    },
+    {
+      "key": "pink_fluffy_bunny",
+      "label": "PinkFluffyBunny-unpruned-v2-rank256",
+      "file": "minimax/PinkFluffyBunny-unpruned-v2-rank256.safetensors",
+      "author": "PinkFluffyBunny",
+      "adaln": "none"
+    },
+    {
+      "key": "h3_realism_people",
+      "label": "h3-realism-people (r34l1sm)",
+      "file": "minimax/h3-realism-people-t2v-i2v-r2v-触发词r34l1sm.safetensors",
+      "author": "realism",
+      "adaln": "none"
+    },
+    {
+      "key": "h3_cinematic_v01",
+      "label": "MinimaxH3真实电影质感V0.1",
+      "file": "minimax/MinimaxH3真实电影质感V0.1.safetensors",
+      "author": "电影镜头",
+      "adaln": "pruned"
+    },
+    {
+      "key": "dasiwa_ref2va_hybrid",
+      "label": "turbo_v4_DasiwaREF2VAHybridV1",
+      "file": "minimax/minimax_h3_turbo_v4_step600_ema_DasiwaREF2VAHybridV1_0_curveproj1025_compat_v001.safetensors",
+      "author": "Dasiwa",
+      "adaln": "pruned"
+    },
+    {
+      "key": "erosmax_4step_t8",
+      "label": "turbo_4step_10ErosMax_T8",
+      "file": "minimax/minimax_h3_turbo_4step_10ErosMax_test4_pruned_curveproj1025_exp_v001-T8.safetensors",
+      "author": "ErosMax",
+      "adaln": "pruned"
+    },
+    {
+      "key": "motion_repair",
+      "label": "Motion_Repair",
+      "file": "minimax/Motion_Repair.safetensors",
+      "author": "Motion",
+      "adaln": "none"
+    },
+    {
+      "key": "camera_motion_v1",
+      "label": "camera_motion_h3_lora_v1_3000_pruned",
+      "file": "minimax/camera_motion_h3_lora_v1_3000_pruned.safetensors",
+      "author": "镜头运动",
+      "adaln": "none"
+    },
+    {
+      "key": "ref2va_toward_fl2va_rank256",
+      "label": "pruned_bf16_ref2va_toward_fl2va_rank256",
+      "file": "minimax/minimax_h3_pruned_bf16__apply_to_ref2va__toward_fl2va__rank256.safetensors",
+      "author": "转换",
+      "adaln": "pruned"
+    },
+    {
+      "key": "action_continuity",
+      "label": "动作连续性修复LORA",
+      "file": "minimax/动作i连续性修复LORA.safetensors",
+      "author": "动作",
+      "adaln": "none"
+    },
+    {
+      "key": "h3_gunfu",
+      "label": "minimaxH3枪斗术GunFu",
+      "file": "minimax/minimaxH3枪斗术GunFu.safetensors",
+      "author": "枪斗术",
+      "adaln": "none"
+    },
+    {
+      "key": "h3_cinematic_v1",
+      "label": "电影感H3-loraV1.0正式版",
+      "file": "minimax/电影感H3-loraV1.0正式版.safetensors",
+      "author": "电影镜头",
+      "adaln": "pruned"
+    },
+    {
+      "key": "h3_cinematic_v1_universal",
+      "label": "电影感H3-loraV1.0正式版_剪枝与非剪枝通用",
+      "file": "minimax/电影感H3-loraV1.0正式版_剪枝与非剪枝通用.safetensors",
+      "author": "电影镜头",
+      "adaln": "none"
+    },
+    {
+      "key": "lightx2v_hybrid_4to8step_r48",
+      "label": "lightx2v_hybrid-4to8step-Turbo_r48",
+      "file": "minimax/lightx2v_hybrid-4to8step-Turbo_r48.safetensors",
+      "author": "LightX2V",
+      "adaln": "full"
+    },
+    {
+      "key": "ig_tiktok_aesthetic_v1",
+      "label": "ig_tiktok_aesthetic_h3_lora_v1_500",
+      "file": "minimax/ig_tiktok_aesthetic_h3_lora_v1_500.safetensors",
+      "author": "TikTok",
+      "adaln": "none"
+    },
+    {
+      "key": "fl2va_turbo_multistep_fro099_r48",
+      "label": "fl2va_bf16_turbo_multistep_fro099_r48_pruned",
+      "file": "minimax/minimax_h3_fl2va_bf16_turbo_multistep_fro099_r48_pruned.safetensors",
+      "author": "LightX2V",
+      "adaln": "pruned"
+    },
+    {
+      "key": "davham_cinema_euler_simple_08",
+      "label": "davham_cinema-h3-Euler-simple-0.8",
+      "file": "minimax/davham_cinema-h3-Euler-simple-0.8.safetensors",
+      "author": "davham",
+      "adaln": "none"
+    },
+    {
+      "key": "hyperflow_8step_v1_comfyui_bf16",
+      "label": "hyperflow_8step_v1.0_comfyui_bf16",
+      "file": "minimax/minimax_h3_hyperflow_8step_v1.0_comfyui_bf16.safetensors",
+      "author": "HyperFlow",
+      "adaln": "none"
+    },
+    {
+      "key": "hyperflow_8step_v1_comfyui_pruned_bf16",
+      "label": "hyperflow_8step_v1.0_comfyui_pruned_bf16",
+      "file": "minimax/minimax_h3_hyperflow_8step_v1.0_comfyui_pruned_bf16.safetensors",
+      "author": "HyperFlow",
+      "adaln": "none"
+    },
+    {
+      "key": "fafafast",
+      "label": "fafafast",
+      "file": "minimax/fafafast.safetensors",
+      "author": "fafafast",
+      "adaln": "none"
+    },
+    {
+      "key": "h3_character_swap_pro4500",
+      "label": "h3_character_swap_pro4500_1000",
+      "file": "minimax/h3_character_swap_pro4500_1000.safetensors",
+      "author": "akatz-ai",
+      "adaln": "none"
+    },
+    {
+      "key": "hyperflow_ema600_pruned_r128",
+      "label": "hyperflow_EMA600_pruned_r128_fro0995",
+      "file": "minimax/minimax_h3_hyperflow_EMA600_pruned_r128_fro0995_turbo_lora.safetensors",
+      "author": "",
+      "adaln": "none"
+    },
+    {
+      "key": "motion_repair_v2",
+      "label": "Motion_Repair_V2",
+      "file": "minimax/Motion_Repair_V2.safetensors",
+      "author": "Motion",
+      "adaln": "none"
+    },
+    {
+      "key": "lms_v1_r64",
+      "label": "lms_v1.0_r64_r2",
+      "file": "minimax/minimax_h3_lms_v1.0_r64_r2.safetensors",
+      "adaln": "pruned"
+    },
+    {
+      "key": "mmh3_mpov",
+      "label": "MMH3-MPOV",
+      "file": "minimax/MMH3-MPOV.safetensors",
+      "adaln": "none"
+    },
+    {
+      "key": "head_swap_v1_r32",
+      "label": "head_swap_v1.0_r32",
+      "file": "minimax/minimax_h3_head_swap_v1.0_r32.safetensors",
+      "adaln": "none"
+    },
+    {
+      "key": "none",
+      "label": "不使用加速 LoRA",
+      "adaln": "none"
+    }
+  ],
+  "modelOptions": {
+    "ref2va": [
+      {
+        "key": "ref2va_bf16",
+        "file": "minimax_h3_ref2va_bf16.safetensors",
+        "tier": "bf16",
+        "label": "bf16 · 完整 BF16（61.7G）",
+        "sizeGB": 61.7,
+        "quant": "bf16",
+        "source": "官方",
+        "note": "原始精度基线，画质天花板；显存/内存占用最高，速度最慢",
+        "adaln": "full"
+      },
+      {
+        "key": "ref2va_pruned_bf16",
+        "file": "minimax_h3_ref2va_pruned_bf16.safetensors",
+        "tier": "pruned_bf16",
+        "label": "pruned_bf16 · 剪枝 BF16（37.5G）",
+        "sizeGB": 37.5,
+        "quant": "bf16",
+        "source": "官方",
+        "note": "AdaLN 结构重构后的 BF16，画质接近完整版，省 24G",
+        "adaln": "pruned"
+      },
+      {
+        "key": "ref2va_int8",
+        "file": "minimax_h3_ref2va_int8_convrot.safetensors",
+        "tier": "int8",
+        "label": "int8 · 完整 INT8（31.7G）",
+        "sizeGB": 31.7,
+        "quant": "int8",
+        "source": "官方",
+        "note": "INT8-ConvRot 在各架构都走原生算子，大显存单卡的画质/速度最佳档",
+        "adaln": "full"
+      },
+      {
+        "key": "ref2va_xueluo_int8",
+        "file": "minimax_h3_ref2va_XUELUO_int8_convrot.safetensors",
+        "tier": "int8",
+        "label": "xueluo_int8 · XUELUO INT8（31.7G）",
+        "sizeGB": 31.7,
+        "quant": "int8",
+        "source": "微调",
+        "note": "XUELUO 社区 Ref2VA INT8 微调，显存与官方 int8 相同，风格与官方版不一致",
+        "neverRecommended": true,
+        "adaln": "full"
+      },
+      {
+        "key": "ref2va_pruned_int8",
+        "file": "minimax_h3_ref2va_pruned_int8_convrot.safetensors",
+        "tier": "pruned_int8",
+        "label": "pruned_int8 · 剪枝 INT8（19.5G）",
+        "sizeGB": 19.5,
+        "quant": "int8",
+        "source": "官方",
+        "note": "剪枝 + INT8，画质接近 bf16，32G 卡的稳妥主力档",
+        "adaln": "pruned"
+      },
+      {
+        "key": "ref2va_pruned_fp8",
+        "file": "minimax_h3_ref2va_pruned_fp8_scaled.safetensors",
+        "tier": "pruned_fp8",
+        "label": "pruned_fp8 · 剪枝 FP8（19.5G）",
+        "sizeGB": 19.5,
+        "quant": "fp8",
+        "source": "官方",
+        "note": "与 pruned_int8 同显存，实测慢约 10%，没有收益",
+        "neverRecommended": true,
+        "adaln": "pruned"
+      },
+      {
+        "key": "ref2va_pruned_nvfp4",
+        "file": "minimax_h3_ref2va_pruned_nvfp4.safetensors",
+        "tier": "pruned_nvfp4",
+        "label": "pruned_nvfp4 · 剪枝 NVFP4（11.7G）",
+        "sizeGB": 11.7,
+        "quant": "nvfp4",
+        "source": "社区",
+        "note": "lilcheaty NVFP4：Blackwell 原生 FP4，最省显存也最快；非 Blackwell 无原生算子",
+        "minArch": "blackwell",
+        "adaln": "pruned"
+      },
+      {
+        "key": "ref2va_pruned_nvfp4_int8",
+        "file": "minimax_h3_ref2va_pruned_nvfp4_convrot_int8.safetensors",
+        "tier": "pruned_nvfp4_int8",
+        "label": "pruned_nvfp4_int8 · 剪枝 NVFP4+INT8 混合（18.7G）",
+        "sizeGB": 18.7,
+        "quant": "nvfp4_int8",
+        "source": "社区",
+        "note": "NVFP4 主干 + INT8 敏感层，画质比纯 NVFP4 好，仍需 Blackwell",
+        "minArch": "blackwell",
+        "adaln": "pruned"
+      },
+      {
+        "key": "ref2va_pruned_w4a8",
+        "file": "minimax_h3_ref2va_pruned_w4a8_mixed.safetensors",
+        "tier": "pruned_w4a8",
+        "label": "pruned_w4a8 · 剪枝 W4A8 混合（11G）",
+        "sizeGB": 11,
+        "quant": "w4a8",
+        "source": "实验",
+        "note": "Kijai 实验版：4bit 权重 + 8bit 激活，需 Ada 及以上，稳定性未定",
+        "minArch": "ada",
+        "neverRecommended": true,
+        "adaln": "pruned"
+      },
+      {
+        "key": "ref2va_nvfp4_full",
+        "file": "minimax_h3_ref2va_nvfp4_full.safetensors",
+        "tier": "nvfp4_full",
+        "label": "nvfp4_full · 完整 NVFP4（17.5G）",
+        "sizeGB": 17.5,
+        "quant": "nvfp4",
+        "source": "社区",
+        "note": "未剪枝全 NVFP4，比剪枝版多保留细节，需 Blackwell 原生 FP4",
+        "minArch": "blackwell",
+        "adaln": "full"
+      },
+      {
+        "key": "ref2va_nvfp4_mixed",
+        "file": "minimax_h3_ref2va_nvfp4_mixed.safetensors",
+        "tier": "nvfp4_mixed",
+        "label": "nvfp4_mixed · 完整 NVFP4 混合（22.8G）",
+        "sizeGB": 22.8,
+        "quant": "nvfp4_int8",
+        "source": "社区",
+        "note": "未剪枝 NVFP4 + 高精度敏感层，社区档里画质最好，需 Blackwell",
+        "minArch": "blackwell",
+        "adaln": "full"
+      },
+      {
+        "key": "ref2va_hybrid_int8",
+        "file": "minimax_h3_hybrid_fl2va_ref2va_b25-49-int8.safetensors",
+        "tier": "hybrid_int8",
+        "label": "hybrid_int8 · FL2VA+REF2VA 混合 INT8 b25-49（19.5G）",
+        "sizeGB": 19.5,
+        "quant": "int8",
+        "source": "社区",
+        "note": "U17 工作流默认：hybrid b25-49 INT8，显存与 pruned_int8 接近",
+        "adaln": "pruned"
+      },
+      {
+        "key": "ref2va_hybrid_b30_int8",
+        "file": "minimax_h3_hybrid_fl2va_ref2va_b30-49-int8.safetensors",
+        "tier": "hybrid_b30_int8",
+        "label": "hybrid_b30_int8 · FL2VA+REF2VA 混合 INT8 b30-49（19.5G）",
+        "sizeGB": 19.5,
+        "quant": "int8",
+        "source": "社区",
+        "note": "hybrid b30-49 INT8 备选，显存与 pruned_int8 接近",
+        "adaln": "pruned"
+      },
+      {
+        "key": "ref2va_redmix_hybrid_a2a",
+        "file": "redcraftREDMIXHybridA2A_h3A2AREDBeta1.safetensors",
+        "tier": "redmix_hybrid_a2a",
+        "label": "redmix_hybrid_a2a · RedCraft REDMIX Hybrid A2A Beta1（19.53G）",
+        "sizeGB": 19.53,
+        "quant": "int8",
+        "source": "微调",
+        "note": "RedCraft REDMIX Hybrid A2A 社区微调，显存与 pruned_int8 / hybrid_int8 接近，风格与官方版不一致",
+        "neverRecommended": true,
+        "adaln": "pruned"
+      },
+      {
+        "key": "ref2va_dasiwa_hybrid",
+        "file": "DasiwaMinimaxH3_dasiwaREF2VAHybridV1.safetensors",
+        "tier": "dasiwa_hybrid",
+        "label": "dasiwa_hybrid · Dasiwa REF2VA Hybrid V1（19.53G）",
+        "sizeGB": 19.53,
+        "quant": "int8",
+        "source": "微调",
+        "note": "Dasiwa 社区 REF2VA Hybrid 微调，显存与 pruned_int8 / hybrid_int8 接近，风格与官方版不一致",
+        "neverRecommended": true,
+        "adaln": "pruned"
+      },
+      {
+        "key": "ref2va_feihou_remix",
+        "file": "FeiHou_MiniMax-H3_Remix_v0.6_int8_convrot.safetensors",
+        "tier": "int8",
+        "label": "feihou_remix · 肥猴 Remix v0.6 INT8（30.88G）",
+        "sizeGB": 30.88,
+        "quant": "int8",
+        "source": "微调",
+        "note": "肥猴社区 Remix INT8 微调，体积接近完整 int8；5090 按完整 int8 低显存峰值估，风格与官方版不一致",
+        "neverRecommended": true,
+        "adaln": "full"
+      },
+      {
+        "key": "ref2va_h3erosmax_beta3",
+        "file": "h3ErosMax_beta3.safetensors",
+        "tier": "pruned_bf16",
+        "label": "h3erosmax_beta3 · ErosMax beta3 剪枝 BF16（37.47G）",
+        "sizeGB": 37.47,
+        "quant": "bf16",
+        "source": "微调",
+        "note": "ErosMax beta3 社区微调，体积与 pruned_bf16 相同；5090 按 pruned_bf16 低显存峰值估，风格与官方版不一致",
+        "neverRecommended": true,
+        "adaln": "pruned"
+      },
+      {
+        "key": "ref2va_10eros_turbo_hybrid_beta4",
+        "file": "10Eros_Max_h3_TURBO-hybrid_beta4_int8_convrot.safetensors",
+        "tier": "10eros_turbo_hybrid_beta4",
+        "label": "10eros_turbo_hybrid_beta4 · 10Eros TURBO Hybrid beta4 INT8（19.53G）",
+        "sizeGB": 19.53,
+        "quant": "int8",
+        "source": "微调",
+        "note": "10Eros TURBO Hybrid beta4 社区微调，显存与 pruned_int8 / hybrid_int8 接近，风格与官方版不一致",
+        "neverRecommended": true,
+        "adaln": "pruned"
+      },
+      {
+        "key": "ref2va_10eros_turbo_hybrid_beta4_bf16",
+        "file": "10Eros_Max_h3_TURBO-hybrid_beta4.safetensors",
+        "tier": "pruned_bf16",
+        "label": "10eros_turbo_hybrid_beta4_bf16 · 10Eros TURBO Hybrid beta4 剪枝 BF16（37.46G）",
+        "sizeGB": 37.46,
+        "quant": "bf16",
+        "source": "微调",
+        "note": "10Eros TURBO Hybrid beta4 未量化版，体积与 pruned_bf16 相同；5090 按 pruned_bf16 低显存峰值估，风格与官方版不一致",
+        "neverRecommended": true,
+        "adaln": "pruned"
+      },
+      {
+        "key": "ref2va_10eros_turbo_hybrid_beta5",
+        "file": "10Eros_Max_h3_TURBO-hybrid_beta5_int8.safetensors",
+        "tier": "10eros_turbo_hybrid_beta5",
+        "label": "10eros_turbo_hybrid_beta5 · 10Eros TURBO Hybrid beta5 INT8（19.53G）",
+        "sizeGB": 19.53,
+        "quant": "int8",
+        "source": "微调",
+        "note": "10Eros TURBO Hybrid beta5 社区微调，显存与 beta4 / pruned_int8 接近，风格与官方版不一致",
+        "neverRecommended": true,
+        "adaln": "pruned"
+      },
+      {
+        "key": "ref2va_dasiwa_hybrid4_turbo",
+        "file": "DasiwaMinimaxH3_dasiwaHybrid4turboV1.safetensors",
+        "tier": "dasiwa_hybrid4_turbo",
+        "label": "dasiwa_hybrid4_turbo · Dasiwa Hybrid 4turbo V1（19.53G）",
+        "sizeGB": 19.53,
+        "quant": "int8",
+        "source": "微调",
+        "note": "Dasiwa 社区 Hybrid 4 步加速微调，显存与 pruned_int8 / hybrid_int8 接近，风格与官方版不一致",
+        "neverRecommended": true,
+        "adaln": "pruned"
+      },
+      {
+        "key": "ref2va_dasiwa_hybrid8_turbo",
+        "file": "DasiwaMinimaxH3_dasiwaHybrid8turboV1.safetensors",
+        "tier": "dasiwa_hybrid8_turbo",
+        "label": "dasiwa_hybrid8_turbo · Dasiwa Hybrid 8turbo V1（19.53G）",
+        "sizeGB": 19.53,
+        "quant": "int8",
+        "source": "微调",
+        "note": "Dasiwa 社区 Hybrid 8 步加速微调，显存与 pruned_int8 / hybrid_int8 接近，风格与官方版不一致",
+        "neverRecommended": true,
+        "adaln": "pruned"
+      },
+      {
+        "key": "ref2va_fastvideo_fasth3_8step_v2",
+        "file": "fastvideo_fasth3_8step_v2_pruned_int8_convrot.safetensors",
+        "tier": "fastvideo_fasth3_8step_v2",
+        "label": "fasth3_8step_v2 · FastVideo FastH3 8步 v2 剪枝 INT8（20.61G）",
+        "sizeGB": 20.61,
+        "quant": "int8",
+        "source": "社区",
+        "note": "FastVideo FastH3 8 步蒸馏剪枝 INT8，显存接近官方 pruned_int8，按 8 步加速用；风格与官方版不一致",
+        "neverRecommended": true,
+        "adaln": "pruned"
+      },
+      {
+        "key": "ref2va_fastvideo_fasth3_8step_v2_bf16",
+        "file": "fastvideo_fasth3_8step_v2_pruned_bf16.safetensors",
+        "tier": "fastvideo_fasth3_8step_v2_bf16",
+        "label": "fasth3_8step_v2_bf16 · FastVideo FastH3 8步 v2 剪枝 BF16（41.05G）",
+        "sizeGB": 41.05,
+        "quant": "bf16",
+        "source": "社区",
+        "note": "FastVideo FastH3 8 步蒸馏剪枝 BF16，体积 41.05G；按 8 步加速用；风格与官方版不一致",
+        "neverRecommended": true,
+        "adaln": "pruned"
+      },
+      {
+        "key": "ref2va_singularity_v13_int8",
+        "file": "Minimax-h3_Singularity_ref2va_v1.3_int8.safetensors",
+        "tier": "singularity_v13_int8",
+        "label": "singularity_v13_int8 · Singularity 完整 INT8 v1.3（31.7G）",
+        "sizeGB": 31.7,
+        "quant": "int8",
+        "source": "微调",
+        "note": "Singularity 社区 REF2VA 完整 INT8 v1.3，AdaLN 入维 2688，不能挂剪枝 LMS",
+        "neverRecommended": true,
+        "adaln": "full"
+      },
+      {
+        "key": "ref2va_singularity_pruned_int8",
+        "file": "Minimax-h3_Singularity_ref2va_Pruned_v1.3_int8.safetensors",
+        "tier": "pruned_int8",
+        "label": "singularity_pruned_int8 · Singularity 剪枝 INT8 v1.3（19.53G）",
+        "sizeGB": 19.53,
+        "quant": "int8",
+        "source": "微调",
+        "note": "Singularity 社区 REF2VA 剪枝 INT8 v1.3，显存与官方 pruned_int8 接近，风格与官方版不一致",
+        "neverRecommended": true,
+        "adaln": "pruned"
+      }
+    ],
+    "fl2va": [
+      {
+        "key": "fl2va_bf16",
+        "file": "minimax_h3_fl2va_bf16.safetensors",
+        "tier": "bf16",
+        "label": "bf16 · 完整 BF16（61.7G）",
+        "sizeGB": 61.7,
+        "quant": "bf16",
+        "source": "官方",
+        "note": "原始精度基线，画质天花板；显存/内存占用最高，速度最慢",
+        "adaln": "full"
+      },
+      {
+        "key": "fl2va_pruned_bf16",
+        "file": "minimax_h3_fl2va_pruned_bf16.safetensors",
+        "tier": "pruned_bf16",
+        "label": "pruned_bf16 · 剪枝 BF16（37.5G）",
+        "sizeGB": 37.5,
+        "quant": "bf16",
+        "source": "官方",
+        "note": "AdaLN 结构重构后的 BF16，画质接近完整版，省 24G",
+        "adaln": "pruned"
+      },
+      {
+        "key": "fl2va_int8",
+        "file": "minimax_h3_fl2va_int8_convrot.safetensors",
+        "tier": "int8",
+        "label": "int8 · 完整 INT8（31.7G）",
+        "sizeGB": 31.7,
+        "quant": "int8",
+        "source": "官方",
+        "note": "INT8-ConvRot 在各架构都走原生算子，大显存单卡的画质/速度最佳档",
+        "adaln": "full"
+      },
+      {
+        "key": "fl2va_pruned_int8",
+        "file": "minimax_h3_fl2va_pruned_int8_convrot.safetensors",
+        "tier": "pruned_int8",
+        "label": "pruned_int8 · 剪枝 INT8（19.5G）",
+        "sizeGB": 19.5,
+        "quant": "int8",
+        "source": "官方",
+        "note": "剪枝 + INT8，画质接近 bf16，32G 卡的稳妥主力档",
+        "adaln": "pruned"
+      },
+      {
+        "key": "fl2va_pruned_fp8",
+        "file": "minimax_h3_fl2va_pruned_fp8_scaled.safetensors",
+        "tier": "pruned_fp8",
+        "label": "pruned_fp8 · 剪枝 FP8（19.5G）",
+        "sizeGB": 19.5,
+        "quant": "fp8",
+        "source": "官方",
+        "note": "与 pruned_int8 同显存，实测慢约 10%，没有收益",
+        "neverRecommended": true,
+        "adaln": "pruned"
+      },
+      {
+        "key": "fl2va_pruned_nvfp4",
+        "file": "minimax_h3_fl2va_pruned_nvfp4.safetensors",
+        "tier": "pruned_nvfp4",
+        "label": "pruned_nvfp4 · 剪枝 NVFP4（11.7G）",
+        "sizeGB": 11.7,
+        "quant": "nvfp4",
+        "source": "社区",
+        "note": "lilcheaty NVFP4：Blackwell 原生 FP4，最省显存也最快；非 Blackwell 无原生算子",
+        "minArch": "blackwell",
+        "adaln": "pruned"
+      },
+      {
+        "key": "fl2va_pruned_nvfp4_int8",
+        "file": "minimax_h3_fl2va_pruned_nvfp4_convrot_int8.safetensors",
+        "tier": "pruned_nvfp4_int8",
+        "label": "pruned_nvfp4_int8 · 剪枝 NVFP4+INT8 混合（18.7G）",
+        "sizeGB": 18.7,
+        "quant": "nvfp4_int8",
+        "source": "社区",
+        "note": "NVFP4 主干 + INT8 敏感层，画质比纯 NVFP4 好，仍需 Blackwell",
+        "minArch": "blackwell",
+        "adaln": "pruned"
+      },
+      {
+        "key": "fl2va_pruned_w4a8",
+        "file": "minimax_h3_fl2va_pruned_w4a8_mixed.safetensors",
+        "tier": "pruned_w4a8",
+        "label": "pruned_w4a8 · 剪枝 W4A8 混合（11.7G）",
+        "sizeGB": 11.7,
+        "quant": "w4a8",
+        "source": "实验",
+        "note": "Kijai 实验版：4bit 权重 + 8bit 激活，需 Ada 及以上，稳定性未定",
+        "minArch": "ada",
+        "neverRecommended": true,
+        "adaln": "pruned"
+      },
+      {
+        "key": "fl2va_10eros_pruned_int8",
+        "file": "10Eros_Max_h3_fl2va_pruned_int8_convrot.safetensors",
+        "tier": "10eros_pruned_int8",
+        "label": "10eros_pruned_int8 · 10Eros 无审查微调（19.5G）",
+        "sizeGB": 19.5,
+        "quant": "int8",
+        "source": "微调",
+        "note": "第三方无审查微调，显存与 pruned_int8 相同，风格与官方版不一致",
+        "neverRecommended": true,
+        "adaln": "pruned"
+      },
+      {
+        "key": "fl2va_pinkcherry_pruned_int8",
+        "file": "PinkCherry_fl2va_MiniMax_H3_pruned_int8_convrot-beta-0.6.safetensors",
+        "tier": "pinkcherry_pruned_int8",
+        "label": "pinkcherry_pruned_int8 · PinkCherry 微调 beta-0.6（19.53G）",
+        "sizeGB": 19.53,
+        "quant": "int8",
+        "source": "微调",
+        "note": "PinkCherry 社区 FL2VA 微调，显存与 pruned_int8 相同，风格与官方版不一致",
+        "neverRecommended": true,
+        "adaln": "pruned"
+      },
+      {
+        "key": "fl2va_redmix_hybrid_a2a",
+        "file": "redcraftREDMIXHybridA2A_h3A2AREDBeta1.safetensors",
+        "tier": "redmix_hybrid_a2a",
+        "label": "redmix_hybrid_a2a · RedCraft REDMIX Hybrid A2A Beta1（19.53G）",
+        "sizeGB": 19.53,
+        "quant": "int8",
+        "source": "微调",
+        "note": "RedCraft REDMIX Hybrid A2A 社区微调，显存与 pruned_int8 / hybrid_int8 接近，风格与官方版不一致",
+        "neverRecommended": true,
+        "adaln": "pruned"
+      },
+      {
+        "key": "fl2va_feihou_remix",
+        "file": "FeiHou_MiniMax-H3_Remix_v0.6_int8_convrot.safetensors",
+        "tier": "int8",
+        "label": "feihou_remix · 肥猴 Remix v0.6 INT8（30.88G）",
+        "sizeGB": 30.88,
+        "quant": "int8",
+        "source": "微调",
+        "note": "肥猴社区 Remix INT8 微调，体积接近完整 int8；5090 按完整 int8 低显存峰值估，风格与官方版不一致",
+        "neverRecommended": true,
+        "adaln": "full"
+      },
+      {
+        "key": "fl2va_h3erosmax_beta3",
+        "file": "h3ErosMax_beta3.safetensors",
+        "tier": "pruned_bf16",
+        "label": "h3erosmax_beta3 · ErosMax beta3 剪枝 BF16（37.47G）",
+        "sizeGB": 37.47,
+        "quant": "bf16",
+        "source": "微调",
+        "note": "ErosMax beta3 社区微调，体积与 pruned_bf16 相同；5090 按 pruned_bf16 低显存峰值估，风格与官方版不一致",
+        "neverRecommended": true,
+        "adaln": "pruned"
+      },
+      {
+        "key": "fl2va_10eros_turbo_hybrid_beta4",
+        "file": "10Eros_Max_h3_TURBO-hybrid_beta4_int8_convrot.safetensors",
+        "tier": "10eros_turbo_hybrid_beta4",
+        "label": "10eros_turbo_hybrid_beta4 · 10Eros TURBO Hybrid beta4 INT8（19.53G）",
+        "sizeGB": 19.53,
+        "quant": "int8",
+        "source": "微调",
+        "note": "10Eros TURBO Hybrid beta4 社区微调，显存与 pruned_int8 / hybrid_int8 接近，风格与官方版不一致",
+        "neverRecommended": true,
+        "adaln": "pruned"
+      },
+      {
+        "key": "fl2va_10eros_turbo_hybrid_beta4_bf16",
+        "file": "10Eros_Max_h3_TURBO-hybrid_beta4.safetensors",
+        "tier": "pruned_bf16",
+        "label": "10eros_turbo_hybrid_beta4_bf16 · 10Eros TURBO Hybrid beta4 剪枝 BF16（37.46G）",
+        "sizeGB": 37.46,
+        "quant": "bf16",
+        "source": "微调",
+        "note": "10Eros TURBO Hybrid beta4 未量化版，体积与 pruned_bf16 相同；5090 按 pruned_bf16 低显存峰值估，风格与官方版不一致",
+        "neverRecommended": true,
+        "adaln": "pruned"
+      },
+      {
+        "key": "fl2va_10eros_turbo_hybrid_beta5",
+        "file": "10Eros_Max_h3_TURBO-hybrid_beta5_int8.safetensors",
+        "tier": "10eros_turbo_hybrid_beta5",
+        "label": "10eros_turbo_hybrid_beta5 · 10Eros TURBO Hybrid beta5 INT8（19.53G）",
+        "sizeGB": 19.53,
+        "quant": "int8",
+        "source": "微调",
+        "note": "10Eros TURBO Hybrid beta5 社区微调，显存与 beta4 / pruned_int8 接近，风格与官方版不一致",
+        "neverRecommended": true,
+        "adaln": "pruned"
+      },
+      {
+        "key": "fl2va_dasiwa_hybrid4_turbo",
+        "file": "DasiwaMinimaxH3_dasiwaHybrid4turboV1.safetensors",
+        "tier": "dasiwa_hybrid4_turbo",
+        "label": "dasiwa_hybrid4_turbo · Dasiwa Hybrid 4turbo V1（19.53G）",
+        "sizeGB": 19.53,
+        "quant": "int8",
+        "source": "微调",
+        "note": "Dasiwa 社区 Hybrid 4 步加速微调，显存与 pruned_int8 / hybrid_int8 接近，风格与官方版不一致",
+        "neverRecommended": true,
+        "adaln": "pruned"
+      },
+      {
+        "key": "fl2va_dasiwa_hybrid8_turbo",
+        "file": "DasiwaMinimaxH3_dasiwaHybrid8turboV1.safetensors",
+        "tier": "dasiwa_hybrid8_turbo",
+        "label": "dasiwa_hybrid8_turbo · Dasiwa Hybrid 8turbo V1（19.53G）",
+        "sizeGB": 19.53,
+        "quant": "int8",
+        "source": "微调",
+        "note": "Dasiwa 社区 Hybrid 8 步加速微调，显存与 pruned_int8 / hybrid_int8 接近，风格与官方版不一致",
+        "neverRecommended": true,
+        "adaln": "pruned"
+      },
+      {
+        "key": "fl2va_fastvideo_fasth3_8step_v2",
+        "file": "fastvideo_fasth3_8step_v2_pruned_int8_convrot.safetensors",
+        "tier": "fastvideo_fasth3_8step_v2",
+        "label": "fasth3_8step_v2 · FastVideo FastH3 8步 v2 剪枝 INT8（20.61G）",
+        "sizeGB": 20.61,
+        "quant": "int8",
+        "source": "社区",
+        "note": "FastVideo FastH3 8 步蒸馏剪枝 INT8，显存接近官方 pruned_int8，按 8 步加速用；风格与官方版不一致",
+        "neverRecommended": true,
+        "adaln": "pruned"
+      },
+      {
+        "key": "fl2va_fastvideo_fasth3_8step_v2_bf16",
+        "file": "fastvideo_fasth3_8step_v2_pruned_bf16.safetensors",
+        "tier": "fastvideo_fasth3_8step_v2_bf16",
+        "label": "fasth3_8step_v2_bf16 · FastVideo FastH3 8步 v2 剪枝 BF16（41.05G）",
+        "sizeGB": 41.05,
+        "quant": "bf16",
+        "source": "社区",
+        "note": "FastVideo FastH3 8 步蒸馏剪枝 BF16，体积 41.05G；按 8 步加速用；风格与官方版不一致",
+        "neverRecommended": true,
+        "adaln": "pruned"
+      }
+    ]
+  },
+  "clipOptions": [
+    {
+      "key": "qwen3vl_bf16",
+      "file": "qwen3vl_32b_minimax_h3_bf16.safetensors",
+      "tier": "qwen3vl_bf16",
+      "label": "qwen3vl_bf16 · 完整 BF16（48G）",
+      "sizeGB": 48,
+      "quant": "bf16",
+      "source": "官方",
+      "note": "提示词理解最准，只有 80G 以上单卡放得下"
+    },
+    {
+      "key": "qwen3vl_int8",
+      "file": "qwen3vl_32b_minimax_h3_int8_convrot.safetensors",
+      "tier": "qwen3vl_int8",
+      "label": "qwen3vl_int8 · INT8 量化（25.3G）",
+      "sizeGB": 25.3,
+      "quant": "int8",
+      "source": "官方",
+      "note": "各架构都走原生算子，长提示词一致性最稳的通用档"
+    },
+    {
+      "key": "qwen3vl_nvfp4",
+      "file": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+      "tier": "qwen3vl_nvfp4",
+      "label": "qwen3vl_nvfp4 · NVFP4-AWQ（14.6G）",
+      "sizeGB": 14.6,
+      "quant": "nvfp4",
+      "source": "官方",
+      "note": "Blackwell 原生 FP4；其它架构是仿真执行，只省显存不提速，复杂提示词一致性略差"
+    },
+    {
+      "key": "qwen3vl_int4",
+      "file": "qwen3vl_32b_minimax_h3_int4_convrot.safetensors",
+      "tier": "qwen3vl_int4",
+      "label": "qwen3vl_int4 · INT4 量化（13.9G）",
+      "sizeGB": 13.9,
+      "quant": "int4",
+      "source": "社区",
+      "note": "显存最省，代价是长提示词、多主体场景更容易漏细节"
+    },
+    {
+      "key": "qwen3vl_heretic_int8",
+      "file": "qwen3vl_32b_minimax_h3_ultra_uncensored_heretic_int8_convrot.safetensors",
+      "tier": "qwen3vl_heretic_int8",
+      "label": "qwen3vl_heretic_int8 · 无审查 INT8（24.6G）",
+      "sizeGB": 24.6,
+      "quant": "int8",
+      "source": "微调",
+      "note": "第三方无审查微调，显存同 INT8，改写风格与官方版不一致",
+      "neverRecommended": true
+    }
+  ],
+  "recommend": {
+    "unetReserveGB": 8,
+    "clipReserveGB": 1.5,
+    "comboOverlapFactor": 0.35,
+    "unet": [
+      {
+        "minVramGB": 44,
+        "tiers": [
+          "int8",
+          "pruned_int8",
+          "pruned_bf16",
+          "bf16"
+        ]
+      },
+      {
+        "minVramGB": 32,
+        "tiers": [
+          "pruned_int8",
+          "pruned_nvfp4_int8",
+          "pruned_nvfp4",
+          "int8",
+          "pruned_bf16"
+        ]
+      },
+      {
+        "arch": "blackwell",
+        "tiers": [
+          "pruned_nvfp4_int8",
+          "pruned_nvfp4",
+          "pruned_int8"
+        ]
+      },
+      {
+        "tiers": [
+          "pruned_int8",
+          "int8"
+        ]
+      }
+    ],
+    "clip": [
+      {
+        "minVramGB": 76,
+        "tiers": [
+          "qwen3vl_bf16",
+          "qwen3vl_int8"
+        ]
+      },
+      {
+        "minVramGB": 40,
+        "tiers": [
+          "qwen3vl_int8",
+          "qwen3vl_nvfp4"
+        ]
+      },
+      {
+        "arch": "blackwell",
+        "tiers": [
+          "qwen3vl_nvfp4",
+          "qwen3vl_int8",
+          "qwen3vl_int4"
+        ]
+      },
+      {
+        "tiers": [
+          "qwen3vl_int8",
+          "qwen3vl_nvfp4",
+          "qwen3vl_int4"
+        ]
+      }
+    ],
+    "tips": {
+      "recommended": [
+        {
+          "gpu": "H800-80G · PRO6000-96G",
+          "combo": "{family}_int8 (31.7G) + qwen3vl_bf16 (48.0G)",
+          "note": "大显存优先给文本编码器全精度（提示词理解更准）；纯保真基线才上 bf16 + bf16，约 110G，仅 96G 稳"
+        },
+        {
+          "gpu": "4090-48G · 3090-48G",
+          "combo": "{family}_int8 (31.7G) + qwen3vl_int8 (25.3G)",
+          "note": "48G 单卡最佳档；长时长 / 高分辨率吃紧就把 UNet 换成 pruned_int8 (19.5G)"
+        },
+        {
+          "gpu": "5090-32G · 5090D-32G",
+          "combo": "{family}_pruned_int8 (19.5G) + qwen3vl_nvfp4 (14.6G)",
+          "note": "官方剪枝 INT8 为默认推荐；要快可换 pruned_nvfp4_int8 + nvfp4。pruned_bf16 (37.5G) 实测可跑，下拉黄·可用，需手动切换"
+        },
+        {
+          "gpu": "4080(S)-32G",
+          "combo": "{family}_pruned_int8 (19.5G) + qwen3vl_int8 (25.3G)",
+          "note": "非 Blackwell 稳妥主力。pruned_bf16 / int8 在 Low VRAM 优化后黄·可用，不作为默认推荐"
+        }
+      ],
+      "notRecommended": [
+        {
+          "gpu": "5090-32G · 4080(S)-32G",
+          "combo": "{family}_pruned_bf16 (37.5G) 作为默认推荐",
+          "reason": "32G 上虽实测可跑，但显存余量小、长时长/高分辨率易 OOM；默认仍推荐 pruned_int8 (19.5G)"
+        },
+        {
+          "gpu": "5090-32G · 4080(S)-32G",
+          "combo": "{family}_bf16、qwen3vl_bf16",
+          "reason": "完整 BF16 权重单文件就超过整卡显存；工作流虽含低显存优化，完整 bf16 仍不建议"
+        },
+        {
+          "gpu": "5090-32G · 4080(S)-32G",
+          "combo": "{family}_int8 + qwen3vl_int8 同时选大档",
+          "reason": "32G 组合编码约 31G+，长时长/高分辨率易 OOM；可换 qwen3vl_nvfp4 或 pruned_int8"
+        },
+        {
+          "gpu": "4090-48G · 3090-48G",
+          "combo": "qwen3vl_bf16 (48.0G)",
+          "reason": "和整卡显存等大，会退回内存换页，慢数倍"
+        },
+        {
+          "gpu": "全部显卡",
+          "combo": "{family}_pruned_fp8 (19.5G)",
+          "reason": "和 pruned_int8 同显存，实测慢约 10%，无收益"
+        },
+        {
+          "gpu": "H800 · 4090 · 3090 · 4080(S)",
+          "combo": "qwen3vl_nvfp4 (14.6G)",
+          "reason": "非 Blackwell 是仿真执行，只省显存不提速，复杂提示词一致性略差"
+        },
+        {
+          "gpu": "H800 · 4090 · 3090 · 4080(S)",
+          "combo": "{family}_*_nvfp4* 全部 NVFP4 权重",
+          "reason": "UNet 的 NVFP4 权重要 Blackwell 原生 FP4 算子，其它架构加载即失败"
+        },
+        {
+          "gpu": "3090-48G",
+          "combo": "{family}_pruned_w4a8 (11G)",
+          "reason": "Kijai 实验版 W4A8 需要 Ada 及以上，Ampere 没有对应算子"
+        }
+      ],
+      "notes": [
+        "U 系列工作流已接入 MiniMax H3 Low VRAM Attention + Chunk FeedForward；32G 卡（5090/4080 等）上 pruned_bf16 (37.5G) 与 int8 (31.7G) 已实测可跑，下拉不再标红。",
+        "pruned 档是 AdaLN 结构重构而非有损剪枝，pruned_int8 画质已接近 bf16；显存富余时优先加分辨率 / 时长，而不是堆精度。",
+        "文本编码器只在编码阶段占显存，编码完即卸载；整轮峰值由 UNet + 激活决定（pruned_int8 实测常驻约 20G、峰值约 28G）。",
+        "CLIP 下拉按「当前已选 UNet」重算组合：编码时 UNet 可能仍部分常驻（recommend.comboOverlapFactor，默认 0.35）。大 UNet + 大 CLIP 可能标红，但仍可选，不再自动换档。",
+        "显存预算是「分辨率 × 帧数」：1344×768 跑 15s（362 帧）连 96G 都会 OOM，长片请降到 1152×640 或缩短时长。"
+      ]
+    }
+  },
+  "variants": {
+    "u2": {
+      "defaultDuration": "5",
+      "defaultSteps": "12",
+      "defaultResolutionKey": "864x480",
+      "defaultModelKey": "fl2va_pruned_int8",
+      "defaultClipKey": "qwen3vl_nvfp4",
+      "defaultLoraKey": "fl2v_turbo_8step_v1_768p",
+      "defaultLoraStrength": 0.75,
+      "defaultExtraLoraKey": "none",
+      "defaultExtraLoraStrength": 0.75,
+      "defaultSeed": 479044338007328
+    },
+    "u4": {
+      "defaultDuration": "5",
+      "defaultSteps": "12",
+      "defaultResolutionKey": "864x480",
+      "defaultModelKey": "ref2va_pruned_int8",
+      "defaultClipKey": "qwen3vl_int8",
+      "defaultLoraKey": "ref2v_turbo_8step_v1_768p",
+      "defaultLoraStrength": 0.75,
+      "defaultSeed": 62237677945434
+    },
+    "u05": {
+      "_comment": "U05-API：5图带货精简页；分辨率最高0.5MP；#225 RTX超分2倍（无RTX则bypass）。工具条显示秒数（#132），LoRA/模型/步数/倍率仍按下列默认写入",
+      "durationSelector": true,
+      "defaultDuration": "8",
+      "defaultSteps": "12",
+      "defaultOrientation": "portrait",
+      "defaultAspectRatio": "9:16 (Portrait Widescreen)",
+      "defaultMegapixels": 0.2,
+      "defaultResolutionKey": "608x352",
+      "maxResolutionMp": 0.5,
+      "defaultPass2Scale": 2,
+      "maxPass2Scale": 3,
+      "defaultModelKey": "ref2va_pruned_int8",
+      "defaultClipKey": "qwen3vl_nvfp4",
+      "defaultLoraKey": "v4_step600_ema_pruned",
+      "defaultLoraStrength": 0.75,
+      "defaultExtraLoraKey": "none",
+      "defaultExtraLoraStrength": 0.75,
+      "defaultSeed": 946020379244747
+    },
+    "u6": {
+      "defaultDuration": "10",
+      "defaultSteps": "20",
+      "defaultResolutionKey": "1344x768",
+      "defaultModelKey": "ref2va_pruned_int8",
+      "defaultClipKey": "qwen3vl_nvfp4",
+      "defaultLoraKey": "v4_step600_ema_pruned",
+      "defaultLoraStrength": 0.75,
+      "defaultExtraLoraKey": "none",
+      "defaultExtraLoraStrength": 0.75,
+      "defaultSeed": 643925678199882
+    },
+    "u9": {
+      "_comment": "U9 V4O OLD，对齐最新 U09-V4O.json：0.4MP/0.9MP、一采 8 步、5 秒、int8+qwen3vl_int8、v4_step600_ema_pruned 0.65",
+      "defaultDuration": "5",
+      "defaultSteps": "8",
+      "defaultPass2Steps": "4",
+      "defaultResolutionKey": "864x480",
+      "defaultPass2ResolutionKey": "1280x736",
+      "defaultOrientation": "landscape",
+      "defaultAspectRatio": "16:9 (Widescreen)",
+      "defaultMegapixels": 0.4,
+      "defaultModelKey": "ref2va_int8",
+      "defaultPass2ModelKey": "ref2va_pruned_w4a8",
+      "defaultClipKey": "qwen3vl_int8",
+      "defaultLoraKey": "v4_step600_ema_pruned",
+      "defaultLoraStrength": 0.65,
+      "defaultExtraLoraKey": "none",
+      "defaultExtraLoraStrength": 0.75,
+      "defaultSeed": 348820262497549,
+      "defaultMaterialShortEdge": 640,
+      "defaultPass2Denoise": 0.2,
+      "materialShortEdgeOptions": [
+        640,
+        720,
+        1072
+      ]
+    },
+    "u9n": {
+      "_comment": "U9 V4N NEW，对齐最新 U09-V4N.json：0.5MP/0.8MP、一采 12 步；默认改用能挂上的 v4_step600_ema_pruned",
+      "defaultDuration": "5",
+      "defaultSteps": "12",
+      "defaultPass2Steps": "3",
+      "defaultResolutionKey": "960x544",
+      "defaultPass2ResolutionKey": "1216x672",
+      "defaultModelKey": "ref2va_pruned_int8",
+      "defaultPass2ModelKey": "ref2va_pruned_w4a8",
+      "defaultClipKey": "qwen3vl_nvfp4",
+      "defaultLoraKey": "v4_step600_ema_pruned",
+      "defaultLoraStrength": 0.65,
+      "defaultExtraLoraKey": "none",
+      "defaultExtraLoraStrength": 0.75,
+      "defaultSeed": 287709635247410,
+      "defaultMaterialShortEdge": 640,
+      "defaultPass2Denoise": 0.2,
+      "materialShortEdgeOptions": [
+        640,
+        720,
+        1072
+      ]
+    },
+    "u08": {
+      "_comment": "U08 #24 锁定 fused_refdelta；#7 一采默认 0.4 最高 1.0；#83 denoise 写死 0.2；空槽不进参考；ref_image_size 走公共规则（≤4 max，>4 match）",
+      "defaultModelKey": "ref2va_fused_refdelta_int8",
+      "modelLocked": true,
+      "pass1ResolutionSelector": true,
+      "defaultResolutionKey": "864x480",
+      "defaultMegapixels": 0.4,
+      "maxResolutionMp": 1,
+      "modelLockHint": "U08 工作流 #24 写死 minimax_h3_fused_refdelta_r1024_turbo8_mystic07_int8_convrot.safetensors，不可更换",
+      "defaultExtraLoraKey": "none",
+      "defaultExtraLoraStrength": 0.75,
+      "modelOptions": [
+        {
+          "key": "ref2va_fused_refdelta_int8",
+          "file": "minimax_h3_fused_refdelta_r1024_turbo8_mystic07_int8_convrot.safetensors",
+          "tier": "fused_refdelta_int8",
+          "label": "fused_refdelta_int8 · fused RefDelta turbo8 mystic07 INT8（19.54G）",
+          "sizeGB": 19.54,
+          "quant": "int8",
+          "source": "社区",
+          "note": "U08 工作流锁定：fused RefDelta + turbo8 + mystic07 INT8",
+          "neverRecommended": true,
+          "adaln": "pruned"
+        }
+      ]
+    },
+    "u11": {
+      "defaultDuration": "10",
+      "defaultSteps": "8",
+      "defaultResolutionKey": "1344x768",
+      "defaultOrientation": "portrait",
+      "defaultModelKey": "ref2va_pruned_int8",
+      "defaultClipKey": "qwen3vl_int8",
+      "defaultLoraKey": "fl2v_turbo_8step_v1_768p",
+      "defaultLoraStrength": 0.75,
+      "defaultSeed": 553065476045255,
+      "defaultAudioDuration": 10,
+      "maxAudioDuration": 30,
+      "recommendedAudioDuration": 15
+    },
+    "u11v2": {
+      "_comment": "U11-API-V2 图音生视频原声版：9:16 / 1.5MP、波形默认取 15 秒（可选到 30）、8 步、fl2va 完整 INT8、CLIP BF16、turbo v4 LoRA 0.75。秒数框、模型、步数、LoRA、Skill 工具条都不展示，成片时长跟音频选段走。",
+      "defaultDuration": "15",
+      "defaultSteps": "8",
+      "defaultResolutionKey": "1664x928",
+      "defaultOrientation": "portrait",
+      "defaultAspectRatio": "9:16 (Portrait Widescreen)",
+      "defaultMegapixels": 1.5,
+      "defaultModelKey": "fl2va_int8",
+      "defaultClipKey": "qwen3vl_bf16",
+      "defaultLoraKey": "v4_step600_ema_pruned",
+      "defaultLoraStrength": 0.75,
+      "defaultSeed": 712566139265718,
+      "defaultAudioDuration": 15,
+      "maxAudioDuration": 30,
+      "recommendedAudioDuration": 15,
+      "durationSelector": false,
+      "sampleImages": [
+        {
+          "file": "南宫婉.png",
+          "subject": "古风女子"
+        },
+        {
+          "file": "yue.png",
+          "subject": "金发女子"
+        }
+      ],
+      "settingsTip": {
+        "title": "原声版推荐设置",
+        "intro": "5090 上高画质耗时较长。建议先用 1 倍率以内验证提示词，确认后再选高画质。",
+        "combos": [
+          {
+            "combo": "1.5 倍率 · 15秒",
+            "note": "5090 生成高画质大约需要 20 分钟",
+            "tag": "5090"
+          },
+          {
+            "combo": "2.0 倍率 · 10秒",
+            "note": "5090 生成高画质大约需要 17 分钟",
+            "tag": "高画质"
+          },
+          {
+            "combo": "1.5 倍率 · 20秒",
+            "note": "5090 生成高画质大约需要 27 分钟",
+            "tag": "5090"
+          },
+          {
+            "combo": "1.5 倍率 · 30秒",
+            "note": "5090 生成高画质大约需要 31 分钟",
+            "tag": "5090"
+          }
+        ],
+        "notes": [
+          "大于 15 秒的视频分辨率需要降低，否则可能失败。",
+          "建议使用 1 倍率以内生成，验证提示词遵循度，确认后再选高画质方案"
+        ]
+      },
+      "promptGuideTip": {
+        "title": "图片+音频写H3提示词技巧",
+        "buttonLabel": "写法技巧",
+        "intro": "提示词 = 人物锁定 + 时间场景 + 动作流程 + 镜头切换 + 声音对齐",
+        "combos": [
+          {
+            "combo": "人物锁定",
+            "note": "直接说“完全按照图1/图2的样子，脸、头发、衣服一点都不能变”。"
+          },
+          {
+            "combo": "时间场景",
+            "note": "写“10秒，豪华舞台上”。"
+          },
+          {
+            "combo": "动作流程",
+            "note": "用“先……然后……接着……最后……”把唱歌+跳舞串起来，动作要连贯。"
+          },
+          {
+            "combo": "镜头切换",
+            "note": "像演唱会一样写“先远景全景 → 切近景脸部 → 再切双人中景 → 最后拉远”。"
+          },
+          {
+            "combo": "声音对齐",
+            "note": "强调“嘴型完全跟音频1同步，布料和脚步声跟着动作走，背景音乐就是音频1”。"
+          }
+        ]
+      }
+    },
+    "u24": {
+      "_comment": "U24 V2API：默认 1152x640（0.7MP）、10秒、放大1.2（最大2）、分辨率档最高 2.0、hybrid b25-49、公共前置+一采/二采 LoRA 链",
+      "defaultPrompt": "subject_definitions:\n<Subject 1> 是 <Picture 1> 中的多视图角色设定里的成年女性，银灰长发、齐刘海与两侧长鬓，脑后大号黑色蝴蝶结配蓝色饰带，浅琥珀色眼，神情端正严肃；无袖高领白色上装、肩口镂空，左胸大型蓝色蝴蝶结与金饰，腰侧白 sash 与金色圆扣，不对称白色裙摆带蓝色渐变下摆与金色菱形纹，深色连裤袜，黑金大腿膝甲中央嵌蓝色宝石，黑色短靴，深色及肘手套，紫色泪滴形金耳环。\n<Subject 2> 是 <Picture 2> 中的多视图角色设定里的年轻女性，灰短发层次刘海，琥珀色眼，神情 calm；黑色开襟长风衣内衬与饰边为黄色，内搭白色垂坠上衣，深灰短裙与黄色点缀，斜挎浅灰宽腰带，黑色指节露指手套带黄色护垫，黑色短靴带黄色拉环。\n<Subject 3> 是 <Picture 3> 中的多视图角色设定里的年轻女性，短而乱的粉发带紫粉发梢，蓝紫星纹大眼，浅笑；白衬衫、蓝色露肩斗篷式短外套与粉紫渐变边、白色宽袖，蓝褶短裙，腰侧挂 turquoise 即拍相机，黑色 choker，深蓝短靴。\n<Subject 4> 是 <Picture 4> 中的多视图角色设定里的青年男性，深棕乱发，浅灰绿眼，神情沉静；白与深青不对称长外套、左肩大型深青肩甲与金色 filigree，黑色高领内搭，深青宽腰带，深灰长裤，黑色指节露指手套，黑靴带金青刺绣。\n<Subject 5> 是 <Picture 5> 中的多视图角色设定里的成年女性，长卷赤红发，暖琥珀眼，成熟端庄；白色无袖紧身礼裙、腰臀金色花卉刺绣，前短后长裙摆露红色里衬，深色长风衣披在肩上作 cape，黑色高跟，金色玫瑰 choker 与腕饰。\n<Subject 6> 是 <Picture 6> 中的多视图角色设定里的成年男性，短棕发，细框黑眼镜，神情严肃；浅灰长风衣至大腿，深褐 hood 围巾搭肩，臂上深红扣带，白背心腹面四枚黑色圆徽，深灰高领与长裤，右黑手套左 bare hand，深色皮鞋。\n<Subject 7> 是 <Picture 7> 中的克里珀堡办公大厅环境拼图：左上高角度可见中央大型弧形木质办公桌与后方站立的银发女性轮廓、圆形地毯；右上 vaulted 天花与大型吊灯、左侧 raised 书架画廊与远处小人影；左下近景桌面红花瓶与文件、左侧大型黄铜浑天仪；右下低角度对称构图，后墙三扇拱窗与蓝色挂幔、两侧画廊与深色木墙板、高耸书架，整体为正式政务/library 尺度空间。\n<Audio 1> is the voice-timbre reference for <Subject 1> (S1). Clear mid-range female voice, measured diplomatic pace, crisp articulation with slight formality when addressing guests.\n\nsummary:\n[reference generation] + [audio reference] 做一条约十五秒、三镜硬切的多参考成片：在 <Subject 7> 克里珀堡大厅内，<Subject 1> 于办公桌前审阅文件并两次开口对白，<Subject 2> 至 <Subject 6> 从门侧列队走向办公桌，第三镜越过 <Subject 5> 右肩聚焦 <Subject 1> 起身迎客；温和明亮略暖光照，无字幕、无背景音乐、不出现重复人物，切镜干净利落。\n\nretention_analysis:\n<Subject 1> (appears in [Shot 1], [Shot 3]): fully_preserved - 银灰长发、蓝白礼服、膝甲与耳环、桌后身份不变，只有眉间表情、站姿与手势改变。\n<Subject 2> (appears in [Shot 2], [Shot 3]): fully_preserved - 灰发、黑黄风衣与短裙、指节手套不变，只有步行姿态与在队列中的横向位置改变。\n<Subject 3> (appears in [Shot 2], [Shot 3]): fully_preserved - 粉发、蓝白外套与腰侧相机不变，只有步行与队列位置改变。\n<Subject 4> (appears in [Shot 2], [Shot 3]): fully_preserved - 深发、白青长外套与肩甲不变，只有步行与队列位置改变。\n<Subject 5> (appears in [Shot 2], [Shot 3]): fully_preserved - 赤红长发、白礼裙与披肩深色风衣不变，在队列中始终居中，第三镜调用背面与右肩轮廓。\n<Subject 6> (appears in [Shot 2], [Shot 3]): fully_preserved - 灰风衣、眼镜与红扣带不变，只有步行与队列位置改变。\n<Subject 7> (appears in [Shot 1], [Shot 2], [Shot 3]): fully_preserved - 大型木桌、拱窗、书架、吊灯与地毯布局不变，只有景别从桌近景扩到侧向远景再变为过肩视角。\n<Picture 1> (角色设定): fully_preserved - 多视图设定供 <Subject 1> 正侧与服饰细节调用。\n<Picture 7> (环境拼图): fully_preserved - 四向拼图锁定大厅尺度与办公桌位置，不切分为多个场景主体。\n<Audio 1> ([Shot 1], [Shot 3] 对白): fully_copy - <Subject 1> 两句中文对白音色与节奏跟随 <Audio 1>。\n\ndetailed_description:\n画质清晰、景深自然，整体为温和明亮的略暖室内日光，高窗与吊灯共同照明，木质与书籍表面有柔和高光，无画面内字幕与文字贴纸。\n[Shot 1] 中景偏近，Static Shot。大型弧形办公桌占据画面前景下方，<Subject 1> 坐在桌后中央，银灰长发、蓝白礼服与 <Picture 1> 一致；她右手握一支钢笔，笔尖停在摊开文件上方，眉头向内收拢，视线落在纸面。窗光与顶光从镜头左上方打来，她脸右侧仍保留可读阴影。约半秒后她微抬下巴，钢笔在纸边轻轻点了一下。<Subject 1> (S1) 带着迟疑说出，<d>[Chinese] 这个要签字吗...新的地髓开采机器的共同研发贸易协定...</d> 室内有很低的大厅房间底噪，纸面与笔杆只有极轻的摩擦声。\n[Shot 2] At 00:05.000, <scenetrans> 硬切。远景侧面，Truck Right at slow speed with small amplitude。同一 <Subject 7> 大厅：后方拱窗与书架纵深感可见，门口在画面一侧，大型办公桌在另一侧。<Subject 2>、<Subject 3>、<Subject 4>、<Subject 5>、<Subject 6> 五人一字横排，从门方向朝办公桌同步步行，队列横向顺序为 <Subject 2>、<Subject 3>、<Subject 4>、<Subject 5>（居中）、<Subject 6>，外观分别与 <Picture 2> 至 <Picture 6> 一致；<Subject 1> 仍在远处桌后，本镜不新增第二张同脸。自然脚步声：左侧高跟鞋、中间与右侧靴子与皮鞋交替落地，节奏平稳，无对白。\n[Shot 3] At 00:07.000, <scenetrans> 硬切。过肩近景，镜头从 <Subject 5> 的右侧背面起幅，可见她披在肩上的深色风衣后缘与赤红长发外轮廓，前景右肩占画幅约三分之一；Push In at slow speed with small amplitude，越过其右肩后焦点落在桌后的 <Subject 1> 上。切点后 <Subject 5> 肩线先微微下沉半拍再稳住，<Subject 1> 在椅中抬头，随即双手扶桌沿站起，结束姿态为站立、右手平放在自己胸口，面向来客方向。同一暖亮顶窗光，<Subject 1> 面部保持清晰可读。<Subject 1> (S1) 语气转为正式致歉说出，<d>[Chinese] 啊，你们来啦，抱歉最近大家都比较忙，佩拉应该是把你们接进城就继续忙别的了吧，真是抱歉，这样子有失地主之谊，是我的不周。</d> 脚步声在本镜开头迅速减弱，让位于对白。\n\noverall_soundscape:\n全片贯穿 <Subject 7> 大厅的低沉房间底噪：远处书架区的空阔混响、极轻的空气流动，窗外 daylight 不引入街噪。第二镜同步五人步行：高跟鞋与多种靴底在地面上的连续、自然 footfall，音量随远景略远而不过分突出；第三镜开头 footfall 收束，椅脚与桌面极轻触响，随后以对白为主，大厅混响保持同一空间连续性。无背景音乐、无字幕提示音。\n\nnon_diegetic_music:\nN/A",
+      "sampleImages": [
+        {
+          "file": "ADC6DF79C1D4F3258A395AE29B74707A.jpg"
+        },
+        {
+          "file": "575063DD615C0F8C66B2624ED70C6999.jpg"
+        },
+        {
+          "file": "2F1F0DC905FC0307747102CEFB4C4B46.jpg"
+        },
+        {
+          "file": "7C2420D4AC329AE567AB9582E30FBB04.jpg"
+        },
+        {
+          "file": "C5042A37DA74EA60986B7F8BB8E6F593.jpg"
+        },
+        {
+          "file": "3915BB456A6FB85648B01884B14852DB.jpg"
+        },
+        {
+          "file": "D9C343578BCFC1B95FD50AB3DEDB97DB.jpg"
+        }
+      ],
+      "sampleAudios": [
+        "布洛妮娅.wav"
+      ],
+      "defaultDuration": "10",
+      "defaultSteps": "8",
+      "defaultPass2Scale": 1.2,
+      "maxPass2Scale": 2,
+      "pass2ScaleHint": "推荐最大倍数为 1.5，设置更高会出现伪影加重或画质畸变",
+      "settingsTip": {
+        "title": "U24 推荐设置",
+        "intro": "右侧尺寸是学习型潜空间放大后的成片（32 对齐）。1152×640 / 864×480 是放大前一采样。推荐最大倍数为 1.5，设置更高会出现伪影加重或画质畸变。",
+        "combos": [
+          {
+            "combo": "0.7 · 10s · 1.2×",
+            "output": "1376×768",
+            "note": "采样 1152×640，再 ×1.2 对齐到 1376×768。5090 实测能跑，也是本页默认",
+            "tag": "默认"
+          },
+          {
+            "combo": "0.4 · 15s · 1.5×",
+            "output": "1312×736",
+            "note": "采样 864×480，再 ×1.5 对齐到 1312×736。5090 实测能跑",
+            "tag": "5090"
+          }
+        ],
+        "notes": [
+          "其他显卡请自行尝试",
+          "尺寸大容易崩",
+          "秒数长容易崩",
+          "推荐最大倍数为 1.5，设置更高会出现伪影加重或画质畸变",
+          "图片多容易崩",
+          "音频大容易崩"
+        ]
+      },
+      "defaultResolutionKey": "1152x640",
+      "defaultOrientation": "landscape",
+      "defaultAspectRatio": "16:9 (Widescreen)",
+      "defaultMegapixels": 0.7,
+      "defaultModelKey": "ref2va_hybrid_int8",
+      "defaultClipKey": "qwen3vl_nvfp4",
+      "defaultSeed": 683072603085674,
+      "defaultLoraSlots": {
+        "prefix_turbo": {
+          "key": "fl2v_turbo_4step_v1_2_768p",
+          "strength": 1
+        },
+        "p1_combat": {
+          "key": "h3_combat_v2",
+          "strength": 0.7
+        },
+        "p1_dasiwa": {
+          "key": "dasiwa_ref2va_hybrid",
+          "strength": 0.9
+        },
+        "p1_erosmax": {
+          "key": "erosmax_4step_t8",
+          "strength": 0.5
+        },
+        "p1_motion": {
+          "key": "motion_repair",
+          "strength": 0.7
+        },
+        "p1_cinematic": {
+          "key": "h3_cinematic_v01",
+          "strength": 0.5
+        },
+        "p2_combat": {
+          "key": "h3_combat_v2",
+          "strength": 0.49
+        },
+        "p2_dasiwa": {
+          "key": "dasiwa_ref2va_hybrid",
+          "strength": 0.5
+        },
+        "p2_erosmax": {
+          "key": "erosmax_4step_t8",
+          "strength": 0.7
+        },
+        "p2_motion": {
+          "key": "motion_repair",
+          "strength": 0.2
+        },
+        "p2_cinematic": {
+          "key": "h3_cinematic_v01",
+          "strength": 0.2
+        }
+      }
+    },
+    "u30": {
+      "_comment": "API-U30-K：#259 素材节点，#301 模型加载器 lora_1，#313 解码前 VRAMCleanup；默认 Singularity 完整 INT8 + ref2v turbo 4step 强度 1；#208 接 #143 与 #301 VAE，一采和二采都走 #208，无 LMS；#71 为 8 步，#99 在第 4 步切开，高噪 4 步、低噪 12 步；16:9/0.7MP、10秒、放大1.5、CLIP INT8",
+      "defaultDuration": "10",
+      "defaultSteps": "8",
+      "defaultPass2Scale": 1.5,
+      "pass2ScaleHint": "推荐最大倍数为 1.5，设置更高会出现伪影加重或画质畸变",
+      "defaultResolutionKey": "1152x640",
+      "maxResolutionMp": 2,
+      "defaultOrientation": "landscape",
+      "defaultAspectRatio": "16:9 (Widescreen)",
+      "defaultMegapixels": 0.7,
+      "defaultModelKey": "ref2va_singularity_v13_int8",
+      "defaultClipKey": "qwen3vl_int8",
+      "defaultSeed": 631838581842996,
+      "forceVramCleanupBeforeVae": true,
+      "refImageSize": "max",
+      "defaultLoraKey": "ref2v_turbo_4step_v01",
+      "defaultLoraStrength": 1,
+      "defaultExtraLoraKey": "none",
+      "defaultExtraLoraStrength": 1,
+      "sampleImages": [
+        {
+          "file": "48902645c4194b9ed74e6da4dd0dda2c32106c83093252478396371e7f9dc6d4.png",
+          "subject": "黑红刺客"
+        },
+        {
+          "file": "02a999c9985ab38e53c83e333ccb3eb789b4bc26f8e00d4ee886275ef428b072.png",
+          "subject": "青金女战士"
+        }
+      ],
+      "settingsTip": {
+        "title": "U30 推荐设置",
+        "intro": "右侧尺寸是 1.5× 潜空间放大后的成片。1152×640 / 864×480 是放大前采样。推荐最大倍数为 1.5，设置更高会出现伪影加重或画质畸变。",
+        "combos": [
+          {
+            "combo": "0.7 · 10s · 1.5×",
+            "output": "1728×960",
+            "note": "采样 1152×640，再 ×1.5。工作流默认，也是本页默认",
+            "tag": "默认"
+          },
+          {
+            "combo": "0.4 · 10s · 1.5×",
+            "output": "1296×720",
+            "note": "采样 864×480，再 ×1.5。更省显存",
+            "tag": "省显存"
+          }
+        ],
+        "notes": [
+          "尺寸大容易崩",
+          "秒数长容易崩",
+          "时长超过15秒或以上可能出现生成噪点坏视频",
+          "推荐最大倍数为 1.5，设置更高会出现伪影加重或画质畸变",
+          "图片多容易崩"
+        ]
+      }
+    },
+    "u17": {
+      "_comment": "U17 新版 U17-V1-api.json：16:9 / 0.9MP=1280×736、总步数 8、1采 4、放大 1.5、hybrid b25-49、双 LoRA 8step 0.7 + 4step v1.1 0.7",
+      "defaultDuration": "5",
+      "defaultSteps": "8",
+      "defaultPass2Steps": "4",
+      "defaultPass2Scale": 1.5,
+      "defaultResolutionKey": "1280x736",
+      "defaultOrientation": "landscape",
+      "defaultAspectRatio": "16:9 (Widescreen)",
+      "defaultMegapixels": 0.9,
+      "defaultModelKey": "ref2va_hybrid_int8",
+      "defaultClipKey": "qwen3vl_nvfp4",
+      "defaultLoraKey": "ref2v_turbo_8step_v1_768p",
+      "defaultLoraStrength": 0.7,
+      "defaultPass2LoraKey": "fl2v_turbo_4step_v1_1_768p",
+      "defaultPass2LoraStrength": 0.7,
+      "defaultSeed": 202608221347001
+    },
+    "u22": {
+      "_comment": "API-U22-K：页面不改模型、LoRA 和步数。文戏版是当前 lora_1 dmad 0.8、lora_2 MysticXXX 0.45。武戏版再打开 lora_3 到 lora_6，挂在 kitchen 注意力之前。步数固定 10，16:9 / 1.5MP、10秒",
+      "defaultDuration": "10",
+      "defaultSteps": "10",
+      "defaultResolutionKey": "1664x928",
+      "maxResolutionMp": 2,
+      "defaultOrientation": "landscape",
+      "defaultAspectRatio": "16:9 (Widescreen)",
+      "defaultMegapixels": 1.5,
+      "defaultModelKey": "ref2va_hybrid_int8",
+      "defaultClipKey": "qwen3vl_nvfp4",
+      "defaultSeed": 868022948637577,
+      "forceVramCleanupBeforeVae": true,
+      "refImageSize": "max",
+      "defaultLoraKey": "dmad_full_dareties_v4",
+      "defaultLoraStrength": 0.8,
+      "defaultExtraLoraKey": "mystic_xxx_v1",
+      "defaultExtraLoraStrength": 0.45,
+      "defaultCombatEnhance": false,
+      "combatStandard": { "label": "文戏版" },
+      "combatEnhanced": { "label": "武戏版" },
+      "combatStackLoras": [
+        { "slot": "lora_3", "lora": "minimax/H3_Combat_V2.safetensors", "strength": 0.65 },
+        { "slot": "lora_4", "lora": "minimax/Motion_Repair_V2.safetensors", "strength": 0.35 },
+        { "slot": "lora_5", "lora": "minimax/H3_Fight_Flow_V1.safetensors", "strength": 0.35 },
+        { "slot": "lora_6", "lora": "minimax/motion_speed_slider_mmh3_v1.1.safetensors", "strength": 3 }
+      ]
+    },
+    "u06v9": {
+      "_comment": "API-U06V9-K：#3892 素材节点，#3939 Singularity v1.3 int8，lora_1 turbo v4 强度 1，lora_2 cinema 0.6；#3967 步数 8；#3978 噪声种子；16:9 / 1.2MP、15秒；#3952 解码前清理显存",
+      "defaultDuration": "15",
+      "defaultSteps": "8",
+      "defaultResolutionKey": "1504x832",
+      "maxResolutionMp": 2,
+      "defaultOrientation": "landscape",
+      "defaultAspectRatio": "16:9 (Widescreen)",
+      "defaultMegapixels": 1.2,
+      "defaultModelKey": "ref2va_singularity_v13_int8",
+      "defaultClipKey": "qwen3vl_int8",
+      "defaultSeed": 270662856799090,
+      "forceVramCleanupBeforeVae": true,
+      "refImageSize": "max",
+      "defaultLoraKey": "v4_step600_ema_pruned",
+      "defaultLoraStrength": 1,
+      "defaultExtraLoraKey": "davham_cinema_h3",
+      "defaultExtraLoraStrength": 0.6
+    },
+    "u00": {
+      "_comment": "U00群主随便耍耍版无音参.json",
+      "defaultDuration": "10",
+      "defaultSteps": "8",
+      "defaultResolutionKey": "1920x1088",
+      "defaultOrientation": "landscape",
+      "defaultAspectRatio": "16:9 (Widescreen)",
+      "defaultMegapixels": 2,
+      "maxMegapixels": 2,
+      "maxResolutionMp": 2,
+      "defaultCombatEnhance": false,
+      "combatStandard": {
+        "label": "文戏去油版",
+        "dropNodes": [
+          "235",
+          "234"
+        ],
+        "loraOverrides": [
+          {
+            "nodeId": "233",
+            "loraName": "minimax/davham_cinema-h3-Euler-simple-0.8.safetensors",
+            "strength": 0.8
+          }
+        ]
+      },
+      "combatEnhanced": {
+        "label": "战斗加强版",
+        "loraOverrides": [
+          {
+            "nodeId": "233",
+            "loraName": "minimax/H3_Combat_V2.safetensors",
+            "strength": 0.5
+          }
+        ]
+      },
+      "defaultLowVram": false,
+      "lowVramNodes": [
+        "281",
+        "282"
+      ],
+      "defaultPromptEnhancer": true,
+      "durationRiskMegapixels": 2,
+      "durationRiskSeconds": 10,
+      "durationRiskMessage": "分辨率设置为 2 时，超过 10 秒可能生成失败",
+      "durationTierCap": true,
+      "durationLowMegapixels": 1,
+      "durationLowSeconds": 15,
+      "defaultModelKey": "fl2va_bf16",
+      "modelLocked": true,
+      "modelSelector": false,
+      "defaultClipKey": "qwen3vl_bf16",
+      "defaultSeed": 271933801555346,
+      "refImageSize": "max",
+      "modelOptions": {
+        "fl2va": [
+          "fl2va_bf16"
+        ]
+      },
+      "sampleImages": [
+        {
+          "file": "Untitled(3).jpg",
+          "subject": "蓝金女子"
+        },
+        {
+          "file": "Untitled(1).jpg",
+          "subject": "黑袍男子"
+        },
+        {
+          "file": "Untitled(4).jpg",
+          "subject": "红袍女子"
+        },
+        {
+          "file": "Untitled(9).jpg",
+          "subject": "银发短发"
+        },
+        {
+          "file": "Untitled(5).jpg",
+          "subject": "白狐"
+        },
+        {
+          "file": "Untitled(2).jpg",
+          "subject": "雪梅林"
+        }
+      ],
+      "settingsTip": {
+        "title": "U00 说明",
+        "intro": "分辨率最高 2。",
+        "combos": [
+          {
+            "combo": "文戏去油版 · 16:9 · 2MP · 10秒",
+            "tag": "默认"
+          },
+          {
+            "combo": "战斗加强版 · 16:9 · 2MP · 10秒",
+            "tag": "加强"
+          }
+        ],
+        "notes": [
+          "分辨率 2 时秒数最多 10，分辨率 1 及以下最多 15 秒"
+        ]
+      }
+    }
+  }
+}

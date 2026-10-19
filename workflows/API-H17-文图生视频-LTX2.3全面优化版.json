@@ -1,0 +1,940 @@
+{
+  "1241": {
+    "inputs": {
+      "frame_rate": [
+        "4989",
+        0
+      ],
+      "positive": [
+        "2483",
+        0
+      ],
+      "negative": [
+        "2612",
+        0
+      ]
+    },
+    "class_type": "LTXVConditioning",
+    "_meta": {
+      "title": "LTXV条件"
+    }
+  },
+  "2004": {
+    "inputs": {
+      "image": "AI Generated Layer (2).png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "2483": {
+    "inputs": {
+      "text": [
+        "5013",
+        0
+      ],
+      "clip": [
+        "4982",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Positive Prompt)"
+    }
+  },
+  "2612": {
+    "inputs": {
+      "text": "pc game, console game, video game, cartoon, childish, ugly,subtitles, caption, captions, closed captions, CC, on-screen text, text overlay, words, letters, characters, readable text, typography, subtitles bar, karaoke lyrics, lyric video, lower third, title card, UI, HUD, watermark, logo, signature, timestamp, sticker, banner, scrolling text, low quality, lowres, blurry, flicker, jitter, shaky camera, ghosting, frame doubling, temporal inconsistency, face warp, face melt, asymmetrical eyes, bad teeth, extra teeth, tongue artifact, mouth deformation, lip-sync mismatch, over-smoothing, plastic skin, heavy beauty filter, harsh sharpening, banding, noise, extra fingers, extra hands，字幕",
+      "clip": [
+        "4982",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Negative Prompt)"
+    },
+    "me": {
+      "title": "负面"
+    }
+  },
+  "3059": {
+    "inputs": {
+      "width": [
+        "5018",
+        0
+      ],
+      "height": [
+        "5020",
+        0
+      ],
+      "length": [
+        "4988",
+        0
+      ],
+      "batch_size": 1
+    },
+    "class_type": "EmptyLTXVLatentVideo",
+    "_meta": {
+      "title": "空Latent视频（LTXV）"
+    }
+  },
+  "3159": {
+    "inputs": {
+      "strength": 0.7,
+      "bypass": [
+        "4987",
+        0
+      ],
+      "vae": [
+        "3940",
+        2
+      ],
+      "image": [
+        "3336",
+        0
+      ],
+      "latent": [
+        "3059",
+        0
+      ]
+    },
+    "class_type": "LTXVImgToVideoConditionOnly",
+    "_meta": {
+      "title": "🅛🅣🅧 LTXV Img To Video Condition Only"
+    }
+  },
+  "3336": {
+    "inputs": {
+      "img_compression": 18,
+      "image": [
+        "5040",
+        0
+      ]
+    },
+    "class_type": "LTXVPreprocess",
+    "_meta": {
+      "title": "LTXV预处理"
+    }
+  },
+  "3940": {
+    "inputs": {
+      "ckpt_name": "ltx-2.3-22b-dev.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple",
+    "_meta": {
+      "title": "Checkpoint加载器（简易）"
+    }
+  },
+  "3980": {
+    "inputs": {
+      "frames_number": [
+        "4988",
+        0
+      ],
+      "frame_rate": [
+        "4983",
+        0
+      ],
+      "batch_size": 1,
+      "audio_vae": [
+        "4010",
+        0
+      ]
+    },
+    "class_type": "LTXVEmptyLatentAudio",
+    "_meta": {
+      "title": "LTXV 空音频潜空间"
+    }
+  },
+  "4010": {
+    "inputs": {
+      "ckpt_name": "ltx-2.3-22b-dev.safetensors"
+    },
+    "class_type": "LTXVAudioVAELoader",
+    "_meta": {
+      "title": "LTXV音频VAE加载器"
+    }
+  },
+  "4528": {
+    "inputs": {
+      "video_latent": [
+        "3159",
+        0
+      ],
+      "audio_latent": [
+        "3980",
+        0
+      ]
+    },
+    "class_type": "LTXVConcatAVLatent",
+    "_meta": {
+      "title": "LTXVConcatAVLatent"
+    }
+  },
+  "4828": {
+    "inputs": {
+      "cfg": 1,
+      "model": [
+        "5008",
+        0
+      ],
+      "positive": [
+        "1241",
+        0
+      ],
+      "negative": [
+        "1241",
+        1
+      ]
+    },
+    "class_type": "CFGGuider",
+    "_meta": {
+      "title": "CFG引导器"
+    }
+  },
+  "4829": {
+    "inputs": {
+      "noise": [
+        "4832",
+        0
+      ],
+      "guider": [
+        "4828",
+        0
+      ],
+      "sampler": [
+        "4831",
+        0
+      ],
+      "sigmas": [
+        "4984",
+        0
+      ],
+      "latent_image": [
+        "4528",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "自定义采样器（高级）"
+    }
+  },
+  "4831": {
+    "inputs": {
+      "sampler_name": "euler_ancestral_cfg_pp"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "K采样器选择"
+    }
+  },
+  "4832": {
+    "inputs": {
+      "noise_seed": 833073238550947
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "随机噪波"
+    }
+  },
+  "4845": {
+    "inputs": {
+      "av_latent": [
+        "4829",
+        0
+      ]
+    },
+    "class_type": "LTXVSeparateAVLatent",
+    "_meta": {
+      "title": "LTXV分离音视频潜空间"
+    }
+  },
+  "4848": {
+    "inputs": {
+      "samples": [
+        "4973",
+        1
+      ],
+      "audio_vae": [
+        "4010",
+        0
+      ]
+    },
+    "class_type": "LTXVAudioVAEDecode",
+    "_meta": {
+      "title": "LTXV音频VAE解码"
+    }
+  },
+  "4851": {
+    "inputs": {
+      "tile_size": 512,
+      "overlap": 64,
+      "temporal_size": 512,
+      "temporal_overlap": 4,
+      "samples": [
+        "4973",
+        0
+      ],
+      "vae": [
+        "3940",
+        2
+      ]
+    },
+    "class_type": "VAEDecodeTiled",
+    "_meta": {
+      "title": "VAE解码（分块）"
+    }
+  },
+  "4922": {
+    "inputs": {
+      "lora_name": "Ltx/ltx-2.3-22b-distilled-lora-384.safetensors",
+      "strength_model": 0.5,
+      "model": [
+        "3940",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "LoRA加载器（仅模型）"
+    }
+  },
+  "4964": {
+    "inputs": {
+      "cfg": 1,
+      "model": [
+        "5008",
+        0
+      ],
+      "positive": [
+        "1241",
+        0
+      ],
+      "negative": [
+        "1241",
+        1
+      ]
+    },
+    "class_type": "CFGGuider",
+    "_meta": {
+      "title": "CFG引导器"
+    }
+  },
+  "4967": {
+    "inputs": {
+      "noise_seed": 710678355821019
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "随机噪波"
+    }
+  },
+  "4969": {
+    "inputs": {
+      "video_latent": [
+        "4970",
+        0
+      ],
+      "audio_latent": [
+        "4845",
+        1
+      ]
+    },
+    "class_type": "LTXVConcatAVLatent",
+    "_meta": {
+      "title": "LTXVConcatAVLatent"
+    }
+  },
+  "4970": {
+    "inputs": {
+      "strength": 1,
+      "bypass": [
+        "4987",
+        0
+      ],
+      "vae": [
+        "3940",
+        2
+      ],
+      "image": [
+        "5040",
+        0
+      ],
+      "latent": [
+        "4975",
+        0
+      ]
+    },
+    "class_type": "LTXVImgToVideoConditionOnly",
+    "_meta": {
+      "title": "🅛🅣🅧 LTXV Img To Video Condition Only"
+    }
+  },
+  "4971": {
+    "inputs": {
+      "noise": [
+        "4967",
+        0
+      ],
+      "guider": [
+        "4964",
+        0
+      ],
+      "sampler": [
+        "4976",
+        0
+      ],
+      "sigmas": [
+        "4985",
+        0
+      ],
+      "latent_image": [
+        "4969",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "自定义采样器（高级）"
+    }
+  },
+  "4973": {
+    "inputs": {
+      "av_latent": [
+        "4971",
+        0
+      ]
+    },
+    "class_type": "LTXVSeparateAVLatent",
+    "_meta": {
+      "title": "LTXV分离音视频潜空间"
+    }
+  },
+  "4974": {
+    "inputs": {
+      "model_name": "ltx-2.3-spatial-upscaler-x2-1.0.safetensors"
+    },
+    "class_type": "LatentUpscaleModelLoader",
+    "_meta": {
+      "title": "加载Latent放大模型"
+    }
+  },
+  "4975": {
+    "inputs": {
+      "samples": [
+        "4845",
+        0
+      ],
+      "upscale_model": [
+        "4974",
+        0
+      ],
+      "vae": [
+        "3940",
+        2
+      ]
+    },
+    "class_type": "LTXVLatentUpsampler",
+    "_meta": {
+      "title": "LTXV潜空间上采样器"
+    }
+  },
+  "4976": {
+    "inputs": {
+      "sampler_name": "euler_cfg_pp"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "K采样器选择"
+    }
+  },
+  "4982": {
+    "inputs": {
+      "text_encoder": "gemma_3_12B_it_fp8_e4m3fn.safetensors",
+      "ckpt_name": "ltx-2.3-22b-dev.safetensors",
+      "device": "default"
+    },
+    "class_type": "LTXAVTextEncoderLoader",
+    "_meta": {
+      "title": "LTXV音频文本编码器加载器"
+    }
+  },
+  "4983": {
+    "inputs": {
+      "a": [
+        "4989",
+        0
+      ]
+    },
+    "class_type": "CM_FloatToInt",
+    "_meta": {
+      "title": "FloatToInt"
+    }
+  },
+  "4984": {
+    "inputs": {
+      "sigmas": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0"
+    },
+    "class_type": "ManualSigmas",
+    "_meta": {
+      "title": "自定义Sigmas"
+    }
+  },
+  "4985": {
+    "inputs": {
+      "sigmas": "0.85, 0.7250, 0.4219, 0.0"
+    },
+    "class_type": "ManualSigmas",
+    "_meta": {
+      "title": "自定义Sigmas"
+    }
+  },
+  "4987": {
+    "inputs": {
+      "value": false
+    },
+    "class_type": "PrimitiveBoolean",
+    "_meta": {
+      "title": "bypass_i2v"
+    }
+  },
+  "4988": {
+    "inputs": {
+      "value": [
+        "5047",
+        0
+      ]
+    },
+    "class_type": "PrimitiveInt",
+    "_meta": {
+      "title": "number of frames"
+    }
+  },
+  "4989": {
+    "inputs": {
+      "value": 24
+    },
+    "class_type": "PrimitiveFloat",
+    "_meta": {
+      "title": "fps"
+    }
+  },
+  "5007": {
+    "inputs": {
+      "enable_fp16_accumulation": true,
+      "model": [
+        "5009",
+        0
+      ]
+    },
+    "class_type": "ModelPatchTorchSettings",
+    "_meta": {
+      "title": "Model Patch Torch Settings"
+    }
+  },
+  "5008": {
+    "inputs": {
+      "chunks": 4,
+      "dim_threshold": 4096,
+      "model": [
+        "5007",
+        0
+      ]
+    },
+    "class_type": "LTXVChunkFeedForward",
+    "_meta": {
+      "title": "LTXV Chunk FeedForward (optional)"
+    }
+  },
+  "5009": {
+    "inputs": {
+      "sage_attention": "auto",
+      "allow_compile": false,
+      "model": [
+        "5043",
+        0
+      ]
+    },
+    "class_type": "PathchSageAttentionKJ",
+    "_meta": {
+      "title": "Patch Sage Attention KJ"
+    }
+  },
+  "5011": {
+    "inputs": {
+      "frame_rate": 24,
+      "loop_count": 0,
+      "filename_prefix": "20260330/image_",
+      "format": "video/h264-mp4",
+      "pix_fmt": "yuv420p",
+      "crf": 19,
+      "save_metadata": false,
+      "trim_to_audio": false,
+      "pingpong": false,
+      "save_output": true,
+      "images": [
+        "4851",
+        0
+      ],
+      "audio": [
+        "4848",
+        0
+      ]
+    },
+    "class_type": "VHS_VideoCombine",
+    "_meta": {
+      "title": "Video Combine 🎥🅥🅗🅢"
+    }
+  },
+  "5013": {
+    "inputs": {
+      "text": "\nStarting from a medium close-up of a graceful young woman in flowing white Hanfu with dark, gold-embroidered lapels, gazing wistfully at two tiny yellow wildflowers she holds against a soft, misty pale-green backdrop. The scene comes to life as a single continuous tracking shot slowly pushes in, capturing the gentle sway of her silver crystal hairpins and loose strands of dark hair stirred by a sudden spring breeze. As she softly rolls the thin green stem between her delicate fingertips, the yellow petals tremble, catching the diffused, ethereal light. Her long eyelashes flutter slightly, and her lower lip parts with a faint, visible breath. Woman (soft, melancholic sigh): \"春风虽暖，却留不住这花期。\" Following her words, her fingers slowly uncurl, surrendering to the wind. The breeze catches the delicate blossoms, sweeping them gracefully from her grasp. The unbroken camera shifts its focus smoothly from her lingering, downcast eyes to the drifting flowers, tracking them as they swirl through the mist past the rough stone pillar on the right edge of the frame. Eastern fantasy wuxia aesthetic, 35mm anamorphic lens, hyper-realistic silk textures, soft cinematic depth of field, ethereal volumetric lighting."
+    },
+    "class_type": "CR Text",
+    "_meta": {
+      "title": "🔤 CR Text"
+    }
+  },
+  "5018": {
+    "inputs": {
+      "value": 720
+    },
+    "class_type": "INTConstant",
+    "_meta": {
+      "title": "INT Constant"
+    }
+  },
+  "5020": {
+    "inputs": {
+      "value": 400
+    },
+    "class_type": "INTConstant",
+    "_meta": {
+      "title": "INT Constant"
+    }
+  },
+  "5040": {
+    "inputs": {
+      "aspect_ratio": "original",
+      "proportional_width": 1,
+      "proportional_height": 1,
+      "fit": "letterbox",
+      "method": "lanczos",
+      "round_to_multiple": "8",
+      "scale_to_side": "longest",
+      "scale_to_length": 1024,
+      "background_color": "#000000",
+      "image": [
+        "2004",
+        0
+      ]
+    },
+    "class_type": "LayerUtility: ImageScaleByAspectRatio V2",
+    "_meta": {
+      "title": "图层工具：按宽高比缩放 V2"
+    }
+  },
+  "5041": {
+    "inputs": {
+      "text": "Role\n\n你是一个 LTX-2 提示词专家。请将用户的【台词】和【画面描述】改写成一段连贯但简单的英文段落，并设计一套8秒时长的、带有明显“空间位移”的连续动作序列，让角色不仅有肢体动作，还要在场景中产生移动（如跑、飞、走、跳等），形成完整的动态叙事。\n\nGoal\n\n生成一段 5-7 句的英文，要求读起来像一个动作分镜脚本，单词难度初中水平，动作必须有明确的时间先后顺序和空间位置变化。\n\nRules (关键！)\n\n合并主语：不要每一句都用 \"He is...\" 开头。\n\n使用连接词：用 \"first\", \"then\", \"as\", \"before\", \"finally\" 来标记动作的时间顺序。\n\n严格遵循顺序：构图/氛围 -> 角色空间位移动作 -> 运镜跟随 -> 音频/台词。\n\n必须是连贯段落：不要分行。\n\n拒绝“站桩输出”：角色绝对不能站在原地只挥动手臂或施法，必须发生位置改变（如向前冲刺、向后滑行、升入空中、边走边说）。\n\n10秒空间位移动作设计原则（核心！）：\n\n第0-2秒（起势/预备）：角色处于初始位置（A点），身体重心改变，准备发力。\n\n第2-5秒（核心位移）：产生大幅度空间移动（奔跑/飞行/跳跃/踱步），穿越当前环境。\n\n第5-8秒（动作交汇/高潮）：在移动中完成核心动作（如在半空中挥剑、在冲刺时施法）。\n\n第8-10秒（落地/到达新位置）：到达B点，通过滑行缓冲、落地砸坑或停下脚步来收尾。\n\nStructure\n\n[Setup]: \"A [Shot Type] opens on [Subject] in [Environment] with [Lighting].\"\n2.[Action & Movement Sequence - 必须包含空间位移]:\n\n动作1（起步）：\"First, he/she [起始动作]...\"\n\n动作2（位移）：\"then[位移动词，如 strides forward / sprints / leaps / levitates] as [伴随效果]...\"\n\n动作3（高潮）：\"before[在移动中爆发的核心动作]...\"\n\n动作4（定格）：\"finally[到达新位置的收尾姿态]...\"\n示例：\"First he draws his sword, then sprints forward through the falling rain, before leaping high into the air to deliver a crushing blow, finally sliding to a halt on the muddy ground.\"\n3.[Camera]: \"The camera [持续跟随角色移动的运镜]，[具体运镜描述]...\"\n4.[Audio]: 描述声音层次（环境音→动作音→台词），引出台词。格式：用标准普通话说（用中文）：The character says, [用户台词] in a [Tone] voice.\n\nConstraints\n\n不要使用列表，必须是一段完整的文字（Single Paragraph）。\n\n必须包含用户的台词（台词部分必须输出中文）。\n\nThe character says, 前必须加 [用标准普通话说]\n\n严禁原地静止描述（如 \"he stands there\", \"she waves her hands\"），必须使用位移动词（如 walk, run, dash, fly, slide, jump, backflip）。\n\n每个动作必须包含：身体部位 + 位移方式 + 动作反馈/环境交互。\n\n动态与位移强度分级（根据场景类型选择）\n1. 日常/剧情类（走/踱步/转身）\n\n起步：转身面向镜头 → 迈出第一步\n\n位移：慢慢向前走近 (strides forward) / 焦躁地来回踱步 (paces back and forth) / 边走边推开障碍物\n\n收尾：停在镜头极近处 → 俯身/抬头看着对方\n\n2. 移动/追击类（跑/冲刺/跑酷）\n\n启动：屈膝下蹲 → 猛然蹬地发力 (pushes off the ground)\n\n位移：极速冲刺 (sprints rapidly) → 踩着墙壁跳跃 (wall-running) / 跨过障碍物 / 留下残影\n\n落地：翻滚缓冲 (rolls forward to absorb impact) → 单膝跪地滑行 (slides on one knee)\n\n3. 战斗类（位移与攻击结合）\n\n启动：握紧武器 → 压低身体重心\n\n位移：贴地疾驰 (dashes close to the ground) → 跃起拉近距离 (leaps towards the enemy) / 向后空翻躲避 (backflips away)\n\n连招：在空中旋身劈砍 → 落地时借着惯性转身横扫 → 收剑\n\n4. 魔法/玄幻类（飞/悬浮/瞬移）\n\n启动：双脚离地 (feet leave the ground) → 能量环绕全身\n\n位移：升入高空 (levitates high into the air) / 向后滑行拉开距离 (glides backward) / 化作一道光束冲破云层\n\n收尾：从空中缓缓降落 (descends slowly) / 斗篷在落地时重重落下\n\nExamples\n示例1：东方玄幻剑术（高速突进+攻击）\n\n输入：台词\"一剑霜寒十四州！\"，画面\"白衣剑客在竹林中\"\n输出：A wide tracking shot opens on a white-robed swordsman in a dense bamboo forest with mist swirling around his ankles. First he lowers his stance and touches his sword hilt, then violently dashes forward like a phantom, shattering the bamboo stalks in his path as he sprints, before leaping horizontally through the air to deliver a spinning slash that freezes the surrounding mist, finally sliding backward on the muddy ground to a perfect halt, leaving a deep trail in the dirt. The camera rushes forward alongside him, capturing the intense speed of his sprint before orbiting during his final landing. 用标准普通话说：The character says, 一剑霜寒十四州！in a fierce and determined voice.\n\n示例2：魔法施法（升空与环境破坏）\n\n输入：台词\"以星辰之名，赐予我力量！\"，画面\"紫袍法师在星空下\"\n输出：A dynamic low-angle shot opens on a purple-robed mage under a starry night sky. First she raises her arms as her feet slowly leave the ground, then gracefully levitates higher into the air while magical wind blows her hood back, before soaring backward and thrusting both hands forward to release a massive beam of starlight that pushes her even further back through the sky, finally landing gently on a ruined pillar as the cosmic energy fades. The camera tilts up as she rises, then pulls back quickly to emphasize her backward flight and the massive energy blast. 用标准普通话说：The character says, 以星辰之名，赐予我力量！in a powerful and reverent voice.\n\n示例3：日常情绪压迫感（走近+压迫）\n\n输入：台词\"这是最后一次警告。\"，画面\"西装黑帮大佬在昏暗仓库\"\n输出：A medium shot opens on a mafia boss in a sharp suit standing at the far end of a dimly lit warehouse. First he drops his cigar and crushes it with his heavy leather shoe, then slowly strides forward with heavy, echoing footsteps as he steps out of the shadows into a pool of harsh light, before suddenly speeding up his walk and grabbing a hanging lightbulb, finally stopping mere inches from the camera with a terrifying glare. The camera slowly dollies backward to maintain distance, keeping his imposing figure constantly moving toward the viewer. 用标准普通话说：The character says, 这是最后一次警告。in a cold, low, and menacing voice.\n"
+    },
+    "class_type": "CR Text",
+    "_meta": {
+      "title": "🔤 CR Text"
+    }
+  },
+  "5042": {
+    "inputs": {
+      "text": "# Role\n你是一名好莱坞级别的图生视频（Image-to-Video）导演兼 LTX-2 提示词架构师。你的核心任务是：接收用户提供的一张【画面描述/参考图信息】以及【动作与台词描述】，将其转化为一段极具视觉冲击力、一镜到底、且物理逻辑严密的长段落英文提示词。你深刻理解 LTX-2 模型的 I2V 机制，懂得如何“唤醒”静态图片，并通过视觉线索代替抽象情感。\n\n# Core Writing Logic (LTX-2 I2V Dynamic Engine 3.0)\n1. Initial Frame Anchoring (首帧锚定): \n   - 提示词的开头必须精准描述原图的构图、光影和人物状态，以此作为“起幅”。使用 `Starting from a [shot type] of...` 或 `The scene opens on...` 锁定画面，防止模型生成时脱离原图。\n2. Single Unbroken Take (一镜到底法则): \n   - 必须使用 `A single continuous tracking shot`, `Unbroken take`, 或 `The camera steadily pans/pushes` 等词汇。严禁暗示切镜头（Jump cut），确保原图的元素在运动中平滑演进。\n3. Chronological Chaining (时间动作链条): \n   - 静态图片动起来后，必须像时间轴一样按顺序描写：动作 A 发生 -> 导致动作 B -> 接着 C 发生。利用 `As...`, `Suddenly...`, `Then...`, `Gradually...` 牵引模型一秒一秒地渲染，防止动作糊在一起。\n4. Visual Subtext & Micro-Physics (视觉潜台词与微观物理): \n   - 绝对禁止直接写抽象情感（如 \"She is sad\"）。必须通过微观动作外化表现（如 \"Her lower lip trembles, catching the dim light\"）。强调物体间的干涉（如脚步踏碎落叶、水滴扭曲倒影）。\n5. Audio-Visual Sync (音画同步): \n   - 对话严格采用 `[Character Name] ([Vocal/Physical cue]): \"中文台词\"` 格式。\n\n# Input/Output Constraints\n- **English Only**: 所有的视觉、动作、环境描述必须使用高水准的好莱坞剧本级英语。\n- **Keep Chinese**: 只有对白必须保留原始中文，严禁翻译成英文！\n- **Sentence Count**: 保持在 5-10 句之间，构建一个从静到动的完整电影图景。\n- **Output Format**: 直接输出一段连贯的英文段落（插入中文台词），无需标题，无需任何废话解释。\n\n# The Formula (Prompt Architecture)\n你的输出必须严格遵循以下叙事结构进行无缝拼接（融合成一段自然段落）：\n1. [Initial Frame Anchor]: Starting from a [Shot Type] of [准确描述图片中的人物/场景/光影状态]. \n2. [Activation & Camera]: The scene comes to life as a single continuous tracking shot [pushes in / slowly pans]... 描述画面的第一个动态。\n3. [Chronological Action 1]: As [Character] does [Action], 描述物理细节与微表情。\n4. [Dialogue Block]: Character (cue): \"中文台词\"\n5. [Chronological Action 2]: 角色说话后或说话同时的连带动作（如呼出白气、扔掉物品）。\n6. [Resolution Frame]: 镜头如何收尾（如拉开、聚焦到地上的物品、走入阴影）。\n7. [Cinematic Suffix]: 导演风格, 镜头参数, 材质与光影术语 (如 35mm anamorphic lens, hyper-realistic textures, volumetric light).\n\n# Few-Shot Examples (The I2V Gold Standards)\n\n**User Input:** \n[图片状态]：中景，赛博朋克雨夜，女侦探靠在巷子售货机旁。\n[动作与台词]：她点烟，说雨洗不掉罪证，把打火机扔进积水里。\n**Your Output:** \nStarting from a medium shot of a female detective in a high-collar leather coat leaning against a flickering neon vending machine in a rain-drenched cyberpunk alleyway. The scene comes to life as a single continuous tracking shot slowly pushes in. She strikes a chrome lighter; the sudden orange flame flickers, illuminating her tired eyes, a faint scar on her cheek, and the heavy, vertical raindrops. Detective (raspy, low voice, exhaling a thick cloud of smoke): \"雨太大了，洗不掉罪证.\" As she speaks, the smoke mixes with the cold, cyan-tinted mist. Then, with a flick of her wrist, she drops the lighter. The unbroken camera follows the lighter in slow motion as it splashes into a neon-lit puddle, distorting the reflection of a \"POLICE\" sign in the ripples, before pulling back slightly into the shadows. Cyberpunk noir style, 35mm anamorphic lens, hyper-realistic textures, volumetric fog.\n\n**User Input:** \n[图片状态]：特写，大雪竹林里，一个流浪武士戴着斗笠。\n[动作与台词]：他突然察觉杀气停下脚步，大拇指推开刀镡说别藏了，抬头看树上。\n**Your Output:** \nStarting from a tight close-up of a lone, weathered samurai wearing a snow-covered bamboo hat, standing amidst a dense, frozen bamboo forest at dusk. The scene activates as heavy snow begins to fall continuously, and a single unbroken take stays locked on his face. Suddenly, he halts his slow trudge. His ears twitch slightly, and his narrowed eyes dart toward a rustling shadow in the peripheral darkness. Samurai (low, gravelly voice, exhaling a plume of white breath): \"既然来了，就别藏着.\" Simultaneously, his thumb firmly flicks the brass guard of his katana; the blade slides out an inch with a sharp metallic schwing, catching a sliver of icy moonlight. As a thick winter mist rolls across the foreground, the steady camera slowly tilts up, following his intense gaze toward the swaying bamboo canopy above. Kurosawa-inspired samurai epic, 35mm anamorphic lens, hyper-realistic textures, cinematic depth of field.\n\n# Execution\nAcknowledge these instructions. Wait for the user to provide the [Image State + Action/Dialogue], and then output ONLY the optimized Cinematic Description based on the Formula and Rules."
+    },
+    "class_type": "CR Text",
+    "_meta": {
+      "title": "🔤 CR Text"
+    }
+  },
+  "5043": {
+    "inputs": {
+      "reserved": 4,
+      "mode": "manual",
+      "seed": 858273494119071,
+      "auto_max_reserved": 0,
+      "clean_gpu_before": true,
+      "anything": [
+        "4922",
+        0
+      ]
+    },
+    "class_type": "ReservedVRAMSetter",
+    "_meta": {
+      "title": "Set Reserved VRAM(GB) ⚙️"
+    }
+  },
+  "5046": {
+    "inputs": {
+      "value": 5
+    },
+    "class_type": "INTConstant",
+    "_meta": {
+      "title": "INT Constant"
+    }
+  },
+  "5047": {
+    "inputs": {
+      "expression": "a*24+1",
+      "a": [
+        "5046",
+        0
+      ]
+    },
+    "class_type": "MathExpression|pysssss",
+    "_meta": {
+      "title": "Math Expression 🐍"
+    }
+  },
+  "_api_config": {
+    "customLabels": {
+      "2004:image": "参考图 0",
+      "2612:text": "负面",
+      "3059:batch_size": "批次大小",
+      "3159:strength": "strength",
+      "3336:img_compression": "img_compression",
+      "3980:batch_size": "批次大小",
+      "4828:cfg": "CFG Scale",
+      "4832:noise_seed": "noise_seed",
+      "4851:tile_size": "tile_size",
+      "4851:overlap": "overlap",
+      "4851:temporal_size": "temporal_size",
+      "4851:temporal_overlap": "temporal_overlap",
+      "4922:strength_model": "strength_model",
+      "4964:cfg": "CFG Scale",
+      "4967:noise_seed": "noise_seed",
+      "4970:strength": "strength",
+      "4982:device": "device",
+      "4984:sigmas": "sigmas",
+      "4985:sigmas": "sigmas",
+      "4987:value": "value",
+      "4989:value": "value",
+      "5007:enable_fp16_accumulation": "enable_fp16_accumulation",
+      "5008:chunks": "chunks",
+      "5008:dim_threshold": "dim_threshold",
+      "5009:sage_attention": "sage_attention",
+      "5009:allow_compile": "allow_compile",
+      "5011:filename_prefix": "文件名前缀",
+      "5011:frame_rate": "frame_rate",
+      "5011:loop_count": "loop_count",
+      "5011:format": "format",
+      "5011:pix_fmt": "pix_fmt",
+      "5011:crf": "crf",
+      "5011:save_metadata": "save_metadata",
+      "5011:trim_to_audio": "trim_to_audio",
+      "5011:pingpong": "pingpong",
+      "5011:save_output": "save_output",
+      "5013:text": "提示词",
+      "5018:value": "value",
+      "5020:value": "value",
+      "5040:aspect_ratio": "aspect_ratio",
+      "5040:proportional_width": "proportional_width",
+      "5040:proportional_height": "proportional_height",
+      "5040:fit": "fit",
+      "5040:method": "method",
+      "5040:round_to_multiple": "round_to_multiple",
+      "5040:scale_to_side": "scale_to_side",
+      "5040:scale_to_length": "scale_to_length",
+      "5040:background_color": "background_color",
+      "5041:text": "提示词",
+      "5042:text": "提示词",
+      "5043:seed": "随机种子",
+      "5043:reserved": "reserved",
+      "5043:mode": "mode",
+      "5043:auto_max_reserved": "auto_max_reserved",
+      "5043:clean_gpu_before": "clean_gpu_before",
+      "5046:value": "value",
+      "5047:expression": "expression"
+    },
+    "enabledParams": {
+      "2004:image": true,
+      "2612:text": true,
+      "3059:batch_size": false,
+      "3159:strength": false,
+      "3336:img_compression": false,
+      "3980:batch_size": false,
+      "4828:cfg": false,
+      "4832:noise_seed": false,
+      "4851:tile_size": false,
+      "4851:overlap": false,
+      "4851:temporal_size": false,
+      "4851:temporal_overlap": false,
+      "4922:strength_model": false,
+      "4964:cfg": false,
+      "4967:noise_seed": false,
+      "4970:strength": false,
+      "4982:device": false,
+      "4984:sigmas": false,
+      "4985:sigmas": false,
+      "4987:value": false,
+      "4989:value": false,
+      "5007:enable_fp16_accumulation": false,
+      "5008:chunks": false,
+      "5008:dim_threshold": false,
+      "5009:sage_attention": false,
+      "5009:allow_compile": false,
+      "5011:filename_prefix": false,
+      "5011:frame_rate": false,
+      "5011:loop_count": false,
+      "5011:format": false,
+      "5011:pix_fmt": false,
+      "5011:crf": false,
+      "5011:save_metadata": false,
+      "5011:trim_to_audio": false,
+      "5011:pingpong": false,
+      "5011:save_output": false,
+      "5013:text": true,
+      "5018:value": true,
+      "5020:value": true,
+      "5040:aspect_ratio": false,
+      "5040:proportional_width": false,
+      "5040:proportional_height": false,
+      "5040:fit": false,
+      "5040:method": false,
+      "5040:round_to_multiple": false,
+      "5040:scale_to_side": false,
+      "5040:scale_to_length": false,
+      "5040:background_color": false,
+      "5041:text": false,
+      "5042:text": false,
+      "5043:seed": false,
+      "5043:reserved": false,
+      "5043:mode": false,
+      "5043:auto_max_reserved": false,
+      "5043:clean_gpu_before": false,
+      "5046:value": false,
+      "5047:expression": false
+    },
+    "formValues": {
+      "2004:image": null,
+      "2612:text": "pc game, console game, video game, cartoon, childish, ugly,subtitles, caption, captions, closed captions, CC, on-screen text, text overlay, words, letters, characters, readable text, typography, subtitles bar, karaoke lyrics, lyric video, lower third, title card, UI, HUD, watermark, logo, signature, timestamp, sticker, banner, scrolling text, low quality, lowres, blurry, flicker, jitter, shaky camera, ghosting, frame doubling, temporal inconsistency, face warp, face melt, asymmetrical eyes, bad teeth, extra teeth, tongue artifact, mouth deformation, lip-sync mismatch, over-smoothing, plastic skin, heavy beauty filter, harsh sharpening, banding, noise, extra fingers, extra hands，字幕",
+      "3059:batch_size": 1,
+      "3159:strength": 0.7,
+      "3336:img_compression": 18,
+      "3980:batch_size": 1,
+      "4828:cfg": 1,
+      "4832:noise_seed": 833073238550947,
+      "4851:tile_size": 512,
+      "4851:overlap": 64,
+      "4851:temporal_size": 512,
+      "4851:temporal_overlap": 4,
+      "4922:strength_model": 0.5,
+      "4964:cfg": 1,
+      "4967:noise_seed": 710678355821019,
+      "4970:strength": 1,
+      "4982:device": "default",
+      "4984:sigmas": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0",
+      "4985:sigmas": "0.85, 0.7250, 0.4219, 0.0",
+      "4987:value": false,
+      "4989:value": 24,
+      "5007:enable_fp16_accumulation": true,
+      "5008:chunks": 4,
+      "5008:dim_threshold": 4096,
+      "5009:sage_attention": "auto",
+      "5009:allow_compile": false,
+      "5011:filename_prefix": "20260330/image_",
+      "5011:frame_rate": 24,
+      "5011:loop_count": 0,
+      "5011:format": "video/h264-mp4",
+      "5011:pix_fmt": "yuv420p",
+      "5011:crf": 19,
+      "5011:save_metadata": false,
+      "5011:trim_to_audio": false,
+      "5011:pingpong": false,
+      "5011:save_output": true,
+      "5013:text": "\nStarting from a medium close-up of a graceful young woman in flowing white Hanfu with dark, gold-embroidered lapels, gazing wistfully at two tiny yellow wildflowers she holds against a soft, misty pale-green backdrop. The scene comes to life as a single continuous tracking shot slowly pushes in, capturing the gentle sway of her silver crystal hairpins and loose strands of dark hair stirred by a sudden spring breeze. As she softly rolls the thin green stem between her delicate fingertips, the yellow petals tremble, catching the diffused, ethereal light. Her long eyelashes flutter slightly, and her lower lip parts with a faint, visible breath. Woman (soft, melancholic sigh): \"春风虽暖，却留不住这花期。\" Following her words, her fingers slowly uncurl, surrendering to the wind. The breeze catches the delicate blossoms, sweeping them gracefully from her grasp. The unbroken camera shifts its focus smoothly from her lingering, downcast eyes to the drifting flowers, tracking them as they swirl through the mist past the rough stone pillar on the right edge of the frame. Eastern fantasy wuxia aesthetic, 35mm anamorphic lens, hyper-realistic silk textures, soft cinematic depth of field, ethereal volumetric lighting.",
+      "5018:value": 720,
+      "5020:value": 400,
+      "5040:aspect_ratio": "original",
+      "5040:proportional_width": 1,
+      "5040:proportional_height": 1,
+      "5040:fit": "letterbox",
+      "5040:method": "lanczos",
+      "5040:round_to_multiple": "8",
+      "5040:scale_to_side": "longest",
+      "5040:scale_to_length": 1024,
+      "5040:background_color": "#000000",
+      "5041:text": "Role\n\n你是一个 LTX-2 提示词专家。请将用户的【台词】和【画面描述】改写成一段连贯但简单的英文段落，并设计一套8秒时长的、带有明显“空间位移”的连续动作序列，让角色不仅有肢体动作，还要在场景中产生移动（如跑、飞、走、跳等），形成完整的动态叙事。\n\nGoal\n\n生成一段 5-7 句的英文，要求读起来像一个动作分镜脚本，单词难度初中水平，动作必须有明确的时间先后顺序和空间位置变化。\n\nRules (关键！)\n\n合并主语：不要每一句都用 \"He is...\" 开头。\n\n使用连接词：用 \"first\", \"then\", \"as\", \"before\", \"finally\" 来标记动作的时间顺序。\n\n严格遵循顺序：构图/氛围 -> 角色空间位移动作 -> 运镜跟随 -> 音频/台词。\n\n必须是连贯段落：不要分行。\n\n拒绝“站桩输出”：角色绝对不能站在原地只挥动手臂或施法，必须发生位置改变（如向前冲刺、向后滑行、升入空中、边走边说）。\n\n10秒空间位移动作设计原则（核心！）：\n\n第0-2秒（起势/预备）：角色处于初始位置（A点），身体重心改变，准备发力。\n\n第2-5秒（核心位移）：产生大幅度空间移动（奔跑/飞行/跳跃/踱步），穿越当前环境。\n\n第5-8秒（动作交汇/高潮）：在移动中完成核心动作（如在半空中挥剑、在冲刺时施法）。\n\n第8-10秒（落地/到达新位置）：到达B点，通过滑行缓冲、落地砸坑或停下脚步来收尾。\n\nStructure\n\n[Setup]: \"A [Shot Type] opens on [Subject] in [Environment] with [Lighting].\"\n2.[Action & Movement Sequence - 必须包含空间位移]:\n\n动作1（起步）：\"First, he/she [起始动作]...\"\n\n动作2（位移）：\"then[位移动词，如 strides forward / sprints / leaps / levitates] as [伴随效果]...\"\n\n动作3（高潮）：\"before[在移动中爆发的核心动作]...\"\n\n动作4（定格）：\"finally[到达新位置的收尾姿态]...\"\n示例：\"First he draws his sword, then sprints forward through the falling rain, before leaping high into the air to deliver a crushing blow, finally sliding to a halt on the muddy ground.\"\n3.[Camera]: \"The camera [持续跟随角色移动的运镜]，[具体运镜描述]...\"\n4.[Audio]: 描述声音层次（环境音→动作音→台词），引出台词。格式：用标准普通话说（用中文）：The character says, [用户台词] in a [Tone] voice.\n\nConstraints\n\n不要使用列表，必须是一段完整的文字（Single Paragraph）。\n\n必须包含用户的台词（台词部分必须输出中文）。\n\nThe character says, 前必须加 [用标准普通话说]\n\n严禁原地静止描述（如 \"he stands there\", \"she waves her hands\"），必须使用位移动词（如 walk, run, dash, fly, slide, jump, backflip）。\n\n每个动作必须包含：身体部位 + 位移方式 + 动作反馈/环境交互。\n\n动态与位移强度分级（根据场景类型选择）\n1. 日常/剧情类（走/踱步/转身）\n\n起步：转身面向镜头 → 迈出第一步\n\n位移：慢慢向前走近 (strides forward) / 焦躁地来回踱步 (paces back and forth) / 边走边推开障碍物\n\n收尾：停在镜头极近处 → 俯身/抬头看着对方\n\n2. 移动/追击类（跑/冲刺/跑酷）\n\n启动：屈膝下蹲 → 猛然蹬地发力 (pushes off the ground)\n\n位移：极速冲刺 (sprints rapidly) → 踩着墙壁跳跃 (wall-running) / 跨过障碍物 / 留下残影\n\n落地：翻滚缓冲 (rolls forward to absorb impact) → 单膝跪地滑行 (slides on one knee)\n\n3. 战斗类（位移与攻击结合）\n\n启动：握紧武器 → 压低身体重心\n\n位移：贴地疾驰 (dashes close to the ground) → 跃起拉近距离 (leaps towards the enemy) / 向后空翻躲避 (backflips away)\n\n连招：在空中旋身劈砍 → 落地时借着惯性转身横扫 → 收剑\n\n4. 魔法/玄幻类（飞/悬浮/瞬移）\n\n启动：双脚离地 (feet leave the ground) → 能量环绕全身\n\n位移：升入高空 (levitates high into the air) / 向后滑行拉开距离 (glides backward) / 化作一道光束冲破云层\n\n收尾：从空中缓缓降落 (descends slowly) / 斗篷在落地时重重落下\n\nExamples\n示例1：东方玄幻剑术（高速突进+攻击）\n\n输入：台词\"一剑霜寒十四州！\"，画面\"白衣剑客在竹林中\"\n输出：A wide tracking shot opens on a white-robed swordsman in a dense bamboo forest with mist swirling around his ankles. First he lowers his stance and touches his sword hilt, then violently dashes forward like a phantom, shattering the bamboo stalks in his path as he sprints, before leaping horizontally through the air to deliver a spinning slash that freezes the surrounding mist, finally sliding backward on the muddy ground to a perfect halt, leaving a deep trail in the dirt. The camera rushes forward alongside him, capturing the intense speed of his sprint before orbiting during his final landing. 用标准普通话说：The character says, 一剑霜寒十四州！in a fierce and determined voice.\n\n示例2：魔法施法（升空与环境破坏）\n\n输入：台词\"以星辰之名，赐予我力量！\"，画面\"紫袍法师在星空下\"\n输出：A dynamic low-angle shot opens on a purple-robed mage under a starry night sky. First she raises her arms as her feet slowly leave the ground, then gracefully levitates higher into the air while magical wind blows her hood back, before soaring backward and thrusting both hands forward to release a massive beam of starlight that pushes her even further back through the sky, finally landing gently on a ruined pillar as the cosmic energy fades. The camera tilts up as she rises, then pulls back quickly to emphasize her backward flight and the massive energy blast. 用标准普通话说：The character says, 以星辰之名，赐予我力量！in a powerful and reverent voice.\n\n示例3：日常情绪压迫感（走近+压迫）\n\n输入：台词\"这是最后一次警告。\"，画面\"西装黑帮大佬在昏暗仓库\"\n输出：A medium shot opens on a mafia boss in a sharp suit standing at the far end of a dimly lit warehouse. First he drops his cigar and crushes it with his heavy leather shoe, then slowly strides forward with heavy, echoing footsteps as he steps out of the shadows into a pool of harsh light, before suddenly speeding up his walk and grabbing a hanging lightbulb, finally stopping mere inches from the camera with a terrifying glare. The camera slowly dollies backward to maintain distance, keeping his imposing figure constantly moving toward the viewer. 用标准普通话说：The character says, 这是最后一次警告。in a cold, low, and menacing voice.\n",
+      "5042:text": "# Role\n你是一名好莱坞级别的图生视频（Image-to-Video）导演兼 LTX-2 提示词架构师。你的核心任务是：接收用户提供的一张【画面描述/参考图信息】以及【动作与台词描述】，将其转化为一段极具视觉冲击力、一镜到底、且物理逻辑严密的长段落英文提示词。你深刻理解 LTX-2 模型的 I2V 机制，懂得如何“唤醒”静态图片，并通过视觉线索代替抽象情感。\n\n# Core Writing Logic (LTX-2 I2V Dynamic Engine 3.0)\n1. Initial Frame Anchoring (首帧锚定): \n   - 提示词的开头必须精准描述原图的构图、光影和人物状态，以此作为“起幅”。使用 `Starting from a [shot type] of...` 或 `The scene opens on...` 锁定画面，防止模型生成时脱离原图。\n2. Single Unbroken Take (一镜到底法则): \n   - 必须使用 `A single continuous tracking shot`, `Unbroken take`, 或 `The camera steadily pans/pushes` 等词汇。严禁暗示切镜头（Jump cut），确保原图的元素在运动中平滑演进。\n3. Chronological Chaining (时间动作链条): \n   - 静态图片动起来后，必须像时间轴一样按顺序描写：动作 A 发生 -> 导致动作 B -> 接着 C 发生。利用 `As...`, `Suddenly...`, `Then...`, `Gradually...` 牵引模型一秒一秒地渲染，防止动作糊在一起。\n4. Visual Subtext & Micro-Physics (视觉潜台词与微观物理): \n   - 绝对禁止直接写抽象情感（如 \"She is sad\"）。必须通过微观动作外化表现（如 \"Her lower lip trembles, catching the dim light\"）。强调物体间的干涉（如脚步踏碎落叶、水滴扭曲倒影）。\n5. Audio-Visual Sync (音画同步): \n   - 对话严格采用 `[Character Name] ([Vocal/Physical cue]): \"中文台词\"` 格式。\n\n# Input/Output Constraints\n- **English Only**: 所有的视觉、动作、环境描述必须使用高水准的好莱坞剧本级英语。\n- **Keep Chinese**: 只有对白必须保留原始中文，严禁翻译成英文！\n- **Sentence Count**: 保持在 5-10 句之间，构建一个从静到动的完整电影图景。\n- **Output Format**: 直接输出一段连贯的英文段落（插入中文台词），无需标题，无需任何废话解释。\n\n# The Formula (Prompt Architecture)\n你的输出必须严格遵循以下叙事结构进行无缝拼接（融合成一段自然段落）：\n1. [Initial Frame Anchor]: Starting from a [Shot Type] of [准确描述图片中的人物/场景/光影状态]. \n2. [Activation & Camera]: The scene comes to life as a single continuous tracking shot [pushes in / slowly pans]... 描述画面的第一个动态。\n3. [Chronological Action 1]: As [Character] does [Action], 描述物理细节与微表情。\n4. [Dialogue Block]: Character (cue): \"中文台词\"\n5. [Chronological Action 2]: 角色说话后或说话同时的连带动作（如呼出白气、扔掉物品）。\n6. [Resolution Frame]: 镜头如何收尾（如拉开、聚焦到地上的物品、走入阴影）。\n7. [Cinematic Suffix]: 导演风格, 镜头参数, 材质与光影术语 (如 35mm anamorphic lens, hyper-realistic textures, volumetric light).\n\n# Few-Shot Examples (The I2V Gold Standards)\n\n**User Input:** \n[图片状态]：中景，赛博朋克雨夜，女侦探靠在巷子售货机旁。\n[动作与台词]：她点烟，说雨洗不掉罪证，把打火机扔进积水里。\n**Your Output:** \nStarting from a medium shot of a female detective in a high-collar leather coat leaning against a flickering neon vending machine in a rain-drenched cyberpunk alleyway. The scene comes to life as a single continuous tracking shot slowly pushes in. She strikes a chrome lighter; the sudden orange flame flickers, illuminating her tired eyes, a faint scar on her cheek, and the heavy, vertical raindrops. Detective (raspy, low voice, exhaling a thick cloud of smoke): \"雨太大了，洗不掉罪证.\" As she speaks, the smoke mixes with the cold, cyan-tinted mist. Then, with a flick of her wrist, she drops the lighter. The unbroken camera follows the lighter in slow motion as it splashes into a neon-lit puddle, distorting the reflection of a \"POLICE\" sign in the ripples, before pulling back slightly into the shadows. Cyberpunk noir style, 35mm anamorphic lens, hyper-realistic textures, volumetric fog.\n\n**User Input:** \n[图片状态]：特写，大雪竹林里，一个流浪武士戴着斗笠。\n[动作与台词]：他突然察觉杀气停下脚步，大拇指推开刀镡说别藏了，抬头看树上。\n**Your Output:** \nStarting from a tight close-up of a lone, weathered samurai wearing a snow-covered bamboo hat, standing amidst a dense, frozen bamboo forest at dusk. The scene activates as heavy snow begins to fall continuously, and a single unbroken take stays locked on his face. Suddenly, he halts his slow trudge. His ears twitch slightly, and his narrowed eyes dart toward a rustling shadow in the peripheral darkness. Samurai (low, gravelly voice, exhaling a plume of white breath): \"既然来了，就别藏着.\" Simultaneously, his thumb firmly flicks the brass guard of his katana; the blade slides out an inch with a sharp metallic schwing, catching a sliver of icy moonlight. As a thick winter mist rolls across the foreground, the steady camera slowly tilts up, following his intense gaze toward the swaying bamboo canopy above. Kurosawa-inspired samurai epic, 35mm anamorphic lens, hyper-realistic textures, cinematic depth of field.\n\n# Execution\nAcknowledge these instructions. Wait for the user to provide the [Image State + Action/Dialogue], and then output ONLY the optimized Cinematic Description based on the Formula and Rules.",
+      "5043:seed": 858273494119071,
+      "5043:reserved": 4,
+      "5043:mode": "manual",
+      "5043:auto_max_reserved": 0,
+      "5043:clean_gpu_before": true,
+      "5046:value": 5,
+      "5047:expression": "a*24+1"
+    },
+    "mediaOrder": [
+      "2004:image"
+    ],
+    "mediaOrderSource": "auto",
+    "apiNames": {
+      "2004:image": "ref_image_0",
+      "2612:text": "prompt",
+      "3059:batch_size": "batch_size",
+      "3159:strength": "strength",
+      "3336:img_compression": "img_compression",
+      "3980:batch_size": "batch_size_2",
+      "4828:cfg": "cfg",
+      "4832:noise_seed": "noise_seed",
+      "4851:tile_size": "tile_size",
+      "4851:overlap": "overlap",
+      "4851:temporal_size": "temporal_size",
+      "4851:temporal_overlap": "temporal_overlap",
+      "4922:strength_model": "strength_model",
+      "4964:cfg": "cfg_2",
+      "4967:noise_seed": "noise_seed_2",
+      "4970:strength": "strength_2",
+      "4982:device": "device",
+      "4984:sigmas": "sigmas",
+      "4985:sigmas": "sigmas_2",
+      "4987:value": "value",
+      "4989:value": "value_2",
+      "5007:enable_fp16_accumulation": "enable_fp16_accumulation",
+      "5008:chunks": "chunks",
+      "5008:dim_threshold": "dim_threshold",
+      "5009:sage_attention": "sage_attention",
+      "5009:allow_compile": "allow_compile",
+      "5011:filename_prefix": "filename_prefix",
+      "5011:frame_rate": "frame_rate",
+      "5011:loop_count": "loop_count",
+      "5011:format": "format",
+      "5011:pix_fmt": "pix_fmt",
+      "5011:crf": "crf",
+      "5011:save_metadata": "save_metadata",
+      "5011:trim_to_audio": "trim_to_audio",
+      "5011:pingpong": "pingpong",
+      "5011:save_output": "save_output",
+      "5013:text": "prompt_2",
+      "5018:value": "value_3",
+      "5020:value": "value_4",
+      "5040:aspect_ratio": "aspect_ratio",
+      "5040:proportional_width": "proportional_width",
+      "5040:proportional_height": "proportional_height",
+      "5040:fit": "fit",
+      "5040:method": "method",
+      "5040:round_to_multiple": "round_to_multiple",
+      "5040:scale_to_side": "scale_to_side",
+      "5040:scale_to_length": "scale_to_length",
+      "5040:background_color": "background_color",
+      "5041:text": "prompt_3",
+      "5042:text": "prompt_4",
+      "5043:seed": "seed",
+      "5043:reserved": "reserved",
+      "5043:mode": "mode",
+      "5043:auto_max_reserved": "auto_max_reserved",
+      "5043:clean_gpu_before": "clean_gpu_before",
+      "5046:value": "value_5",
+      "5047:expression": "expression"
+    }
+  }
+}

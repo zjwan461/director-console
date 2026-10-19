@@ -1,0 +1,43 @@
+id: h3.i2v
+name: 图生视频
+badge: 常用
+category: video
+output_kind: video
+order: 20
+desc: 给一张首帧，让它动起来；可留空尾帧。
+hint: 参考图不要太大（建议长边 ≤ 1024），大图是最常见的爆显存原因。
+workflow: API-U02-minimax_h3_图生视频基础版-V2.json
+timeout: 3600
+placeholders:
+  image: blank-image.png
+  video: blank-video.mp4
+  audio: blank-audio.mp3
+fields:
+  - key: first_frame
+    bind: "114:image"
+    type: image
+    label: 首帧画面
+    required: true
+  - key: prompt
+    bind: "139:prompt"
+    type: textarea
+    label: 画面描述
+    rows: 6
+    required: true
+    assist: i2v
+    placeholder: 例：她缓缓转头看向镜头，头发被风吹动，背景霓虹虚化
+  - key: size
+    type: size
+    label: 画幅
+    mode: wh
+    width: "122:自定义宽"
+    height: "122:自定义高"
+    default_aspect: "16:9"
+    default_megapixels: 0.4
+  - key: duration
+    bind: "141:value"
+    type: duration
+    label: 时长（秒）
+    default: 5
+    min: 1
+    max: 15

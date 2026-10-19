@@ -1,0 +1,319 @@
+{
+  "1": {
+    "inputs": {
+      "image": "Untitled(3).jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "2": {
+    "inputs": {
+      "image": "Untitled(1).jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "3": {
+    "inputs": {
+      "image": "Untitled(4).jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "4": {
+    "inputs": {
+      "image": "Untitled(2).jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "5": {
+    "inputs": {
+      "image": "Untitled(2).jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "6": {
+    "inputs": {
+      "image": "Untitled(2).jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "7": {
+    "inputs": {
+      "image": "Untitled(2).jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "8": {
+    "inputs": {
+      "image": "Untitled(2).jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "9": {
+    "inputs": {
+      "image": "Untitled(2).jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "13": {
+    "inputs": {
+      "text": [
+        "15",
+        0
+      ]
+    },
+    "class_type": "ShowText|pysssss",
+    "_meta": {
+      "title": "Show Text 🐍"
+    }
+  },
+  "14": {
+    "inputs": {
+      "模型系列": "Qwen3.8-VL",
+      "主模型": "Qwen3.8-27B-Q4_K_M.gguf",
+      "视觉投影mmproj": "Qwen3.8-mmproj-BF16.gguf",
+      "启用思考": false,
+      "保留历史think": false,
+      "上下文长度": 8192,
+      "GPU层数": -1,
+      "KV缓存K类型": "默认(F16)",
+      "KV缓存V类型": "默认(F16)",
+      "Qwen3.8推理强度": "xhigh",
+      "MoE专家上CPU": false,
+      "前N层专家上CPU": 0
+    },
+    "class_type": "ZealmanLLM_ModelLoader",
+    "_meta": {
+      "title": "Zealman LLM 模型加载器"
+    }
+  },
+  "15": {
+    "inputs": {
+      "提示词": "图1的女士和图2的男士去图4的雪景场景找到了图2的红衣女生，图1的女士镜头特写说话：师姐我终于找到你了。图3的女士说:都怪群主太能折腾了，我差点爬不起来。嘤嘤嘤！",
+      "系统提示词": "你是 MiniMax H3 全参考模式（full-reference）的提示词改写专家。图像从左到右依次排列，识别后按要求写提示词。用户会用自己的话描述想要的视频，你要把它改写成规范的六段式输出。\n\n请严格只输出一个 JSON 对象（不要 markdown 围栏、不要解释、不要多余字段），字段如下：\n{\n  \"subject_definitions\": [\"每行一条参考内容的定义句\"],\n  \"summary\": \"一段英文，以方括号任务类型前缀开头\",\n  \"retention_analysis\": [\"每行一条参考内容的保留关系\"],\n  \"detailed_description\": \"正文，含风格开场句与 [Shot N] 分镜，换行分隔\",\n  \"overall_soundscape\": \"全片环境音与物理音\",\n  \"non_diegetic_music\": \"只有观众能听到的配乐，没有则写 N/A\"\n}\n\n写作规范：\n- 六段全部用英文书写。只有 <d> 里的台词/歌词，以及画面中可见的文字，保留原语言。\n- subject_definitions：每条说明该标签代表什么、参考角色、需要跟随的主要外观特征。看图写出真实的外观特征（发型、发色、服装款式与颜色、配饰、体态、场景元素），不要凭空编造图中没有的内容。句式如：<Subject 1> is the young woman in <Picture 1>, with long dark hair, a blue cardigan, and a thin silver necklace.\n- 一个主体由多张素材定义时合并成一句，并说明各素材提供了什么。\n- 只有当某张图本身作为镜头首帧/关键帧/尾帧/构图锚点时，才单独写 <Picture N> 行；仅用于定义人物、场景、服装、风格的图，一律写进对应 <Subject N> 的定义句里，不单独立行。\n- summary：一段话，以任务类型前缀开头，可选类型 keyframe completion / reference generation / video editing / video continuation / audio reuse / audio reference，多个用 \" + \" 连接。本段不得引入新的参考标签。\n- retention_analysis：每个标签一行。可见内容用 fully_preserved / partially_preserved / attribute_transfer / weak_reference；音频用 fully_copy / partially_copy / reference / weak_reference。\n  · <Subject N> 写成 <Subject 1> (appears in [Shot 1], [Shot 3]): fully_preserved - ...\n  · <Picture N> 写它担任的角色而不是 appears in，例如 <Picture 2> ([Shot 1] first frame): fully_preserved - ...\n  · 本段不出现 (Sx) 说话人编号。\n- detailed_description：先用一到两句英文确立整体风格，然后按播放顺序分镜。[Shot 1] 不带时间戳，之后每个镜头写成 [Shot N] At MM:SS.mmm, ...。镜头运动用自然英文描述。说话人按实际发声顺序编号 (S1)、(S2)，主体说话时写成 <Subject 1> (S1)，台词写成 <d>[Chinese] 内容</d>。要写清构图、主体外观与位置、环境与光线、动作与状态变化、运镜、当前声音，以及参考内容具体在哪里生效，不要写成剧情梗概。生成类任务正文通常 350-500 个英文单词。\n- overall_soundscape / non_diegetic_music：只写全片层面的环境音与观众专属配乐，完整台词只写在 detailed_description 的 <d> 里。",
+      "最大边长": 1024,
+      "最大生成token": 2048,
+      "温度": 0.7,
+      "top_p": 0.9,
+      "top_k": 20,
+      "seed": 551320301107837,
+      "输出think块": false,
+      "生成后自动卸载": true,
+      "zealman模型": [
+        "14",
+        0
+      ],
+      "图片": [
+        "1",
+        0
+      ],
+      "图片2": [
+        "2",
+        0
+      ],
+      "图片3": [
+        "3",
+        0
+      ],
+      "图片4": [
+        "4",
+        0
+      ],
+      "图片5": [
+        "5",
+        0
+      ],
+      "图片6": [
+        "6",
+        0
+      ],
+      "图片7": [
+        "7",
+        0
+      ],
+      "图片8": [
+        "8",
+        0
+      ],
+      "图片9": [
+        "9",
+        0
+      ]
+    },
+    "class_type": "ZealmanLLM_Generate",
+    "_meta": {
+      "title": "Zealman LLM"
+    }
+  },
+  "_api_config": {
+    "customLabels": {
+      "1:image": "参考图 0",
+      "2:image": "参考图 1",
+      "3:image": "参考图 2",
+      "4:image": "参考图 3",
+      "5:image": "参考图 4",
+      "6:image": "参考图 5",
+      "7:image": "参考图 6",
+      "8:image": "参考图 7",
+      "9:image": "参考图 8",
+      "14:模型系列": "模型系列",
+      "14:主模型": "主模型",
+      "14:视觉投影mmproj": "视觉投影mmproj",
+      "14:启用思考": "启用思考",
+      "14:保留历史think": "保留历史think",
+      "14:上下文长度": "上下文长度",
+      "14:GPU层数": "GPU层数",
+      "14:KV缓存K类型": "KV缓存K类型",
+      "14:KV缓存V类型": "KV缓存V类型",
+      "14:Qwen3.8推理强度": "Qwen3.8推理强度",
+      "14:MoE专家上CPU": "MoE专家上CPU",
+      "14:前N层专家上CPU": "前N层专家上CPU",
+      "15:seed": "随机种子",
+      "15:提示词": "提示词",
+      "15:系统提示词": "系统提示词",
+      "15:最大边长": "最大边长",
+      "15:最大生成token": "最大生成token",
+      "15:温度": "温度",
+      "15:top_p": "top_p",
+      "15:top_k": "top_k",
+      "15:输出think块": "输出think块",
+      "15:生成后自动卸载": "生成后自动卸载"
+    },
+    "enabledParams": {
+      "1:image": true,
+      "2:image": true,
+      "3:image": true,
+      "4:image": true,
+      "5:image": true,
+      "6:image": true,
+      "7:image": true,
+      "8:image": true,
+      "9:image": true,
+      "14:模型系列": false,
+      "14:主模型": false,
+      "14:视觉投影mmproj": false,
+      "14:启用思考": false,
+      "14:保留历史think": false,
+      "14:上下文长度": false,
+      "14:GPU层数": false,
+      "14:KV缓存K类型": false,
+      "14:KV缓存V类型": false,
+      "14:Qwen3.8推理强度": false,
+      "14:MoE专家上CPU": false,
+      "14:前N层专家上CPU": false,
+      "15:seed": false,
+      "15:提示词": true,
+      "15:系统提示词": false,
+      "15:最大边长": false,
+      "15:最大生成token": false,
+      "15:温度": false,
+      "15:top_p": false,
+      "15:top_k": false,
+      "15:输出think块": false,
+      "15:生成后自动卸载": false
+    },
+    "formValues": {
+      "1:image": null,
+      "2:image": null,
+      "3:image": null,
+      "4:image": null,
+      "5:image": null,
+      "6:image": null,
+      "7:image": null,
+      "8:image": null,
+      "9:image": null,
+      "14:模型系列": "Qwen3.8-VL",
+      "14:主模型": "Qwen3.8-27B-Q4_K_M.gguf",
+      "14:视觉投影mmproj": "Qwen3.8-mmproj-BF16.gguf",
+      "14:启用思考": false,
+      "14:保留历史think": false,
+      "14:上下文长度": 8192,
+      "14:GPU层数": -1,
+      "14:KV缓存K类型": "默认(F16)",
+      "14:KV缓存V类型": "默认(F16)",
+      "14:Qwen3.8推理强度": "xhigh",
+      "14:MoE专家上CPU": false,
+      "14:前N层专家上CPU": 0,
+      "15:seed": 551320301107837,
+      "15:提示词": "图1的女士和图2的男士去图4的雪景场景找到了图2的红衣女生，图1的女士镜头特写说话：师姐我终于找到你了。图3的女士说:都怪群主太能折腾了，我差点爬不起来。嘤嘤嘤！",
+      "15:系统提示词": "你是 MiniMax H3 全参考模式（full-reference）的提示词改写专家。图像从左到右依次排列，识别后按要求写提示词。用户会用自己的话描述想要的视频，你要把它改写成规范的六段式输出。\n\n请严格只输出一个 JSON 对象（不要 markdown 围栏、不要解释、不要多余字段），字段如下：\n{\n  \"subject_definitions\": [\"每行一条参考内容的定义句\"],\n  \"summary\": \"一段英文，以方括号任务类型前缀开头\",\n  \"retention_analysis\": [\"每行一条参考内容的保留关系\"],\n  \"detailed_description\": \"正文，含风格开场句与 [Shot N] 分镜，换行分隔\",\n  \"overall_soundscape\": \"全片环境音与物理音\",\n  \"non_diegetic_music\": \"只有观众能听到的配乐，没有则写 N/A\"\n}\n\n写作规范：\n- 六段全部用英文书写。只有 <d> 里的台词/歌词，以及画面中可见的文字，保留原语言。\n- subject_definitions：每条说明该标签代表什么、参考角色、需要跟随的主要外观特征。看图写出真实的外观特征（发型、发色、服装款式与颜色、配饰、体态、场景元素），不要凭空编造图中没有的内容。句式如：<Subject 1> is the young woman in <Picture 1>, with long dark hair, a blue cardigan, and a thin silver necklace.\n- 一个主体由多张素材定义时合并成一句，并说明各素材提供了什么。\n- 只有当某张图本身作为镜头首帧/关键帧/尾帧/构图锚点时，才单独写 <Picture N> 行；仅用于定义人物、场景、服装、风格的图，一律写进对应 <Subject N> 的定义句里，不单独立行。\n- summary：一段话，以任务类型前缀开头，可选类型 keyframe completion / reference generation / video editing / video continuation / audio reuse / audio reference，多个用 \" + \" 连接。本段不得引入新的参考标签。\n- retention_analysis：每个标签一行。可见内容用 fully_preserved / partially_preserved / attribute_transfer / weak_reference；音频用 fully_copy / partially_copy / reference / weak_reference。\n  · <Subject N> 写成 <Subject 1> (appears in [Shot 1], [Shot 3]): fully_preserved - ...\n  · <Picture N> 写它担任的角色而不是 appears in，例如 <Picture 2> ([Shot 1] first frame): fully_preserved - ...\n  · 本段不出现 (Sx) 说话人编号。\n- detailed_description：先用一到两句英文确立整体风格，然后按播放顺序分镜。[Shot 1] 不带时间戳，之后每个镜头写成 [Shot N] At MM:SS.mmm, ...。镜头运动用自然英文描述。说话人按实际发声顺序编号 (S1)、(S2)，主体说话时写成 <Subject 1> (S1)，台词写成 <d>[Chinese] 内容</d>。要写清构图、主体外观与位置、环境与光线、动作与状态变化、运镜、当前声音，以及参考内容具体在哪里生效，不要写成剧情梗概。生成类任务正文通常 350-500 个英文单词。\n- overall_soundscape / non_diegetic_music：只写全片层面的环境音与观众专属配乐，完整台词只写在 detailed_description 的 <d> 里。",
+      "15:最大边长": 1024,
+      "15:最大生成token": 2048,
+      "15:温度": 0.7,
+      "15:top_p": 0.9,
+      "15:top_k": 20,
+      "15:输出think块": false,
+      "15:生成后自动卸载": true
+    },
+    "mediaOrder": [
+      "1:image",
+      "2:image",
+      "3:image",
+      "4:image",
+      "5:image",
+      "6:image",
+      "7:image",
+      "8:image",
+      "9:image"
+    ],
+    "mediaOrderSource": "auto",
+    "apiNames": {
+      "1:image": "ref_image_0",
+      "2:image": "ref_image_1",
+      "3:image": "ref_image_2",
+      "4:image": "ref_image_3",
+      "5:image": "ref_image_4",
+      "6:image": "ref_image_5",
+      "7:image": "ref_image_6",
+      "8:image": "ref_image_7",
+      "9:image": "ref_image_8",
+      "14:模型系列": "param_2",
+      "14:主模型": "param_3",
+      "14:视觉投影mmproj": "mmproj",
+      "14:启用思考": "param",
+      "14:保留历史think": "think",
+      "14:上下文长度": "param_4",
+      "14:GPU层数": "GPU__",
+      "14:KV缓存K类型": "KV__K__",
+      "14:KV缓存V类型": "KV__V__",
+      "14:Qwen3.8推理强度": "Qwen3_8____",
+      "14:MoE专家上CPU": "MoE___CPU",
+      "14:前N层专家上CPU": "N____CPU",
+      "15:seed": "seed",
+      "15:提示词": "param_6",
+      "15:系统提示词": "param_7",
+      "15:最大边长": "param_8",
+      "15:最大生成token": "token",
+      "15:温度": "param_9",
+      "15:top_p": "top_p",
+      "15:top_k": "top_k",
+      "15:输出think块": "think_",
+      "15:生成后自动卸载": "param_5"
+    }
+  }
+}

@@ -1,0 +1,48 @@
+id: h3.flf2v
+name: 首尾帧过渡
+badge: 转场
+category: video
+output_kind: video
+order: 30
+desc: 给首帧和尾帧，让画面自然过渡过去，适合镜头衔接。
+hint: 首尾帧内容差太远时中间会“变形”；两帧尽量同主体、同画幅。
+workflow: API-U02-minimax_h3_图生视频基础版-V2.json
+timeout: 3600
+placeholders:
+  image: blank-image.png
+  video: blank-video.mp4
+  audio: blank-audio.mp3
+fields:
+  - key: first_frame
+    bind: "114:image"
+    type: image
+    label: 首帧画面
+    required: true
+  - key: last_frame
+    bind: "144:image"
+    type: image
+    label: 尾帧画面
+    required: true
+  - key: prompt
+    bind: "139:prompt"
+    type: textarea
+    label: 过渡描述
+    rows: 5
+    required: true
+    assist: flf2v
+    placeholder: 例：她推门走进雪地，镜头缓慢后拉，最后停在门前
+  - key: size
+    type: size
+    label: 画幅
+    mode: wh
+    width: "122:自定义宽"
+    height: "122:自定义高"
+    default_aspect: "16:9"
+    default_megapixels: 0.4
+  - key: duration
+    bind: "141:value"
+    type: duration
+    label: 时长（秒）
+    default: 5
+    min: 2
+    max: 15

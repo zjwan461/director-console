@@ -1,0 +1,174 @@
+{
+  "13": {
+    "inputs": {
+      "model": "large-v3",
+      "language": "auto",
+      "prompt": "",
+      "audio": [
+        "21",
+        0
+      ]
+    },
+    "class_type": "Apply Whisper",
+    "_meta": {
+      "title": "Apply Whisper"
+    }
+  },
+  "21": {
+    "inputs": {
+      "audio": "abf9d2fd4ed309e17f0a8010400bc4d3d1b36210eb80376faf672b9acfc7ad06.MP3",
+      "audioUI": "/api/view?filename=abf9d2fd4ed309e17f0a8010400bc4d3d1b36210eb80376faf672b9acfc7ad06.MP3&type=input&subfolder=&rand=0.6479105253865299"
+    },
+    "class_type": "LoadAudio",
+    "_meta": {
+      "title": "加载音频"
+    }
+  },
+  "25": {
+    "inputs": {
+      "model_path": "s2-pro",
+      "text": "Hello! [excited] This is my cloned voice.大家好啊，这是我的克隆声音！どうも、皆さん！これが僕（私）のクローンボイスだよ！",
+      "language": "auto",
+      "device": "cuda",
+      "precision": "bfloat16",
+      "attention": "auto",
+      "max_new_tokens": 0,
+      "chunk_length": 200,
+      "temperature": 0.8,
+      "top_p": 0.8,
+      "repetition_penalty": 1.1,
+      "seed": 666,
+      "keep_model_loaded": false,
+      "compile_model": false,
+      "reference_text": [
+        "13",
+        0
+      ],
+      "reference_audio": [
+        "21",
+        0
+      ]
+    },
+    "class_type": "FishS2VoiceCloneTTS",
+    "_meta": {
+      "title": "Fish S2 Voice Clone TTS"
+    }
+  },
+  "34": {
+    "inputs": {
+      "filename_prefix": "20260330/image_",
+      "audioUI": "",
+      "audio": [
+        "25",
+        0
+      ]
+    },
+    "class_type": "SaveAudio",
+    "_meta": {
+      "title": "保存音频"
+    }
+  },
+  "40": {
+    "inputs": {
+      "prompt": "在合适的位置加上语气标签，使得合成的语音抑扬顿挫富有感染力\n\n语气标签\n| **基础情感**  | `[angry]`、`[sad]`、`[excited]`、`[happy]`、`[fearful]`、`[surprised]`、`[satisfied]`、`[delighted]`、`[scared]`、`[worried]`、`[upset]`、`[nervous]`、`[frustrated]`、`[depressed]`、`[empathetic]`、`[embarrassed]`、`[disgusted]`、`[moved]`、`[proud]`、`[relaxed]`、`[grateful]`、`[confident]`、`[interested]`、`[curious]`、`[confused]`、`[joyful]`                                    \n| **高级情感**  | `[disdainful]`、`[unhappy]`、`[anxious]`、`[hysterical]`、`[indifferent]`、`[impatient]`、`[guilty]`、`[scornful]`、`[panicked]`、`[furious]`、`[reluctant]`、`[keen]`、`[disapproving]`、`[negative]`、`[denying]`、`[astonished]`、`[serious]`、`[sarcastic]`、`[conciliative]`、`[comforting]`、`[sincere]`、`[sneering]`、`[hesitating]`、`[yielding]`、`[painful]`、`[awkward]`、`[amused]` \n| **语调/语气** | `[in a hurry tone]`、`[shouting]`、`[screaming]`、`[whispering]`、`[soft tone]`、`[professional broadcast tone]`、`[pitch up]`、`[pitch down]`、`[voice up]`、`[interrupting]`                                                                                                                                                                                                  \n| **特殊音效**  | `[laughing]`、`[chuckling]`、`[sobbing]`、`[crying loudly]`、`[sighing]`、`[panting]`、`[groaning]`、`[crowd laughing]`、`[background laughter]`、`[audience laughing]`、`[inhale]`、`[exhale]`、`[tsk]`、`[clearing throat]`、`[moaning]`、`[singing]`、`[echo]`、`[emphasis]`、`[pause]`、`[short pause]` \n| **音量控制**  | `[volume up]`、`[volume down]`、`[low volume]`、`[loud]`、`[low voice]`、`[whisper in small voice]`                                                                                                                                                                                                                                                                         \n| **动态效果**  | `[laugh]`、`[super happy]`、`[laughing nervously]`、`[whispers]`、`[astonished]`、`[delight]`、`[shocked]`                 \n\n输出示例      \n用户输入：欢迎来到今天的节目。 但首先，告诉你一个秘密。\n你的输出：[professional broadcast tone] 欢迎来到今天的节目。[whispers] 但首先，告诉你一个秘密。\n用户输入：我可能不该说这个。这完全不能接受！\n你的输出：[laughing nervously] 我可能不该说这个。[angry] 这完全不能接受！\n用户输入：提高音调降低音量   \n你的输出：[pitch up] 提高音调 [volume down] 降低音量                                                                                                                                                                                   "
+    },
+    "class_type": "CR Prompt Text",
+    "_meta": {
+      "title": "⚙️ CR Prompt Text"
+    }
+  },
+  "_api_config": {
+    "customLabels": {
+      "13:prompt": "prompt",
+      "13:model": "model",
+      "13:language": "language",
+      "21:audio": "参考音频 0",
+      "25:seed": "随机种子",
+      "25:text": "提示词",
+      "25:model_path": "model_path",
+      "25:language": "language",
+      "25:device": "device",
+      "25:precision": "precision",
+      "25:attention": "attention",
+      "25:max_new_tokens": "max_new_tokens",
+      "25:chunk_length": "chunk_length",
+      "25:temperature": "temperature",
+      "25:top_p": "top_p",
+      "25:repetition_penalty": "repetition_penalty",
+      "25:keep_model_loaded": "keep_model_loaded",
+      "25:compile_model": "compile_model",
+      "34:filename_prefix": "文件名前缀",
+      "40:prompt": "prompt"
+    },
+    "enabledParams": {
+      "13:prompt": false,
+      "13:model": false,
+      "13:language": false,
+      "21:audio": true,
+      "25:seed": false,
+      "25:text": true,
+      "25:model_path": false,
+      "25:language": false,
+      "25:device": false,
+      "25:precision": false,
+      "25:attention": false,
+      "25:max_new_tokens": false,
+      "25:chunk_length": false,
+      "25:temperature": false,
+      "25:top_p": false,
+      "25:repetition_penalty": false,
+      "25:keep_model_loaded": false,
+      "25:compile_model": false,
+      "34:filename_prefix": false,
+      "40:prompt": false
+    },
+    "formValues": {
+      "13:prompt": "",
+      "13:model": "large-v3",
+      "13:language": "auto",
+      "21:audio": null,
+      "25:seed": 666,
+      "25:text": "Hello! [excited] This is my cloned voice.大家好啊，这是我的克隆声音！どうも、皆さん！これが僕（私）のクローンボイスだよ！",
+      "25:model_path": "s2-pro",
+      "25:language": "auto",
+      "25:device": "cuda",
+      "25:precision": "bfloat16",
+      "25:attention": "auto",
+      "25:max_new_tokens": 0,
+      "25:chunk_length": 200,
+      "25:temperature": 0.8,
+      "25:top_p": 0.8,
+      "25:repetition_penalty": 1.1,
+      "25:keep_model_loaded": false,
+      "25:compile_model": false,
+      "34:filename_prefix": "20260330/image_",
+      "40:prompt": "在合适的位置加上语气标签，使得合成的语音抑扬顿挫富有感染力\n\n语气标签\n| **基础情感**  | `[angry]`、`[sad]`、`[excited]`、`[happy]`、`[fearful]`、`[surprised]`、`[satisfied]`、`[delighted]`、`[scared]`、`[worried]`、`[upset]`、`[nervous]`、`[frustrated]`、`[depressed]`、`[empathetic]`、`[embarrassed]`、`[disgusted]`、`[moved]`、`[proud]`、`[relaxed]`、`[grateful]`、`[confident]`、`[interested]`、`[curious]`、`[confused]`、`[joyful]`                                    \n| **高级情感**  | `[disdainful]`、`[unhappy]`、`[anxious]`、`[hysterical]`、`[indifferent]`、`[impatient]`、`[guilty]`、`[scornful]`、`[panicked]`、`[furious]`、`[reluctant]`、`[keen]`、`[disapproving]`、`[negative]`、`[denying]`、`[astonished]`、`[serious]`、`[sarcastic]`、`[conciliative]`、`[comforting]`、`[sincere]`、`[sneering]`、`[hesitating]`、`[yielding]`、`[painful]`、`[awkward]`、`[amused]` \n| **语调/语气** | `[in a hurry tone]`、`[shouting]`、`[screaming]`、`[whispering]`、`[soft tone]`、`[professional broadcast tone]`、`[pitch up]`、`[pitch down]`、`[voice up]`、`[interrupting]`                                                                                                                                                                                                  \n| **特殊音效**  | `[laughing]`、`[chuckling]`、`[sobbing]`、`[crying loudly]`、`[sighing]`、`[panting]`、`[groaning]`、`[crowd laughing]`、`[background laughter]`、`[audience laughing]`、`[inhale]`、`[exhale]`、`[tsk]`、`[clearing throat]`、`[moaning]`、`[singing]`、`[echo]`、`[emphasis]`、`[pause]`、`[short pause]` \n| **音量控制**  | `[volume up]`、`[volume down]`、`[low volume]`、`[loud]`、`[low voice]`、`[whisper in small voice]`                                                                                                                                                                                                                                                                         \n| **动态效果**  | `[laugh]`、`[super happy]`、`[laughing nervously]`、`[whispers]`、`[astonished]`、`[delight]`、`[shocked]`                 \n\n输出示例      \n用户输入：欢迎来到今天的节目。 但首先，告诉你一个秘密。\n你的输出：[professional broadcast tone] 欢迎来到今天的节目。[whispers] 但首先，告诉你一个秘密。\n用户输入：我可能不该说这个。这完全不能接受！\n你的输出：[laughing nervously] 我可能不该说这个。[angry] 这完全不能接受！\n用户输入：提高音调降低音量   \n你的输出：[pitch up] 提高音调 [volume down] 降低音量                                                                                                                                                                                   "
+    },
+    "mediaOrder": [
+      "21:audio"
+    ],
+    "mediaOrderSource": "auto",
+    "apiNames": {
+      "13:prompt": "prompt",
+      "13:model": "model",
+      "13:language": "language",
+      "21:audio": "ref_audio_0",
+      "25:seed": "seed",
+      "25:text": "prompt_2",
+      "25:model_path": "model_path",
+      "25:language": "language_2",
+      "25:device": "device",
+      "25:precision": "precision",
+      "25:attention": "attention",
+      "25:max_new_tokens": "max_new_tokens",
+      "25:chunk_length": "chunk_length",
+      "25:temperature": "temperature",
+      "25:top_p": "top_p",
+      "25:repetition_penalty": "repetition_penalty",
+      "25:keep_model_loaded": "keep_model_loaded",
+      "25:compile_model": "compile_model",
+      "34:filename_prefix": "filename_prefix",
+      "40:prompt": "prompt_3"
+    }
+  }
+}

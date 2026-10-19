@@ -1,0 +1,691 @@
+{
+  "253": {
+    "inputs": {
+      "samples": [
+        "418",
+        0
+      ],
+      "vae": [
+        "411",
+        2
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "254": {
+    "inputs": {
+      "samples": [
+        "418",
+        0
+      ],
+      "vae": [
+        "411",
+        3
+      ]
+    },
+    "class_type": "VAEDecodeAudio",
+    "_meta": {
+      "title": "VAE解码（音频）"
+    }
+  },
+  "255": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "K采样器选择"
+    }
+  },
+  "261": {
+    "inputs": {
+      "scheduler": "beta",
+      "steps": 10,
+      "denoise": 1,
+      "model": [
+        "329",
+        0
+      ]
+    },
+    "class_type": "BasicScheduler",
+    "_meta": {
+      "title": "基本调度器"
+    }
+  },
+  "265": {
+    "inputs": {
+      "prompt": [
+        "403",
+        18
+      ],
+      "width": [
+        "403",
+        19
+      ],
+      "height": [
+        "403",
+        20
+      ],
+      "length": [
+        "403",
+        21
+      ],
+      "ref_image_size": "max",
+      "clip": [
+        "411",
+        1
+      ],
+      "vae": [
+        "411",
+        2
+      ],
+      "audio_vae": [
+        "411",
+        3
+      ],
+      "ref_images.ref_image_0": [
+        "403",
+        0
+      ],
+      "ref_images.ref_image_1": [
+        "403",
+        1
+      ],
+      "ref_images.ref_image_2": [
+        "403",
+        2
+      ],
+      "ref_images.ref_image_3": [
+        "403",
+        3
+      ],
+      "ref_images.ref_image_4": [
+        "403",
+        4
+      ],
+      "ref_images.ref_image_5": [
+        "403",
+        5
+      ],
+      "ref_images.ref_image_6": [
+        "403",
+        6
+      ],
+      "ref_videos.ref_video_0": [
+        "403",
+        9
+      ],
+      "ref_videos.ref_video_1": [
+        "403",
+        10
+      ],
+      "ref_videos.ref_video_2": [
+        "403",
+        11
+      ],
+      "ref_audios.ref_audio_0": [
+        "403",
+        15
+      ],
+      "ref_audios.ref_audio_1": [
+        "403",
+        16
+      ],
+      "ref_audios.ref_audio_2": [
+        "403",
+        17
+      ],
+      "ref_images.ref_image_7": [
+        "403",
+        7
+      ],
+      "ref_images.ref_image_8": [
+        "403",
+        8
+      ]
+    },
+    "class_type": "MiniMaxH3ReferenceToVideo",
+    "_meta": {
+      "title": "MiniMax H3 参考生成视频"
+    }
+  },
+  "328": {
+    "inputs": {
+      "conditioning": [
+        "265",
+        0
+      ]
+    },
+    "class_type": "ConditioningZeroOut",
+    "_meta": {
+      "title": "条件零化"
+    }
+  },
+  "329": {
+    "inputs": {
+      "max_resolution": 1024,
+      "jpeg_quality": 80,
+      "suppress_default_preview": true,
+      "preview_frames": [
+        "403",
+        21
+      ],
+      "preview_fps": 12,
+      "tiny_vae": "taeh3.safetensors",
+      "model": [
+        "401",
+        0
+      ],
+      "vae": [
+        "411",
+        2
+      ]
+    },
+    "class_type": "ModelPreviewOverrideKJ",
+    "_meta": {
+      "title": "Model Preview Override"
+    }
+  },
+  "332": {
+    "inputs": {
+      "selection": "sol-attn",
+      "selection.tau": 1.3,
+      "start_percent": 0.2,
+      "end_percent": 1,
+      "dense_blocks": "",
+      "min_tokens": 12288,
+      "extra_tokens": 256,
+      "sink_conditioning": "exact_kv_and_rows",
+      "verbose": true,
+      "model": [
+        "411",
+        0
+      ]
+    },
+    "class_type": "BlockSparseAttention",
+    "_meta": {
+      "title": "模型稀疏注意力"
+    }
+  },
+  "333": {
+    "inputs": {
+      "shift_video": 12,
+      "shift_audio": 3.0000000000000004,
+      "model": [
+        "332",
+        0
+      ]
+    },
+    "class_type": "MiniMaxH3SigmaShift",
+    "_meta": {
+      "title": "MiniMax H3 Sigma Shift"
+    }
+  },
+  "364": {
+    "inputs": {
+      "frame_rate": 24,
+      "loop_count": 0,
+      "filename_prefix": "comfyui",
+      "format": "video/h264-mp4",
+      "pix_fmt": "yuv420p",
+      "crf": 16,
+      "save_metadata": false,
+      "trim_to_audio": false,
+      "pingpong": false,
+      "save_output": true,
+      "images": [
+        "253",
+        0
+      ],
+      "audio": [
+        "254",
+        0
+      ]
+    },
+    "class_type": "VHS_VideoCombine",
+    "_meta": {
+      "title": "Video Combine 🎥🅥🅗🅢"
+    }
+  },
+  "397": {
+    "inputs": {
+      "seed": 900198731025885,
+      "cfg": 1,
+      "transition_step": 6,
+      "lowres_scale": 0.6000000000000001,
+      "rho": 0,
+      "w_min": 0.5,
+      "w_max": 1,
+      "upscaler_model": "h3_upscaler_lms_v0.1.safetensors",
+      "highres_tiling": true,
+      "upscaler_unload": true,
+      "model": [
+        "329",
+        0
+      ],
+      "positive": [
+        "265",
+        0
+      ],
+      "negative": [
+        "328",
+        0
+      ],
+      "vae": [
+        "411",
+        2
+      ],
+      "latent_image": [
+        "265",
+        1
+      ],
+      "sampler": [
+        "255",
+        0
+      ],
+      "sigmas": [
+        "261",
+        0
+      ]
+    },
+    "class_type": "SelfLiftH3Sampler",
+    "_meta": {
+      "title": "SelfLift Progressive Sampler (MiniMax H3)"
+    }
+  },
+  "401": {
+    "inputs": {
+      "chunks": 2,
+      "seq_threshold": 4096,
+      "model": [
+        "333",
+        0
+      ]
+    },
+    "class_type": "MiniMaxChunkFeedForward",
+    "_meta": {
+      "title": "MiniMax H3 Chunk FeedForward"
+    }
+  },
+  "403": {
+    "inputs": {
+      "fps": 24,
+      "video_trim_seconds": "auto",
+      "audio_trim_seconds": "auto",
+      "image_max_side": "1536",
+      "video_max_side": "512",
+      "prompt": "subject_definitions:\n<Subject 1> 是 <Picture 1> 中的女士，东亚女性面孔，栗棕色齐肩发，颊边有被风吹起的碎发，眼妆清楚、唇色偏红，肤色偏白，锈红色无袖深V裹身裙，腰侧一颗扣，颈间系黑、白、米色格纹丝巾，两截尾端垂在胸前，细链小吊坠，耳侧垂坠耳环。\n<Subject 2> 是 <Picture 2> 中的男士，东亚男性面孔，短黑发，眉眼清楚，藏青色翻领外套，左胸有贴袋，内搭深灰圆领毛衣。\n\nsummary:\n[reference generation] 做一条十五秒的白天街边对质：两人坐在 <Picture 1> 身后那片秋日露天咖啡座，她抽回手后起身转向街道，服装、五官和身后的店铺、银杏、藤椅保持不变，画面不出现字幕、标志和界面。\n\nretention_analysis:\n<Subject 1> (appears in [Shot 1], [Shot 2], [Shot 4]): partially_preserved - 栗棕齐肩发与颊边碎发、锈红无袖深V裹身裙、腰侧扣、黑白米格纹丝巾、细链小吊坠、垂坠耳环保持不变，双手叠放在膝上的姿势和神情改成对质。\n<Subject 2> (appears in [Shot 1], [Shot 2], [Shot 3], [Shot 4]): partially_preserved - 短黑发、藏青翻领外套、深灰圆领毛衣保持不变，棚拍微笑和正对镜头的姿态改成坐在对面。\n\ndetailed_description:\n实拍质感，自然肤色，浅景深。日光从镜头左前方照到两人脸上，右侧银杏叶被照成金黄，人脸不被树后的亮斑吞掉。圆木桌在两人之间，藤椅落在铺着黄叶的人行道上，街对面是带雨篷的店铺和行人。\n[Shot 1] 中景，<Subject 1> 坐在画面左侧藤椅，外观与 <Picture 1> 一致，左手按在桌上那只白瓷杯旁；<Subject 2> 坐在画面右侧藤椅，外观与 <Picture 2> 一致，双手还放在自己膝上。两人隔着一张圆桌。她的上身已经越过桌沿前倾，下颌收紧，看着他。格纹丝巾的两截尾端被风带得轻晃，桌上一片黄叶滑了半指。Push In，with small amplitude，at slow speed，只推向她的肩线。街对面的车流和银杏叶声一直铺在底下。<Subject 1> (S1) 压着声音说出，<d>[Chinese] 你骗了我三个月。</d> 结束时她仍前倾，左手还按在杯旁，他的手还没有离开膝盖。\n[Shot 2] At 00:03.500, 她的面部特写，3/4 正面。继承：她仍前倾坐在左椅，他坐在右椅。日光仍从镜头左前方打在她脸上，垂坠耳环和颊边碎发入画，店铺缩成暖色光斑。他的右手从画面右下进入，先在她左手手背上停住约半秒，指腹按在手背中段。她的肩向街道一侧拧，左手整只抽回，贴向自己肋骨，他的手指从皮肤上滑脱。杯身被带偏约一指，咖啡液面晃出一圈，丝巾尾端甩向画面左侧。Push In，with small amplitude，at fast speed，推到眼部后沿抽回的手离开。抽手时有皮肤摩擦和杯底磕桌。<Subject 1> (S1) 更短地说出，<d>[Chinese] 别碰我。</d> 眼眶湿，泪没有掉下来。结束时她的手贴在身侧，目光仍看着他。\n[Shot 3] At 00:07.000, 他的面部特写。继承：两人还在原椅，她的手已经抽回，他的右手仍伸在画外的桌面上方，上身因扑空微微前栽。日光从镜头左前方照到他脸上，左颊留着一条仍能看清的叶影，背景里银杏是金黄圆斑。他先看着画面左下她抽走的方向，喉结滚动，吸一口气，嘴角的弧度收平。Shake Slightly，with small amplitude。这一镜只有很近的呼吸，街声退远。<Subject 2> (S2) 声音发紧地说出，<d>[Chinese] 机票改不了了。</d> 结束时他仍看着左下，右手没有收回。\n[Shot 4] At 00:11.000, 中景。继承：同一张圆桌，她在左椅，他在右椅，右手还停在桌面上方，手指没有握拢。日光方向不变，店铺和银杏重新出现在两人身后。她带着抽手的那一拧从左椅起身，椅脚在人行道上刮出半步，裙摆和丝巾尾端往街道方向甩，黄叶被带离地面。她侧过身对着街对面的店铺，不回头。Pull Out，with small amplitude，at slow speed。椅脚刮过地面，裙摆带起风声，之后没有新的人声。到 00:15.000 她的裙摆、丝巾和碎发仍在动，他的手仍悬在桌面上方。\n\noverall_soundscape:\n这条人行道自己的底噪是远处行人的脚步和很轻的杯碟，全片不断。街对面有持续、不靠近的车流，风穿过银杏，叶子相互摩擦，没有雨声。她前倾时丝巾布料轻响。指腹按上皮肤后是抽手的摩擦，杯底磕桌一下，咖啡液面轻晃。他吸气。椅脚刮过人行道，裙摆和丝巾甩动，黄叶擦过地面。她转开之后人声停止，只剩风、叶子和远处车流，一直到结尾。\n\nnon_diegetic_music:\n极低的钢琴单音，速度慢，无歌词。开头是弱音，手抽开时低下去，椅脚刮地时落一个低音，到结尾余音还在，不收成安静。",
+      "seconds": 10,
+      "aspect_ratio": "16:9 (Widescreen)",
+      "megapixels": 1.5,
+      "multiple": 32,
+      "ref_image_0": "nv.jpg",
+      "ref_image_1": "nan.png",
+      "ref_image_2": "zealman-blank-image.png",
+      "ref_image_3": "zealman-blank-image.png",
+      "ref_image_4": "zealman-blank-image.png",
+      "ref_image_5": "zealman-blank-image.png",
+      "ref_image_6": "zealman-blank-image.png",
+      "ref_image_7": "zealman-blank-image.png",
+      "ref_image_8": "zealman-blank-image.png",
+      "ref_audio_0": "zealman-blank-audio.mp3",
+      "ref_audio_1": "zealman-blank-audio.mp3",
+      "ref_audio_2": "zealman-blank-audio.mp3"
+    },
+    "class_type": "ZealmanH3PickReferenceMedia",
+    "_meta": {
+      "title": "ZealmanH3素材选择"
+    }
+  },
+  "411": {
+    "inputs": {
+      "unet_name": "minimax/minimax_h3_hybrid_fl2va_ref2va_b25-49-int8.safetensors",
+      "weight_dtype": "default",
+      "clip_name": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+      "clip_device": "default",
+      "video_vae": "minimax_h3_video_vae_int8_convrot.safetensors",
+      "audio_vae": "minimax_h3_audio_vae_fp32.safetensors",
+      "attention": "comfy kitchen attention",
+      "lora_1": {
+        "on": true,
+        "lora": "minimax/minimax_h3_dmad_full_dareties_v4_step600_comfy_fro.safetensors",
+        "strength": 0.8
+      },
+      "lora_2": {
+        "on": true,
+        "lora": "minimax/MysticXXX_MMH3-V1.safetensors",
+        "strength": 0.45
+      },
+      "lora_3": {
+        "on": false,
+        "lora": "minimax/H3_Combat_V2.safetensors",
+        "strength": 0.65
+      },
+      "lora_4": {
+        "on": false,
+        "lora": "minimax/Motion_Repair_V2.safetensors",
+        "strength": 0.35
+      },
+      "lora_5": {
+        "on": false,
+        "lora": "minimax/H3_Fight_Flow_V1.safetensors",
+        "strength": 0.35
+      },
+      "lora_6": {
+        "on": false,
+        "lora": "minimax/motion_speed_slider_mmh3_v1.1.safetensors",
+        "strength": 3
+      }
+    },
+    "class_type": "ZealmanH3ModelLoader",
+    "_meta": {
+      "title": "ZealmanH3模型加载"
+    }
+  },
+  "418": {
+    "inputs": {
+      "offload_model": true,
+      "offload_cache": true,
+      "anything": [
+        "397",
+        0
+      ]
+    },
+    "class_type": "VRAMCleanup",
+    "_meta": {
+      "title": "🎈VRAM-Cleanup"
+    }
+  },
+  "_api_config": {
+    "customLabels": {
+      "261:steps": "迭代步数",
+      "261:denoise": "denoise",
+      "265:ref_image_size": "ref_image_size",
+      "329:max_resolution": "max_resolution",
+      "329:jpeg_quality": "jpeg_quality",
+      "329:suppress_default_preview": "suppress_default_preview",
+      "329:preview_fps": "preview_fps",
+      "332:selection": "selection",
+      "332:selection.tau": "selection.tau",
+      "332:start_percent": "start_percent",
+      "332:end_percent": "end_percent",
+      "332:dense_blocks": "dense_blocks",
+      "332:min_tokens": "min_tokens",
+      "332:extra_tokens": "extra_tokens",
+      "332:sink_conditioning": "sink_conditioning",
+      "332:verbose": "verbose",
+      "333:shift_video": "shift_video",
+      "333:shift_audio": "shift_audio",
+      "364:filename_prefix": "文件名前缀",
+      "364:frame_rate": "frame_rate",
+      "364:loop_count": "loop_count",
+      "364:format": "format",
+      "364:pix_fmt": "pix_fmt",
+      "364:crf": "crf",
+      "364:save_metadata": "save_metadata",
+      "364:trim_to_audio": "trim_to_audio",
+      "364:pingpong": "pingpong",
+      "364:save_output": "save_output",
+      "397:seed": "随机种子",
+      "397:cfg": "CFG Scale",
+      "397:transition_step": "transition_step",
+      "397:lowres_scale": "lowres_scale",
+      "397:rho": "rho",
+      "397:w_min": "w_min",
+      "397:w_max": "w_max",
+      "397:highres_tiling": "highres_tiling",
+      "397:upscaler_unload": "upscaler_unload",
+      "401:chunks": "chunks",
+      "401:seq_threshold": "seq_threshold",
+      "403:ref_image_0": "图像 ref_image_0",
+      "403:ref_image_1": "图像 ref_image_1",
+      "403:ref_image_2": "图像 ref_image_2",
+      "403:ref_image_3": "图像 ref_image_3",
+      "403:ref_image_4": "图像 ref_image_4",
+      "403:ref_image_5": "图像 ref_image_5",
+      "403:ref_image_6": "图像 ref_image_6",
+      "403:ref_image_7": "图像 ref_image_7",
+      "403:ref_image_8": "图像 ref_image_8",
+      "403:ref_audio_0": "音频 ref_audio_0",
+      "403:ref_audio_1": "音频 ref_audio_1",
+      "403:ref_audio_2": "音频 ref_audio_2",
+      "403:prompt": "提示词",
+      "403:fps": "fps",
+      "403:video_trim_seconds": "video_trim_seconds",
+      "403:audio_trim_seconds": "audio_trim_seconds",
+      "403:image_max_side": "image_max_side",
+      "403:video_max_side": "video_max_side",
+      "403:seconds": "seconds",
+      "403:aspect_ratio": "aspect_ratio",
+      "403:megapixels": "megapixels",
+      "403:multiple": "multiple",
+      "411:weight_dtype": "weight_dtype",
+      "411:clip_device": "clip_device",
+      "411:attention": "attention",
+      "418:offload_model": "offload_model",
+      "418:offload_cache": "offload_cache"
+    },
+    "enabledParams": {
+      "261:steps": false,
+      "261:denoise": false,
+      "265:ref_image_size": false,
+      "329:max_resolution": false,
+      "329:jpeg_quality": false,
+      "329:suppress_default_preview": false,
+      "329:preview_fps": false,
+      "332:selection": false,
+      "332:selection.tau": false,
+      "332:start_percent": false,
+      "332:end_percent": false,
+      "332:dense_blocks": false,
+      "332:min_tokens": false,
+      "332:extra_tokens": false,
+      "332:sink_conditioning": false,
+      "332:verbose": false,
+      "333:shift_video": false,
+      "333:shift_audio": false,
+      "364:filename_prefix": false,
+      "364:frame_rate": false,
+      "364:loop_count": false,
+      "364:format": false,
+      "364:pix_fmt": false,
+      "364:crf": false,
+      "364:save_metadata": false,
+      "364:trim_to_audio": false,
+      "364:pingpong": false,
+      "364:save_output": false,
+      "397:seed": false,
+      "397:cfg": false,
+      "397:transition_step": false,
+      "397:lowres_scale": false,
+      "397:rho": false,
+      "397:w_min": false,
+      "397:w_max": false,
+      "397:highres_tiling": false,
+      "397:upscaler_unload": false,
+      "401:chunks": false,
+      "401:seq_threshold": false,
+      "403:ref_image_0": true,
+      "403:ref_image_1": true,
+      "403:ref_image_2": true,
+      "403:ref_image_3": true,
+      "403:ref_image_4": true,
+      "403:ref_image_5": true,
+      "403:ref_image_6": true,
+      "403:ref_image_7": true,
+      "403:ref_image_8": true,
+      "403:ref_audio_0": true,
+      "403:ref_audio_1": true,
+      "403:ref_audio_2": true,
+      "403:prompt": true,
+      "403:fps": false,
+      "403:video_trim_seconds": false,
+      "403:audio_trim_seconds": false,
+      "403:image_max_side": false,
+      "403:video_max_side": false,
+      "403:seconds": true,
+      "403:aspect_ratio": true,
+      "403:megapixels": true,
+      "403:multiple": false,
+      "411:weight_dtype": false,
+      "411:clip_device": false,
+      "411:attention": false,
+      "418:offload_model": false,
+      "418:offload_cache": false
+    },
+    "formValues": {
+      "261:steps": 10,
+      "261:denoise": 1,
+      "265:ref_image_size": "max",
+      "329:max_resolution": 1024,
+      "329:jpeg_quality": 80,
+      "329:suppress_default_preview": true,
+      "329:preview_fps": 12,
+      "332:selection": "sol-attn",
+      "332:selection.tau": 1.3,
+      "332:start_percent": 0.2,
+      "332:end_percent": 1,
+      "332:dense_blocks": "",
+      "332:min_tokens": 12288,
+      "332:extra_tokens": 256,
+      "332:sink_conditioning": "exact_kv_and_rows",
+      "332:verbose": true,
+      "333:shift_video": 12,
+      "333:shift_audio": 3.0000000000000004,
+      "364:filename_prefix": "comfyui",
+      "364:frame_rate": 24,
+      "364:loop_count": 0,
+      "364:format": "video/h264-mp4",
+      "364:pix_fmt": "yuv420p",
+      "364:crf": 16,
+      "364:save_metadata": false,
+      "364:trim_to_audio": false,
+      "364:pingpong": false,
+      "364:save_output": true,
+      "397:seed": 900198731025885,
+      "397:cfg": 1,
+      "397:transition_step": 6,
+      "397:lowres_scale": 0.6000000000000001,
+      "397:rho": 0,
+      "397:w_min": 0.5,
+      "397:w_max": 1,
+      "397:highres_tiling": true,
+      "397:upscaler_unload": true,
+      "401:chunks": 2,
+      "401:seq_threshold": 4096,
+      "403:ref_image_0": null,
+      "403:ref_image_1": null,
+      "403:ref_image_2": null,
+      "403:ref_image_3": null,
+      "403:ref_image_4": null,
+      "403:ref_image_5": null,
+      "403:ref_image_6": null,
+      "403:ref_image_7": null,
+      "403:ref_image_8": null,
+      "403:ref_audio_0": null,
+      "403:ref_audio_1": null,
+      "403:ref_audio_2": null,
+      "403:prompt": "subject_definitions:\n<Subject 1> 是 <Picture 1> 中的女士，东亚女性面孔，栗棕色齐肩发，颊边有被风吹起的碎发，眼妆清楚、唇色偏红，肤色偏白，锈红色无袖深V裹身裙，腰侧一颗扣，颈间系黑、白、米色格纹丝巾，两截尾端垂在胸前，细链小吊坠，耳侧垂坠耳环。\n<Subject 2> 是 <Picture 2> 中的男士，东亚男性面孔，短黑发，眉眼清楚，藏青色翻领外套，左胸有贴袋，内搭深灰圆领毛衣。\n\nsummary:\n[reference generation] 做一条十五秒的白天街边对质：两人坐在 <Picture 1> 身后那片秋日露天咖啡座，她抽回手后起身转向街道，服装、五官和身后的店铺、银杏、藤椅保持不变，画面不出现字幕、标志和界面。\n\nretention_analysis:\n<Subject 1> (appears in [Shot 1], [Shot 2], [Shot 4]): partially_preserved - 栗棕齐肩发与颊边碎发、锈红无袖深V裹身裙、腰侧扣、黑白米格纹丝巾、细链小吊坠、垂坠耳环保持不变，双手叠放在膝上的姿势和神情改成对质。\n<Subject 2> (appears in [Shot 1], [Shot 2], [Shot 3], [Shot 4]): partially_preserved - 短黑发、藏青翻领外套、深灰圆领毛衣保持不变，棚拍微笑和正对镜头的姿态改成坐在对面。\n\ndetailed_description:\n实拍质感，自然肤色，浅景深。日光从镜头左前方照到两人脸上，右侧银杏叶被照成金黄，人脸不被树后的亮斑吞掉。圆木桌在两人之间，藤椅落在铺着黄叶的人行道上，街对面是带雨篷的店铺和行人。\n[Shot 1] 中景，<Subject 1> 坐在画面左侧藤椅，外观与 <Picture 1> 一致，左手按在桌上那只白瓷杯旁；<Subject 2> 坐在画面右侧藤椅，外观与 <Picture 2> 一致，双手还放在自己膝上。两人隔着一张圆桌。她的上身已经越过桌沿前倾，下颌收紧，看着他。格纹丝巾的两截尾端被风带得轻晃，桌上一片黄叶滑了半指。Push In，with small amplitude，at slow speed，只推向她的肩线。街对面的车流和银杏叶声一直铺在底下。<Subject 1> (S1) 压着声音说出，<d>[Chinese] 你骗了我三个月。</d> 结束时她仍前倾，左手还按在杯旁，他的手还没有离开膝盖。\n[Shot 2] At 00:03.500, 她的面部特写，3/4 正面。继承：她仍前倾坐在左椅，他坐在右椅。日光仍从镜头左前方打在她脸上，垂坠耳环和颊边碎发入画，店铺缩成暖色光斑。他的右手从画面右下进入，先在她左手手背上停住约半秒，指腹按在手背中段。她的肩向街道一侧拧，左手整只抽回，贴向自己肋骨，他的手指从皮肤上滑脱。杯身被带偏约一指，咖啡液面晃出一圈，丝巾尾端甩向画面左侧。Push In，with small amplitude，at fast speed，推到眼部后沿抽回的手离开。抽手时有皮肤摩擦和杯底磕桌。<Subject 1> (S1) 更短地说出，<d>[Chinese] 别碰我。</d> 眼眶湿，泪没有掉下来。结束时她的手贴在身侧，目光仍看着他。\n[Shot 3] At 00:07.000, 他的面部特写。继承：两人还在原椅，她的手已经抽回，他的右手仍伸在画外的桌面上方，上身因扑空微微前栽。日光从镜头左前方照到他脸上，左颊留着一条仍能看清的叶影，背景里银杏是金黄圆斑。他先看着画面左下她抽走的方向，喉结滚动，吸一口气，嘴角的弧度收平。Shake Slightly，with small amplitude。这一镜只有很近的呼吸，街声退远。<Subject 2> (S2) 声音发紧地说出，<d>[Chinese] 机票改不了了。</d> 结束时他仍看着左下，右手没有收回。\n[Shot 4] At 00:11.000, 中景。继承：同一张圆桌，她在左椅，他在右椅，右手还停在桌面上方，手指没有握拢。日光方向不变，店铺和银杏重新出现在两人身后。她带着抽手的那一拧从左椅起身，椅脚在人行道上刮出半步，裙摆和丝巾尾端往街道方向甩，黄叶被带离地面。她侧过身对着街对面的店铺，不回头。Pull Out，with small amplitude，at slow speed。椅脚刮过地面，裙摆带起风声，之后没有新的人声。到 00:15.000 她的裙摆、丝巾和碎发仍在动，他的手仍悬在桌面上方。\n\noverall_soundscape:\n这条人行道自己的底噪是远处行人的脚步和很轻的杯碟，全片不断。街对面有持续、不靠近的车流，风穿过银杏，叶子相互摩擦，没有雨声。她前倾时丝巾布料轻响。指腹按上皮肤后是抽手的摩擦，杯底磕桌一下，咖啡液面轻晃。他吸气。椅脚刮过人行道，裙摆和丝巾甩动，黄叶擦过地面。她转开之后人声停止，只剩风、叶子和远处车流，一直到结尾。\n\nnon_diegetic_music:\n极低的钢琴单音，速度慢，无歌词。开头是弱音，手抽开时低下去，椅脚刮地时落一个低音，到结尾余音还在，不收成安静。",
+      "403:fps": 24,
+      "403:video_trim_seconds": "auto",
+      "403:audio_trim_seconds": "auto",
+      "403:image_max_side": "1536",
+      "403:video_max_side": "512",
+      "403:seconds": 10,
+      "403:aspect_ratio": "16:9 (Widescreen)",
+      "403:megapixels": 1.5,
+      "403:multiple": 32,
+      "411:weight_dtype": "default",
+      "411:clip_device": "default",
+      "411:attention": "comfy kitchen attention",
+      "418:offload_model": true,
+      "418:offload_cache": true
+    },
+    "mediaOrder": [
+      "403:ref_image_0",
+      "403:ref_image_1",
+      "403:ref_image_2",
+      "403:ref_image_3",
+      "403:ref_image_4",
+      "403:ref_image_5",
+      "403:ref_image_6",
+      "403:ref_image_7",
+      "403:ref_image_8",
+      "403:ref_audio_0",
+      "403:ref_audio_1",
+      "403:ref_audio_2"
+    ],
+    "mediaOrderSource": "auto",
+    "apiNames": {
+      "261:steps": "steps",
+      "261:denoise": "denoise",
+      "265:ref_image_size": "ref_image_size",
+      "329:max_resolution": "max_resolution",
+      "329:jpeg_quality": "jpeg_quality",
+      "329:suppress_default_preview": "suppress_default_preview",
+      "329:preview_fps": "preview_fps",
+      "332:selection": "selection",
+      "332:selection.tau": "selection_tau",
+      "332:start_percent": "start_percent",
+      "332:end_percent": "end_percent",
+      "332:dense_blocks": "dense_blocks",
+      "332:min_tokens": "min_tokens",
+      "332:extra_tokens": "extra_tokens",
+      "332:sink_conditioning": "sink_conditioning",
+      "332:verbose": "verbose",
+      "333:shift_video": "shift_video",
+      "333:shift_audio": "shift_audio",
+      "364:filename_prefix": "filename_prefix",
+      "364:frame_rate": "frame_rate",
+      "364:loop_count": "loop_count",
+      "364:format": "format",
+      "364:pix_fmt": "pix_fmt",
+      "364:crf": "crf",
+      "364:save_metadata": "save_metadata",
+      "364:trim_to_audio": "trim_to_audio",
+      "364:pingpong": "pingpong",
+      "364:save_output": "save_output",
+      "397:seed": "seed",
+      "397:cfg": "cfg",
+      "397:transition_step": "transition_step",
+      "397:lowres_scale": "lowres_scale",
+      "397:rho": "rho",
+      "397:w_min": "w_min",
+      "397:w_max": "w_max",
+      "397:highres_tiling": "highres_tiling",
+      "397:upscaler_unload": "upscaler_unload",
+      "401:chunks": "chunks",
+      "401:seq_threshold": "seq_threshold",
+      "403:ref_image_0": "ref_image_0",
+      "403:ref_image_1": "ref_image_1",
+      "403:ref_image_2": "ref_image_2",
+      "403:ref_image_3": "ref_image_3",
+      "403:ref_image_4": "ref_image_4",
+      "403:ref_image_5": "ref_image_5",
+      "403:ref_image_6": "ref_image_6",
+      "403:ref_image_7": "ref_image_7",
+      "403:ref_image_8": "ref_image_8",
+      "403:ref_audio_0": "ref_audio_0",
+      "403:ref_audio_1": "ref_audio_1",
+      "403:ref_audio_2": "ref_audio_2",
+      "403:prompt": "prompt",
+      "403:fps": "fps",
+      "403:video_trim_seconds": "video_trim_seconds",
+      "403:audio_trim_seconds": "audio_trim_seconds",
+      "403:image_max_side": "image_max_side",
+      "403:video_max_side": "video_max_side",
+      "403:seconds": "seconds",
+      "403:aspect_ratio": "aspect_ratio",
+      "403:megapixels": "megapixels",
+      "403:multiple": "multiple",
+      "411:weight_dtype": "weight_dtype",
+      "411:clip_device": "clip_device",
+      "411:attention": "attention",
+      "418:offload_model": "offload_model",
+      "418:offload_cache": "offload_cache"
+    }
+  }
+}

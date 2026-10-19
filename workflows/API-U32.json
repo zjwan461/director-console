@@ -1,0 +1,810 @@
+{
+  "1": {
+    "inputs": {
+      "vae_name": "minimax_h3_video_vae_fp16.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "视频 VAE / Video VAE"
+    }
+  },
+  "2": {
+    "inputs": {
+      "vae_name": "minimax_h3_audio_vae_fp32.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "音频 VAE / Audio VAE"
+    }
+  },
+  "3": {
+    "inputs": {
+      "clip_name": "qwen3vl_32b_minimax_h3_int8_convrot.safetensors",
+      "type": "minimax",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "H3 CLIP / Text Encoder"
+    }
+  },
+  "4": {
+    "inputs": {
+      "unet_name": "minimax/minimax_h3_hybrid_fl2va_ref2va_b25-49-int8.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "H3 FL2VA 主模型 / Base Model"
+    }
+  },
+  "5": {
+    "inputs": {
+      "lora_name": "minimax/minimax_h3_turbo_v4_step600_ema_pruned_comfyui.safetensors",
+      "strength_model": 0.7000000000000002,
+      "model": [
+        "4",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderBypassModelOnly",
+    "_meta": {
+      "title": "H3 Turbo 加速 LoRA / Acceleration LoRA"
+    }
+  },
+  "20": {
+    "inputs": {
+      "av_latent": [
+        "79",
+        0
+      ],
+      "video_vae": [
+        "1",
+        0
+      ],
+      "audio_vae": [
+        "2",
+        0
+      ]
+    },
+    "class_type": "MiniMaxH3AVDecodeT8",
+    "_meta": {
+      "title": "SelfLift AV 解码 / Final Decode"
+    }
+  },
+  "27": {
+    "inputs": {
+      "value": 10
+    },
+    "class_type": "PrimitiveFloat",
+    "_meta": {
+      "title": "视频时长（秒）/ Duration (Seconds)"
+    }
+  },
+  "29": {
+    "inputs": {
+      "aspect_ratio": "16:9 (Widescreen)",
+      "megapixels": 2,
+      "multiple": 32
+    },
+    "class_type": "ResolutionSelector",
+    "_meta": {
+      "title": "SelfLift 目标分辨率 / Target Resolution"
+    },
+    "t": {
+      "title": "分辨率"
+    }
+  },
+  "30": {
+    "inputs": {
+      "expression": "max(5, round(a * 24)) + (5 - (max(5, round(a * 24)) % 17)) % 17",
+      "values.a": [
+        "27",
+        0
+      ]
+    },
+    "class_type": "ComfyMathExpression",
+    "_meta": {
+      "title": "帧数自动换算 / Auto Frame Count"
+    }
+  },
+  "45": {
+    "inputs": {
+      "lora_name": "minimax/Motion_Repair.safetensors",
+      "strength_model": 0.25,
+      "model": [
+        "83",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "SelfLift · Motion Repair（当前旁路）"
+    }
+  },
+  "47": {
+    "inputs": {
+      "lora_name": "minimax/Bunny_weapon_combatV1.safetensors",
+      "strength_model": 0.8,
+      "model": [
+        "85",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "SelfLift · LORA"
+    }
+  },
+  "74": {
+    "inputs": {
+      "offload_model": true,
+      "offload_cache": true,
+      "anything": [
+        "20",
+        0
+      ]
+    },
+    "class_type": "VRAMCleanup",
+    "_meta": {
+      "title": "🎈VRAM-Cleanup"
+    }
+  },
+  "75": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "Standard Euler · SelfLift required"
+    }
+  },
+  "76": {
+    "inputs": {
+      "scheduler": "simple",
+      "steps": 8,
+      "denoise": 1,
+      "model": [
+        "45",
+        0
+      ]
+    },
+    "class_type": "BasicScheduler",
+    "_meta": {
+      "title": "8-step simple base schedule"
+    }
+  },
+  "77": {
+    "inputs": {
+      "extra_steps": 1,
+      "start_at_sigma": 0.7,
+      "end_at_sigma": 0,
+      "spacing": "cosine",
+      "sigmas": [
+        "76",
+        0
+      ]
+    },
+    "class_type": "H3SigmaRefiner",
+    "_meta": {
+      "title": "H3 refine +1 · total 9 NFE"
+    }
+  },
+  "78": {
+    "inputs": {
+      "conditioning": [
+        "90",
+        0
+      ]
+    },
+    "class_type": "ConditioningZeroOut",
+    "_meta": {
+      "title": "CFG 1 negative placeholder"
+    }
+  },
+  "79": {
+    "inputs": {
+      "seed": 683072603085675,
+      "cfg": 1,
+      "transition_step": 6,
+      "lowres_scale": 0.5,
+      "rho": 0,
+      "w_min": 0.5,
+      "w_max": 1,
+      "upscaler_model": "minimax_h3_latent_upscaler_3d_bf16.safetensors",
+      "highres_tiling": true,
+      "upscaler_unload": 2,
+      "model": [
+        "45",
+        0
+      ],
+      "positive": [
+        "90",
+        0
+      ],
+      "negative": [
+        "78",
+        0
+      ],
+      "vae": [
+        "1",
+        0
+      ],
+      "latent_image": [
+        "90",
+        1
+      ],
+      "sampler": [
+        "75",
+        0
+      ],
+      "sigmas": [
+        "77",
+        0
+      ]
+    },
+    "class_type": "SelfLiftH3Sampler",
+    "_meta": {
+      "title": "SelfLift"
+    }
+  },
+  "82": {
+    "inputs": {
+      "tau": 0.2,
+      "log_diagnostics": false,
+      "model": [
+        "5",
+        0
+      ]
+    },
+    "class_type": "SelfLiftH3TST",
+    "_meta": {
+      "title": "SelfLift TST · Sol稠密回退路径 · 0.20"
+    }
+  },
+  "83": {
+    "inputs": {
+      "lora_name": "minimax/H3_Combat_V2.safetensors",
+      "strength_model": 0.5,
+      "model": [
+        "47",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "SelfLift · LORA"
+    }
+  },
+  "85": {
+    "inputs": {
+      "tau": 1.3,
+      "start_percent": 0.2,
+      "end_percent": 0.9,
+      "min_tokens": 12288,
+      "sink_conditioning": "exact_kv_and_rows",
+      "morton": false,
+      "morton_curve": "2d_frame",
+      "centroid_tail": true,
+      "routed_cap_percent": 0,
+      "reuse_qkv_memory": false,
+      "verbose": false,
+      "dense_blocks": "",
+      "model": [
+        "82",
+        0
+      ]
+    },
+    "class_type": "SolAttnMiniMax",
+    "_meta": {
+      "title": "Patch Sol-Attn (MiniMax)"
+    }
+  },
+  "86": {
+    "inputs": {
+      "image": "48902645c4194b9ed74e6da4dd0dda2c32106c83093252478396371e7f9dc6d4.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "87": {
+    "inputs": {
+      "image": "02a999c9985ab38e53c83e333ccb3eb789b4bc26f8e00d4ee886275ef428b072.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "88": {
+    "inputs": {
+      "value": "subject_definitions:\n<Subject 1> is the female cyber-Chinese assassin from <Picture 1>, preserving her elegant black-and-red combat dress, fitted dark armored costume, metallic shoulder details, red fabric accents, turquoise ornamental highlights, elaborate dark updo, ornate hair accessories, long red tassel earrings, pale complexion, and sharp focused expression. She carries a dark folding fan with metallic and red decorative details, used as a close-range combat prop. The character-sheet layout, borders, labels, and graphic text from the reference are not part of the target video.\n\n<Subject 2> is the female cyber-Chinese combat operative from <Picture 2>, preserving her white, black, teal, and antique-gold costume, translucent flowing outer sleeves, intricate hair ornaments, dark updo, teal jewelry, mechanical shoulder and back details, pale complexion, and calm but determined expression. She carries a distinctive teal-and-gold umbrella-like weapon with a rigid shaft and mechanical decorative structure, used as a defensive and striking prop. The character-sheet layout, borders, labels, and graphic text from the reference are not part of the target video.\n\n<Subject 3> is a large passenger or transport aircraft flying at high altitude above a vast layer of clouds. The fight takes place on the broad upper surface of one aircraft wing, featuring riveted metal panels, structural seams, aerodynamic flaps, a visible engine nacelle near the wing root, intense airflow, cold blue sky, rapidly moving clouds below, and strong aircraft vibration.\n\n<Picture 1> is the character-design reference for <Subject 1>, defining her black-and-red cyber-Chinese costume, hairstyle, accessories, facial appearance, proportions, and folding-fan weapon.\n<Picture 2> is the character-design reference for <Subject 2>, defining her white-teal-gold cyber-Chinese costume, hairstyle, accessories, facial appearance, proportions, and umbrella-like weapon.\n\nsummary:\n[reference generation] A 10-second uninterrupted live-action Hollywood action sequence shows <Subject 1> and <Subject 2> engaged in an extremely fast and forceful close-quarters fight on the wing of a high-speed aircraft flying above the clouds. The sequence is one continuous take with no cuts. The action structure is: brief silent standoff, simultaneous explosive rush, rapid hand-to-hand and weapon-assisted exchanges, a powerful collision, a short realistic bullet-time camera orbit, and an immediate return to full speed. The camera moves with extreme kinetic energy along the aircraft wing, using rapid backward tracking, low-angle pursuit, aggressive orbiting, whip pans, sudden tilts, impact jolts, and a final pullback. The visual style is realistic live-action action cinema, not anime. No dialogue, no subtitles, no captions, no logos, no watermarks, no background music, no blood, and no gore.\n\nretention_analysis:\n<Subject 1> (appears continuously throughout the single take): fully_preserved - retain the black-and-red cyber-Chinese costume, fitted silhouette, metallic details, red accents, turquoise ornaments, elaborate updo, red tassel earrings, folding-fan weapon, and sharp determined expression.\n<Subject 2> (appears continuously throughout the single take): fully_preserved - retain the white-black-teal-gold cyber-Chinese costume, translucent outer sleeves, elaborate hair ornaments, teal jewelry, mechanical shoulder details, umbrella-like weapon, and calm focused expression.\n<Subject 3> (appears continuously throughout the single take): fully_preserved - retain the aircraft wing, riveted metal surface, engine nacelle, high-altitude wind, rapidly moving clouds, blue sky, and strong aircraft vibration.\n<Picture 1> (reference only): guides the appearance, costume, accessories, and weapon continuity of <Subject 1>; do not reproduce the character-sheet layout or its text.\n<Picture 2> (reference only): guides the appearance, costume, accessories, and weapon continuity of <Subject 2>; do not reproduce the character-sheet layout or its text.\n\ndetailed_description:\nThe entire 10-second video is one uninterrupted continuous live-action take. There are no cuts, no jump cuts, no hidden edits, no fade transitions, no wipes, no black frames, no camera teleportation, and no scene reset.\n\nThe visual treatment is realistic high-budget Hollywood action cinematography. The rhythm of the action is inspired only by the escalation pattern of Japanese action animation: a brief silent confrontation, an explosive simultaneous rush, a dense chain of rapid attacks and counters, a dramatic impact peak, a short bullet-time moment, and an immediate return to full speed. Do not use anime rendering, cel shading, manga speed lines, cartoon effects, supernatural powers, glowing energy, or illustrated motion.\n\nThe camera must be highly dynamic throughout the uninterrupted take. It races backward along the wing, dives close to the metal surface, circles around the fighters, changes height rapidly, performs whip pans around impacts, tilts with spinning attacks, and pulls back dramatically at the end. All camera changes are achieved through continuous physical movement rather than editing. Keep the action readable and maintain consistent positions relative to the wing, engine, horizon, and clouds.\n\n[Single Continuous Take | 00:00.000–00:10.000]\n\n[00:00.000–00:01.300]\nBegin with a low wide shot moving rapidly along the aircraft wing, only a few centimeters above the vibrating metal surface. Rivets, structural seams, and thin condensation streaks pass close to the lens. The engine nacelle is visible near the wing root, while clouds race far below.\n\n<Subject 1> and <Subject 2> stand approximately five meters apart on the broad central section of the wing. <Subject 1>, in the black-and-red costume from <Picture 1>, holds her closed folding fan near her chest. <Subject 2>, in the white-teal-gold costume from <Picture 2>, holds her folded umbrella-like weapon diagonally in front of her.\n\nThe camera performs a tense, fast 120-degree orbit around them while gradually closing the distance. Their clothing, hair ornaments, tassels, and translucent sleeves whip violently in the aircraft wind. Both remain completely silent, shifting their weight into low combat stances. The confrontation lasts only 1.3 seconds and feels intensely compressed and dangerous.\n\n[00:01.300–00:01.850]\nAt exactly 00:01.300, both characters suddenly launch toward each other at full speed. The camera instantly accelerates backward along the wing, keeping both fighters in the same frame as the wing surface rushes beneath them.\n\n<Subject 1> snaps open the folding fan and uses it to deflect <Subject 2>'s first strike. <Subject 2> rotates the umbrella-like weapon and drives its shaft toward <Subject 1>'s torso. <Subject 1> twists aside by a few centimeters. The weapons collide with a hard metallic impact. The camera whip-pans around the collision without cutting, jolting from the force of the contact.\n\n[00:01.850–00:06.300]\nThe camera flows directly through the collision and becomes an aggressive close-range pursuit camera inside the fight. The choreography is extremely rapid, with almost no idle time.\n\n<Subject 1> performs a fast three-hit combination using the folding fan: a slash-like fan strike toward the shoulder, a short hook across the forearm, and a direct palm strike to the chest. <Subject 2> blocks the fan with the umbrella shaft, absorbs the palm strike, and immediately counters with a rapid horizontal sweep.\n\nThe camera drops to wing level and tracks their footwork as they pivot, slide, and brace against the aircraft surface. <Subject 1> leaps over the sweep, lands on one hand, rotates around her planted palm, and kicks <Subject 2>'s upper torso. <Subject 2> is driven backward but hooks the umbrella shaft into a structural seam and uses it to stop her slide.\n\nThe camera circles tightly around <Subject 2> and rises sharply as she launches forward again. She uses the umbrella-like weapon as a short staff, delivering two rapid strikes toward <Subject 1>'s ribs and shoulder. <Subject 1> blocks the first strike with the open fan, absorbs the second against her forearm guard, and immediately closes the distance.\n\n<Subject 1> performs a fast elbow strike, knee feint, and low sweeping kick. <Subject 2> blocks the elbow with her mechanical forearm, rotates under the knee, and jumps over the sweep. The camera spins with their bodies in a fast 180-degree roll while keeping the aircraft horizon and engine nacelle visible.\n\n<Subject 1> briefly hooks one arm around <Subject 2>'s upper neck and shoulder in a rapid standing choke-control maneuver, using it only to redirect balance. The hold lasts less than 0.6 seconds. The camera pushes tightly into the grappling exchange, then dives underneath their locked arms as <Subject 2> grips <Subject 1>'s forearm and forcefully breaks the control.\n\n<Subject 2> immediately performs an arm drag, turns <Subject 1>, and drives her shoulder-first onto the metal wing. The impact creates a sharp metallic resonance and a burst of condensation and dust. <Subject 1> does not remain down; she plants her hand on the wing, rolls through the impact, and rises into a spinning counterattack.\n\nThe camera tracks the spin at extremely close range, then pulls backward just enough to reveal <Subject 1>'s heel striking <Subject 2>'s chest armor. <Subject 2> slides backward across the wing, producing a brief trail of harmless sparks from armor scraping against metal.\n\n[00:06.300–00:07.500]\nThe camera rushes laterally alongside the sliding android, then snaps around the engine nacelle and reacquires both fighters in one continuous movement. <Subject 2> stops herself with the umbrella-like weapon, launches forward, and thrusts the weapon shaft toward <Subject 1>.\n\n<Subject 1> traps the shaft with the folding fan and her forearm, pulls <Subject 2> off line, and strikes with a powerful close-range punch. <Subject 2> counters with an armored shoulder strike. Both fighters collide violently at the center of the wing. The camera drives directly into the collision and rotates around them as the aircraft wing vibrates under the force.\n\n[00:07.500–00:08.700]\nImmediately after the major collision, enter a brief realistic live-action bullet-time effect within the same uninterrupted take.\n\nTime slows dramatically for approximately 1.2 seconds. The camera performs a smooth 240-degree arc around the fighters, starting close to the wing surface, rising past their shoulders, and circling behind them. The aircraft, engine nacelle, wing structure, horizon, and cloud layer remain spatially consistent.\n\nThe two characters are suspended at the exact moment of impact. <Subject 1>'s black-and-red fabric, red tassels, hair ornaments, and folding fan remain suspended in the turbulent air. <Subject 2>'s translucent sleeves, teal ornaments, hair accessories, and umbrella-like weapon remain suspended as well. Show realistic compression in their shoulders and arms, armor vibration, strained fabric, loose hair strands, condensation droplets, and particles floating in the air.\n\nThis is only a realistic cinematic time-dilation camera effect. No supernatural power, no glowing aura, no energy wave, no anime freeze frame, no manga graphics, and no visual transformation.\n\n[00:08.700–00:10.000]\nAt exactly 00:08.700, return abruptly to full speed. The suspended air particles and condensation burst outward as both characters are thrown apart.\n\n<Subject 1> slides backward across the wing, catches a structural seam with one hand, spins, and stops herself before reaching the wing edge. <Subject 2> lands heavily on one knee, her armor scraping the metal and creating a brief shower of harmless sparks, then immediately rises.\n\nThe camera accelerates backward and spirals upward, transitioning from a close action perspective to a dramatic wide view of both fighters on the aircraft wing, the engine nacelle, the aircraft fuselage, and the clouds far below. Both characters face each other in low combat stances, weapons ready, clothing and hair violently streaming in the high-altitude wind.\n\nEnd on a powerful wide composition that clearly shows they are still on the moving aircraft wing and ready for another exchange. No text appears anywhere in the frame.\n\nCamera continuity requirements:\nThe camera must never cut. Every angle change must be created by continuous tracking, orbiting, tilting, rolling, whipping, diving, craning, or physically motivated movement around the fighters. The camera may pass close behind a character, the engine nacelle, or a brief cloud of condensation, but it must immediately preserve the same spatial continuity. Never teleport the camera, reset the perspective, lose the fighters, or change the aircraft wing orientation.\n\noverall_soundscape:\nOnly realistic diegetic sound: continuous jet-engine roar, violent high-altitude wind, aerodynamic turbulence, aircraft structural vibration, metal wing resonance, rapid footsteps on the wing, sliding shoes, fabric whipping, tassels and ornaments rattling, folding-fan snaps, umbrella-weapon mechanical clicks, metallic weapon impacts, hard punches, elbows, knees, shoulder collisions, armor scraping, short exertion breaths, and brief harmless sparks.\n\nDuring the bullet-time sequence from 00:07.500 to 00:08.700, stretch and muffle the engine roar and wind into a deep resonant sound layer while preserving the heavy impact vibration. At 00:08.700, restore the engine, wind, and combat impacts to full speed with a sudden sonic acceleration. No dialogue, no voiceover, no crowd noise, no background music, and no cartoon-like sound effects.\n\nnon_diegetic_music:\nN/A. No background music, no soundtrack, no percussion, no orchestral score, and no musical crescendo."
+    },
+    "class_type": "PrimitiveStringMultiline",
+    "_meta": {
+      "title": "提示词"
+    }
+  },
+  "89": {
+    "inputs": {
+      "frame_rate": 24,
+      "loop_count": 0,
+      "filename_prefix": "comfyui",
+      "format": "video/h264-mp4",
+      "pix_fmt": "yuv420p",
+      "crf": 16,
+      "save_metadata": false,
+      "trim_to_audio": false,
+      "pingpong": false,
+      "save_output": true,
+      "images": [
+        "74",
+        0
+      ],
+      "audio": [
+        "20",
+        1
+      ]
+    },
+    "class_type": "VHS_VideoCombine",
+    "_meta": {
+      "title": "Video Combine 🎥🅥🅗🅢"
+    }
+  },
+  "90": {
+    "inputs": {
+      "prompt": [
+        "88",
+        0
+      ],
+      "width": [
+        "29",
+        0
+      ],
+      "height": [
+        "29",
+        1
+      ],
+      "length": [
+        "30",
+        1
+      ],
+      "task_type": "auto",
+      "audio_mode": "native",
+      "audio_denoise_strength": 1,
+      "add_source_as_reference": false,
+      "prompt_primary_audio_ordinal": 0,
+      "strict_prompt_tags": true,
+      "ref_image_size": "match",
+      "reference_video_policy": "official_2_to_15s",
+      "allow_above_reference_area": false,
+      "clip": [
+        "3",
+        0
+      ],
+      "video_vae": [
+        "1",
+        0
+      ],
+      "audio_vae": [
+        "2",
+        0
+      ],
+      "ref_images.ref_image_0": [
+        "86",
+        0
+      ],
+      "ref_images.ref_image_1": [
+        "87",
+        0
+      ],
+      "ref_images.ref_image_2": [
+        "97",
+        0
+      ],
+      "ref_images.ref_image_3": [
+        "98",
+        0
+      ],
+      "ref_images.ref_image_4": [
+        "100",
+        0
+      ],
+      "ref_images.ref_image_5": [
+        "99",
+        0
+      ],
+      "ref_images.ref_image_6": [
+        "102",
+        0
+      ],
+      "ref_images.ref_image_7": [
+        "101",
+        0
+      ],
+      "ref_images.ref_image_8": [
+        "103",
+        0
+      ]
+    },
+    "class_type": "MiniMaxH3AudioConditioningT8",
+    "_meta": {
+      "title": "SelfLift Conditioning / AUTO"
+    }
+  },
+  "97": {
+    "inputs": {
+      "image": "zealman-blank-image.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "98": {
+    "inputs": {
+      "image": "zealman-blank-image.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "99": {
+    "inputs": {
+      "image": "zealman-blank-image.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "100": {
+    "inputs": {
+      "image": "zealman-blank-image.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "101": {
+    "inputs": {
+      "image": "zealman-blank-image.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "102": {
+    "inputs": {
+      "image": "zealman-blank-image.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "103": {
+    "inputs": {
+      "image": "zealman-blank-image.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "_api_config": {
+    "customLabels": {
+      "3:type": "type",
+      "3:device": "device",
+      "4:weight_dtype": "weight_dtype",
+      "5:strength_model": "strength_model",
+      "27:value": "value",
+      "29:aspect_ratio": "分辨率 (aspect_ratio)",
+      "29:megapixels": "分辨率 (megapixels)",
+      "29:multiple": "分辨率 (multiple)",
+      "30:expression": "expression",
+      "45:strength_model": "strength_model",
+      "47:strength_model": "strength_model",
+      "74:offload_model": "offload_model",
+      "74:offload_cache": "offload_cache",
+      "76:steps": "迭代步数",
+      "76:denoise": "denoise",
+      "77:extra_steps": "extra_steps",
+      "77:start_at_sigma": "start_at_sigma",
+      "77:end_at_sigma": "end_at_sigma",
+      "77:spacing": "spacing",
+      "79:seed": "随机种子",
+      "79:cfg": "CFG Scale",
+      "79:transition_step": "transition_step",
+      "79:lowres_scale": "lowres_scale",
+      "79:rho": "rho",
+      "79:w_min": "w_min",
+      "79:w_max": "w_max",
+      "79:highres_tiling": "highres_tiling",
+      "79:upscaler_unload": "upscaler_unload",
+      "82:tau": "tau",
+      "82:log_diagnostics": "log_diagnostics",
+      "83:strength_model": "strength_model",
+      "85:tau": "tau",
+      "85:start_percent": "start_percent",
+      "85:end_percent": "end_percent",
+      "85:min_tokens": "min_tokens",
+      "85:sink_conditioning": "sink_conditioning",
+      "85:morton": "morton",
+      "85:morton_curve": "morton_curve",
+      "85:centroid_tail": "centroid_tail",
+      "85:routed_cap_percent": "routed_cap_percent",
+      "85:reuse_qkv_memory": "reuse_qkv_memory",
+      "85:verbose": "verbose",
+      "85:dense_blocks": "dense_blocks",
+      "86:image": "参考图 0",
+      "87:image": "参考图 1",
+      "88:value": "提示词",
+      "89:filename_prefix": "文件名前缀",
+      "89:frame_rate": "frame_rate",
+      "89:loop_count": "loop_count",
+      "89:format": "format",
+      "89:pix_fmt": "pix_fmt",
+      "89:crf": "crf",
+      "89:save_metadata": "save_metadata",
+      "89:trim_to_audio": "trim_to_audio",
+      "89:pingpong": "pingpong",
+      "89:save_output": "save_output",
+      "90:task_type": "task_type",
+      "90:audio_mode": "audio_mode",
+      "90:audio_denoise_strength": "audio_denoise_strength",
+      "90:add_source_as_reference": "add_source_as_reference",
+      "90:prompt_primary_audio_ordinal": "prompt_primary_audio_ordinal",
+      "90:strict_prompt_tags": "strict_prompt_tags",
+      "90:ref_image_size": "ref_image_size",
+      "90:reference_video_policy": "reference_video_policy",
+      "90:allow_above_reference_area": "allow_above_reference_area",
+      "97:image": "参考图 2",
+      "98:image": "参考图 3",
+      "99:image": "参考图 5",
+      "100:image": "参考图 4",
+      "101:image": "参考图 7",
+      "102:image": "参考图 6",
+      "103:image": "参考图 8"
+    },
+    "enabledParams": {
+      "3:type": false,
+      "3:device": false,
+      "4:weight_dtype": false,
+      "5:strength_model": false,
+      "27:value": true,
+      "29:aspect_ratio": true,
+      "29:megapixels": true,
+      "29:multiple": false,
+      "30:expression": false,
+      "45:strength_model": false,
+      "47:strength_model": false,
+      "74:offload_model": false,
+      "74:offload_cache": false,
+      "76:steps": false,
+      "76:denoise": false,
+      "77:extra_steps": false,
+      "77:start_at_sigma": false,
+      "77:end_at_sigma": false,
+      "77:spacing": false,
+      "79:seed": false,
+      "79:cfg": false,
+      "79:transition_step": false,
+      "79:lowres_scale": false,
+      "79:rho": false,
+      "79:w_min": false,
+      "79:w_max": false,
+      "79:highres_tiling": false,
+      "79:upscaler_unload": false,
+      "82:tau": false,
+      "82:log_diagnostics": false,
+      "83:strength_model": false,
+      "85:tau": false,
+      "85:start_percent": false,
+      "85:end_percent": false,
+      "85:min_tokens": false,
+      "85:sink_conditioning": false,
+      "85:morton": false,
+      "85:morton_curve": false,
+      "85:centroid_tail": false,
+      "85:routed_cap_percent": false,
+      "85:reuse_qkv_memory": false,
+      "85:verbose": false,
+      "85:dense_blocks": false,
+      "86:image": true,
+      "87:image": true,
+      "88:value": true,
+      "89:filename_prefix": false,
+      "89:frame_rate": false,
+      "89:loop_count": false,
+      "89:format": false,
+      "89:pix_fmt": false,
+      "89:crf": false,
+      "89:save_metadata": false,
+      "89:trim_to_audio": false,
+      "89:pingpong": false,
+      "89:save_output": false,
+      "90:task_type": false,
+      "90:audio_mode": false,
+      "90:audio_denoise_strength": false,
+      "90:add_source_as_reference": false,
+      "90:prompt_primary_audio_ordinal": false,
+      "90:strict_prompt_tags": false,
+      "90:ref_image_size": false,
+      "90:reference_video_policy": false,
+      "90:allow_above_reference_area": false,
+      "97:image": true,
+      "98:image": true,
+      "99:image": true,
+      "100:image": true,
+      "101:image": true,
+      "102:image": true,
+      "103:image": true
+    },
+    "formValues": {
+      "3:type": "minimax",
+      "3:device": "default",
+      "4:weight_dtype": "default",
+      "5:strength_model": 0.7000000000000002,
+      "27:value": 10,
+      "29:aspect_ratio": "16:9 (Widescreen)",
+      "29:megapixels": 2,
+      "29:multiple": 32,
+      "30:expression": "max(5, round(a * 24)) + (5 - (max(5, round(a * 24)) % 17)) % 17",
+      "45:strength_model": 0.25,
+      "47:strength_model": 0.8,
+      "74:offload_model": true,
+      "74:offload_cache": true,
+      "76:steps": 8,
+      "76:denoise": 1,
+      "77:extra_steps": 1,
+      "77:start_at_sigma": 0.7,
+      "77:end_at_sigma": 0,
+      "77:spacing": "cosine",
+      "79:seed": 683072603085675,
+      "79:cfg": 1,
+      "79:transition_step": 6,
+      "79:lowres_scale": 0.5,
+      "79:rho": 0,
+      "79:w_min": 0.5,
+      "79:w_max": 1,
+      "79:highres_tiling": true,
+      "79:upscaler_unload": 2,
+      "82:tau": 0.2,
+      "82:log_diagnostics": false,
+      "83:strength_model": 0.5,
+      "85:tau": 1.3,
+      "85:start_percent": 0.2,
+      "85:end_percent": 0.9,
+      "85:min_tokens": 12288,
+      "85:sink_conditioning": "exact_kv_and_rows",
+      "85:morton": false,
+      "85:morton_curve": "2d_frame",
+      "85:centroid_tail": true,
+      "85:routed_cap_percent": 0,
+      "85:reuse_qkv_memory": false,
+      "85:verbose": false,
+      "85:dense_blocks": "",
+      "86:image": null,
+      "87:image": null,
+      "88:value": "subject_definitions:\n<Subject 1> is the female cyber-Chinese assassin from <Picture 1>, preserving her elegant black-and-red combat dress, fitted dark armored costume, metallic shoulder details, red fabric accents, turquoise ornamental highlights, elaborate dark updo, ornate hair accessories, long red tassel earrings, pale complexion, and sharp focused expression. She carries a dark folding fan with metallic and red decorative details, used as a close-range combat prop. The character-sheet layout, borders, labels, and graphic text from the reference are not part of the target video.\n\n<Subject 2> is the female cyber-Chinese combat operative from <Picture 2>, preserving her white, black, teal, and antique-gold costume, translucent flowing outer sleeves, intricate hair ornaments, dark updo, teal jewelry, mechanical shoulder and back details, pale complexion, and calm but determined expression. She carries a distinctive teal-and-gold umbrella-like weapon with a rigid shaft and mechanical decorative structure, used as a defensive and striking prop. The character-sheet layout, borders, labels, and graphic text from the reference are not part of the target video.\n\n<Subject 3> is a large passenger or transport aircraft flying at high altitude above a vast layer of clouds. The fight takes place on the broad upper surface of one aircraft wing, featuring riveted metal panels, structural seams, aerodynamic flaps, a visible engine nacelle near the wing root, intense airflow, cold blue sky, rapidly moving clouds below, and strong aircraft vibration.\n\n<Picture 1> is the character-design reference for <Subject 1>, defining her black-and-red cyber-Chinese costume, hairstyle, accessories, facial appearance, proportions, and folding-fan weapon.\n<Picture 2> is the character-design reference for <Subject 2>, defining her white-teal-gold cyber-Chinese costume, hairstyle, accessories, facial appearance, proportions, and umbrella-like weapon.\n\nsummary:\n[reference generation] A 10-second uninterrupted live-action Hollywood action sequence shows <Subject 1> and <Subject 2> engaged in an extremely fast and forceful close-quarters fight on the wing of a high-speed aircraft flying above the clouds. The sequence is one continuous take with no cuts. The action structure is: brief silent standoff, simultaneous explosive rush, rapid hand-to-hand and weapon-assisted exchanges, a powerful collision, a short realistic bullet-time camera orbit, and an immediate return to full speed. The camera moves with extreme kinetic energy along the aircraft wing, using rapid backward tracking, low-angle pursuit, aggressive orbiting, whip pans, sudden tilts, impact jolts, and a final pullback. The visual style is realistic live-action action cinema, not anime. No dialogue, no subtitles, no captions, no logos, no watermarks, no background music, no blood, and no gore.\n\nretention_analysis:\n<Subject 1> (appears continuously throughout the single take): fully_preserved - retain the black-and-red cyber-Chinese costume, fitted silhouette, metallic details, red accents, turquoise ornaments, elaborate updo, red tassel earrings, folding-fan weapon, and sharp determined expression.\n<Subject 2> (appears continuously throughout the single take): fully_preserved - retain the white-black-teal-gold cyber-Chinese costume, translucent outer sleeves, elaborate hair ornaments, teal jewelry, mechanical shoulder details, umbrella-like weapon, and calm focused expression.\n<Subject 3> (appears continuously throughout the single take): fully_preserved - retain the aircraft wing, riveted metal surface, engine nacelle, high-altitude wind, rapidly moving clouds, blue sky, and strong aircraft vibration.\n<Picture 1> (reference only): guides the appearance, costume, accessories, and weapon continuity of <Subject 1>; do not reproduce the character-sheet layout or its text.\n<Picture 2> (reference only): guides the appearance, costume, accessories, and weapon continuity of <Subject 2>; do not reproduce the character-sheet layout or its text.\n\ndetailed_description:\nThe entire 10-second video is one uninterrupted continuous live-action take. There are no cuts, no jump cuts, no hidden edits, no fade transitions, no wipes, no black frames, no camera teleportation, and no scene reset.\n\nThe visual treatment is realistic high-budget Hollywood action cinematography. The rhythm of the action is inspired only by the escalation pattern of Japanese action animation: a brief silent confrontation, an explosive simultaneous rush, a dense chain of rapid attacks and counters, a dramatic impact peak, a short bullet-time moment, and an immediate return to full speed. Do not use anime rendering, cel shading, manga speed lines, cartoon effects, supernatural powers, glowing energy, or illustrated motion.\n\nThe camera must be highly dynamic throughout the uninterrupted take. It races backward along the wing, dives close to the metal surface, circles around the fighters, changes height rapidly, performs whip pans around impacts, tilts with spinning attacks, and pulls back dramatically at the end. All camera changes are achieved through continuous physical movement rather than editing. Keep the action readable and maintain consistent positions relative to the wing, engine, horizon, and clouds.\n\n[Single Continuous Take | 00:00.000–00:10.000]\n\n[00:00.000–00:01.300]\nBegin with a low wide shot moving rapidly along the aircraft wing, only a few centimeters above the vibrating metal surface. Rivets, structural seams, and thin condensation streaks pass close to the lens. The engine nacelle is visible near the wing root, while clouds race far below.\n\n<Subject 1> and <Subject 2> stand approximately five meters apart on the broad central section of the wing. <Subject 1>, in the black-and-red costume from <Picture 1>, holds her closed folding fan near her chest. <Subject 2>, in the white-teal-gold costume from <Picture 2>, holds her folded umbrella-like weapon diagonally in front of her.\n\nThe camera performs a tense, fast 120-degree orbit around them while gradually closing the distance. Their clothing, hair ornaments, tassels, and translucent sleeves whip violently in the aircraft wind. Both remain completely silent, shifting their weight into low combat stances. The confrontation lasts only 1.3 seconds and feels intensely compressed and dangerous.\n\n[00:01.300–00:01.850]\nAt exactly 00:01.300, both characters suddenly launch toward each other at full speed. The camera instantly accelerates backward along the wing, keeping both fighters in the same frame as the wing surface rushes beneath them.\n\n<Subject 1> snaps open the folding fan and uses it to deflect <Subject 2>'s first strike. <Subject 2> rotates the umbrella-like weapon and drives its shaft toward <Subject 1>'s torso. <Subject 1> twists aside by a few centimeters. The weapons collide with a hard metallic impact. The camera whip-pans around the collision without cutting, jolting from the force of the contact.\n\n[00:01.850–00:06.300]\nThe camera flows directly through the collision and becomes an aggressive close-range pursuit camera inside the fight. The choreography is extremely rapid, with almost no idle time.\n\n<Subject 1> performs a fast three-hit combination using the folding fan: a slash-like fan strike toward the shoulder, a short hook across the forearm, and a direct palm strike to the chest. <Subject 2> blocks the fan with the umbrella shaft, absorbs the palm strike, and immediately counters with a rapid horizontal sweep.\n\nThe camera drops to wing level and tracks their footwork as they pivot, slide, and brace against the aircraft surface. <Subject 1> leaps over the sweep, lands on one hand, rotates around her planted palm, and kicks <Subject 2>'s upper torso. <Subject 2> is driven backward but hooks the umbrella shaft into a structural seam and uses it to stop her slide.\n\nThe camera circles tightly around <Subject 2> and rises sharply as she launches forward again. She uses the umbrella-like weapon as a short staff, delivering two rapid strikes toward <Subject 1>'s ribs and shoulder. <Subject 1> blocks the first strike with the open fan, absorbs the second against her forearm guard, and immediately closes the distance.\n\n<Subject 1> performs a fast elbow strike, knee feint, and low sweeping kick. <Subject 2> blocks the elbow with her mechanical forearm, rotates under the knee, and jumps over the sweep. The camera spins with their bodies in a fast 180-degree roll while keeping the aircraft horizon and engine nacelle visible.\n\n<Subject 1> briefly hooks one arm around <Subject 2>'s upper neck and shoulder in a rapid standing choke-control maneuver, using it only to redirect balance. The hold lasts less than 0.6 seconds. The camera pushes tightly into the grappling exchange, then dives underneath their locked arms as <Subject 2> grips <Subject 1>'s forearm and forcefully breaks the control.\n\n<Subject 2> immediately performs an arm drag, turns <Subject 1>, and drives her shoulder-first onto the metal wing. The impact creates a sharp metallic resonance and a burst of condensation and dust. <Subject 1> does not remain down; she plants her hand on the wing, rolls through the impact, and rises into a spinning counterattack.\n\nThe camera tracks the spin at extremely close range, then pulls backward just enough to reveal <Subject 1>'s heel striking <Subject 2>'s chest armor. <Subject 2> slides backward across the wing, producing a brief trail of harmless sparks from armor scraping against metal.\n\n[00:06.300–00:07.500]\nThe camera rushes laterally alongside the sliding android, then snaps around the engine nacelle and reacquires both fighters in one continuous movement. <Subject 2> stops herself with the umbrella-like weapon, launches forward, and thrusts the weapon shaft toward <Subject 1>.\n\n<Subject 1> traps the shaft with the folding fan and her forearm, pulls <Subject 2> off line, and strikes with a powerful close-range punch. <Subject 2> counters with an armored shoulder strike. Both fighters collide violently at the center of the wing. The camera drives directly into the collision and rotates around them as the aircraft wing vibrates under the force.\n\n[00:07.500–00:08.700]\nImmediately after the major collision, enter a brief realistic live-action bullet-time effect within the same uninterrupted take.\n\nTime slows dramatically for approximately 1.2 seconds. The camera performs a smooth 240-degree arc around the fighters, starting close to the wing surface, rising past their shoulders, and circling behind them. The aircraft, engine nacelle, wing structure, horizon, and cloud layer remain spatially consistent.\n\nThe two characters are suspended at the exact moment of impact. <Subject 1>'s black-and-red fabric, red tassels, hair ornaments, and folding fan remain suspended in the turbulent air. <Subject 2>'s translucent sleeves, teal ornaments, hair accessories, and umbrella-like weapon remain suspended as well. Show realistic compression in their shoulders and arms, armor vibration, strained fabric, loose hair strands, condensation droplets, and particles floating in the air.\n\nThis is only a realistic cinematic time-dilation camera effect. No supernatural power, no glowing aura, no energy wave, no anime freeze frame, no manga graphics, and no visual transformation.\n\n[00:08.700–00:10.000]\nAt exactly 00:08.700, return abruptly to full speed. The suspended air particles and condensation burst outward as both characters are thrown apart.\n\n<Subject 1> slides backward across the wing, catches a structural seam with one hand, spins, and stops herself before reaching the wing edge. <Subject 2> lands heavily on one knee, her armor scraping the metal and creating a brief shower of harmless sparks, then immediately rises.\n\nThe camera accelerates backward and spirals upward, transitioning from a close action perspective to a dramatic wide view of both fighters on the aircraft wing, the engine nacelle, the aircraft fuselage, and the clouds far below. Both characters face each other in low combat stances, weapons ready, clothing and hair violently streaming in the high-altitude wind.\n\nEnd on a powerful wide composition that clearly shows they are still on the moving aircraft wing and ready for another exchange. No text appears anywhere in the frame.\n\nCamera continuity requirements:\nThe camera must never cut. Every angle change must be created by continuous tracking, orbiting, tilting, rolling, whipping, diving, craning, or physically motivated movement around the fighters. The camera may pass close behind a character, the engine nacelle, or a brief cloud of condensation, but it must immediately preserve the same spatial continuity. Never teleport the camera, reset the perspective, lose the fighters, or change the aircraft wing orientation.\n\noverall_soundscape:\nOnly realistic diegetic sound: continuous jet-engine roar, violent high-altitude wind, aerodynamic turbulence, aircraft structural vibration, metal wing resonance, rapid footsteps on the wing, sliding shoes, fabric whipping, tassels and ornaments rattling, folding-fan snaps, umbrella-weapon mechanical clicks, metallic weapon impacts, hard punches, elbows, knees, shoulder collisions, armor scraping, short exertion breaths, and brief harmless sparks.\n\nDuring the bullet-time sequence from 00:07.500 to 00:08.700, stretch and muffle the engine roar and wind into a deep resonant sound layer while preserving the heavy impact vibration. At 00:08.700, restore the engine, wind, and combat impacts to full speed with a sudden sonic acceleration. No dialogue, no voiceover, no crowd noise, no background music, and no cartoon-like sound effects.\n\nnon_diegetic_music:\nN/A. No background music, no soundtrack, no percussion, no orchestral score, and no musical crescendo.",
+      "89:filename_prefix": "comfyui",
+      "89:frame_rate": 24,
+      "89:loop_count": 0,
+      "89:format": "video/h264-mp4",
+      "89:pix_fmt": "yuv420p",
+      "89:crf": 16,
+      "89:save_metadata": false,
+      "89:trim_to_audio": false,
+      "89:pingpong": false,
+      "89:save_output": true,
+      "90:task_type": "auto",
+      "90:audio_mode": "native",
+      "90:audio_denoise_strength": 1,
+      "90:add_source_as_reference": false,
+      "90:prompt_primary_audio_ordinal": 0,
+      "90:strict_prompt_tags": true,
+      "90:ref_image_size": "match",
+      "90:reference_video_policy": "official_2_to_15s",
+      "90:allow_above_reference_area": false,
+      "97:image": null,
+      "98:image": null,
+      "99:image": null,
+      "100:image": null,
+      "101:image": null,
+      "102:image": null,
+      "103:image": null
+    },
+    "mediaOrder": [
+      "86:image",
+      "87:image",
+      "97:image",
+      "98:image",
+      "100:image",
+      "99:image",
+      "102:image",
+      "101:image",
+      "103:image"
+    ],
+    "mediaOrderSource": "auto",
+    "apiNames": {
+      "3:type": "type",
+      "3:device": "device",
+      "4:weight_dtype": "weight_dtype",
+      "5:strength_model": "strength_model",
+      "27:value": "value",
+      "29:aspect_ratio": "aspect_ratio",
+      "29:megapixels": "megapixels",
+      "29:multiple": "multiple",
+      "30:expression": "expression",
+      "45:strength_model": "strength_model_2",
+      "47:strength_model": "strength_model_3",
+      "74:offload_model": "offload_model",
+      "74:offload_cache": "offload_cache",
+      "76:steps": "steps",
+      "76:denoise": "denoise",
+      "77:extra_steps": "extra_steps",
+      "77:start_at_sigma": "start_at_sigma",
+      "77:end_at_sigma": "end_at_sigma",
+      "77:spacing": "spacing",
+      "79:seed": "seed",
+      "79:cfg": "cfg",
+      "79:transition_step": "transition_step",
+      "79:lowres_scale": "lowres_scale",
+      "79:rho": "rho",
+      "79:w_min": "w_min",
+      "79:w_max": "w_max",
+      "79:highres_tiling": "highres_tiling",
+      "79:upscaler_unload": "upscaler_unload",
+      "82:tau": "tau",
+      "82:log_diagnostics": "log_diagnostics",
+      "83:strength_model": "strength_model_4",
+      "85:tau": "tau_2",
+      "85:start_percent": "start_percent",
+      "85:end_percent": "end_percent",
+      "85:min_tokens": "min_tokens",
+      "85:sink_conditioning": "sink_conditioning",
+      "85:morton": "morton",
+      "85:morton_curve": "morton_curve",
+      "85:centroid_tail": "centroid_tail",
+      "85:routed_cap_percent": "routed_cap_percent",
+      "85:reuse_qkv_memory": "reuse_qkv_memory",
+      "85:verbose": "verbose",
+      "85:dense_blocks": "dense_blocks",
+      "86:image": "ref_image_0",
+      "87:image": "ref_image_1",
+      "88:value": "prompt",
+      "89:filename_prefix": "filename_prefix",
+      "89:frame_rate": "frame_rate",
+      "89:loop_count": "loop_count",
+      "89:format": "format",
+      "89:pix_fmt": "pix_fmt",
+      "89:crf": "crf",
+      "89:save_metadata": "save_metadata",
+      "89:trim_to_audio": "trim_to_audio",
+      "89:pingpong": "pingpong",
+      "89:save_output": "save_output",
+      "90:task_type": "task_type",
+      "90:audio_mode": "audio_mode",
+      "90:audio_denoise_strength": "audio_denoise_strength",
+      "90:add_source_as_reference": "add_source_as_reference",
+      "90:prompt_primary_audio_ordinal": "prompt_primary_audio_ordinal",
+      "90:strict_prompt_tags": "strict_prompt_tags",
+      "90:ref_image_size": "ref_image_size",
+      "90:reference_video_policy": "reference_video_policy",
+      "90:allow_above_reference_area": "allow_above_reference_area",
+      "97:image": "ref_image_2",
+      "98:image": "ref_image_3",
+      "99:image": "ref_image_5",
+      "100:image": "ref_image_4",
+      "101:image": "ref_image_7",
+      "102:image": "ref_image_6",
+      "103:image": "ref_image_8"
+    }
+  }
+}

@@ -1,0 +1,1895 @@
+{
+  "935": {
+    "inputs": {
+      "images": [
+        "949",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "预览图像"
+    }
+  },
+  "948": {
+    "inputs": {
+      "image1_text": "参考图",
+      "image2_text": "生成图",
+      "image3_text": "",
+      "image4_text": "",
+      "reel_height": 1024,
+      "border": 32,
+      "image1": [
+        "1184",
+        0
+      ],
+      "image2": [
+        "1102:866",
+        0
+      ]
+    },
+    "class_type": "LayerUtility: ImageReel",
+    "_meta": {
+      "title": "图层工具：图像卷轴"
+    }
+  },
+  "949": {
+    "inputs": {
+      "font_file": "Alibaba-PuHuiTi-Heavy.ttf",
+      "font_size": 40,
+      "border": 32,
+      "color_theme": "light",
+      "reel_1": [
+        "948",
+        0
+      ]
+    },
+    "class_type": "LayerUtility: ImageReelComposit",
+    "_meta": {
+      "title": "图层工具：图像卷轴合成"
+    }
+  },
+  "1028": {
+    "inputs": {
+      "conditioning": [
+        "1224:1173",
+        0
+      ]
+    },
+    "class_type": "ConditioningZeroOut",
+    "_meta": {
+      "title": "条件零化"
+    }
+  },
+  "1054": {
+    "inputs": {
+      "text": [
+        "1062",
+        0
+      ],
+      "clip": [
+        "1102:1100",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "1057": {
+    "inputs": {
+      "model": "Qwen3.5-9B-Uncensored-HauhauCS-Aggressive-Q4_K_M.gguf",
+      "mmproj": "mmproj-Qwen3.5-9B-Uncensored-HauhauCS-Aggressive-BF16.gguf",
+      "chat_handler": "Qwen3.5",
+      "n_ctx": 8192,
+      "vram_limit": -1,
+      "image_min_tokens": 0,
+      "image_max_tokens": 0,
+      "load_mtp": false
+    },
+    "class_type": "llama_cpp_model_loader",
+    "_meta": {
+      "title": "Llama-cpp Model Loader"
+    }
+  },
+  "1058": {
+    "inputs": {
+      "preset_prompt": "Empty - Nothing",
+      "custom_prompt": [
+        "1072",
+        0
+      ],
+      "system_prompt": "## 角色\n\n你是顶级AI绘画提示词工程师，精通 ComfyUI 与 flux-2-klein-9b-fp8 多参考图编辑模型。你会收到一张【横向拼接】的多参考图大图与用户需求，任务是【观察图像 + 强制执行用户的修改与布局指令 + 重写优化】，产出专用于该模型的结构化中文提示词。\n\n---\n\n## 输入说明\n\n拼接大图从左到右为参考图1、2、…、N。人物图每张一人；场景可能来自某张参考图，也可能仅由用户文字描述。用户需求可能规范分为六块——【参考图描述】【故故事情节】【画面构图】【正向提示词优化】【负面提示词优化】【特殊要求】，也可能是一句话自由指令(含人物合并、改属性、指定站位/坐姿/互动等)，都要准确解析并落实。缺信息时合理默认，绝不报错、绝不提问、绝不复述指令。\n\n---\n\n## 最高优先级A：属性修改(特殊要求)\n\n涉及颜色/发型/服装/属性时，无条件以用户值【覆盖】原图并改彻底(如\"发型改长发\"\"全身改黄\")。特殊要求的优先级高于一切其他规则。\n\n---\n\n## 最高优先级B：空间布局/动作指令(凌驾输出模板)\n\n若用户指定了人物位置/站位/坐姿/互动：Main Scene 必须据此重写空间叙事，真实描述各人位置与姿态，丢弃\"并排站立、无重叠、面向镜头、全身照\"等默认句；对应\"姿态:\"必须符合指令；Composition 也可据空间关系重写为纵深、分区光照等。未指定布局时才用默认模板。\n\n---\n## 最高优先级C：镜头要求(凌驾输出模板)\n\n若用户指定了画面镜头：Main Scene 必须前面增加镜头描述和裁切范围，并不能因为原图是全身就描述全身，范例如：近景镜头 Main Scene:（人物近景镜头，严格裁切至人物胸部以上范围，完整呈现头部、肩部与部分胸部区域，兼顾面部表情与上半身形态，无胸部以下身体部位:2.0）**Composition:**近景画幅，全程聚焦胸部以上人物区域。超写实渲染画质，完整保留人物上半身与面部细节。俯拍视角 Main Scene:（极致高机位俯拍视角，镜头机位严格高于被摄人物，从上方垂直向下拍摄，完整呈现人物头顶、背部轮廓与场景整体布局，强化画面俯视纵深感:2.0）。背拍视角 Main Scene:（纯背面背拍视角，镜头严格正对被摄人物背部，仅完整呈现人物纯后背轮廓，无面部与侧面画面，突出人物背影线条与整体氛围感:2.0）\n\n---\n\n## 优化逻辑(决定改写哪几段)\n\n1. 当用户给出【画面构图】时：只重写 Main Scene 与 Composition，不得改动 Character 与 Background Scene 的任何内容。\n2. 当用户给出【正向提示词优化】【负面提示词优化】时：据其优化 Main Scene、Composition 与 Negative，不得改动 Character 与 Background Scene。\n3. 未触发上述时：各段均基于参考图与用户输入正常生成。\n\n---\n\n## 参考图绑定(防混淆)\n\n必须严格区分每张参考图的人物、服装、动作、场景，绝对不能张冠李戴；Character X 只能描述 Reference Image X 的人物。\n\n---\n\n## 输出纪律(违反即错误，最重要)\n\n1. 【纯中文】只输出中文(Character/Reference Image/Main Scene/Composition/Background Scene/Negative 等固定结构标签词除外)。\n2. 【纯净输出】只输出最终提示词文本，禁止任何前置语、解释、说明、思考过程、备注。禁止编造用户未提及的细节。\n3. 【绝不输出标签/占位词】铁律。\"整体环境概括句\"\"按场景真实类型分层\"\"主要材质1/2\"\"环境与光照一句\"\"服装：\"\"发型：\"\"神态：\"\"按用户指令重写\"\"Reference Image N 的字母N\"等一律禁止出现；每段直接写成品内容，除 Main Scene/Composition/Character N(...)/Background Scene(...)/Negative 五个固定结构标题外，正文不得有任何带冒号的自造小标签。\n4. 【禁止复制示例】下方参考范例仅供学习格式，其中所有人物、场景、细节都是示例，必须完全忽略，绝不复制其文字，所有内容基于用户真实输入重新生成。\n5. 【Character 无字段前缀】人物描述不写\"发型:\"\"神态:\"\"服装:\"，用\"，\"\"；\"把 发型发饰、神态妆容、服装、姿态 连成流畅段落；仅\"道具:\"\"姿态:\"两个前缀允许保留。\n6. 【段落紧凑】段间不空行，行尾不留多余空格。\n\n---\n\n## 内容规则\n\n1. 【方位词】与人物在最终画面的实际位置一致：2人=Left, Right(或按原拼接顺序 Far Left/Second from Left)；3人=Left, Middle, Right；4/5人按从左到右等距映射。\n2. 【景别】仅当用户给景别时放 Composition 句首；否则不加。无布局指令时 Main Scene 景别写\"全身照\"，有布局指令时按叙事自由处理。遇 (xxx:2.0) 权重括号转写为普通中文。\n3. 【人物·克制】顺序：发型发饰→神态/眼神/妆容→服装(内搭/外搭/下装连写，写明颜色材质剪裁，鞋/皮带/手环并入)→突出手持道具(道具:)→姿态(姿态:，须符合用户布局)。忠于原图，不堆砌、不用括号补猜测。\n4. 【背景·自适应】有场景图：标题写实际编号，按其类型用贴合实际的分区(如 墙面主体/吧台区/展架/地面/天花板)直接描述，首句给整体环境概括(但不写\"概括\"二字)；仅文字场景无图：标题写 Background Scene(Generated from text:场景词)，按真实类型描述；背景只写环境，绝不写入人物。\n5. 【色温】按光照判断(如5200K/5500K)。\n\n\n---\n\n## 输出范例(只模仿其\"无小标签、直接成品\"的写法，禁止照抄其文字内容)\n\nMain Scene: 大师级作品，最高画质，8K超高清，超写实商业人像摄影，现代科技感企业前台，左侧女性站立于流线型金属吧台内身体微侧一手轻搭台面，右侧女性坐在吧台外的红色高脚椅上双腿交叠，两人视线望向镜头，冷暖对比布光，金属与玻璃质感强烈，无硬阴影\nComposition: 广角纵深构图，人物主体清晰锐利，背景前台细节丰富；顶部线性灯带为主光，吧台区偏冷白光，右侧人物略受暖光；完美人体结构，真实身体比例，无透视畸变，电影级柔和漫反射灯光，人物面部光线均匀，整体色温5200K，符合科技感空间质感。\nCharacter 1(Left, Reference Image 1): 黑色及肩波浪短发，发丝柔顺有光泽，眼神冷峻直视镜头，妆容精致自然唇色裸粉；黑色细肩带短款背心外搭浅灰水洗牛仔夹克半披穿法，黑色高腰破洞紧身牛仔裤大腿处不规则撕裂，腰间黑皮带配银色链条，黑色厚底系带马丁靴哑光质感；姿态:站立于吧台内侧，身体微侧向右，左手自然垂落右手轻搭吧台边缘，双腿微分，专业放松的接待姿态。\nCharacter 2(Right, Reference Image 2): 橙红色高马尾，红色发圈固定，发尾微卷，眼神锐利直视镜头表情自信，浓妆突出眼部唇色鲜红；全身红色高光泽乳胶战斗服紧身包裹，肩胸有橙色圆形装饰块，手臂腿部黑色条纹拼接，同色系乳胶手套与高跟尖头靴；姿态:坐在吧台外的红色高脚椅上，双腿优雅交叠右腿搭左腿，左手叉腰右手垂于大腿侧，身体微前倾，自信动感的坐姿。\nBackground Scene(Restoration of Reference Image 3): 现代高端科技公司前台大厅，墙面为蓝紫渐变发光玻璃，中央嵌入白色立体「TechInnovate」字样与蓝色盾形logo；流线型金属吧台表面高光反射，台面放置平板电脑与抽象金属雕塑；右侧深灰柜体内嵌白色冷光展架陈列电子产品；地面浅灰高光大理石反射清晰；天花板白色平顶内嵌线性暖白LED灯带。\nNegative: 坏手, 漏趾, 畸形肢体, 缺失肢体, 额外肢体, 多余的手, 连体人, 三条腿, 两个头",
+      "inference_mode": "images",
+      "max_frames": 24,
+      "max_size": 256,
+      "seed": 44,
+      "force_offload": false,
+      "save_states": false,
+      "llama_model": [
+        "1057",
+        0
+      ],
+      "parameters": [
+        "1059",
+        0
+      ],
+      "images": [
+        "1224:851",
+        0
+      ]
+    },
+    "class_type": "llama_cpp_instruct_adv",
+    "_meta": {
+      "title": "Llama-cpp Instruct"
+    }
+  },
+  "1059": {
+    "inputs": {
+      "max_tokens": 1024,
+      "top_k": 30,
+      "top_p": 0.9,
+      "min_p": 0.05,
+      "typical_p": 1,
+      "temperature": 0.7,
+      "repeat_penalty": 1,
+      "frequency_penalty": 0,
+      "mirostat_mode": 0,
+      "mirostat_eta": 0.1,
+      "mirostat_tau": 5,
+      "state_uid": -1,
+      "present_penalty": 1
+    },
+    "class_type": "llama_cpp_parameters",
+    "_meta": {
+      "title": "Llama-cpp Parameters"
+    }
+  },
+  "1061": {
+    "inputs": {
+      "text": [
+        "1058",
+        0
+      ],
+      "split_keyword": "Negative",
+      "remove_text": "",
+      "include_keyword": false
+    },
+    "class_type": "segment_text",
+    "_meta": {
+      "title": "📝文本分割"
+    }
+  },
+  "1062": {
+    "inputs": {
+      "text_0": "Main Scene: 大师级作品，最高画质，8K超高清，超写实商业人像摄影，广袤无垠的大草原场景，六位风格各异的女性一字排开站立于画面中，面向镜头，同时举起右手向观众挥手打招呼，表情自然亲切，阳光明媚，暖色调，草地细节清晰，无硬阴影\nComposition: 广角全景构图，人物主体清晰锐利，背景草原细节丰富；顶部自然日光为主光，整体明亮均匀，完美人体结构，真实身体比例，无透视畸变，电影级柔和漫反射灯光，人物面部光线均匀，整体色温5500K，符合户外草原自然光质感。\nCharacter 1(Left, Reference Image 1): 黑色齐肩波浪卷发，刘海微卷，眼神冷峻直视镜头表情酷飒；黑色细肩带短款背心外搭浅灰水洗牛仔夹克半披穿法，黑色高腰破洞紧身牛仔裤大腿处不规则撕裂，腰间黑皮带配银色链条，黑色厚底系带马丁靴哑光质感；姿态:站立于画面最左侧，右手举起向观众挥手，双腿微分，酷飒放松的站姿。\nCharacter 2(Second from Left, Reference Image 2): 橙红色双马尾，红色发圈固定，发尾微卷，眼神锐利直视镜头表情自信，浓妆突出眼部；全身红色高光泽乳胶战斗服紧身包裹，肩胸有橙色圆形装饰块，手臂腿部黑色条纹拼接，同色系乳胶手套与红色高跟尖头靴；姿态:站立于左二位置，右手举起向观众挥手，身体微侧，自信动感的站姿。\nCharacter 3(Third from Left, Reference Image 3): 黑色长直发，白色花朵发饰点缀，眼神温婉直视镜头表情恬静；淡蓝色水墨花卉图案长款汉服外搭白色薄纱披风，内搭同色系绣花裙，手持白色油纸伞，淡蓝色绣花鞋；姿态:站立于画面中央，右手举起向观众挥手，左手持伞，温婉恬静的站姿。\nCharacter 4(Fourth from Left, Reference Image 4): 深棕色长卷发，眼神温柔直视镜头表情甜美；红色无袖细吊带长裙，裙摆及小腿，材质垂顺，搭配红色玛丽珍鞋；姿态:站立于右二位置，右手举起向观众挥手，身体微侧，优雅甜美的站姿。\nCharacter 5(Fifth from Left, Reference Image 5): 深棕色长直发，发丝柔顺有光泽，眼神清澈直视镜头表情清纯；白色蕾丝无袖连衣裙，领口与袖口有精致蕾丝花边，手腕佩戴银色细手链；姿态:站立于右一位置，右手举起向观众挥手，身体微侧，清纯自然的站姿。\nCharacter 6(Right, Reference Image 6): 黑色齐刘海短发，白色修女头巾包裹，眼神无辜直视镜头表情乖巧；黑色修女服搭配白色荷叶领与袖口，黑色短裙，白色堆堆袜与黑色皮鞋；姿态:站立于画面最右侧，右手举起向观众挥手，双腿微分，乖巧可爱的站姿。\nBackground Scene(Generated from text:广袤无垠的大草原): 画面背景为广袤无垠的大草原，地面覆盖茂密的绿色与枯黄色相间野草，远处地平线清晰，天空湛蓝，光线明亮自然，无其他建筑或人物干扰，营造出开阔自然的户外氛围。",
+      "text": [
+        "1061",
+        0
+      ]
+    },
+    "class_type": "ShowText|pysssss",
+    "_meta": {
+      "title": "Show Text 🐍"
+    }
+  },
+  "1072": {
+    "inputs": {
+      "positive": "【参考图描述】\n参考图1是个女人,参考图2是个女人, 参考图3是个女人, 参考图4是个女人, 参考图5是个女人, 参考图6是个女人,\n\n【故事情节】\n6个女人站广袤无垠的大草原场景里，挥手向观众打招呼"
+    },
+    "class_type": "easy positive",
+    "_meta": {
+      "title": "正面提示词"
+    }
+  },
+  "1103": {
+    "inputs": {
+      "image": "x1.png",
+      "enabled": true
+    },
+    "class_type": "LoadImageWithSwitch",
+    "_meta": {
+      "title": "Load Image with Switch"
+    }
+  },
+  "1104": {
+    "inputs": {
+      "image": "x2.png",
+      "enabled": true
+    },
+    "class_type": "LoadImageWithSwitch",
+    "_meta": {
+      "title": "Load Image with Switch"
+    }
+  },
+  "1105": {
+    "inputs": {
+      "image": "x4.png",
+      "enabled": true
+    },
+    "class_type": "LoadImageWithSwitch",
+    "_meta": {
+      "title": "Load Image with Switch"
+    }
+  },
+  "1106": {
+    "inputs": {
+      "image": "x3.png",
+      "enabled": true
+    },
+    "class_type": "LoadImageWithSwitch",
+    "_meta": {
+      "title": "Load Image with Switch"
+    }
+  },
+  "1112": {
+    "inputs": {
+      "image": "07E52C5B4156BC3E2318D727733D5F7C.png",
+      "enabled": true
+    },
+    "class_type": "LoadImageWithSwitch",
+    "_meta": {
+      "title": "Load Image with Switch"
+    }
+  },
+  "1117": {
+    "inputs": {
+      "image": "2f3849397945344de0d95c371adbc2f2866cd13a3d5248bf40ed5f4bb575c17f.jpg",
+      "enabled": true
+    },
+    "class_type": "LoadImageWithSwitch",
+    "_meta": {
+      "title": "Load Image with Switch"
+    }
+  },
+  "1184": {
+    "inputs": {
+      "inputcount": 6,
+      "direction": "down",
+      "match_image_size": true,
+      "Update inputs": null,
+      "image_1": [
+        "1224:1204",
+        0
+      ],
+      "image_2": [
+        "1224:1211",
+        0
+      ],
+      "image_3": [
+        "1224:1209",
+        0
+      ],
+      "image_4": [
+        "1224:1207",
+        0
+      ],
+      "image_5": [
+        "1224:1189",
+        0
+      ],
+      "image_6": [
+        "1224:1183",
+        0
+      ]
+    },
+    "class_type": "ImageConcatMulti",
+    "_meta": {
+      "title": "Image Concatenate Multi"
+    }
+  },
+  "1222": {
+    "inputs": {
+      "base64_data": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
+      "image_output": "Preview",
+      "save_prefix": "ComfyUI"
+    },
+    "class_type": "easy loadImageBase64",
+    "_meta": {
+      "title": "加载图像（Base64）"
+    }
+  },
+  "1232": {
+    "inputs": {
+      "width": 1536,
+      "height": 2048,
+      "batch_size": 1
+    },
+    "class_type": "EmptyLatentImage",
+    "_meta": {
+      "title": "空Latent图像"
+    }
+  },
+  "1238": {
+    "inputs": {
+      "model": "seedvr2_ema_3b_fp16.safetensors",
+      "device": "cuda:0",
+      "blocks_to_swap": 32,
+      "swap_io_components": true,
+      "offload_device": "cpu",
+      "cache_model": "sdpa",
+      "attention_mode": "sdpa"
+    },
+    "class_type": "SeedVR2LoadDiTModel",
+    "_meta": {
+      "title": "SeedVR2 (Down)Load DiT Model"
+    }
+  },
+  "1239": {
+    "inputs": {
+      "model": "ema_vae_fp16.safetensors",
+      "device": "cuda:0",
+      "encode_tiled": true,
+      "encode_tile_size": 1024,
+      "encode_tile_overlap": 128,
+      "decode_tiled": true,
+      "decode_tile_size": 1024,
+      "decode_tile_overlap": 128,
+      "tile_debug": "false",
+      "offload_device": "cpu",
+      "cache_model": false
+    },
+    "class_type": "SeedVR2LoadVAEModel",
+    "_meta": {
+      "title": "SeedVR2 (Down)Load VAE Model"
+    }
+  },
+  "1240": {
+    "inputs": {
+      "seed": 3084876233,
+      "resolution": 2048,
+      "max_resolution": 4096,
+      "batch_size": 5,
+      "uniform_batch_size": false,
+      "color_correction": "lab",
+      "temporal_overlap": 0,
+      "prepend_frames": 0,
+      "input_noise_scale": 0,
+      "latent_noise_scale": 0,
+      "offload_device": "cpu",
+      "enable_debug": false,
+      "image": [
+        "1242",
+        0
+      ],
+      "dit": [
+        "1238",
+        0
+      ],
+      "vae": [
+        "1239",
+        0
+      ]
+    },
+    "class_type": "SeedVR2VideoUpscaler",
+    "_meta": {
+      "title": "SeedVR2 Video Upscaler (v2.5.24)"
+    }
+  },
+  "1242": {
+    "inputs": {
+      "upscale_method": "lanczos",
+      "scale_by": 0.5000000000000001,
+      "image": [
+        "1102:866",
+        0
+      ]
+    },
+    "class_type": "ImageScaleBy",
+    "_meta": {
+      "title": "缩放图像（比例）"
+    }
+  },
+  "1243": {
+    "inputs": {
+      "filename_prefix": "ComfyUI",
+      "images": [
+        "1240",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "保存图像"
+    }
+  },
+  "1102:1101": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "加载VAE"
+    }
+  },
+  "1102:866": {
+    "inputs": {
+      "samples": [
+        "1102:867",
+        0
+      ],
+      "vae": [
+        "1102:1101",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "1102:1100": {
+    "inputs": {
+      "clip_name": "qwen_3_8b_fp8mixed.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "加载CLIP"
+    }
+  },
+  "1102:1099": {
+    "inputs": {
+      "unet_name": "flux/flux-2-klein-9b.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "UNet加载器"
+    }
+  },
+  "1102:867": {
+    "inputs": {
+      "seed": 44,
+      "steps": 6,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 1,
+      "model": [
+        "1102:1099",
+        0
+      ],
+      "positive": [
+        "1224:1173",
+        0
+      ],
+      "negative": [
+        "1028",
+        0
+      ],
+      "latent_image": [
+        "1232",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "1224:846": {
+    "inputs": {
+      "aspect_ratio": "original",
+      "proportional_width": 1,
+      "proportional_height": 1,
+      "fit": "letterbox",
+      "method": "lanczos",
+      "round_to_multiple": "8",
+      "scale_to_side": "longest",
+      "scale_to_length": 1920,
+      "background_color": "#000000",
+      "image": [
+        "1224:1220",
+        0
+      ]
+    },
+    "class_type": "LayerUtility: ImageScaleByAspectRatio V2",
+    "_meta": {
+      "title": "图层工具：按宽高比缩放 V2"
+    }
+  },
+  "1224:1183": {
+    "inputs": {
+      "boolean": [
+        "1117",
+        2
+      ],
+      "on_true": [
+        "1224:1176",
+        0
+      ],
+      "on_false": [
+        "1222",
+        0
+      ]
+    },
+    "class_type": "Switch image [Crystools]",
+    "_meta": {
+      "title": "🪛 Switch image"
+    }
+  },
+  "1224:1189": {
+    "inputs": {
+      "boolean": [
+        "1112",
+        2
+      ],
+      "on_true": [
+        "1224:1186",
+        0
+      ],
+      "on_false": [
+        "1222",
+        0
+      ]
+    },
+    "class_type": "Switch image [Crystools]",
+    "_meta": {
+      "title": "🪛 Switch image"
+    }
+  },
+  "1224:1209": {
+    "inputs": {
+      "boolean": [
+        "1106",
+        2
+      ],
+      "on_true": [
+        "1224:1196",
+        0
+      ],
+      "on_false": [
+        "1222",
+        0
+      ]
+    },
+    "class_type": "Switch image [Crystools]",
+    "_meta": {
+      "title": "🪛 Switch image"
+    }
+  },
+  "1224:1211": {
+    "inputs": {
+      "boolean": [
+        "1104",
+        2
+      ],
+      "on_true": [
+        "1224:1200",
+        0
+      ],
+      "on_false": [
+        "1222",
+        0
+      ]
+    },
+    "class_type": "Switch image [Crystools]",
+    "_meta": {
+      "title": "🪛 Switch image"
+    }
+  },
+  "1224:848": {
+    "inputs": {
+      "aspect_ratio": "original",
+      "proportional_width": 1,
+      "proportional_height": 1,
+      "fit": "letterbox",
+      "method": "lanczos",
+      "round_to_multiple": "8",
+      "scale_to_side": "longest",
+      "scale_to_length": 1920,
+      "background_color": "#000000",
+      "image": [
+        "1224:1216",
+        0
+      ]
+    },
+    "class_type": "LayerUtility: ImageScaleByAspectRatio V2",
+    "_meta": {
+      "title": "图层工具：按宽高比缩放 V2"
+    }
+  },
+  "1224:1200": {
+    "inputs": {
+      "image": [
+        "1104",
+        0
+      ]
+    },
+    "class_type": "FluxKontextImageScale",
+    "_meta": {
+      "title": "图像缩放为FluxKontext"
+    }
+  },
+  "1224:1196": {
+    "inputs": {
+      "image": [
+        "1106",
+        0
+      ]
+    },
+    "class_type": "FluxKontextImageScale",
+    "_meta": {
+      "title": "图像缩放为FluxKontext"
+    }
+  },
+  "1224:1192": {
+    "inputs": {
+      "image": [
+        "1105",
+        0
+      ]
+    },
+    "class_type": "FluxKontextImageScale",
+    "_meta": {
+      "title": "图像缩放为FluxKontext"
+    }
+  },
+  "1224:1186": {
+    "inputs": {
+      "image": [
+        "1112",
+        0
+      ]
+    },
+    "class_type": "FluxKontextImageScale",
+    "_meta": {
+      "title": "图像缩放为FluxKontext"
+    }
+  },
+  "1224:1176": {
+    "inputs": {
+      "image": [
+        "1117",
+        0
+      ]
+    },
+    "class_type": "FluxKontextImageScale",
+    "_meta": {
+      "title": "图像缩放为FluxKontext"
+    }
+  },
+  "1224:1187": {
+    "inputs": {
+      "pixels": [
+        "1224:1186",
+        0
+      ],
+      "vae": [
+        "1102:1101",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE编码"
+    }
+  },
+  "1224:1175": {
+    "inputs": {
+      "pixels": [
+        "1224:1176",
+        0
+      ],
+      "vae": [
+        "1102:1101",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE编码"
+    }
+  },
+  "1224:1193": {
+    "inputs": {
+      "pixels": [
+        "1224:1192",
+        0
+      ],
+      "vae": [
+        "1102:1101",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE编码"
+    }
+  },
+  "1224:1197": {
+    "inputs": {
+      "pixels": [
+        "1224:1196",
+        0
+      ],
+      "vae": [
+        "1102:1101",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE编码"
+    }
+  },
+  "1224:1201": {
+    "inputs": {
+      "pixels": [
+        "1224:1200",
+        0
+      ],
+      "vae": [
+        "1102:1101",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE编码"
+    }
+  },
+  "1224:1205": {
+    "inputs": {
+      "pixels": [
+        "1224:1204",
+        0
+      ],
+      "vae": [
+        "1102:1101",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE编码"
+    }
+  },
+  "1224:1203": {
+    "inputs": {
+      "conditioning": [
+        "1224:1126",
+        0
+      ],
+      "latent": [
+        "1224:1205",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "参考Latent"
+    }
+  },
+  "1224:1199": {
+    "inputs": {
+      "conditioning": [
+        "1224:1206",
+        0
+      ],
+      "latent": [
+        "1224:1201",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "参考Latent"
+    }
+  },
+  "1224:1195": {
+    "inputs": {
+      "conditioning": [
+        "1224:1202",
+        0
+      ],
+      "latent": [
+        "1224:1197",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "参考Latent"
+    }
+  },
+  "1224:1191": {
+    "inputs": {
+      "conditioning": [
+        "1224:1198",
+        0
+      ],
+      "latent": [
+        "1224:1193",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "参考Latent"
+    }
+  },
+  "1224:1185": {
+    "inputs": {
+      "conditioning": [
+        "1224:1194",
+        0
+      ],
+      "latent": [
+        "1224:1187",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "参考Latent"
+    }
+  },
+  "1224:1174": {
+    "inputs": {
+      "conditioning": [
+        "1224:1188",
+        0
+      ],
+      "latent": [
+        "1224:1175",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "参考Latent"
+    }
+  },
+  "1224:1173": {
+    "inputs": {
+      "boolean": [
+        "1117",
+        2
+      ],
+      "on_true": [
+        "1224:1174",
+        0
+      ],
+      "on_false": [
+        "1224:1188",
+        0
+      ]
+    },
+    "class_type": "Switch conditioning [Crystools]",
+    "_meta": {
+      "title": "🪛 Switch conditioning"
+    }
+  },
+  "1224:1188": {
+    "inputs": {
+      "boolean": [
+        "1112",
+        2
+      ],
+      "on_true": [
+        "1224:1185",
+        0
+      ],
+      "on_false": [
+        "1224:1194",
+        0
+      ]
+    },
+    "class_type": "Switch conditioning [Crystools]",
+    "_meta": {
+      "title": "🪛 Switch conditioning"
+    }
+  },
+  "1224:1194": {
+    "inputs": {
+      "boolean": [
+        "1105",
+        2
+      ],
+      "on_true": [
+        "1224:1191",
+        0
+      ],
+      "on_false": [
+        "1224:1198",
+        0
+      ]
+    },
+    "class_type": "Switch conditioning [Crystools]",
+    "_meta": {
+      "title": "🪛 Switch conditioning"
+    }
+  },
+  "1224:1198": {
+    "inputs": {
+      "boolean": [
+        "1106",
+        2
+      ],
+      "on_true": [
+        "1224:1195",
+        0
+      ],
+      "on_false": [
+        "1224:1202",
+        0
+      ]
+    },
+    "class_type": "Switch conditioning [Crystools]",
+    "_meta": {
+      "title": "🪛 Switch conditioning"
+    }
+  },
+  "1224:1202": {
+    "inputs": {
+      "boolean": [
+        "1104",
+        2
+      ],
+      "on_true": [
+        "1224:1199",
+        0
+      ],
+      "on_false": [
+        "1224:1206",
+        0
+      ]
+    },
+    "class_type": "Switch conditioning [Crystools]",
+    "_meta": {
+      "title": "🪛 Switch conditioning"
+    }
+  },
+  "1224:1206": {
+    "inputs": {
+      "boolean": [
+        "1103",
+        2
+      ],
+      "on_true": [
+        "1224:1203",
+        0
+      ],
+      "on_false": [
+        "1224:1126",
+        0
+      ]
+    },
+    "class_type": "Switch conditioning [Crystools]",
+    "_meta": {
+      "title": "🪛 Switch conditioning"
+    }
+  },
+  "1224:1207": {
+    "inputs": {
+      "boolean": [
+        "1105",
+        2
+      ],
+      "on_true": [
+        "1224:1192",
+        0
+      ],
+      "on_false": [
+        "1222",
+        0
+      ]
+    },
+    "class_type": "Switch image [Crystools]",
+    "_meta": {
+      "title": "🪛 Switch image"
+    }
+  },
+  "1224:850": {
+    "inputs": {
+      "aspect_ratio": "original",
+      "proportional_width": 1,
+      "proportional_height": 1,
+      "fit": "letterbox",
+      "method": "lanczos",
+      "round_to_multiple": "8",
+      "scale_to_side": "longest",
+      "scale_to_length": 1920,
+      "background_color": "#000000",
+      "image": [
+        "1224:1215",
+        0
+      ]
+    },
+    "class_type": "LayerUtility: ImageScaleByAspectRatio V2",
+    "_meta": {
+      "title": "图层工具：按宽高比缩放 V2"
+    }
+  },
+  "1224:1215": {
+    "inputs": {
+      "boolean": [
+        "1117",
+        2
+      ],
+      "on_true": [
+        "1117",
+        0
+      ],
+      "on_false": [
+        "1222",
+        0
+      ]
+    },
+    "class_type": "Switch image [Crystools]",
+    "_meta": {
+      "title": "🪛 Switch image"
+    }
+  },
+  "1224:1216": {
+    "inputs": {
+      "boolean": [
+        "1112",
+        2
+      ],
+      "on_true": [
+        "1112",
+        0
+      ],
+      "on_false": [
+        "1222",
+        0
+      ]
+    },
+    "class_type": "Switch image [Crystools]",
+    "_meta": {
+      "title": "🪛 Switch image"
+    }
+  },
+  "1224:1220": {
+    "inputs": {
+      "boolean": [
+        "1105",
+        2
+      ],
+      "on_true": [
+        "1105",
+        0
+      ],
+      "on_false": [
+        "1222",
+        0
+      ]
+    },
+    "class_type": "Switch image [Crystools]",
+    "_meta": {
+      "title": "🪛 Switch image"
+    }
+  },
+  "1224:1217": {
+    "inputs": {
+      "boolean": [
+        "1106",
+        2
+      ],
+      "on_true": [
+        "1106",
+        0
+      ],
+      "on_false": [
+        "1222",
+        0
+      ]
+    },
+    "class_type": "Switch image [Crystools]",
+    "_meta": {
+      "title": "🪛 Switch image"
+    }
+  },
+  "1224:1218": {
+    "inputs": {
+      "boolean": [
+        "1104",
+        2
+      ],
+      "on_true": [
+        "1104",
+        0
+      ],
+      "on_false": [
+        "1222",
+        0
+      ]
+    },
+    "class_type": "Switch image [Crystools]",
+    "_meta": {
+      "title": "🪛 Switch image"
+    }
+  },
+  "1224:839": {
+    "inputs": {
+      "aspect_ratio": "original",
+      "proportional_width": 1,
+      "proportional_height": 1,
+      "fit": "letterbox",
+      "method": "lanczos",
+      "round_to_multiple": "8",
+      "scale_to_side": "longest",
+      "scale_to_length": 1920,
+      "background_color": "#000000",
+      "image": [
+        "1103",
+        0
+      ]
+    },
+    "class_type": "LayerUtility: ImageScaleByAspectRatio V2",
+    "_meta": {
+      "title": "图层工具：按宽高比缩放 V2"
+    }
+  },
+  "1224:842": {
+    "inputs": {
+      "aspect_ratio": "original",
+      "proportional_width": 1,
+      "proportional_height": 1,
+      "fit": "letterbox",
+      "method": "lanczos",
+      "round_to_multiple": "8",
+      "scale_to_side": "longest",
+      "scale_to_length": 1920,
+      "background_color": "#000000",
+      "image": [
+        "1224:1218",
+        0
+      ]
+    },
+    "class_type": "LayerUtility: ImageScaleByAspectRatio V2",
+    "_meta": {
+      "title": "图层工具：按宽高比缩放 V2"
+    }
+  },
+  "1224:844": {
+    "inputs": {
+      "aspect_ratio": "original",
+      "proportional_width": 1,
+      "proportional_height": 1,
+      "fit": "letterbox",
+      "method": "lanczos",
+      "round_to_multiple": "8",
+      "scale_to_side": "longest",
+      "scale_to_length": 1920,
+      "background_color": "#000000",
+      "image": [
+        "1224:1217",
+        0
+      ]
+    },
+    "class_type": "LayerUtility: ImageScaleByAspectRatio V2",
+    "_meta": {
+      "title": "图层工具：按宽高比缩放 V2"
+    }
+  },
+  "1224:851": {
+    "inputs": {
+      "inputcount": 6,
+      "direction": "right",
+      "match_image_size": true,
+      "Update inputs": null,
+      "image_1": [
+        "1224:839",
+        0
+      ],
+      "image_2": [
+        "1224:842",
+        0
+      ],
+      "image_3": [
+        "1224:844",
+        0
+      ],
+      "image_4": [
+        "1224:846",
+        0
+      ],
+      "image_5": [
+        "1224:848",
+        0
+      ],
+      "image_6": [
+        "1224:850",
+        0
+      ]
+    },
+    "class_type": "ImageConcatMulti",
+    "_meta": {
+      "title": "Image Concatenate Multi"
+    }
+  },
+  "1224:1126": {
+    "inputs": {
+      "guidance": 4,
+      "conditioning": [
+        "1054",
+        0
+      ]
+    },
+    "class_type": "FluxGuidance",
+    "_meta": {
+      "title": "Flux引导"
+    }
+  },
+  "1224:1204": {
+    "inputs": {
+      "image": [
+        "1103",
+        0
+      ]
+    },
+    "class_type": "FluxKontextImageScale",
+    "_meta": {
+      "title": "图像缩放为FluxKontext"
+    }
+  },
+  "_api_config": {
+    "customLabels": {
+      "948:image1_text": "image1_text",
+      "948:image2_text": "image2_text",
+      "948:image3_text": "image3_text",
+      "948:image4_text": "image4_text",
+      "948:reel_height": "reel_height",
+      "948:border": "border",
+      "949:font_file": "font_file",
+      "949:font_size": "font_size",
+      "949:border": "border",
+      "949:color_theme": "color_theme",
+      "1057:model": "model",
+      "1057:mmproj": "mmproj",
+      "1057:chat_handler": "chat_handler",
+      "1057:n_ctx": "n_ctx",
+      "1057:vram_limit": "vram_limit",
+      "1057:image_min_tokens": "image_min_tokens",
+      "1057:image_max_tokens": "image_max_tokens",
+      "1057:load_mtp": "load_mtp",
+      "1058:seed": "随机种子",
+      "1058:preset_prompt": "preset_prompt",
+      "1058:system_prompt": "system_prompt",
+      "1058:inference_mode": "inference_mode",
+      "1058:max_frames": "max_frames",
+      "1058:max_size": "max_size",
+      "1058:force_offload": "force_offload",
+      "1058:save_states": "save_states",
+      "1059:max_tokens": "max_tokens",
+      "1059:top_k": "top_k",
+      "1059:top_p": "top_p",
+      "1059:min_p": "min_p",
+      "1059:typical_p": "typical_p",
+      "1059:temperature": "temperature",
+      "1059:repeat_penalty": "repeat_penalty",
+      "1059:frequency_penalty": "frequency_penalty",
+      "1059:mirostat_mode": "mirostat_mode",
+      "1059:mirostat_eta": "mirostat_eta",
+      "1059:mirostat_tau": "mirostat_tau",
+      "1059:state_uid": "state_uid",
+      "1059:present_penalty": "present_penalty",
+      "1061:split_keyword": "split_keyword",
+      "1061:remove_text": "remove_text",
+      "1061:include_keyword": "include_keyword",
+      "1062:text_0": "text_0",
+      "1072:positive": "positive",
+      "1103:image": "参考图 0",
+      "1103:enabled": "参考图 0 启用",
+      "1104:image": "参考图 1",
+      "1104:enabled": "参考图 1 启用",
+      "1105:image": "参考图 2",
+      "1105:enabled": "参考图 2 启用",
+      "1106:image": "参考图 3",
+      "1106:enabled": "参考图 3 启用",
+      "1112:image": "参考图 4",
+      "1112:enabled": "参考图 4 启用",
+      "1117:image": "参考图 5",
+      "1117:enabled": "参考图 5 启用",
+      "1184:inputcount": "inputcount",
+      "1184:direction": "direction",
+      "1184:match_image_size": "match_image_size",
+      "1222:base64_data": "base64_data",
+      "1222:image_output": "image_output",
+      "1222:save_prefix": "save_prefix",
+      "1232:width": "宽度",
+      "1232:height": "高度",
+      "1232:batch_size": "批次大小",
+      "1238:device": "device",
+      "1238:blocks_to_swap": "blocks_to_swap",
+      "1238:swap_io_components": "swap_io_components",
+      "1238:offload_device": "offload_device",
+      "1238:cache_model": "cache_model",
+      "1238:attention_mode": "attention_mode",
+      "1239:device": "device",
+      "1239:encode_tiled": "encode_tiled",
+      "1239:encode_tile_size": "encode_tile_size",
+      "1239:encode_tile_overlap": "encode_tile_overlap",
+      "1239:decode_tiled": "decode_tiled",
+      "1239:decode_tile_size": "decode_tile_size",
+      "1239:decode_tile_overlap": "decode_tile_overlap",
+      "1239:tile_debug": "tile_debug",
+      "1239:offload_device": "offload_device",
+      "1239:cache_model": "cache_model",
+      "1240:seed": "随机种子",
+      "1240:batch_size": "批次大小",
+      "1240:resolution": "resolution",
+      "1240:max_resolution": "max_resolution",
+      "1240:uniform_batch_size": "uniform_batch_size",
+      "1240:color_correction": "color_correction",
+      "1240:temporal_overlap": "temporal_overlap",
+      "1240:prepend_frames": "prepend_frames",
+      "1240:input_noise_scale": "input_noise_scale",
+      "1240:latent_noise_scale": "latent_noise_scale",
+      "1240:offload_device": "offload_device",
+      "1240:enable_debug": "enable_debug",
+      "1242:upscale_method": "upscale_method",
+      "1242:scale_by": "scale_by",
+      "1243:filename_prefix": "文件名前缀",
+      "1102:1100:type": "type",
+      "1102:1100:device": "device",
+      "1102:1099:weight_dtype": "weight_dtype",
+      "1102:867:seed": "随机种子",
+      "1102:867:steps": "迭代步数",
+      "1102:867:cfg": "CFG Scale",
+      "1102:867:denoise": "denoise",
+      "1224:846:aspect_ratio": "aspect_ratio",
+      "1224:846:proportional_width": "proportional_width",
+      "1224:846:proportional_height": "proportional_height",
+      "1224:846:fit": "fit",
+      "1224:846:method": "method",
+      "1224:846:round_to_multiple": "round_to_multiple",
+      "1224:846:scale_to_side": "scale_to_side",
+      "1224:846:scale_to_length": "scale_to_length",
+      "1224:846:background_color": "background_color",
+      "1224:848:aspect_ratio": "aspect_ratio",
+      "1224:848:proportional_width": "proportional_width",
+      "1224:848:proportional_height": "proportional_height",
+      "1224:848:fit": "fit",
+      "1224:848:method": "method",
+      "1224:848:round_to_multiple": "round_to_multiple",
+      "1224:848:scale_to_side": "scale_to_side",
+      "1224:848:scale_to_length": "scale_to_length",
+      "1224:848:background_color": "background_color",
+      "1224:850:aspect_ratio": "aspect_ratio",
+      "1224:850:proportional_width": "proportional_width",
+      "1224:850:proportional_height": "proportional_height",
+      "1224:850:fit": "fit",
+      "1224:850:method": "method",
+      "1224:850:round_to_multiple": "round_to_multiple",
+      "1224:850:scale_to_side": "scale_to_side",
+      "1224:850:scale_to_length": "scale_to_length",
+      "1224:850:background_color": "background_color",
+      "1224:839:aspect_ratio": "aspect_ratio",
+      "1224:839:proportional_width": "proportional_width",
+      "1224:839:proportional_height": "proportional_height",
+      "1224:839:fit": "fit",
+      "1224:839:method": "method",
+      "1224:839:round_to_multiple": "round_to_multiple",
+      "1224:839:scale_to_side": "scale_to_side",
+      "1224:839:scale_to_length": "scale_to_length",
+      "1224:839:background_color": "background_color",
+      "1224:842:aspect_ratio": "aspect_ratio",
+      "1224:842:proportional_width": "proportional_width",
+      "1224:842:proportional_height": "proportional_height",
+      "1224:842:fit": "fit",
+      "1224:842:method": "method",
+      "1224:842:round_to_multiple": "round_to_multiple",
+      "1224:842:scale_to_side": "scale_to_side",
+      "1224:842:scale_to_length": "scale_to_length",
+      "1224:842:background_color": "background_color",
+      "1224:844:aspect_ratio": "aspect_ratio",
+      "1224:844:proportional_width": "proportional_width",
+      "1224:844:proportional_height": "proportional_height",
+      "1224:844:fit": "fit",
+      "1224:844:method": "method",
+      "1224:844:round_to_multiple": "round_to_multiple",
+      "1224:844:scale_to_side": "scale_to_side",
+      "1224:844:scale_to_length": "scale_to_length",
+      "1224:844:background_color": "background_color",
+      "1224:851:inputcount": "inputcount",
+      "1224:851:direction": "direction",
+      "1224:851:match_image_size": "match_image_size",
+      "1224:1126:guidance": "guidance"
+    },
+    "enabledParams": {
+      "948:image1_text": false,
+      "948:image2_text": false,
+      "948:image3_text": false,
+      "948:image4_text": false,
+      "948:reel_height": false,
+      "948:border": false,
+      "949:font_file": false,
+      "949:font_size": false,
+      "949:border": false,
+      "949:color_theme": false,
+      "1057:model": false,
+      "1057:mmproj": false,
+      "1057:chat_handler": false,
+      "1057:n_ctx": false,
+      "1057:vram_limit": false,
+      "1057:image_min_tokens": false,
+      "1057:image_max_tokens": false,
+      "1057:load_mtp": false,
+      "1058:seed": false,
+      "1058:preset_prompt": false,
+      "1058:system_prompt": false,
+      "1058:inference_mode": false,
+      "1058:max_frames": false,
+      "1058:max_size": false,
+      "1058:force_offload": false,
+      "1058:save_states": false,
+      "1059:max_tokens": false,
+      "1059:top_k": false,
+      "1059:top_p": false,
+      "1059:min_p": false,
+      "1059:typical_p": false,
+      "1059:temperature": false,
+      "1059:repeat_penalty": false,
+      "1059:frequency_penalty": false,
+      "1059:mirostat_mode": false,
+      "1059:mirostat_eta": false,
+      "1059:mirostat_tau": false,
+      "1059:state_uid": false,
+      "1059:present_penalty": false,
+      "1061:split_keyword": false,
+      "1061:remove_text": false,
+      "1061:include_keyword": false,
+      "1062:text_0": false,
+      "1072:positive": true,
+      "1103:image": true,
+      "1103:enabled": true,
+      "1104:image": true,
+      "1104:enabled": true,
+      "1105:image": true,
+      "1105:enabled": true,
+      "1106:image": true,
+      "1106:enabled": true,
+      "1112:image": true,
+      "1112:enabled": true,
+      "1117:image": true,
+      "1117:enabled": true,
+      "1184:inputcount": false,
+      "1184:direction": false,
+      "1184:match_image_size": false,
+      "1222:base64_data": false,
+      "1222:image_output": false,
+      "1222:save_prefix": false,
+      "1232:width": true,
+      "1232:height": true,
+      "1232:batch_size": false,
+      "1238:device": false,
+      "1238:blocks_to_swap": false,
+      "1238:swap_io_components": false,
+      "1238:offload_device": false,
+      "1238:cache_model": false,
+      "1238:attention_mode": false,
+      "1239:device": false,
+      "1239:encode_tiled": false,
+      "1239:encode_tile_size": false,
+      "1239:encode_tile_overlap": false,
+      "1239:decode_tiled": false,
+      "1239:decode_tile_size": false,
+      "1239:decode_tile_overlap": false,
+      "1239:tile_debug": false,
+      "1239:offload_device": false,
+      "1239:cache_model": false,
+      "1240:seed": false,
+      "1240:batch_size": false,
+      "1240:resolution": false,
+      "1240:max_resolution": false,
+      "1240:uniform_batch_size": false,
+      "1240:color_correction": false,
+      "1240:temporal_overlap": false,
+      "1240:prepend_frames": false,
+      "1240:input_noise_scale": false,
+      "1240:latent_noise_scale": false,
+      "1240:offload_device": false,
+      "1240:enable_debug": false,
+      "1242:upscale_method": false,
+      "1242:scale_by": false,
+      "1243:filename_prefix": false,
+      "1102:1100:type": false,
+      "1102:1100:device": false,
+      "1102:1099:weight_dtype": false,
+      "1102:867:seed": true,
+      "1102:867:steps": false,
+      "1102:867:cfg": false,
+      "1102:867:denoise": false,
+      "1224:846:aspect_ratio": false,
+      "1224:846:proportional_width": false,
+      "1224:846:proportional_height": false,
+      "1224:846:fit": false,
+      "1224:846:method": false,
+      "1224:846:round_to_multiple": false,
+      "1224:846:scale_to_side": false,
+      "1224:846:scale_to_length": false,
+      "1224:846:background_color": false,
+      "1224:848:aspect_ratio": false,
+      "1224:848:proportional_width": false,
+      "1224:848:proportional_height": false,
+      "1224:848:fit": false,
+      "1224:848:method": false,
+      "1224:848:round_to_multiple": false,
+      "1224:848:scale_to_side": false,
+      "1224:848:scale_to_length": false,
+      "1224:848:background_color": false,
+      "1224:850:aspect_ratio": false,
+      "1224:850:proportional_width": false,
+      "1224:850:proportional_height": false,
+      "1224:850:fit": false,
+      "1224:850:method": false,
+      "1224:850:round_to_multiple": false,
+      "1224:850:scale_to_side": false,
+      "1224:850:scale_to_length": false,
+      "1224:850:background_color": false,
+      "1224:839:aspect_ratio": false,
+      "1224:839:proportional_width": false,
+      "1224:839:proportional_height": false,
+      "1224:839:fit": false,
+      "1224:839:method": false,
+      "1224:839:round_to_multiple": false,
+      "1224:839:scale_to_side": false,
+      "1224:839:scale_to_length": false,
+      "1224:839:background_color": false,
+      "1224:842:aspect_ratio": false,
+      "1224:842:proportional_width": false,
+      "1224:842:proportional_height": false,
+      "1224:842:fit": false,
+      "1224:842:method": false,
+      "1224:842:round_to_multiple": false,
+      "1224:842:scale_to_side": false,
+      "1224:842:scale_to_length": false,
+      "1224:842:background_color": false,
+      "1224:844:aspect_ratio": false,
+      "1224:844:proportional_width": false,
+      "1224:844:proportional_height": false,
+      "1224:844:fit": false,
+      "1224:844:method": false,
+      "1224:844:round_to_multiple": false,
+      "1224:844:scale_to_side": false,
+      "1224:844:scale_to_length": false,
+      "1224:844:background_color": false,
+      "1224:851:inputcount": false,
+      "1224:851:direction": false,
+      "1224:851:match_image_size": false,
+      "1224:1126:guidance": false
+    },
+    "formValues": {
+      "948:image1_text": "参考图",
+      "948:image2_text": "生成图",
+      "948:image3_text": "",
+      "948:image4_text": "",
+      "948:reel_height": 1024,
+      "948:border": 32,
+      "949:font_file": "Alibaba-PuHuiTi-Heavy.ttf",
+      "949:font_size": 40,
+      "949:border": 32,
+      "949:color_theme": "light",
+      "1057:model": "Qwen3.6-35B-A3B-UD-Q2_K_XL.gguf",
+      "1057:mmproj": "Qwen3.6-35B-A3B-mmproj-BF16.gguf",
+      "1057:chat_handler": "Qwen3.6",
+      "1057:n_ctx": 8192,
+      "1057:vram_limit": -1,
+      "1057:image_min_tokens": 0,
+      "1057:image_max_tokens": 0,
+      "1057:load_mtp": false,
+      "1058:seed": 44,
+      "1058:preset_prompt": "Empty - Nothing",
+      "1058:system_prompt": "## 角色\n\n你是顶级AI绘画提示词工程师，精通 ComfyUI 与 flux-2-klein-9b-fp8 多参考图编辑模型。你会收到一张【横向拼接】的多参考图大图与用户需求，任务是【观察图像 + 强制执行用户的修改与布局指令 + 重写优化】，产出专用于该模型的结构化中文提示词。\n\n---\n\n## 输入说明\n\n拼接大图从左到右为参考图1、2、…、N。人物图每张一人；场景可能来自某张参考图，也可能仅由用户文字描述。用户需求可能规范分为六块——【参考图描述】【故故事情节】【画面构图】【正向提示词优化】【负面提示词优化】【特殊要求】，也可能是一句话自由指令(含人物合并、改属性、指定站位/坐姿/互动等)，都要准确解析并落实。缺信息时合理默认，绝不报错、绝不提问、绝不复述指令。\n\n---\n\n## 最高优先级A：属性修改(特殊要求)\n\n涉及颜色/发型/服装/属性时，无条件以用户值【覆盖】原图并改彻底(如\"发型改长发\"\"全身改黄\")。特殊要求的优先级高于一切其他规则。\n\n---\n\n## 最高优先级B：空间布局/动作指令(凌驾输出模板)\n\n若用户指定了人物位置/站位/坐姿/互动：Main Scene 必须据此重写空间叙事，真实描述各人位置与姿态，丢弃\"并排站立、无重叠、面向镜头、全身照\"等默认句；对应\"姿态:\"必须符合指令；Composition 也可据空间关系重写为纵深、分区光照等。未指定布局时才用默认模板。\n\n---\n## 最高优先级C：镜头要求(凌驾输出模板)\n\n若用户指定了画面镜头：Main Scene 必须前面增加镜头描述和裁切范围，并不能因为原图是全身就描述全身，范例如：近景镜头 Main Scene:（人物近景镜头，严格裁切至人物胸部以上范围，完整呈现头部、肩部与部分胸部区域，兼顾面部表情与上半身形态，无胸部以下身体部位:2.0）**Composition:**近景画幅，全程聚焦胸部以上人物区域。超写实渲染画质，完整保留人物上半身与面部细节。俯拍视角 Main Scene:（极致高机位俯拍视角，镜头机位严格高于被摄人物，从上方垂直向下拍摄，完整呈现人物头顶、背部轮廓与场景整体布局，强化画面俯视纵深感:2.0）。背拍视角 Main Scene:（纯背面背拍视角，镜头严格正对被摄人物背部，仅完整呈现人物纯后背轮廓，无面部与侧面画面，突出人物背影线条与整体氛围感:2.0）\n\n---\n\n## 优化逻辑(决定改写哪几段)\n\n1. 当用户给出【画面构图】时：只重写 Main Scene 与 Composition，不得改动 Character 与 Background Scene 的任何内容。\n2. 当用户给出【正向提示词优化】【负面提示词优化】时：据其优化 Main Scene、Composition 与 Negative，不得改动 Character 与 Background Scene。\n3. 未触发上述时：各段均基于参考图与用户输入正常生成。\n\n---\n\n## 参考图绑定(防混淆)\n\n必须严格区分每张参考图的人物、服装、动作、场景，绝对不能张冠李戴；Character X 只能描述 Reference Image X 的人物。\n\n---\n\n## 输出纪律(违反即错误，最重要)\n\n1. 【纯中文】只输出中文(Character/Reference Image/Main Scene/Composition/Background Scene/Negative 等固定结构标签词除外)。\n2. 【纯净输出】只输出最终提示词文本，禁止任何前置语、解释、说明、思考过程、备注。禁止编造用户未提及的细节。\n3. 【绝不输出标签/占位词】铁律。\"整体环境概括句\"\"按场景真实类型分层\"\"主要材质1/2\"\"环境与光照一句\"\"服装：\"\"发型：\"\"神态：\"\"按用户指令重写\"\"Reference Image N 的字母N\"等一律禁止出现；每段直接写成品内容，除 Main Scene/Composition/Character N(...)/Background Scene(...)/Negative 五个固定结构标题外，正文不得有任何带冒号的自造小标签。\n4. 【禁止复制示例】下方参考范例仅供学习格式，其中所有人物、场景、细节都是示例，必须完全忽略，绝不复制其文字，所有内容基于用户真实输入重新生成。\n5. 【Character 无字段前缀】人物描述不写\"发型:\"\"神态:\"\"服装:\"，用\"，\"\"；\"把 发型发饰、神态妆容、服装、姿态 连成流畅段落；仅\"道具:\"\"姿态:\"两个前缀允许保留。\n6. 【段落紧凑】段间不空行，行尾不留多余空格。\n\n---\n\n## 内容规则\n\n1. 【方位词】与人物在最终画面的实际位置一致：2人=Left, Right(或按原拼接顺序 Far Left/Second from Left)；3人=Left, Middle, Right；4/5人按从左到右等距映射。\n2. 【景别】仅当用户给景别时放 Composition 句首；否则不加。无布局指令时 Main Scene 景别写\"全身照\"，有布局指令时按叙事自由处理。遇 (xxx:2.0) 权重括号转写为普通中文。\n3. 【人物·克制】顺序：发型发饰→神态/眼神/妆容→服装(内搭/外搭/下装连写，写明颜色材质剪裁，鞋/皮带/手环并入)→突出手持道具(道具:)→姿态(姿态:，须符合用户布局)。忠于原图，不堆砌、不用括号补猜测。\n4. 【背景·自适应】有场景图：标题写实际编号，按其类型用贴合实际的分区(如 墙面主体/吧台区/展架/地面/天花板)直接描述，首句给整体环境概括(但不写\"概括\"二字)；仅文字场景无图：标题写 Background Scene(Generated from text:场景词)，按真实类型描述；背景只写环境，绝不写入人物。\n5. 【色温】按光照判断(如5200K/5500K)。\n\n\n---\n\n## 输出范例(只模仿其\"无小标签、直接成品\"的写法，禁止照抄其文字内容)\n\nMain Scene: 大师级作品，最高画质，8K超高清，超写实商业人像摄影，现代科技感企业前台，左侧女性站立于流线型金属吧台内身体微侧一手轻搭台面，右侧女性坐在吧台外的红色高脚椅上双腿交叠，两人视线望向镜头，冷暖对比布光，金属与玻璃质感强烈，无硬阴影\nComposition: 广角纵深构图，人物主体清晰锐利，背景前台细节丰富；顶部线性灯带为主光，吧台区偏冷白光，右侧人物略受暖光；完美人体结构，真实身体比例，无透视畸变，电影级柔和漫反射灯光，人物面部光线均匀，整体色温5200K，符合科技感空间质感。\nCharacter 1(Left, Reference Image 1): 黑色及肩波浪短发，发丝柔顺有光泽，眼神冷峻直视镜头，妆容精致自然唇色裸粉；黑色细肩带短款背心外搭浅灰水洗牛仔夹克半披穿法，黑色高腰破洞紧身牛仔裤大腿处不规则撕裂，腰间黑皮带配银色链条，黑色厚底系带马丁靴哑光质感；姿态:站立于吧台内侧，身体微侧向右，左手自然垂落右手轻搭吧台边缘，双腿微分，专业放松的接待姿态。\nCharacter 2(Right, Reference Image 2): 橙红色高马尾，红色发圈固定，发尾微卷，眼神锐利直视镜头表情自信，浓妆突出眼部唇色鲜红；全身红色高光泽乳胶战斗服紧身包裹，肩胸有橙色圆形装饰块，手臂腿部黑色条纹拼接，同色系乳胶手套与高跟尖头靴；姿态:坐在吧台外的红色高脚椅上，双腿优雅交叠右腿搭左腿，左手叉腰右手垂于大腿侧，身体微前倾，自信动感的坐姿。\nBackground Scene(Restoration of Reference Image 3): 现代高端科技公司前台大厅，墙面为蓝紫渐变发光玻璃，中央嵌入白色立体「TechInnovate」字样与蓝色盾形logo；流线型金属吧台表面高光反射，台面放置平板电脑与抽象金属雕塑；右侧深灰柜体内嵌白色冷光展架陈列电子产品；地面浅灰高光大理石反射清晰；天花板白色平顶内嵌线性暖白LED灯带。\nNegative: 坏手, 漏趾, 畸形肢体, 缺失肢体, 额外肢体, 多余的手, 连体人, 三条腿, 两个头",
+      "1058:inference_mode": "images",
+      "1058:max_frames": 24,
+      "1058:max_size": 256,
+      "1058:force_offload": false,
+      "1058:save_states": false,
+      "1059:max_tokens": 1024,
+      "1059:top_k": 30,
+      "1059:top_p": 0.9,
+      "1059:min_p": 0.05,
+      "1059:typical_p": 1,
+      "1059:temperature": 0.7,
+      "1059:repeat_penalty": 1,
+      "1059:frequency_penalty": 0,
+      "1059:mirostat_mode": 0,
+      "1059:mirostat_eta": 0.1,
+      "1059:mirostat_tau": 5,
+      "1059:state_uid": -1,
+      "1059:present_penalty": 1,
+      "1061:split_keyword": "Negative",
+      "1061:remove_text": "",
+      "1061:include_keyword": false,
+      "1062:text_0": "Main Scene: 大师级作品，最高画质，8K超高清，超写实商业人像摄影，广袤无垠的大草原场景，六位风格各异的女性一字排开站立于画面中，面向镜头，同时举起右手向观众挥手打招呼，表情自然亲切，阳光明媚，暖色调，草地细节清晰，无硬阴影\nComposition: 广角全景构图，人物主体清晰锐利，背景草原细节丰富；顶部自然日光为主光，整体明亮均匀，完美人体结构，真实身体比例，无透视畸变，电影级柔和漫反射灯光，人物面部光线均匀，整体色温5500K，符合户外草原自然光质感。\nCharacter 1(Left, Reference Image 1): 黑色齐肩波浪卷发，刘海微卷，眼神冷峻直视镜头表情酷飒；黑色细肩带短款背心外搭浅灰水洗牛仔夹克半披穿法，黑色高腰破洞紧身牛仔裤大腿处不规则撕裂，腰间黑皮带配银色链条，黑色厚底系带马丁靴哑光质感；姿态:站立于画面最左侧，右手举起向观众挥手，双腿微分，酷飒放松的站姿。\nCharacter 2(Second from Left, Reference Image 2): 橙红色双马尾，红色发圈固定，发尾微卷，眼神锐利直视镜头表情自信，浓妆突出眼部；全身红色高光泽乳胶战斗服紧身包裹，肩胸有橙色圆形装饰块，手臂腿部黑色条纹拼接，同色系乳胶手套与红色高跟尖头靴；姿态:站立于左二位置，右手举起向观众挥手，身体微侧，自信动感的站姿。\nCharacter 3(Third from Left, Reference Image 3): 黑色长直发，白色花朵发饰点缀，眼神温婉直视镜头表情恬静；淡蓝色水墨花卉图案长款汉服外搭白色薄纱披风，内搭同色系绣花裙，手持白色油纸伞，淡蓝色绣花鞋；姿态:站立于画面中央，右手举起向观众挥手，左手持伞，温婉恬静的站姿。\nCharacter 4(Fourth from Left, Reference Image 4): 深棕色长卷发，眼神温柔直视镜头表情甜美；红色无袖细吊带长裙，裙摆及小腿，材质垂顺，搭配红色玛丽珍鞋；姿态:站立于右二位置，右手举起向观众挥手，身体微侧，优雅甜美的站姿。\nCharacter 5(Fifth from Left, Reference Image 5): 深棕色长直发，发丝柔顺有光泽，眼神清澈直视镜头表情清纯；白色蕾丝无袖连衣裙，领口与袖口有精致蕾丝花边，手腕佩戴银色细手链；姿态:站立于右一位置，右手举起向观众挥手，身体微侧，清纯自然的站姿。\nCharacter 6(Right, Reference Image 6): 黑色齐刘海短发，白色修女头巾包裹，眼神无辜直视镜头表情乖巧；黑色修女服搭配白色荷叶领与袖口，黑色短裙，白色堆堆袜与黑色皮鞋；姿态:站立于画面最右侧，右手举起向观众挥手，双腿微分，乖巧可爱的站姿。\nBackground Scene(Generated from text:广袤无垠的大草原): 画面背景为广袤无垠的大草原，地面覆盖茂密的绿色与枯黄色相间野草，远处地平线清晰，天空湛蓝，光线明亮自然，无其他建筑或人物干扰，营造出开阔自然的户外氛围。",
+      "1072:positive": "【参考图描述】\n参考图1是个女人,参考图2是个女人, 参考图3是个女人, 参考图4是个女人, 参考图5是个女人, 参考图6是个女人,\n\n【故事情节】\n6个女人站广袤无垠的大草原场景里，挥手向观众打招呼",
+      "1103:image": null,
+      "1103:enabled": true,
+      "1104:image": null,
+      "1104:enabled": true,
+      "1105:image": null,
+      "1105:enabled": true,
+      "1106:image": null,
+      "1106:enabled": true,
+      "1112:image": null,
+      "1112:enabled": true,
+      "1117:image": null,
+      "1117:enabled": true,
+      "1184:inputcount": 6,
+      "1184:direction": "down",
+      "1184:match_image_size": true,
+      "1222:base64_data": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
+      "1222:image_output": "Preview",
+      "1222:save_prefix": "ComfyUI",
+      "1232:width": 1536,
+      "1232:height": 2048,
+      "1232:batch_size": 1,
+      "1238:device": "cuda:0",
+      "1238:blocks_to_swap": 32,
+      "1238:swap_io_components": true,
+      "1238:offload_device": "cpu",
+      "1238:cache_model": "sdpa",
+      "1238:attention_mode": "sdpa",
+      "1239:device": "cuda:0",
+      "1239:encode_tiled": true,
+      "1239:encode_tile_size": 1024,
+      "1239:encode_tile_overlap": 128,
+      "1239:decode_tiled": true,
+      "1239:decode_tile_size": 1024,
+      "1239:decode_tile_overlap": 128,
+      "1239:tile_debug": "false",
+      "1239:offload_device": "cpu",
+      "1239:cache_model": false,
+      "1240:seed": 3084876233,
+      "1240:batch_size": 5,
+      "1240:resolution": 2048,
+      "1240:max_resolution": 4096,
+      "1240:uniform_batch_size": false,
+      "1240:color_correction": "lab",
+      "1240:temporal_overlap": 0,
+      "1240:prepend_frames": 0,
+      "1240:input_noise_scale": 0,
+      "1240:latent_noise_scale": 0,
+      "1240:offload_device": "cpu",
+      "1240:enable_debug": false,
+      "1242:upscale_method": "lanczos",
+      "1242:scale_by": 0.5000000000000001,
+      "1243:filename_prefix": "ComfyUI",
+      "1102:1100:type": "flux2",
+      "1102:1100:device": "default",
+      "1102:1099:weight_dtype": "default",
+      "1102:867:seed": 44,
+      "1102:867:steps": 6,
+      "1102:867:cfg": 1,
+      "1102:867:denoise": 1,
+      "1224:846:aspect_ratio": "original",
+      "1224:846:proportional_width": 1,
+      "1224:846:proportional_height": 1,
+      "1224:846:fit": "letterbox",
+      "1224:846:method": "lanczos",
+      "1224:846:round_to_multiple": "8",
+      "1224:846:scale_to_side": "longest",
+      "1224:846:scale_to_length": 1920,
+      "1224:846:background_color": "#000000",
+      "1224:848:aspect_ratio": "original",
+      "1224:848:proportional_width": 1,
+      "1224:848:proportional_height": 1,
+      "1224:848:fit": "letterbox",
+      "1224:848:method": "lanczos",
+      "1224:848:round_to_multiple": "8",
+      "1224:848:scale_to_side": "longest",
+      "1224:848:scale_to_length": 1920,
+      "1224:848:background_color": "#000000",
+      "1224:850:aspect_ratio": "original",
+      "1224:850:proportional_width": 1,
+      "1224:850:proportional_height": 1,
+      "1224:850:fit": "letterbox",
+      "1224:850:method": "lanczos",
+      "1224:850:round_to_multiple": "8",
+      "1224:850:scale_to_side": "longest",
+      "1224:850:scale_to_length": 1920,
+      "1224:850:background_color": "#000000",
+      "1224:839:aspect_ratio": "original",
+      "1224:839:proportional_width": 1,
+      "1224:839:proportional_height": 1,
+      "1224:839:fit": "letterbox",
+      "1224:839:method": "lanczos",
+      "1224:839:round_to_multiple": "8",
+      "1224:839:scale_to_side": "longest",
+      "1224:839:scale_to_length": 1920,
+      "1224:839:background_color": "#000000",
+      "1224:842:aspect_ratio": "original",
+      "1224:842:proportional_width": 1,
+      "1224:842:proportional_height": 1,
+      "1224:842:fit": "letterbox",
+      "1224:842:method": "lanczos",
+      "1224:842:round_to_multiple": "8",
+      "1224:842:scale_to_side": "longest",
+      "1224:842:scale_to_length": 1920,
+      "1224:842:background_color": "#000000",
+      "1224:844:aspect_ratio": "original",
+      "1224:844:proportional_width": 1,
+      "1224:844:proportional_height": 1,
+      "1224:844:fit": "letterbox",
+      "1224:844:method": "lanczos",
+      "1224:844:round_to_multiple": "8",
+      "1224:844:scale_to_side": "longest",
+      "1224:844:scale_to_length": 1920,
+      "1224:844:background_color": "#000000",
+      "1224:851:inputcount": 6,
+      "1224:851:direction": "right",
+      "1224:851:match_image_size": true,
+      "1224:1126:guidance": 4
+    },
+    "mediaOrder": [
+      "1103:image",
+      "1104:image",
+      "1105:image",
+      "1106:image",
+      "1112:image",
+      "1117:image"
+    ],
+    "mediaOrderSource": "auto",
+    "apiNames": {
+      "948:image1_text": "image1_text",
+      "948:image2_text": "image2_text",
+      "948:image3_text": "image3_text",
+      "948:image4_text": "image4_text",
+      "948:reel_height": "reel_height",
+      "948:border": "border",
+      "949:font_file": "font_file",
+      "949:font_size": "font_size",
+      "949:border": "border_2",
+      "949:color_theme": "color_theme",
+      "1057:model": "model",
+      "1057:mmproj": "mmproj",
+      "1057:chat_handler": "chat_handler",
+      "1057:n_ctx": "n_ctx",
+      "1057:vram_limit": "vram_limit",
+      "1057:image_min_tokens": "image_min_tokens",
+      "1057:image_max_tokens": "image_max_tokens",
+      "1057:load_mtp": "load_mtp",
+      "1058:seed": "seed",
+      "1058:preset_prompt": "preset_prompt",
+      "1058:system_prompt": "system_prompt",
+      "1058:inference_mode": "inference_mode",
+      "1058:max_frames": "max_frames",
+      "1058:max_size": "max_size",
+      "1058:force_offload": "force_offload",
+      "1058:save_states": "save_states",
+      "1059:max_tokens": "max_tokens",
+      "1059:top_k": "top_k",
+      "1059:top_p": "top_p",
+      "1059:min_p": "min_p",
+      "1059:typical_p": "typical_p",
+      "1059:temperature": "temperature",
+      "1059:repeat_penalty": "repeat_penalty",
+      "1059:frequency_penalty": "frequency_penalty",
+      "1059:mirostat_mode": "mirostat_mode",
+      "1059:mirostat_eta": "mirostat_eta",
+      "1059:mirostat_tau": "mirostat_tau",
+      "1059:state_uid": "state_uid",
+      "1059:present_penalty": "present_penalty",
+      "1061:split_keyword": "split_keyword",
+      "1061:remove_text": "remove_text",
+      "1061:include_keyword": "include_keyword",
+      "1062:text_0": "text_0",
+      "1072:positive": "positive",
+      "1103:image": "ref_image_0",
+      "1103:enabled": "enabled_0",
+      "1104:image": "ref_image_1",
+      "1104:enabled": "enabled_1",
+      "1105:image": "ref_image_2",
+      "1105:enabled": "enabled_2",
+      "1106:image": "ref_image_3",
+      "1106:enabled": "enabled_3",
+      "1112:image": "ref_image_4",
+      "1112:enabled": "enabled_4",
+      "1117:image": "ref_image_5",
+      "1117:enabled": "enabled_5",
+      "1184:inputcount": "inputcount",
+      "1184:direction": "direction",
+      "1184:match_image_size": "match_image_size",
+      "1222:base64_data": "base64_data",
+      "1222:image_output": "image_output",
+      "1222:save_prefix": "save_prefix",
+      "1232:width": "width",
+      "1232:height": "height",
+      "1232:batch_size": "batch_size",
+      "1238:device": "device_2",
+      "1238:blocks_to_swap": "blocks_to_swap",
+      "1238:swap_io_components": "swap_io_components",
+      "1238:offload_device": "offload_device",
+      "1238:cache_model": "cache_model",
+      "1238:attention_mode": "attention_mode",
+      "1239:device": "device_3",
+      "1239:encode_tiled": "encode_tiled",
+      "1239:encode_tile_size": "encode_tile_size",
+      "1239:encode_tile_overlap": "encode_tile_overlap",
+      "1239:decode_tiled": "decode_tiled",
+      "1239:decode_tile_size": "decode_tile_size",
+      "1239:decode_tile_overlap": "decode_tile_overlap",
+      "1239:tile_debug": "tile_debug",
+      "1239:offload_device": "offload_device_2",
+      "1239:cache_model": "cache_model_2",
+      "1240:seed": "seed_3",
+      "1240:batch_size": "batch_size_2",
+      "1240:resolution": "resolution",
+      "1240:max_resolution": "max_resolution",
+      "1240:uniform_batch_size": "uniform_batch_size",
+      "1240:color_correction": "color_correction",
+      "1240:temporal_overlap": "temporal_overlap",
+      "1240:prepend_frames": "prepend_frames",
+      "1240:input_noise_scale": "input_noise_scale",
+      "1240:latent_noise_scale": "latent_noise_scale",
+      "1240:offload_device": "offload_device_3",
+      "1240:enable_debug": "enable_debug",
+      "1242:upscale_method": "upscale_method",
+      "1242:scale_by": "scale_by",
+      "1243:filename_prefix": "filename_prefix",
+      "1102:1100:type": "type",
+      "1102:1100:device": "device",
+      "1102:1099:weight_dtype": "weight_dtype",
+      "1102:867:seed": "seed_2",
+      "1102:867:steps": "steps",
+      "1102:867:cfg": "cfg",
+      "1102:867:denoise": "denoise",
+      "1224:846:aspect_ratio": "aspect_ratio_4",
+      "1224:846:proportional_width": "proportional_width_4",
+      "1224:846:proportional_height": "proportional_height_4",
+      "1224:846:fit": "fit_4",
+      "1224:846:method": "method_4",
+      "1224:846:round_to_multiple": "round_to_multiple_4",
+      "1224:846:scale_to_side": "scale_to_side_4",
+      "1224:846:scale_to_length": "scale_to_length_4",
+      "1224:846:background_color": "background_color_4",
+      "1224:848:aspect_ratio": "aspect_ratio_5",
+      "1224:848:proportional_width": "proportional_width_5",
+      "1224:848:proportional_height": "proportional_height_5",
+      "1224:848:fit": "fit_5",
+      "1224:848:method": "method_5",
+      "1224:848:round_to_multiple": "round_to_multiple_5",
+      "1224:848:scale_to_side": "scale_to_side_5",
+      "1224:848:scale_to_length": "scale_to_length_5",
+      "1224:848:background_color": "background_color_5",
+      "1224:850:aspect_ratio": "aspect_ratio_6",
+      "1224:850:proportional_width": "proportional_width_6",
+      "1224:850:proportional_height": "proportional_height_6",
+      "1224:850:fit": "fit_6",
+      "1224:850:method": "method_6",
+      "1224:850:round_to_multiple": "round_to_multiple_6",
+      "1224:850:scale_to_side": "scale_to_side_6",
+      "1224:850:scale_to_length": "scale_to_length_6",
+      "1224:850:background_color": "background_color_6",
+      "1224:839:aspect_ratio": "aspect_ratio",
+      "1224:839:proportional_width": "proportional_width",
+      "1224:839:proportional_height": "proportional_height",
+      "1224:839:fit": "fit",
+      "1224:839:method": "method",
+      "1224:839:round_to_multiple": "round_to_multiple",
+      "1224:839:scale_to_side": "scale_to_side",
+      "1224:839:scale_to_length": "scale_to_length",
+      "1224:839:background_color": "background_color",
+      "1224:842:aspect_ratio": "aspect_ratio_2",
+      "1224:842:proportional_width": "proportional_width_2",
+      "1224:842:proportional_height": "proportional_height_2",
+      "1224:842:fit": "fit_2",
+      "1224:842:method": "method_2",
+      "1224:842:round_to_multiple": "round_to_multiple_2",
+      "1224:842:scale_to_side": "scale_to_side_2",
+      "1224:842:scale_to_length": "scale_to_length_2",
+      "1224:842:background_color": "background_color_2",
+      "1224:844:aspect_ratio": "aspect_ratio_3",
+      "1224:844:proportional_width": "proportional_width_3",
+      "1224:844:proportional_height": "proportional_height_3",
+      "1224:844:fit": "fit_3",
+      "1224:844:method": "method_3",
+      "1224:844:round_to_multiple": "round_to_multiple_3",
+      "1224:844:scale_to_side": "scale_to_side_3",
+      "1224:844:scale_to_length": "scale_to_length_3",
+      "1224:844:background_color": "background_color_3",
+      "1224:851:inputcount": "inputcount_2",
+      "1224:851:direction": "direction_2",
+      "1224:851:match_image_size": "match_image_size_2",
+      "1224:1126:guidance": "guidance"
+    }
+  }
+}

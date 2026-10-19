@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+backend/.venv/
+.venv/
+
+# Node / 前端
+web/node_modules/
+web/dist/
+web/.vite/
+npm-debug.log*
+
+# 运行时数据（数据库、上传、产物、日志、末帧）
+data/director.db*
+data/*.db.bak
+data/uploads/*
+data/outputs/*
+data/thumbs/*
+data/comfy.log
+data/*.log
+!data/uploads/.gitkeep
+!data/outputs/.gitkeep
+!data/thumbs/.gitkeep
+
+# 备份 / 临时
+*.bak
+*.tmp
+*.log
+
+# 编辑器 / 系统
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

@@ -1,0 +1,1143 @@
+{
+  "269": {
+    "inputs": {
+      "image": "123.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "274": {
+    "inputs": {
+      "noise_seed": 42
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "随机噪波"
+    }
+  },
+  "275": {
+    "inputs": {
+      "noise_seed": 23
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "随机噪波"
+    }
+  },
+  "276": {
+    "inputs": {
+      "video_latent": [
+        "288",
+        0
+      ],
+      "audio_latent": [
+        "309",
+        1
+      ]
+    },
+    "class_type": "LTXVConcatAVLatent",
+    "_meta": {
+      "title": "LTXVConcatAVLatent"
+    }
+  },
+  "279": {
+    "inputs": {
+      "sampler_name": "euler_cfg_pp"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "K采样器选择"
+    }
+  },
+  "280": {
+    "inputs": {
+      "sigmas": "0.85, 0.7250, 0.4219, 0.0"
+    },
+    "class_type": "ManualSigmas",
+    "_meta": {
+      "title": "自定义Sigmas"
+    }
+  },
+  "282": {
+    "inputs": {
+      "cfg": 1,
+      "model": [
+        "318",
+        0
+      ],
+      "positive": [
+        "284",
+        0
+      ],
+      "negative": [
+        "284",
+        1
+      ]
+    },
+    "class_type": "CFGGuider",
+    "_meta": {
+      "title": "CFG引导器"
+    }
+  },
+  "283": {
+    "inputs": {
+      "noise": [
+        "275",
+        0
+      ],
+      "guider": [
+        "316",
+        0
+      ],
+      "sampler": [
+        "291",
+        0
+      ],
+      "sigmas": [
+        "308",
+        0
+      ],
+      "latent_image": [
+        "306",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "自定义采样器（高级）"
+    }
+  },
+  "284": {
+    "inputs": {
+      "positive": [
+        "305",
+        0
+      ],
+      "negative": [
+        "305",
+        1
+      ],
+      "latent": [
+        "309",
+        0
+      ]
+    },
+    "class_type": "LTXVCropGuides",
+    "_meta": {
+      "title": "LTXV裁剪指导"
+    }
+  },
+  "286": {
+    "inputs": {
+      "longer_edge": 1536,
+      "images": [
+        "334",
+        0
+      ]
+    },
+    "class_type": "ResizeImagesByLongerEdge",
+    "_meta": {
+      "title": "缩放图像（长边）"
+    }
+  },
+  "287": {
+    "inputs": {
+      "samples": [
+        "284",
+        2
+      ],
+      "upscale_model": [
+        "313",
+        0
+      ],
+      "vae": [
+        "319",
+        0
+      ]
+    },
+    "class_type": "LTXVLatentUpsampler",
+    "_meta": {
+      "title": "LTXV潜空间上采样器"
+    }
+  },
+  "288": {
+    "inputs": {
+      "strength": 1,
+      "bypass": false,
+      "vae": [
+        "319",
+        0
+      ],
+      "image": [
+        "289",
+        0
+      ],
+      "latent": [
+        "287",
+        0
+      ]
+    },
+    "class_type": "LTXVImgToVideoInplace",
+    "_meta": {
+      "title": "LTXV图像转视频（原地）"
+    }
+  },
+  "289": {
+    "inputs": {
+      "img_compression": 18,
+      "image": [
+        "286",
+        0
+      ]
+    },
+    "class_type": "LTXVPreprocess",
+    "_meta": {
+      "title": "LTXV预处理"
+    }
+  },
+  "291": {
+    "inputs": {
+      "sampler_name": "euler_ancestral_cfg_pp"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "K采样器选择"
+    }
+  },
+  "292": {
+    "inputs": {
+      "expression": "a/2",
+      "values.a": [
+        "457",
+        0
+      ]
+    },
+    "class_type": "ComfyMathExpression",
+    "_meta": {
+      "title": "数学表达式"
+    }
+  },
+  "294": {
+    "inputs": {
+      "expression": "a/2",
+      "values.a": [
+        "459",
+        0
+      ]
+    },
+    "class_type": "ComfyMathExpression",
+    "_meta": {
+      "title": "数学表达式"
+    }
+  },
+  "295": {
+    "inputs": {
+      "width": [
+        "292",
+        1
+      ],
+      "height": [
+        "294",
+        1
+      ],
+      "length": [
+        "465",
+        0
+      ],
+      "batch_size": 1
+    },
+    "class_type": "EmptyLTXVLatentVideo",
+    "_meta": {
+      "title": "空Latent视频（LTXV）"
+    }
+  },
+  "296": {
+    "inputs": {
+      "strength": 0.7,
+      "bypass": false,
+      "vae": [
+        "319",
+        0
+      ],
+      "image": [
+        "289",
+        0
+      ],
+      "latent": [
+        "295",
+        0
+      ]
+    },
+    "class_type": "LTXVImgToVideoInplace",
+    "_meta": {
+      "title": "LTXV图像转视频（原地）"
+    }
+  },
+  "297": {
+    "inputs": {
+      "samples": [
+        "446",
+        1
+      ],
+      "audio_vae": [
+        "320",
+        0
+      ]
+    },
+    "class_type": "LTXVAudioVAEDecode",
+    "_meta": {
+      "title": "LTXV音频VAE解码"
+    }
+  },
+  "298": {
+    "inputs": {
+      "expression": "a",
+      "values.a": [
+        "469",
+        0
+      ]
+    },
+    "class_type": "ComfyMathExpression",
+    "_meta": {
+      "title": "数学表达式"
+    }
+  },
+  "304": {
+    "inputs": {
+      "text": [
+        "475",
+        0
+      ],
+      "clip": [
+        "436",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "305": {
+    "inputs": {
+      "frame_rate": [
+        "352",
+        0
+      ],
+      "positive": [
+        "304",
+        0
+      ],
+      "negative": [
+        "315",
+        0
+      ]
+    },
+    "class_type": "LTXVConditioning",
+    "_meta": {
+      "title": "LTXV条件"
+    }
+  },
+  "306": {
+    "inputs": {
+      "video_latent": [
+        "296",
+        0
+      ],
+      "audio_latent": [
+        "307",
+        0
+      ]
+    },
+    "class_type": "LTXVConcatAVLatent",
+    "_meta": {
+      "title": "LTXVConcatAVLatent"
+    }
+  },
+  "307": {
+    "inputs": {
+      "frames_number": [
+        "465",
+        0
+      ],
+      "frame_rate": [
+        "298",
+        1
+      ],
+      "batch_size": 1,
+      "audio_vae": [
+        "320",
+        0
+      ]
+    },
+    "class_type": "LTXVEmptyLatentAudio",
+    "_meta": {
+      "title": "LTXV 空音频潜空间"
+    }
+  },
+  "308": {
+    "inputs": {
+      "sigmas": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0"
+    },
+    "class_type": "ManualSigmas",
+    "_meta": {
+      "title": "自定义Sigmas"
+    }
+  },
+  "309": {
+    "inputs": {
+      "av_latent": [
+        "283",
+        0
+      ]
+    },
+    "class_type": "LTXVSeparateAVLatent",
+    "_meta": {
+      "title": "LTXV分离音视频潜空间"
+    }
+  },
+  "310": {
+    "inputs": {
+      "noise": [
+        "274",
+        0
+      ],
+      "guider": [
+        "282",
+        0
+      ],
+      "sampler": [
+        "279",
+        0
+      ],
+      "sigmas": [
+        "280",
+        0
+      ],
+      "latent_image": [
+        "276",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "自定义采样器（高级）"
+    }
+  },
+  "311": {
+    "inputs": {
+      "av_latent": [
+        "310",
+        0
+      ]
+    },
+    "class_type": "LTXVSeparateAVLatent",
+    "_meta": {
+      "title": "LTXV分离音视频潜空间"
+    }
+  },
+  "313": {
+    "inputs": {
+      "model_name": "ltx-2.3-spatial-upscaler-x2-1.0.safetensors"
+    },
+    "class_type": "LatentUpscaleModelLoader",
+    "_meta": {
+      "title": "加载Latent放大模型"
+    }
+  },
+  "315": {
+    "inputs": {
+      "text": "pc game, console game, video game, cartoon, childish, ugly",
+      "clip": [
+        "436",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    },
+    "me": {
+      "title": "负面提示词"
+    }
+  },
+  "316": {
+    "inputs": {
+      "cfg": 1,
+      "model": [
+        "318",
+        0
+      ],
+      "positive": [
+        "305",
+        0
+      ],
+      "negative": [
+        "305",
+        1
+      ]
+    },
+    "class_type": "CFGGuider",
+    "_meta": {
+      "title": "CFG引导器"
+    }
+  },
+  "317": {
+    "inputs": {
+      "tile_size": 768,
+      "overlap": 64,
+      "temporal_size": 4096,
+      "temporal_overlap": 4,
+      "samples": [
+        "446",
+        0
+      ],
+      "vae": [
+        "319",
+        0
+      ]
+    },
+    "class_type": "VAEDecodeTiled",
+    "_meta": {
+      "title": "VAE解码（分块）"
+    }
+  },
+  "318": {
+    "inputs": {
+      "unet_name": "Ltx/ltx-2.3-22b-distilled_transformer_only_fp8_input_scaled_v3.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "UNet加载器"
+    }
+  },
+  "319": {
+    "inputs": {
+      "vae_name": "LTX23_video_vae_bf16.safetensors",
+      "device": "main_device",
+      "weight_dtype": "bf16"
+    },
+    "class_type": "VAELoaderKJ",
+    "_meta": {
+      "title": "VAELoader KJ"
+    }
+  },
+  "320": {
+    "inputs": {
+      "vae_name": "LTX23_audio_vae_bf16.safetensors",
+      "device": "main_device",
+      "weight_dtype": "bf16"
+    },
+    "class_type": "VAELoaderKJ",
+    "_meta": {
+      "title": "VAELoader KJ"
+    }
+  },
+  "324": {
+    "inputs": {
+      "clip_name1": "gemma_3_12B_it_fp8_e4m3fn.safetensors",
+      "clip_name2": "ltx-2.3_text_projection_bf16.safetensors",
+      "type": "ltxv",
+      "device": "default"
+    },
+    "class_type": "DualCLIPLoader",
+    "_meta": {
+      "title": "双CLIP加载器"
+    }
+  },
+  "334": {
+    "inputs": {
+      "width": [
+        "457",
+        0
+      ],
+      "height": [
+        "459",
+        0
+      ],
+      "upscale_method": "nearest-exact",
+      "keep_proportion": "crop",
+      "pad_color": "0, 0, 0",
+      "crop_position": "center",
+      "divisible_by": 32,
+      "device": "cpu",
+      "image": [
+        "269",
+        0
+      ]
+    },
+    "class_type": "ImageResizeKJv2",
+    "_meta": {
+      "title": "Resize Image v2"
+    }
+  },
+  "352": {
+    "inputs": {
+      "expression": "a",
+      "values.a": [
+        "469",
+        0
+      ]
+    },
+    "class_type": "ComfyMathExpression",
+    "_meta": {
+      "title": "数学表达式"
+    }
+  },
+  "379": {
+    "inputs": {
+      "images": [
+        "334",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "预览图像"
+    }
+  },
+  "380": {
+    "inputs": {
+      "frame_rate": [
+        "469",
+        0
+      ],
+      "loop_count": 0,
+      "filename_prefix": "comfyui",
+      "format": "video/h264-mp4",
+      "pix_fmt": "yuv420p",
+      "crf": 19,
+      "save_metadata": true,
+      "trim_to_audio": false,
+      "pingpong": false,
+      "save_output": true,
+      "images": [
+        "317",
+        0
+      ],
+      "audio": [
+        "297",
+        0
+      ]
+    },
+    "class_type": "VHS_VideoCombine",
+    "_meta": {
+      "title": "Video Combine 🎥🅥🅗🅢"
+    }
+  },
+  "436": {
+    "inputs": {
+      "lora_name": "gemma-3-12b-it-abliterated_heretic_lora_rank64_bf16.safetensors",
+      "strength_model": 1,
+      "strength_clip": 1,
+      "model": [
+        "318",
+        0
+      ],
+      "clip": [
+        "324",
+        0
+      ]
+    },
+    "class_type": "LoraLoader",
+    "_meta": {
+      "title": "加载LoRA"
+    }
+  },
+  "439": {
+    "inputs": {
+      "positive": [
+        "305",
+        0
+      ],
+      "negative": [
+        "305",
+        1
+      ],
+      "latent": [
+        "311",
+        0
+      ]
+    },
+    "class_type": "LTXVCropGuides",
+    "_meta": {
+      "title": "LTXV裁剪指导"
+    }
+  },
+  "440": {
+    "inputs": {
+      "noise_seed": 42
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "随机噪波"
+    }
+  },
+  "441": {
+    "inputs": {
+      "sampler_name": "euler_cfg_pp"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "K采样器选择"
+    }
+  },
+  "442": {
+    "inputs": {
+      "sigmas": "0.85, 0.7250, 0.4219, 0.0"
+    },
+    "class_type": "ManualSigmas",
+    "_meta": {
+      "title": "自定义Sigmas"
+    }
+  },
+  "443": {
+    "inputs": {
+      "video_latent": [
+        "451",
+        0
+      ],
+      "audio_latent": [
+        "311",
+        1
+      ]
+    },
+    "class_type": "LTXVConcatAVLatent",
+    "_meta": {
+      "title": "LTXVConcatAVLatent"
+    }
+  },
+  "444": {
+    "inputs": {
+      "noise": [
+        "440",
+        0
+      ],
+      "guider": [
+        "445",
+        0
+      ],
+      "sampler": [
+        "441",
+        0
+      ],
+      "sigmas": [
+        "442",
+        0
+      ],
+      "latent_image": [
+        "443",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "自定义采样器（高级）"
+    }
+  },
+  "445": {
+    "inputs": {
+      "cfg": 1,
+      "model": [
+        "318",
+        0
+      ],
+      "positive": [
+        "439",
+        0
+      ],
+      "negative": [
+        "439",
+        1
+      ]
+    },
+    "class_type": "CFGGuider",
+    "_meta": {
+      "title": "CFG引导器"
+    }
+  },
+  "446": {
+    "inputs": {
+      "av_latent": [
+        "444",
+        0
+      ]
+    },
+    "class_type": "LTXVSeparateAVLatent",
+    "_meta": {
+      "title": "LTXV分离音视频潜空间"
+    }
+  },
+  "450": {
+    "inputs": {
+      "samples": [
+        "439",
+        2
+      ],
+      "upscale_model": [
+        "313",
+        0
+      ],
+      "vae": [
+        "319",
+        0
+      ]
+    },
+    "class_type": "LTXVLatentUpsampler",
+    "_meta": {
+      "title": "LTXV潜空间上采样器"
+    }
+  },
+  "451": {
+    "inputs": {
+      "strength": 1,
+      "bypass": false,
+      "vae": [
+        "319",
+        0
+      ],
+      "image": [
+        "289",
+        0
+      ],
+      "latent": [
+        "450",
+        0
+      ]
+    },
+    "class_type": "LTXVImgToVideoInplace",
+    "_meta": {
+      "title": "LTXV图像转视频（原地）"
+    }
+  },
+  "457": {
+    "inputs": {
+      "Number": 360
+    },
+    "class_type": "Int",
+    "_meta": {
+      "title": "Int"
+    },
+    "me": {
+      "title": "高度"
+    }
+  },
+  "459": {
+    "inputs": {
+      "Number": 640
+    },
+    "class_type": "Int",
+    "_meta": {
+      "title": "Int"
+    },
+    "me": {
+      "title": "宽度"
+    }
+  },
+  "465": {
+    "inputs": {
+      "value": "a*b+1",
+      "a": [
+        "467",
+        0
+      ],
+      "b": [
+        "469",
+        0
+      ]
+    },
+    "class_type": "SimpleMath+",
+    "_meta": {
+      "title": "🔧 Simple Math"
+    }
+  },
+  "467": {
+    "inputs": {
+      "Number": "5"
+    },
+    "class_type": "Int",
+    "_meta": {
+      "title": "Int"
+    },
+    "me": {
+      "title": "秒"
+    }
+  },
+  "469": {
+    "inputs": {
+      "Number": "30"
+    },
+    "class_type": "Float",
+    "_meta": {
+      "title": "Float"
+    },
+    "me": {
+      "title": "帧率"
+    }
+  },
+  "475": {
+    "inputs": {
+      "prompt": "Cinematic 8-second vertical video, ultra-realistic, 4K.\nShot 1 (0-3 seconds):\nClose-up portrait of a beautiful young Chinese woman in elegant white and black Hanfu. She stands gracefully in a misty ancient landscape with soft fog and god rays. The camera slowly orbits around her from left to right while gently zooming in. Her long black hair and sheer Hanfu fabric flow softly in the breeze. She starts with a serene, slightly shy expression, looking gently at the camera. She slowly tilts her head slightly to the side, her long eyelashes blink once, and the corners of her mouth curve into a faint, warm, elegant smile. Delicate white hair ornaments and teardrop earrings sway lightly.\nShot 2 (3-6 seconds):\nSmooth transition with a slow dissolve. The camera pulls back to a medium shot as she gracefully turns her body 45 degrees to the right, away from the camera. Her long hair and wide sleeves flow dramatically with the turn. She lowers her gaze for a moment, then slowly raises her head and looks back over her shoulder toward the camera with soft, captivating eyes. Gentle mist swirls around her, and soft light particles drift in the air.\nShot 3 (6-8 seconds):\nThe camera slowly zooms in again on her face as she fully turns back toward the camera. She gives a final gentle, almost shy smile, her eyes sparkling softly. Her hair continues to flow elegantly in the wind. The scene fades out with increasing mist and glowing light.\nOverall mood: graceful, poetic, ethereal, and breathtakingly beautiful. Soft breeze, flowing fabric and hair, smooth natural movements, cinematic lighting with rim light and god rays, high detail, masterpiece quality."
+    },
+    "class_type": "CR Prompt Text",
+    "_meta": {
+      "title": "⚙️ CR Prompt Text"
+    },
+    "me": {
+      "title": "正面提示词"
+    }
+  },
+  "_api_config": {
+    "customLabels": {
+      "269:image": "参考图 0",
+      "274:noise_seed": "noise_seed",
+      "275:noise_seed": "noise_seed",
+      "280:sigmas": "sigmas",
+      "282:cfg": "CFG Scale",
+      "286:longer_edge": "longer_edge",
+      "288:strength": "strength",
+      "288:bypass": "bypass",
+      "289:img_compression": "img_compression",
+      "292:expression": "expression",
+      "294:expression": "expression",
+      "295:batch_size": "批次大小",
+      "296:strength": "strength",
+      "296:bypass": "bypass",
+      "298:expression": "expression",
+      "307:batch_size": "批次大小",
+      "308:sigmas": "sigmas",
+      "315:text": "负面提示词",
+      "316:cfg": "CFG Scale",
+      "317:tile_size": "tile_size",
+      "317:overlap": "overlap",
+      "317:temporal_size": "temporal_size",
+      "317:temporal_overlap": "temporal_overlap",
+      "318:weight_dtype": "weight_dtype",
+      "319:device": "device",
+      "319:weight_dtype": "weight_dtype",
+      "320:device": "device",
+      "320:weight_dtype": "weight_dtype",
+      "324:type": "type",
+      "324:device": "device",
+      "334:upscale_method": "upscale_method",
+      "334:keep_proportion": "keep_proportion",
+      "334:pad_color": "pad_color",
+      "334:crop_position": "crop_position",
+      "334:divisible_by": "divisible_by",
+      "334:device": "device",
+      "352:expression": "expression",
+      "380:filename_prefix": "文件名前缀",
+      "380:loop_count": "loop_count",
+      "380:format": "format",
+      "380:pix_fmt": "pix_fmt",
+      "380:crf": "crf",
+      "380:save_metadata": "save_metadata",
+      "380:trim_to_audio": "trim_to_audio",
+      "380:pingpong": "pingpong",
+      "380:save_output": "save_output",
+      "436:strength_model": "strength_model",
+      "436:strength_clip": "strength_clip",
+      "440:noise_seed": "noise_seed",
+      "442:sigmas": "sigmas",
+      "445:cfg": "CFG Scale",
+      "451:strength": "strength",
+      "451:bypass": "bypass",
+      "457:Number": "高度 (Number)",
+      "459:Number": "宽度 (Number)",
+      "465:value": "value",
+      "467:Number": "秒 (Number)",
+      "469:Number": "帧率 (Number)",
+      "475:prompt": "正面提示词 (prompt)"
+    },
+    "enabledParams": {
+      "269:image": true,
+      "274:noise_seed": false,
+      "275:noise_seed": false,
+      "280:sigmas": false,
+      "282:cfg": false,
+      "286:longer_edge": false,
+      "288:strength": false,
+      "288:bypass": false,
+      "289:img_compression": false,
+      "292:expression": false,
+      "294:expression": false,
+      "295:batch_size": false,
+      "296:strength": false,
+      "296:bypass": false,
+      "298:expression": false,
+      "307:batch_size": false,
+      "308:sigmas": false,
+      "315:text": true,
+      "316:cfg": false,
+      "317:tile_size": false,
+      "317:overlap": false,
+      "317:temporal_size": false,
+      "317:temporal_overlap": false,
+      "318:weight_dtype": false,
+      "319:device": false,
+      "319:weight_dtype": false,
+      "320:device": false,
+      "320:weight_dtype": false,
+      "324:type": false,
+      "324:device": false,
+      "334:upscale_method": false,
+      "334:keep_proportion": false,
+      "334:pad_color": false,
+      "334:crop_position": false,
+      "334:divisible_by": false,
+      "334:device": false,
+      "352:expression": false,
+      "380:filename_prefix": false,
+      "380:loop_count": false,
+      "380:format": false,
+      "380:pix_fmt": false,
+      "380:crf": false,
+      "380:save_metadata": false,
+      "380:trim_to_audio": false,
+      "380:pingpong": false,
+      "380:save_output": false,
+      "436:strength_model": false,
+      "436:strength_clip": false,
+      "440:noise_seed": false,
+      "442:sigmas": false,
+      "445:cfg": false,
+      "451:strength": false,
+      "451:bypass": false,
+      "457:Number": true,
+      "459:Number": true,
+      "465:value": false,
+      "467:Number": true,
+      "469:Number": true,
+      "475:prompt": true
+    },
+    "formValues": {
+      "269:image": null,
+      "274:noise_seed": 42,
+      "275:noise_seed": 23,
+      "280:sigmas": "0.85, 0.7250, 0.4219, 0.0",
+      "282:cfg": 1,
+      "286:longer_edge": 1536,
+      "288:strength": 1,
+      "288:bypass": false,
+      "289:img_compression": 18,
+      "292:expression": "a/2",
+      "294:expression": "a/2",
+      "295:batch_size": 1,
+      "296:strength": 0.7,
+      "296:bypass": false,
+      "298:expression": "a",
+      "307:batch_size": 1,
+      "308:sigmas": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0",
+      "315:text": "pc game, console game, video game, cartoon, childish, ugly",
+      "316:cfg": 1,
+      "317:tile_size": 768,
+      "317:overlap": 64,
+      "317:temporal_size": 4096,
+      "317:temporal_overlap": 4,
+      "318:weight_dtype": "default",
+      "319:device": "main_device",
+      "319:weight_dtype": "bf16",
+      "320:device": "main_device",
+      "320:weight_dtype": "bf16",
+      "324:type": "ltxv",
+      "324:device": "default",
+      "334:upscale_method": "nearest-exact",
+      "334:keep_proportion": "crop",
+      "334:pad_color": "0, 0, 0",
+      "334:crop_position": "center",
+      "334:divisible_by": 32,
+      "334:device": "cpu",
+      "352:expression": "a",
+      "380:filename_prefix": "comfyui",
+      "380:loop_count": 0,
+      "380:format": "video/h264-mp4",
+      "380:pix_fmt": "yuv420p",
+      "380:crf": 19,
+      "380:save_metadata": true,
+      "380:trim_to_audio": false,
+      "380:pingpong": false,
+      "380:save_output": true,
+      "436:strength_model": 1,
+      "436:strength_clip": 1,
+      "440:noise_seed": 42,
+      "442:sigmas": "0.85, 0.7250, 0.4219, 0.0",
+      "445:cfg": 1,
+      "451:strength": 1,
+      "451:bypass": false,
+      "457:Number": 360,
+      "459:Number": 640,
+      "465:value": "a*b+1",
+      "467:Number": "5",
+      "469:Number": "30",
+      "475:prompt": "Cinematic 8-second vertical video, ultra-realistic, 4K.\nShot 1 (0-3 seconds):\nClose-up portrait of a beautiful young Chinese woman in elegant white and black Hanfu. She stands gracefully in a misty ancient landscape with soft fog and god rays. The camera slowly orbits around her from left to right while gently zooming in. Her long black hair and sheer Hanfu fabric flow softly in the breeze. She starts with a serene, slightly shy expression, looking gently at the camera. She slowly tilts her head slightly to the side, her long eyelashes blink once, and the corners of her mouth curve into a faint, warm, elegant smile. Delicate white hair ornaments and teardrop earrings sway lightly.\nShot 2 (3-6 seconds):\nSmooth transition with a slow dissolve. The camera pulls back to a medium shot as she gracefully turns her body 45 degrees to the right, away from the camera. Her long hair and wide sleeves flow dramatically with the turn. She lowers her gaze for a moment, then slowly raises her head and looks back over her shoulder toward the camera with soft, captivating eyes. Gentle mist swirls around her, and soft light particles drift in the air.\nShot 3 (6-8 seconds):\nThe camera slowly zooms in again on her face as she fully turns back toward the camera. She gives a final gentle, almost shy smile, her eyes sparkling softly. Her hair continues to flow elegantly in the wind. The scene fades out with increasing mist and glowing light.\nOverall mood: graceful, poetic, ethereal, and breathtakingly beautiful. Soft breeze, flowing fabric and hair, smooth natural movements, cinematic lighting with rim light and god rays, high detail, masterpiece quality."
+    },
+    "mediaOrder": [
+      "269:image"
+    ],
+    "mediaOrderSource": "auto",
+    "apiNames": {
+      "269:image": "ref_image_0",
+      "274:noise_seed": "noise_seed",
+      "275:noise_seed": "noise_seed_2",
+      "280:sigmas": "sigmas",
+      "282:cfg": "cfg",
+      "286:longer_edge": "longer_edge",
+      "288:strength": "strength",
+      "288:bypass": "bypass",
+      "289:img_compression": "img_compression",
+      "292:expression": "expression",
+      "294:expression": "expression_2",
+      "295:batch_size": "batch_size",
+      "296:strength": "strength_2",
+      "296:bypass": "bypass_2",
+      "298:expression": "expression_3",
+      "307:batch_size": "batch_size_2",
+      "308:sigmas": "sigmas_2",
+      "315:text": "prompt",
+      "316:cfg": "cfg_2",
+      "317:tile_size": "tile_size",
+      "317:overlap": "overlap",
+      "317:temporal_size": "temporal_size",
+      "317:temporal_overlap": "temporal_overlap",
+      "318:weight_dtype": "weight_dtype",
+      "319:device": "device",
+      "319:weight_dtype": "weight_dtype_2",
+      "320:device": "device_2",
+      "320:weight_dtype": "weight_dtype_3",
+      "324:type": "type",
+      "324:device": "device_3",
+      "334:upscale_method": "upscale_method",
+      "334:keep_proportion": "keep_proportion",
+      "334:pad_color": "pad_color",
+      "334:crop_position": "crop_position",
+      "334:divisible_by": "divisible_by",
+      "334:device": "device_4",
+      "352:expression": "expression_4",
+      "380:filename_prefix": "filename_prefix",
+      "380:loop_count": "loop_count",
+      "380:format": "format",
+      "380:pix_fmt": "pix_fmt",
+      "380:crf": "crf",
+      "380:save_metadata": "save_metadata",
+      "380:trim_to_audio": "trim_to_audio",
+      "380:pingpong": "pingpong",
+      "380:save_output": "save_output",
+      "436:strength_model": "strength_model",
+      "436:strength_clip": "strength_clip",
+      "440:noise_seed": "noise_seed_3",
+      "442:sigmas": "sigmas_3",
+      "445:cfg": "cfg_3",
+      "451:strength": "strength_3",
+      "451:bypass": "bypass_3",
+      "457:Number": "Number",
+      "459:Number": "Number_2",
+      "465:value": "value",
+      "467:Number": "Number_3",
+      "469:Number": "Number_4",
+      "475:prompt": "prompt_2"
+    }
+  }
+}

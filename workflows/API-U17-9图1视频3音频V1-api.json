@@ -1,0 +1,1255 @@
+{
+  "115": {
+    "inputs": {
+      "aspect_ratio": "16:9 (Widescreen)",
+      "megapixels": 0.9,
+      "multiple": 32
+    },
+    "class_type": "ResolutionSelector",
+    "_meta": {
+      "title": "Resolution Selector (Size)"
+    },
+    "t": {
+      "title": "官方分辨率写法"
+    }
+  },
+  "119": {
+    "inputs": {
+      "vae_name": "minimax_h3_video_vae_fp16.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "加载VAE"
+    }
+  },
+  "120": {
+    "inputs": {
+      "vae_name": "minimax_h3_audio_vae_fp32.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "加载VAE"
+    }
+  },
+  "123": {
+    "inputs": {
+      "sampler_name": "res_multistep"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "K采样器选择"
+    }
+  },
+  "124": {
+    "inputs": {
+      "scheduler": "simple",
+      "steps": [
+        "184",
+        0
+      ],
+      "denoise": 1,
+      "model": [
+        "252",
+        0
+      ]
+    },
+    "class_type": "BasicScheduler",
+    "_meta": {
+      "title": "基本调度器"
+    }
+  },
+  "125": {
+    "inputs": {
+      "noise": [
+        "129",
+        0
+      ],
+      "guider": [
+        "126",
+        0
+      ],
+      "sampler": [
+        "123",
+        0
+      ],
+      "sigmas": [
+        "188",
+        0
+      ],
+      "latent_image": [
+        "275",
+        1
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "自定义采样器（高级）"
+    }
+  },
+  "126": {
+    "inputs": {
+      "model": [
+        "252",
+        0
+      ],
+      "conditioning": [
+        "275",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "基本引导器"
+    }
+  },
+  "128": {
+    "inputs": {
+      "clip_name": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+      "type": "minimax",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "加载CLIP"
+    }
+  },
+  "129": {
+    "inputs": {
+      "noise_seed": 0
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "随机噪波"
+    }
+  },
+  "131": {
+    "inputs": {
+      "expression": "max(5, round(a * 24)) + (5 - (max(5, round(a * 24)) % 17)) % 17",
+      "values.a": [
+        "132",
+        0
+      ]
+    },
+    "class_type": "ComfyMathExpression",
+    "_meta": {
+      "title": "数学表达式"
+    }
+  },
+  "132": {
+    "inputs": {
+      "value": 5
+    },
+    "class_type": "PrimitiveFloat",
+    "_meta": {
+      "title": "时长"
+    },
+    "t": {
+      "title": "时长"
+    }
+  },
+  "150": {
+    "inputs": {
+      "lora_name": "minimax/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors",
+      "strength_model": 0.7,
+      "model": [
+        "228",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "LoRA加载器（仅模型）"
+    }
+  },
+  "156": {
+    "inputs": {
+      "av_latent": [
+        "125",
+        1
+      ]
+    },
+    "class_type": "LTXVSeparateAVLatent",
+    "_meta": {
+      "title": "LTXV分离音视频潜空间"
+    }
+  },
+  "175": {
+    "inputs": {
+      "noise": [
+        "129",
+        0
+      ],
+      "guider": [
+        "231",
+        0
+      ],
+      "sampler": [
+        "123",
+        0
+      ],
+      "sigmas": [
+        "188",
+        1
+      ],
+      "latent_image": [
+        "235",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "自定义采样器（高级）"
+    }
+  },
+  "177": {
+    "inputs": {
+      "samples": [
+        "175",
+        1
+      ],
+      "vae": [
+        "119",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "178": {
+    "inputs": {
+      "samples": [
+        "175",
+        1
+      ],
+      "vae": [
+        "120",
+        0
+      ]
+    },
+    "class_type": "VAEDecodeAudio",
+    "_meta": {
+      "title": "VAE解码（音频）"
+    }
+  },
+  "179": {
+    "inputs": {
+      "fps": 24,
+      "bit_depth": 8,
+      "images": [
+        "277",
+        0
+      ],
+      "audio": [
+        "178",
+        0
+      ]
+    },
+    "class_type": "CreateVideo",
+    "_meta": {
+      "title": "创建视频"
+    }
+  },
+  "180": {
+    "inputs": {
+      "filename_prefix": "video/MiniMax_H3",
+      "format": "mp4",
+      "codec": "h264",
+      "codec.encoding": "re-encode",
+      "codec.encoding.crf": 16,
+      "video-preview": "",
+      "video": [
+        "179",
+        0
+      ]
+    },
+    "class_type": "SaveVideo",
+    "_meta": {
+      "title": "保存视频"
+    }
+  },
+  "182": {
+    "inputs": {
+      "value": 1.5
+    },
+    "class_type": "PrimitiveFloat",
+    "_meta": {
+      "title": "放大倍数"
+    },
+    "t": {
+      "title": "放大倍率"
+    }
+  },
+  "184": {
+    "inputs": {
+      "value": 8
+    },
+    "class_type": "PrimitiveInt",
+    "_meta": {
+      "title": "总步数"
+    }
+  },
+  "185": {
+    "inputs": {
+      "value": 4
+    },
+    "class_type": "PrimitiveInt",
+    "_meta": {
+      "title": "一采步数"
+    }
+  },
+  "188": {
+    "inputs": {
+      "step": [
+        "185",
+        0
+      ],
+      "sigmas": [
+        "232",
+        0
+      ]
+    },
+    "class_type": "SplitSigmas",
+    "_meta": {
+      "title": "分离Sigma"
+    }
+  },
+  "191": {
+    "inputs": {
+      "video_latent": [
+        "226",
+        0
+      ],
+      "audio_latent": [
+        "156",
+        1
+      ]
+    },
+    "class_type": "LTXVConcatAVLatent",
+    "_meta": {
+      "title": "LTXVConcatAVLatent"
+    }
+  },
+  "226": {
+    "inputs": {
+      "model_name": "minimax_h3_latent_upscaler_3d_bf16.safetensors",
+      "device": "cuda",
+      "precision": "bf16",
+      "latent": [
+        "156",
+        0
+      ],
+      "mode": "scale by multiplier",
+      "mode.scale": [
+        "182",
+        0
+      ],
+      "enable_temporal_chunking": true,
+      "force_unload": true,
+      "align": 32
+    },
+    "class_type": "MinimaxH3LatentUpscaler3D",
+    "_meta": {
+      "title": "Minimax H3 Latent Upscaler (3D)"
+    }
+  },
+  "228": {
+    "inputs": {
+      "attention": "pytorch attention",
+      "model": [
+        "245",
+        0
+      ]
+    },
+    "class_type": "ModelAttentionBackend",
+    "_meta": {
+      "title": "ModelAttentionBackend"
+    }
+  },
+  "231": {
+    "inputs": {
+      "model": [
+        "251",
+        0
+      ],
+      "conditioning": [
+        "275",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "基本引导器"
+    }
+  },
+  "232": {
+    "inputs": {
+      "steps": 1,
+      "start_at_sigma": 0.6500000000000001,
+      "end_at_sigma": 0,
+      "spacing": "linear",
+      "sigmas": [
+        "124",
+        0
+      ]
+    },
+    "class_type": "ExtendIntermediateSigmas",
+    "_meta": {
+      "title": "插值扩展Sigmas"
+    }
+  },
+  "233": {
+    "inputs": {
+      "lora_name": "minimax/minimax_h3_fl2v_turbo_4step_v1.1_768p_comfyui_bf16.safetensors",
+      "strength_model": 0.7000000000000002,
+      "model": [
+        "228",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "LoRA加载器（仅模型）"
+    }
+  },
+  "235": {
+    "inputs": {
+      "anything": [
+        "191",
+        0
+      ]
+    },
+    "class_type": "easy cleanGpuUsed",
+    "_meta": {
+      "title": "清理显存占用"
+    }
+  },
+  "236": {
+    "inputs": {
+      "unet_name": "minimax/minimax_h3_hybrid_fl2va_ref2va_b25-49-int8.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "UNet加载器"
+    }
+  },
+  "243": {
+    "inputs": {
+      "head_chunks": 4,
+      "model": [
+        "236",
+        0
+      ]
+    },
+    "class_type": "MiniMaxLowVRAMAttention",
+    "_meta": {
+      "title": "MiniMax H3 Low VRAM Attention"
+    }
+  },
+  "245": {
+    "inputs": {
+      "chunks": 2,
+      "seq_threshold": 4096,
+      "model": [
+        "243",
+        0
+      ]
+    },
+    "class_type": "MiniMaxChunkFeedForward",
+    "_meta": {
+      "title": "MiniMax H3 Chunk FeedForward"
+    }
+  },
+  "246": {
+    "inputs": {
+      "image": "Untitled(2).jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "247": {
+    "inputs": {
+      "image": "Untitled(4).jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "248": {
+    "inputs": {
+      "image": "Untitled(3).jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "249": {
+    "inputs": {
+      "image": "Untitled(1).jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "250": {
+    "inputs": {
+      "value": "{\n  \"subject_definitions\": [\n    \"<Subject 1> is the young woman from <Picture 1>, with a pale complexion, long black hair arranged in an elaborate updo with side-falling strands, blue floral hair ornaments and delicate dangling chains, refined eye makeup, red lips, gold-and-blue earrings, layered necklaces, and an ornate blue-and-gold fitted bodice beneath translucent pale-blue wide sleeves and a long flowing skirt.\",\n    \"<Subject 2> is the young man from <Picture 2>, with a pale complexion, long black hair tied high with a dark hair ornament, loose strands framing his face, straight brows, a calm serious expression, and layered black traditional robes with gray embroidered trim, wide sleeves, a waist belt with hanging metal ornaments, and dark wrist-covering fabric.\",\n    \"<Subject 3> is the woman from <Picture 3>, serving as the senior martial sister, with a fair complexion, long black hair half tied into an updo with red floral hair ornaments and dangling beads, soft natural makeup, pearl-like earrings, a red embroidered collar, layered crimson robes with wide sleeves, a dark decorated waist sash, and long trailing red fabric ribbons.\",\n    \"<Subject 4> is the snow-forest environment from <Picture 4>, with a large dark-barked tree on the left, snow-covered branches densely filled with vivid red plum blossoms, a pale blue-white forest receding into mist, an uneven snowy ground, and continuously falling snow.\"\n  ],\n  \"summary\": \"[reference generation] A 5-second 2-shot cinematic sequence in a snowy plum forest featuring a wide establishing shot of <Subject 1> and <Subject 2> arriving, followed by a tight facial close-up of <Subject 3> turning around to speak.\",\n  \"retention_analysis\": [\n    \"<Subject 1> (appears in [Shot 1]): fully_preserved - the elaborate updo, blue floral hair ornaments, translucent pale-blue wide sleeves, and flowing blue dress are retained.\",\n    \"<Subject 2> (appears in [Shot 1]): fully_preserved - the long black hair, layered black traditional robes, dark wrist coverings, and solemn expression are retained.\",\n    \"<Subject 3> (appears in [Shot 2]): fully_preserved - the fair facial features, red floral ornaments, delicate makeup, and crimson embroidered collar are retained.\",\n    \"<Subject 4> (appears in [Shot 1], [Shot 2]): fully_preserved - the snowy red-plum forest, cool mist, and continuously falling snowflakes remain consistent.\"\n  ],\n  \"detailed_description\": \"Cinematic high-detail Chinese fantasy drama style, sharp facial focus, soft diffused winter lighting, vibrant contrast between red blossoms, blue robes, black robes, and white snow, 8k photorealistic quality.\\n\\n[Shot 1] Wide establishing shot (00:00.000 - 00:02.500). <Subject 1> and <Subject 2> stand side-by-side in a two-shot long view within the misty snowy landscape of <Subject 4>. <Subject 1> in her translucent pale-blue robes and <Subject 2> in his dark black robes walk carefully through ankle-deep snow toward the distant blooming red plum trees, their hair and robe ribbons moving gently in the winter wind.\\n\\n[Shot 2] Extreme close-up tracking shot (00:02.500 - 00:05.000). At 00:02.500, cut to an intense facial close-up of <Subject 3> under the red plum branches of <Subject 4>. Her delicate face fills the frame as she turns around towards the camera, snow particles settling on her black hair and red floral ornaments. With a soft and practical expression, <Subject 3> (S1) speaks directly to them, <d>[Chinese] 你们来了，群主刚睡下，我正准备给群主做饭去。</d> The camera holds tightly on her subtle eye micro-expressions before cutting to black.\",\n  \"overall_soundscape\": \"Continuous soft snowfall, light wintry wind passing through branches, muted footsteps compressing snow, robe rustling, and clear gentle female voice reverberating in the open forest.\",\n  \"non_diegetic_music\": \"N/A\"\n}"
+    },
+    "class_type": "PrimitiveStringMultiline",
+    "_meta": {
+      "title": "Input Text (Prompt)"
+    }
+  },
+  "251": {
+    "inputs": {
+      "max_resolution": 1024,
+      "jpeg_quality": 80,
+      "suppress_default_preview": true,
+      "preview_frames": [
+        "131",
+        1
+      ],
+      "preview_fps": 12,
+      "tiny_vae": "taeh3.safetensors",
+      "model": [
+        "233",
+        0
+      ]
+    },
+    "class_type": "ModelPreviewOverrideKJ",
+    "_meta": {
+      "title": "Model Preview Override"
+    }
+  },
+  "252": {
+    "inputs": {
+      "max_resolution": 1024,
+      "jpeg_quality": 80,
+      "suppress_default_preview": true,
+      "preview_frames": [
+        "131",
+        1
+      ],
+      "preview_fps": 12,
+      "tiny_vae": "taeh3.safetensors",
+      "model": [
+        "150",
+        0
+      ]
+    },
+    "class_type": "ModelPreviewOverrideKJ",
+    "_meta": {
+      "title": "Model Preview Override"
+    }
+  },
+  "256": {
+    "inputs": {
+      "video": "comfyui_00025-audio.mp4",
+      "force_rate": 24,
+      "custom_width": 0,
+      "custom_height": 0,
+      "frame_load_cap": 360,
+      "skip_first_frames": 0,
+      "select_every_nth": 1,
+      "format": "None"
+    },
+    "class_type": "VHS_LoadVideo",
+    "_meta": {
+      "title": "Load Video (Upload) 🎥🅥🅗🅢"
+    }
+  },
+  "259": {
+    "inputs": {
+      "audio": "p2.MP3"
+    },
+    "class_type": "LoadAudio",
+    "_meta": {
+      "title": "加载音频"
+    }
+  },
+  "260": {
+    "inputs": {
+      "audio": "p2.MP3"
+    },
+    "class_type": "LoadAudio",
+    "_meta": {
+      "title": "加载音频"
+    }
+  },
+  "261": {
+    "inputs": {
+      "audio": "p2.MP3"
+    },
+    "class_type": "LoadAudio",
+    "_meta": {
+      "title": "加载音频"
+    }
+  },
+  "262": {
+    "inputs": {
+      "width": 0,
+      "height": 0,
+      "upscale_method": "lanczos",
+      "keep_proportion": "resize",
+      "pad_color": "0, 0, 0",
+      "crop_position": "center",
+      "divisible_by": 32,
+      "device": "cpu",
+      "image": [
+        "263",
+        0
+      ]
+    },
+    "class_type": "ImageResizeKJv2",
+    "_meta": {
+      "title": "Resize Image v2"
+    }
+  },
+  "263": {
+    "inputs": {
+      "start_index": 0,
+      "num_frames": [
+        "131",
+        1
+      ],
+      "images": [
+        "256",
+        0
+      ]
+    },
+    "class_type": "GetImageRangeFromBatch",
+    "_meta": {
+      "title": "Get Image or Mask Range From Batch"
+    }
+  },
+  "264": {
+    "inputs": {
+      "anything": [
+        "262",
+        0
+      ]
+    },
+    "class_type": "easy clearCacheAll",
+    "_meta": {
+      "title": "清除全部缓存"
+    }
+  },
+  "265": {
+    "inputs": {
+      "start_index": 0,
+      "duration": 15,
+      "audio": [
+        "260",
+        0
+      ]
+    },
+    "class_type": "TrimAudioDuration",
+    "_meta": {
+      "title": "修剪音频时长"
+    }
+  },
+  "266": {
+    "inputs": {
+      "start_index": 0,
+      "duration": 15,
+      "audio": [
+        "261",
+        0
+      ]
+    },
+    "class_type": "TrimAudioDuration",
+    "_meta": {
+      "title": "修剪音频时长"
+    }
+  },
+  "267": {
+    "inputs": {
+      "start_index": 0,
+      "duration": 15,
+      "audio": [
+        "259",
+        0
+      ]
+    },
+    "class_type": "TrimAudioDuration",
+    "_meta": {
+      "title": "修剪音频时长"
+    }
+  },
+  "275": {
+    "inputs": {
+      "prompt": [
+        "250",
+        0
+      ],
+      "width": [
+        "115",
+        0
+      ],
+      "height": [
+        "115",
+        1
+      ],
+      "length": [
+        "131",
+        1
+      ],
+      "ref_image_size": "max",
+      "clip": [
+        "128",
+        0
+      ],
+      "vae": [
+        "119",
+        0
+      ],
+      "audio_vae": [
+        "120",
+        0
+      ],
+      "ref_images.ref_image_0": [
+        "248",
+        0
+      ],
+      "ref_images.ref_image_1": [
+        "249",
+        0
+      ],
+      "ref_images.ref_image_2": [
+        "247",
+        0
+      ],
+      "ref_images.ref_image_3": [
+        "246",
+        0
+      ],
+      "ref_images.ref_image_4": [
+        "279",
+        0
+      ],
+      "ref_images.ref_image_5": [
+        "280",
+        0
+      ],
+      "ref_images.ref_image_6": [
+        "281",
+        0
+      ],
+      "ref_images.ref_image_7": [
+        "282",
+        0
+      ],
+      "ref_images.ref_image_8": [
+        "283",
+        0
+      ],
+      "ref_videos.ref_video_0": [
+        "264",
+        0
+      ],
+      "ref_audios.ref_audio_0": [
+        "267",
+        0
+      ],
+      "ref_audios.ref_audio_1": [
+        "265",
+        0
+      ],
+      "ref_audios.ref_audio_2": [
+        "266",
+        0
+      ]
+    },
+    "class_type": "MiniMaxH3ReferenceToVideo",
+    "_meta": {
+      "title": "MiniMax H3 Reference to Video"
+    }
+  },
+  "276": {
+    "inputs": {
+      "resize_type": "scale by multiplier",
+      "resize_type.scale": 2,
+      "quality": "ULTRA",
+      "images": [
+        "278",
+        0
+      ]
+    },
+    "class_type": "RTXVideoSuperResolution",
+    "_meta": {
+      "title": "RTX Video Super Resolution"
+    }
+  },
+  "277": {
+    "inputs": {
+      "clean_file_cache": true,
+      "clean_processes": true,
+      "clean_dlls": true,
+      "retry_times": 3,
+      "anything": [
+        "276",
+        0
+      ]
+    },
+    "class_type": "RAMCleanup",
+    "_meta": {
+      "title": "🎈RAM-Cleanup"
+    }
+  },
+  "278": {
+    "inputs": {
+      "offload_model": true,
+      "offload_cache": true,
+      "anything": [
+        "177",
+        0
+      ]
+    },
+    "class_type": "VRAMCleanup",
+    "_meta": {
+      "title": "🎈VRAM-Cleanup"
+    }
+  },
+  "279": {
+    "inputs": {
+      "image": "Untitled(2).jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "280": {
+    "inputs": {
+      "image": "Untitled(2).jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "281": {
+    "inputs": {
+      "image": "Untitled(2).jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "282": {
+    "inputs": {
+      "image": "Untitled(2).jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "283": {
+    "inputs": {
+      "image": "Untitled(2).jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "_api_config": {
+    "customLabels": {
+      "115:aspect_ratio": "官方分辨率写法 (aspect_ratio)",
+      "115:megapixels": "官方分辨率写法 (megapixels)",
+      "115:multiple": "官方分辨率写法 (multiple)",
+      "124:denoise": "denoise",
+      "128:type": "type",
+      "128:device": "device",
+      "129:noise_seed": "noise_seed",
+      "131:expression": "expression",
+      "132:value": "时长 (value)",
+      "150:strength_model": "strength_model",
+      "179:fps": "fps",
+      "179:bit_depth": "bit_depth",
+      "180:filename_prefix": "文件名前缀",
+      "180:format": "format",
+      "180:codec": "codec",
+      "180:codec.encoding": "codec.encoding",
+      "180:codec.encoding.crf": "codec.encoding.crf",
+      "180:video-preview": "video-preview",
+      "182:value": "放大倍率 (value)",
+      "184:value": "value",
+      "185:value": "value",
+      "226:device": "device",
+      "226:precision": "precision",
+      "226:mode": "mode",
+      "226:enable_temporal_chunking": "enable_temporal_chunking",
+      "226:force_unload": "force_unload",
+      "226:align": "align",
+      "228:attention": "attention",
+      "232:steps": "迭代步数",
+      "232:start_at_sigma": "start_at_sigma",
+      "232:end_at_sigma": "end_at_sigma",
+      "232:spacing": "spacing",
+      "233:strength_model": "strength_model",
+      "236:weight_dtype": "weight_dtype",
+      "243:head_chunks": "head_chunks",
+      "245:chunks": "chunks",
+      "245:seq_threshold": "seq_threshold",
+      "246:image": "参考图 3",
+      "247:image": "参考图 2",
+      "248:image": "参考图 0",
+      "249:image": "参考图 1",
+      "250:value": "value",
+      "251:max_resolution": "max_resolution",
+      "251:jpeg_quality": "jpeg_quality",
+      "251:suppress_default_preview": "suppress_default_preview",
+      "251:preview_fps": "preview_fps",
+      "252:max_resolution": "max_resolution",
+      "252:jpeg_quality": "jpeg_quality",
+      "252:suppress_default_preview": "suppress_default_preview",
+      "252:preview_fps": "preview_fps",
+      "256:video": "参考视频 0",
+      "256:force_rate": "force_rate",
+      "256:custom_width": "custom_width",
+      "256:custom_height": "custom_height",
+      "256:frame_load_cap": "frame_load_cap",
+      "256:skip_first_frames": "skip_first_frames",
+      "256:select_every_nth": "select_every_nth",
+      "256:format": "format",
+      "259:audio": "参考音频 0",
+      "260:audio": "参考音频 1",
+      "261:audio": "参考音频 2",
+      "262:width": "宽度",
+      "262:height": "高度",
+      "262:upscale_method": "upscale_method",
+      "262:keep_proportion": "keep_proportion",
+      "262:pad_color": "pad_color",
+      "262:crop_position": "crop_position",
+      "262:divisible_by": "divisible_by",
+      "262:device": "device",
+      "263:start_index": "start_index",
+      "265:start_index": "start_index",
+      "265:duration": "duration",
+      "266:start_index": "start_index",
+      "266:duration": "duration",
+      "267:start_index": "start_index",
+      "267:duration": "duration",
+      "275:ref_image_size": "ref_image_size",
+      "276:resize_type": "resize_type",
+      "276:resize_type.scale": "resize_type.scale",
+      "276:quality": "quality",
+      "277:clean_file_cache": "clean_file_cache",
+      "277:clean_processes": "clean_processes",
+      "277:clean_dlls": "clean_dlls",
+      "277:retry_times": "retry_times",
+      "278:offload_model": "offload_model",
+      "278:offload_cache": "offload_cache",
+      "279:image": "参考图 4",
+      "280:image": "参考图 5",
+      "281:image": "参考图 6",
+      "282:image": "参考图 7",
+      "283:image": "参考图 8"
+    },
+    "enabledParams": {
+      "115:aspect_ratio": true,
+      "115:megapixels": true,
+      "115:multiple": false,
+      "124:denoise": false,
+      "128:type": false,
+      "128:device": false,
+      "129:noise_seed": false,
+      "131:expression": false,
+      "132:value": true,
+      "150:strength_model": false,
+      "179:fps": false,
+      "179:bit_depth": false,
+      "180:filename_prefix": false,
+      "180:format": false,
+      "180:codec": false,
+      "180:codec.encoding": false,
+      "180:codec.encoding.crf": false,
+      "180:video-preview": false,
+      "182:value": true,
+      "184:value": false,
+      "185:value": false,
+      "226:device": false,
+      "226:precision": false,
+      "226:mode": false,
+      "226:enable_temporal_chunking": false,
+      "226:force_unload": false,
+      "226:align": false,
+      "228:attention": false,
+      "232:steps": false,
+      "232:start_at_sigma": false,
+      "232:end_at_sigma": false,
+      "232:spacing": false,
+      "233:strength_model": false,
+      "236:weight_dtype": false,
+      "243:head_chunks": false,
+      "245:chunks": false,
+      "245:seq_threshold": false,
+      "246:image": true,
+      "247:image": true,
+      "248:image": true,
+      "249:image": true,
+      "250:value": false,
+      "251:max_resolution": false,
+      "251:jpeg_quality": false,
+      "251:suppress_default_preview": false,
+      "251:preview_fps": false,
+      "252:max_resolution": false,
+      "252:jpeg_quality": false,
+      "252:suppress_default_preview": false,
+      "252:preview_fps": false,
+      "256:video": true,
+      "256:force_rate": false,
+      "256:custom_width": false,
+      "256:custom_height": false,
+      "256:frame_load_cap": false,
+      "256:skip_first_frames": false,
+      "256:select_every_nth": false,
+      "256:format": false,
+      "259:audio": true,
+      "260:audio": true,
+      "261:audio": true,
+      "262:width": false,
+      "262:height": false,
+      "262:upscale_method": false,
+      "262:keep_proportion": false,
+      "262:pad_color": false,
+      "262:crop_position": false,
+      "262:divisible_by": false,
+      "262:device": false,
+      "263:start_index": false,
+      "265:start_index": false,
+      "265:duration": false,
+      "266:start_index": false,
+      "266:duration": false,
+      "267:start_index": false,
+      "267:duration": false,
+      "275:ref_image_size": false,
+      "276:resize_type": false,
+      "276:resize_type.scale": false,
+      "276:quality": false,
+      "277:clean_file_cache": false,
+      "277:clean_processes": false,
+      "277:clean_dlls": false,
+      "277:retry_times": false,
+      "278:offload_model": false,
+      "278:offload_cache": false,
+      "279:image": true,
+      "280:image": true,
+      "281:image": true,
+      "282:image": true,
+      "283:image": true
+    },
+    "formValues": {
+      "115:aspect_ratio": "16:9 (Widescreen)",
+      "115:megapixels": 0.9,
+      "115:multiple": 32,
+      "124:denoise": 1,
+      "128:type": "minimax",
+      "128:device": "default",
+      "129:noise_seed": 0,
+      "131:expression": "max(5, round(a * 24)) + (5 - (max(5, round(a * 24)) % 17)) % 17",
+      "132:value": 5,
+      "150:strength_model": 0.7,
+      "179:fps": 24,
+      "179:bit_depth": 8,
+      "180:filename_prefix": "video/MiniMax_H3",
+      "180:format": "mp4",
+      "180:codec": "h264",
+      "180:codec.encoding": "re-encode",
+      "180:codec.encoding.crf": 16,
+      "180:video-preview": "",
+      "182:value": 1.5,
+      "184:value": 8,
+      "185:value": 4,
+      "226:device": "cuda",
+      "226:precision": "bf16",
+      "226:mode": "scale by multiplier",
+      "226:enable_temporal_chunking": true,
+      "226:force_unload": true,
+      "226:align": 32,
+      "228:attention": "pytorch attention",
+      "232:steps": 1,
+      "232:start_at_sigma": 0.6500000000000001,
+      "232:end_at_sigma": 0,
+      "232:spacing": "linear",
+      "233:strength_model": 0.7000000000000002,
+      "236:weight_dtype": "default",
+      "243:head_chunks": 4,
+      "245:chunks": 2,
+      "245:seq_threshold": 4096,
+      "246:image": null,
+      "247:image": null,
+      "248:image": null,
+      "249:image": null,
+      "250:value": "{\n  \"subject_definitions\": [\n    \"<Subject 1> is the young woman from <Picture 1>, with a pale complexion, long black hair arranged in an elaborate updo with side-falling strands, blue floral hair ornaments and delicate dangling chains, refined eye makeup, red lips, gold-and-blue earrings, layered necklaces, and an ornate blue-and-gold fitted bodice beneath translucent pale-blue wide sleeves and a long flowing skirt.\",\n    \"<Subject 2> is the young man from <Picture 2>, with a pale complexion, long black hair tied high with a dark hair ornament, loose strands framing his face, straight brows, a calm serious expression, and layered black traditional robes with gray embroidered trim, wide sleeves, a waist belt with hanging metal ornaments, and dark wrist-covering fabric.\",\n    \"<Subject 3> is the woman from <Picture 3>, serving as the senior martial sister, with a fair complexion, long black hair half tied into an updo with red floral hair ornaments and dangling beads, soft natural makeup, pearl-like earrings, a red embroidered collar, layered crimson robes with wide sleeves, a dark decorated waist sash, and long trailing red fabric ribbons.\",\n    \"<Subject 4> is the snow-forest environment from <Picture 4>, with a large dark-barked tree on the left, snow-covered branches densely filled with vivid red plum blossoms, a pale blue-white forest receding into mist, an uneven snowy ground, and continuously falling snow.\"\n  ],\n  \"summary\": \"[reference generation] A 5-second 2-shot cinematic sequence in a snowy plum forest featuring a wide establishing shot of <Subject 1> and <Subject 2> arriving, followed by a tight facial close-up of <Subject 3> turning around to speak.\",\n  \"retention_analysis\": [\n    \"<Subject 1> (appears in [Shot 1]): fully_preserved - the elaborate updo, blue floral hair ornaments, translucent pale-blue wide sleeves, and flowing blue dress are retained.\",\n    \"<Subject 2> (appears in [Shot 1]): fully_preserved - the long black hair, layered black traditional robes, dark wrist coverings, and solemn expression are retained.\",\n    \"<Subject 3> (appears in [Shot 2]): fully_preserved - the fair facial features, red floral ornaments, delicate makeup, and crimson embroidered collar are retained.\",\n    \"<Subject 4> (appears in [Shot 1], [Shot 2]): fully_preserved - the snowy red-plum forest, cool mist, and continuously falling snowflakes remain consistent.\"\n  ],\n  \"detailed_description\": \"Cinematic high-detail Chinese fantasy drama style, sharp facial focus, soft diffused winter lighting, vibrant contrast between red blossoms, blue robes, black robes, and white snow, 8k photorealistic quality.\\n\\n[Shot 1] Wide establishing shot (00:00.000 - 00:02.500). <Subject 1> and <Subject 2> stand side-by-side in a two-shot long view within the misty snowy landscape of <Subject 4>. <Subject 1> in her translucent pale-blue robes and <Subject 2> in his dark black robes walk carefully through ankle-deep snow toward the distant blooming red plum trees, their hair and robe ribbons moving gently in the winter wind.\\n\\n[Shot 2] Extreme close-up tracking shot (00:02.500 - 00:05.000). At 00:02.500, cut to an intense facial close-up of <Subject 3> under the red plum branches of <Subject 4>. Her delicate face fills the frame as she turns around towards the camera, snow particles settling on her black hair and red floral ornaments. With a soft and practical expression, <Subject 3> (S1) speaks directly to them, <d>[Chinese] 你们来了，群主刚睡下，我正准备给群主做饭去。</d> The camera holds tightly on her subtle eye micro-expressions before cutting to black.\",\n  \"overall_soundscape\": \"Continuous soft snowfall, light wintry wind passing through branches, muted footsteps compressing snow, robe rustling, and clear gentle female voice reverberating in the open forest.\",\n  \"non_diegetic_music\": \"N/A\"\n}",
+      "251:max_resolution": 1024,
+      "251:jpeg_quality": 80,
+      "251:suppress_default_preview": true,
+      "251:preview_fps": 12,
+      "252:max_resolution": 1024,
+      "252:jpeg_quality": 80,
+      "252:suppress_default_preview": true,
+      "252:preview_fps": 12,
+      "256:video": null,
+      "256:force_rate": 24,
+      "256:custom_width": 0,
+      "256:custom_height": 0,
+      "256:frame_load_cap": 360,
+      "256:skip_first_frames": 0,
+      "256:select_every_nth": 1,
+      "256:format": "None",
+      "259:audio": null,
+      "260:audio": null,
+      "261:audio": null,
+      "262:width": 0,
+      "262:height": 0,
+      "262:upscale_method": "lanczos",
+      "262:keep_proportion": "resize",
+      "262:pad_color": "0, 0, 0",
+      "262:crop_position": "center",
+      "262:divisible_by": 32,
+      "262:device": "cpu",
+      "263:start_index": 0,
+      "265:start_index": 0,
+      "265:duration": 15,
+      "266:start_index": 0,
+      "266:duration": 15,
+      "267:start_index": 0,
+      "267:duration": 15,
+      "275:ref_image_size": "max",
+      "276:resize_type": "scale by multiplier",
+      "276:resize_type.scale": 2,
+      "276:quality": "ULTRA",
+      "277:clean_file_cache": true,
+      "277:clean_processes": true,
+      "277:clean_dlls": true,
+      "277:retry_times": 3,
+      "278:offload_model": true,
+      "278:offload_cache": true,
+      "279:image": null,
+      "280:image": null,
+      "281:image": null,
+      "282:image": null,
+      "283:image": null
+    },
+    "mediaOrder": [
+      "248:image",
+      "249:image",
+      "247:image",
+      "246:image",
+      "279:image",
+      "280:image",
+      "281:image",
+      "282:image",
+      "283:image",
+      "256:video",
+      "259:audio",
+      "260:audio",
+      "261:audio"
+    ],
+    "mediaOrderSource": "auto",
+    "apiNames": {
+      "115:aspect_ratio": "aspect_ratio",
+      "115:megapixels": "megapixels",
+      "115:multiple": "multiple",
+      "124:denoise": "denoise",
+      "128:type": "type",
+      "128:device": "device",
+      "129:noise_seed": "noise_seed",
+      "131:expression": "expression",
+      "132:value": "value",
+      "150:strength_model": "strength_model",
+      "179:fps": "fps",
+      "179:bit_depth": "bit_depth",
+      "180:filename_prefix": "filename_prefix",
+      "180:format": "format",
+      "180:codec": "codec",
+      "180:codec.encoding": "codec_encoding",
+      "180:codec.encoding.crf": "codec_encoding_crf",
+      "180:video-preview": "video_preview",
+      "182:value": "value_2",
+      "184:value": "value_3",
+      "185:value": "value_4",
+      "226:device": "device_2",
+      "226:precision": "precision",
+      "226:mode": "mode",
+      "226:enable_temporal_chunking": "enable_temporal_chunking",
+      "226:force_unload": "force_unload",
+      "226:align": "align",
+      "228:attention": "attention",
+      "232:steps": "steps",
+      "232:start_at_sigma": "start_at_sigma",
+      "232:end_at_sigma": "end_at_sigma",
+      "232:spacing": "spacing",
+      "233:strength_model": "strength_model_2",
+      "236:weight_dtype": "weight_dtype",
+      "243:head_chunks": "head_chunks",
+      "245:chunks": "chunks",
+      "245:seq_threshold": "seq_threshold",
+      "246:image": "ref_image_3",
+      "247:image": "ref_image_2",
+      "248:image": "ref_image_0",
+      "249:image": "ref_image_1",
+      "250:value": "prompt",
+      "251:max_resolution": "max_resolution",
+      "251:jpeg_quality": "jpeg_quality",
+      "251:suppress_default_preview": "suppress_default_preview",
+      "251:preview_fps": "preview_fps",
+      "252:max_resolution": "max_resolution_2",
+      "252:jpeg_quality": "jpeg_quality_2",
+      "252:suppress_default_preview": "suppress_default_preview_2",
+      "252:preview_fps": "preview_fps_2",
+      "256:video": "ref_video_0",
+      "256:force_rate": "force_rate",
+      "256:custom_width": "custom_width",
+      "256:custom_height": "custom_height",
+      "256:frame_load_cap": "frame_load_cap",
+      "256:skip_first_frames": "skip_first_frames",
+      "256:select_every_nth": "select_every_nth",
+      "256:format": "format_2",
+      "259:audio": "ref_audio_0",
+      "260:audio": "ref_audio_1",
+      "261:audio": "ref_audio_2",
+      "262:width": "width",
+      "262:height": "height",
+      "262:upscale_method": "upscale_method",
+      "262:keep_proportion": "keep_proportion",
+      "262:pad_color": "pad_color",
+      "262:crop_position": "crop_position",
+      "262:divisible_by": "divisible_by",
+      "262:device": "device_3",
+      "263:start_index": "start_index",
+      "265:start_index": "start_index_2",
+      "265:duration": "duration",
+      "266:start_index": "start_index_3",
+      "266:duration": "duration_2",
+      "267:start_index": "start_index_4",
+      "267:duration": "duration_3",
+      "275:ref_image_size": "ref_image_size",
+      "276:resize_type": "resize_type",
+      "276:resize_type.scale": "resize_type_scale",
+      "276:quality": "quality",
+      "277:clean_file_cache": "clean_file_cache",
+      "277:clean_processes": "clean_processes",
+      "277:clean_dlls": "clean_dlls",
+      "277:retry_times": "retry_times",
+      "278:offload_model": "offload_model",
+      "278:offload_cache": "offload_cache",
+      "279:image": "ref_image_4",
+      "280:image": "ref_image_5",
+      "281:image": "ref_image_6",
+      "282:image": "ref_image_7",
+      "283:image": "ref_image_8"
+    }
+  }
+}

@@ -1,0 +1,844 @@
+{
+  "1": {
+    "inputs": {
+      "model_name": "Ltx/ltx-2.3-22b-distilled-1.1_transformer_only_fp8_scaled.safetensors",
+      "weight_dtype": "default",
+      "compute_dtype": "default",
+      "patch_cublaslinear": false,
+      "sage_attention": "auto",
+      "enable_fp16_accumulation": true
+    },
+    "class_type": "DiffusionModelLoaderKJ",
+    "_meta": {
+      "title": "Diffusion Model Loader KJ"
+    }
+  },
+  "2": {
+    "inputs": {
+      "lora_name": "Ltx/Ltx2.3-Licon-VBVR-I2V-240K-R32.safetensors",
+      "strength_model": 1.0000000000000002,
+      "model": [
+        "1",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "LoRA加载器（仅模型）"
+    }
+  },
+  "8": {
+    "inputs": {
+      "clip_name1": "gemma_3_12B_it_fp8_e4m3fn.safetensors",
+      "clip_name2": "ltx-2.3_text_projection_bf16.safetensors",
+      "type": "ltxv",
+      "device": "default"
+    },
+    "class_type": "DualCLIPLoader",
+    "_meta": {
+      "title": "双CLIP加载器"
+    }
+  },
+  "10": {
+    "inputs": {
+      "vae_name": "LTX23_audio_vae_bf16.safetensors",
+      "device": "main_device",
+      "weight_dtype": "bf16"
+    },
+    "class_type": "VAELoaderKJ",
+    "_meta": {
+      "title": "VAELoader KJ"
+    }
+  },
+  "11": {
+    "inputs": {
+      "vae_name": "LTX23_video_vae_bf16.safetensors",
+      "device": "main_device",
+      "weight_dtype": "bf16"
+    },
+    "class_type": "VAELoaderKJ",
+    "_meta": {
+      "title": "VAELoader KJ"
+    }
+  },
+  "14": {
+    "inputs": {
+      "image": "84e6afbcae38981ce63e997bf1774e2e9743a1b169c89e3c2b0bec3834f9c3ad.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "15": {
+    "inputs": {
+      "width": [
+        "16",
+        0
+      ],
+      "height": [
+        "16",
+        1
+      ],
+      "upscale_method": "lanczos",
+      "keep_proportion": "crop",
+      "pad_color": "0, 0, 0",
+      "crop_position": "center",
+      "divisible_by": 2,
+      "device": "cpu",
+      "image": [
+        "14",
+        0
+      ]
+    },
+    "class_type": "ImageResizeKJv2",
+    "_meta": {
+      "title": "Resize Image v2"
+    }
+  },
+  "16": {
+    "inputs": {
+      "use_custom_resolution": true,
+      "resolution": "1280x720 (16:9) (横屏)",
+      "custom_width": [
+        "167",
+        0
+      ],
+      "custom_height": [
+        "168",
+        0
+      ]
+    },
+    "class_type": "TTResolutionSelector",
+    "_meta": {
+      "title": "TT分辨率选择器"
+    }
+  },
+  "39": {
+    "inputs": {
+      "audio": "18ebdd8171d66391297650a99b5defa28cdb36f27f373c0209402d435d2e3f50.flac",
+      "audioUI": "/api/view?filename=18ebdd8171d66391297650a99b5defa28cdb36f27f373c0209402d435d2e3f50.flac&type=input&subfolder=&rand=0.3244442234741577"
+    },
+    "class_type": "LoadAudio",
+    "_meta": {
+      "title": "加载音频"
+    }
+  },
+  "41": {
+    "inputs": {
+      "start_time": "0:00",
+      "end_time": "1:00",
+      "audio": [
+        "39",
+        0
+      ]
+    },
+    "class_type": "AudioCrop",
+    "_meta": {
+      "title": "AudioCrop"
+    }
+  },
+  "44": {
+    "inputs": {
+      "Number": "30"
+    },
+    "class_type": "Float",
+    "_meta": {
+      "title": "Float"
+    }
+  },
+  "50": {
+    "inputs": {
+      "model": [
+        "51",
+        0
+      ],
+      "audio": [
+        "41",
+        0
+      ]
+    },
+    "class_type": "MelBandRoFormerSampler",
+    "_meta": {
+      "title": "Mel-Band RoFormer Sampler"
+    }
+  },
+  "51": {
+    "inputs": {
+      "model_name": "MelRoFormer/MelBandRoformer_fp32.safetensors"
+    },
+    "class_type": "MelBandRoFormerModelLoader",
+    "_meta": {
+      "title": "Mel-Band RoFormer Model Loader"
+    }
+  },
+  "60": {
+    "inputs": {
+      "text": "vivid tones, overexposed, static, details unclear, subtitles, style, work, painting, picture, still, overall grayish, poorest quality, low quality, JPEG compression artifacts, ugly, incomplete, extra fingers, poorly drawn hands, poorly drawn faces, deformed, disfigured, malformed limbs, fused fingers, still image, messy background, three legs, many people in the background, walking backwards, AI skin, Oily skin, reflective skin, strained expression, contorted expression, blurry, oversaturated, pixelated, low resolution, grainy, distorted, noise, compression artifacts, jpeg artifacts, glitches, watermark, text, logo, signature, copyright, distorted sound, saturated sound, loud, lowres, worst quality, normal quality, bad anatomy, mutated, extra limbs, missing limbs, extra digits, username, out of frame, cropped, gross proportions, underexposed, noisy, static frame, unstable motion, flickering, nsfw, out of focus, low contrast, washed out colors, excessive noise, grainy texture, poor lighting, motion blur, distorted proportions, unnatural skin tones, deformed facial features, asymmetrical face, missing facial features, disfigured hands, wrong hand count, artifacts around text, unreadable text on shirt or hat, incorrect lettering on cap(\"PNTR\"), incorrect t-shirt slogan (\"JUST DO IT\"), missing microphone, misplaced microphone, inconsistent perspective, camera shake, incorrect depth of field, background too sharp, background clutter, distracting reflections, harsh shadows, inconsistent lighting direction, color banding, cartoonish rendering, 3D CGI look, unrealistic materials, uncanny valley effect, incorrect ethnicity, wrong gender, exaggerated expressions, smiling, laughing, exaggerated sadness, wrong gaze direction, eyes looking at camera, mismatched lip sync, silent or muted audio, distorted voice, robotic voice, echo, background noise, off-sync audio, missing sniff sounds, incorrect dialogue, added dialogue, repetitive speech, jittery movement, awkward pauses, incorrect timing, unnatural transitions, inconsistent framing, tilted camera, missing door or shelves, missing shallow depth of field, flat lighting, inconsistent tone, cinematic oversaturation, stylized filters, AI artifacts，worst quality, inconsistent motion, blurry, jittery, distorted face, deformed face, ugly, aged skin, wrinkles, asymmetric eyes, extra fingers, mutated hands, bad anatomy, static image, frozen, oversaturated, cartoon, anime, plastic skin, motion smear, transition cuts, scene change, text overlay, watermark",
+      "clip": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "61": {
+    "inputs": {
+      "frame_rate": [
+        "44",
+        0
+      ],
+      "positive": [
+        "153",
+        1
+      ],
+      "negative": [
+        "60",
+        0
+      ]
+    },
+    "class_type": "LTXVConditioning",
+    "_meta": {
+      "title": "LTXV条件"
+    }
+  },
+  "71": {
+    "inputs": {
+      "audio": [
+        "50",
+        0
+      ],
+      "audio_vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "LTXVAudioVAEEncode",
+    "_meta": {
+      "title": "LTXV音频VAE编码"
+    }
+  },
+  "72": {
+    "inputs": {
+      "samples": [
+        "71",
+        0
+      ],
+      "mask": [
+        "74",
+        0
+      ]
+    },
+    "class_type": "SetLatentNoiseMask",
+    "_meta": {
+      "title": "设置Latent噪波遮罩"
+    }
+  },
+  "74": {
+    "inputs": {
+      "value": 0,
+      "width": [
+        "15",
+        1
+      ],
+      "height": [
+        "15",
+        2
+      ]
+    },
+    "class_type": "SolidMask",
+    "_meta": {
+      "title": "纯块遮罩"
+    }
+  },
+  "77": {
+    "inputs": {
+      "width": [
+        "15",
+        1
+      ],
+      "height": [
+        "15",
+        2
+      ],
+      "length": [
+        "142",
+        0
+      ],
+      "batch_size": 1
+    },
+    "class_type": "EmptyLTXVLatentVideo",
+    "_meta": {
+      "title": "空Latent视频（LTXV）"
+    }
+  },
+  "84": {
+    "inputs": {
+      "video_latent": [
+        "190",
+        0
+      ],
+      "audio_latent": [
+        "72",
+        0
+      ]
+    },
+    "class_type": "LTXVConcatAVLatent",
+    "_meta": {
+      "title": "LTXVConcatAVLatent"
+    }
+  },
+  "91": {
+    "inputs": {
+      "add_noise": true,
+      "noise_seed": 922235551959693,
+      "cfg": 1,
+      "model": [
+        "153",
+        0
+      ],
+      "positive": [
+        "61",
+        0
+      ],
+      "negative": [
+        "61",
+        1
+      ],
+      "sampler": [
+        "98",
+        0
+      ],
+      "sigmas": [
+        "99",
+        0
+      ],
+      "latent_image": [
+        "84",
+        0
+      ]
+    },
+    "class_type": "SamplerCustom",
+    "_meta": {
+      "title": "自定义采样器"
+    }
+  },
+  "98": {
+    "inputs": {
+      "sampler_name": "euler_ancestral_cfg_pp"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "K采样器选择"
+    }
+  },
+  "99": {
+    "inputs": {
+      "sigmas": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0"
+    },
+    "class_type": "ManualSigmas",
+    "_meta": {
+      "title": "自定义Sigmas"
+    }
+  },
+  "102": {
+    "inputs": {
+      "tile_size": 512,
+      "overlap": 64,
+      "temporal_size": 4096,
+      "temporal_overlap": 8,
+      "samples": [
+        "108",
+        0
+      ],
+      "vae": [
+        "11",
+        0
+      ]
+    },
+    "class_type": "VAEDecodeTiled",
+    "_meta": {
+      "title": "VAE解码（分块）"
+    }
+  },
+  "108": {
+    "inputs": {
+      "av_latent": [
+        "91",
+        0
+      ]
+    },
+    "class_type": "LTXVSeparateAVLatent",
+    "_meta": {
+      "title": "LTXV分离音视频潜空间"
+    }
+  },
+  "140": {
+    "inputs": {
+      "audio": [
+        "41",
+        0
+      ]
+    },
+    "class_type": "Audio Duration (mtb)",
+    "_meta": {
+      "title": "Audio Duration (mtb)"
+    }
+  },
+  "141": {
+    "inputs": {
+      "expression": "ceil(a/1000)",
+      "a": [
+        "140",
+        0
+      ]
+    },
+    "class_type": "MathExpression|pysssss",
+    "_meta": {
+      "title": "Math Expression 🐍"
+    }
+  },
+  "142": {
+    "inputs": {
+      "expression": "ceil(a*b/8)*8+1",
+      "a": [
+        "44",
+        0
+      ],
+      "b": [
+        "141",
+        0
+      ]
+    },
+    "class_type": "MathExpression|pysssss",
+    "_meta": {
+      "title": "Math Expression 🐍"
+    }
+  },
+  "143": {
+    "inputs": {
+      "text": "1057",
+      "anything": [
+        "142",
+        0
+      ]
+    },
+    "class_type": "easy showAnything",
+    "_meta": {
+      "title": "展示任何"
+    }
+  },
+  "149": {
+    "inputs": {
+      "anything": [
+        "14",
+        0
+      ]
+    },
+    "class_type": "easy cleanGpuUsed",
+    "_meta": {
+      "title": "清理显存占用"
+    }
+  },
+  "150": {
+    "inputs": {
+      "images": [
+        "15",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "预览图像"
+    }
+  },
+  "153": {
+    "inputs": {
+      "global_prompt": "",
+      "local_prompts": [
+        "188",
+        0
+      ],
+      "segment_lengths": [
+        "189",
+        0
+      ],
+      "epsilon": [
+        "185",
+        0
+      ],
+      "model": [
+        "2",
+        0
+      ],
+      "clip": [
+        "8",
+        0
+      ],
+      "latent": [
+        "84",
+        0
+      ]
+    },
+    "class_type": "PromptRelayEncode",
+    "_meta": {
+      "title": "Prompt Relay Encode"
+    }
+  },
+  "162": {
+    "inputs": {
+      "frame_rate": [
+        "44",
+        0
+      ],
+      "loop_count": 0,
+      "filename_prefix": "AnimateDiff",
+      "format": "video/h264-mp4",
+      "pix_fmt": "yuv420p",
+      "crf": 19,
+      "save_metadata": true,
+      "trim_to_audio": false,
+      "pingpong": false,
+      "save_output": true,
+      "images": [
+        "102",
+        0
+      ],
+      "audio": [
+        "41",
+        0
+      ]
+    },
+    "class_type": "VHS_VideoCombine",
+    "_meta": {
+      "title": "Video Combine 🎥🅥🅗🅢"
+    }
+  },
+  "167": {
+    "inputs": {
+      "Number": 1280
+    },
+    "class_type": "Int",
+    "_meta": {
+      "title": "width"
+    }
+  },
+  "168": {
+    "inputs": {
+      "Number": 720
+    },
+    "class_type": "Int",
+    "_meta": {
+      "title": "height"
+    }
+  },
+  "185": {
+    "inputs": {
+      "Number": "0.5"
+    },
+    "class_type": "Float",
+    "_meta": {
+      "title": "Float"
+    }
+  },
+  "187": {
+    "inputs": {
+      "prompt": "A lively youthful Chinese female beauty livestreamer in her early twenties with bright sparkling almond eyes featuring crisp circular ring light catchlights in her pupils, smooth dewy fair skin with fresh natural makeup including peach pink blush flushed cheeks and glossy tinted lips, long softly curled chestnut brown hair with face-framing bangs, wearing a soft pink chunky knit cardigan over a white camisole with a delicate gold pendant necklace and small pearl stud earrings, holding a transparent glass serum bottle with a black dropper cap close to her chest, standing in a cozy home beauty livestream setup with a warm wooden shelf behind her displaying assorted skincare bottles toner jars and small product boxes, a pegboard hanging neatly arranged makeup brushes, a small acrylic tray with foundation and lipstick swatch cards in front, a soft pink LED neon sign glowing on the wall, illuminated by a large warm ring light creating soft even facial lighting and visible circular pupil reflections, captured by a stationary handheld phone camera with very subtle natural breathing sway, warm golden color grading, shallow depth of field with softly blurred bokeh background, authentic mobile livestream aesthetic"
+    },
+    "class_type": "CR Prompt Text",
+    "_meta": {
+      "title": "⚙️ CR Prompt Text"
+    }
+  },
+  "188": {
+    "inputs": {
+      "prompt": "She leans forward energetically toward the camera with a wide bright beaming smile and excitedly raised eyebrows, lifting the transparent serum bottle high near her face with both hands in a playful presenting gesture, tilting her head quickly to one side and back with bubbly energy, soft loose strands of her wavy hair bouncing around her cheeks while her sparkling eyes catch the warm ring light, mouth opening wide and animated as she greets her audience with explosive enthusiasm | She softens her posture leaning slightly closer with an earnest sincere expression and gently widened sparkly eyes conveying personal testimony, raising her index finger to delicately tap the outer corner of her own eye while her other hand still cradles the serum bottle near her collarbone, nodding emphatically twice for sincere emphasis, a few stray hair strands brush against her temple as her finger touches her face, lips moving expressively and warmly as she shares her real 28-day result | She moves her face noticeably closer to the camera lens with a confident playful challenging smile and slightly lifted chin showing off her bare unfiltered skin, gently brushing her fingertips along her cheekbone in a subtle skin-tap gesture, slow steady head turn from one side to the other to display both cheeks, fine flyaway baby hairs catching the warm light around her hairline, lips parted in a knowing cheeky smirk as she dares the viewers to look closely | She straightens her posture with a focused animated expert expression while keeping her bubbly energy, lifting her free hand to count off three ingredients on her fingers one by one then tapping the serum bottle label to highlight the formula, quick decisive head nods punctuating each ingredient name, her wavy hair swaying with each gesture and a single glossy strand falling across her shoulder, mouth animated and rapid-fire enthusiastic as she rattles off the ingredient list | She throws her shoulders back in mock shocked excitement with comically widened eyes and an exaggerated open-mouthed gasp at the price reveal, making a sweeping downward chopping hand gesture to slash the price while shaking the serum bottle for emphasis with the other hand, tilting her head back briefly in playful disbelief then snapping forward, hair flipping dramatically with the head movement and her pearl earring catching the light, lips forming a wide animated wow shape conveying unbeatable value | She leans urgently toward the camera with serious focused eyes and quick darting glances downward toward the imagined product link, pointing emphatically with her index finger toward the lower corner of the frame three times in rapid succession while clutching the serum bottle protectively to her chest, sharp small head jerks creating urgency, soft flyaway hairs fluttering from the rapid movement and her cheeks flushing slightly pinker with excitement, lips moving fast and sharply as she creates time pressure | She pulls back slightly with a triumphant beaming smile and bright wide-open eyes sealing the call to action, making a big confident come-on beckoning gesture with her free hand pulling viewers in then clapping once decisively, single sharp affirming nod, hair settling around her shoulders as a single glossy strand falls across her smile, mouth opening wide in a final commanding cheerful shout to grab the link"
+    },
+    "class_type": "CR Prompt Text",
+    "_meta": {
+      "title": "⚙️ CR Prompt Text"
+    }
+  },
+  "189": {
+    "inputs": {
+      "prompt": "150,180,90,210,210,120,60"
+    },
+    "class_type": "CR Prompt Text",
+    "_meta": {
+      "title": "⚙️ CR Prompt Text"
+    }
+  },
+  "190": {
+    "inputs": {
+      "num_images": "1",
+      "num_images.strength_1": 1,
+      "num_images.index_1": 0,
+      "vae": [
+        "11",
+        0
+      ],
+      "latent": [
+        "77",
+        0
+      ],
+      "num_images.image_1": [
+        "15",
+        0
+      ]
+    },
+    "class_type": "LTXVImgToVideoInplaceKJ",
+    "_meta": {
+      "title": "LTXVImgToVideoInplaceKJ"
+    }
+  },
+  "_api_config": {
+    "customLabels": {
+      "1:weight_dtype": "weight_dtype",
+      "1:compute_dtype": "compute_dtype",
+      "1:patch_cublaslinear": "patch_cublaslinear",
+      "1:sage_attention": "sage_attention",
+      "1:enable_fp16_accumulation": "enable_fp16_accumulation",
+      "2:strength_model": "strength_model",
+      "8:type": "type",
+      "8:device": "device",
+      "10:device": "device",
+      "10:weight_dtype": "weight_dtype",
+      "11:device": "device",
+      "11:weight_dtype": "weight_dtype",
+      "14:image": "参考图 0",
+      "15:upscale_method": "upscale_method",
+      "15:keep_proportion": "keep_proportion",
+      "15:pad_color": "pad_color",
+      "15:crop_position": "crop_position",
+      "15:divisible_by": "divisible_by",
+      "15:device": "device",
+      "16:use_custom_resolution": "use_custom_resolution",
+      "16:resolution": "resolution",
+      "39:audio": "参考音频 0",
+      "41:start_time": "start_time",
+      "41:end_time": "end_time",
+      "44:Number": "Number",
+      "60:text": "提示词",
+      "74:value": "value",
+      "77:batch_size": "批次大小",
+      "91:cfg": "CFG Scale",
+      "91:add_noise": "add_noise",
+      "91:noise_seed": "noise_seed",
+      "99:sigmas": "sigmas",
+      "102:tile_size": "tile_size",
+      "102:overlap": "overlap",
+      "102:temporal_size": "temporal_size",
+      "102:temporal_overlap": "temporal_overlap",
+      "141:expression": "expression",
+      "142:expression": "expression",
+      "143:text": "提示词",
+      "153:global_prompt": "global_prompt",
+      "162:filename_prefix": "文件名前缀",
+      "162:loop_count": "loop_count",
+      "162:format": "format",
+      "162:pix_fmt": "pix_fmt",
+      "162:crf": "crf",
+      "162:save_metadata": "save_metadata",
+      "162:trim_to_audio": "trim_to_audio",
+      "162:pingpong": "pingpong",
+      "162:save_output": "save_output",
+      "167:Number": "Number",
+      "168:Number": "Number",
+      "185:Number": "Number",
+      "187:prompt": "prompt",
+      "188:prompt": "prompt",
+      "189:prompt": "prompt",
+      "190:num_images": "num_images",
+      "190:num_images.strength_1": "num_images.strength_1",
+      "190:num_images.index_1": "num_images.index_1"
+    },
+    "enabledParams": {
+      "1:weight_dtype": false,
+      "1:compute_dtype": false,
+      "1:patch_cublaslinear": false,
+      "1:sage_attention": false,
+      "1:enable_fp16_accumulation": false,
+      "2:strength_model": false,
+      "8:type": false,
+      "8:device": false,
+      "10:device": false,
+      "10:weight_dtype": false,
+      "11:device": false,
+      "11:weight_dtype": false,
+      "14:image": true,
+      "15:upscale_method": false,
+      "15:keep_proportion": false,
+      "15:pad_color": false,
+      "15:crop_position": false,
+      "15:divisible_by": false,
+      "15:device": false,
+      "16:use_custom_resolution": false,
+      "16:resolution": false,
+      "39:audio": true,
+      "41:start_time": false,
+      "41:end_time": false,
+      "44:Number": false,
+      "60:text": false,
+      "74:value": false,
+      "77:batch_size": false,
+      "91:cfg": false,
+      "91:add_noise": false,
+      "91:noise_seed": false,
+      "99:sigmas": false,
+      "102:tile_size": false,
+      "102:overlap": false,
+      "102:temporal_size": false,
+      "102:temporal_overlap": false,
+      "141:expression": false,
+      "142:expression": false,
+      "143:text": false,
+      "153:global_prompt": false,
+      "162:filename_prefix": false,
+      "162:loop_count": false,
+      "162:format": false,
+      "162:pix_fmt": false,
+      "162:crf": false,
+      "162:save_metadata": false,
+      "162:trim_to_audio": false,
+      "162:pingpong": false,
+      "162:save_output": false,
+      "167:Number": true,
+      "168:Number": true,
+      "185:Number": false,
+      "187:prompt": true,
+      "188:prompt": true,
+      "189:prompt": true,
+      "190:num_images": false,
+      "190:num_images.strength_1": false,
+      "190:num_images.index_1": false
+    },
+    "formValues": {
+      "1:weight_dtype": "default",
+      "1:compute_dtype": "default",
+      "1:patch_cublaslinear": false,
+      "1:sage_attention": "auto",
+      "1:enable_fp16_accumulation": true,
+      "2:strength_model": 1.0000000000000002,
+      "8:type": "ltxv",
+      "8:device": "default",
+      "10:device": "main_device",
+      "10:weight_dtype": "bf16",
+      "11:device": "main_device",
+      "11:weight_dtype": "bf16",
+      "14:image": null,
+      "15:upscale_method": "lanczos",
+      "15:keep_proportion": "crop",
+      "15:pad_color": "0, 0, 0",
+      "15:crop_position": "center",
+      "15:divisible_by": 2,
+      "15:device": "cpu",
+      "16:use_custom_resolution": true,
+      "16:resolution": "1280x720 (16:9) (横屏)",
+      "39:audio": null,
+      "41:start_time": "0:00",
+      "41:end_time": "1:00",
+      "44:Number": "30",
+      "60:text": "vivid tones, overexposed, static, details unclear, subtitles, style, work, painting, picture, still, overall grayish, poorest quality, low quality, JPEG compression artifacts, ugly, incomplete, extra fingers, poorly drawn hands, poorly drawn faces, deformed, disfigured, malformed limbs, fused fingers, still image, messy background, three legs, many people in the background, walking backwards, AI skin, Oily skin, reflective skin, strained expression, contorted expression, blurry, oversaturated, pixelated, low resolution, grainy, distorted, noise, compression artifacts, jpeg artifacts, glitches, watermark, text, logo, signature, copyright, distorted sound, saturated sound, loud, lowres, worst quality, normal quality, bad anatomy, mutated, extra limbs, missing limbs, extra digits, username, out of frame, cropped, gross proportions, underexposed, noisy, static frame, unstable motion, flickering, nsfw, out of focus, low contrast, washed out colors, excessive noise, grainy texture, poor lighting, motion blur, distorted proportions, unnatural skin tones, deformed facial features, asymmetrical face, missing facial features, disfigured hands, wrong hand count, artifacts around text, unreadable text on shirt or hat, incorrect lettering on cap(\"PNTR\"), incorrect t-shirt slogan (\"JUST DO IT\"), missing microphone, misplaced microphone, inconsistent perspective, camera shake, incorrect depth of field, background too sharp, background clutter, distracting reflections, harsh shadows, inconsistent lighting direction, color banding, cartoonish rendering, 3D CGI look, unrealistic materials, uncanny valley effect, incorrect ethnicity, wrong gender, exaggerated expressions, smiling, laughing, exaggerated sadness, wrong gaze direction, eyes looking at camera, mismatched lip sync, silent or muted audio, distorted voice, robotic voice, echo, background noise, off-sync audio, missing sniff sounds, incorrect dialogue, added dialogue, repetitive speech, jittery movement, awkward pauses, incorrect timing, unnatural transitions, inconsistent framing, tilted camera, missing door or shelves, missing shallow depth of field, flat lighting, inconsistent tone, cinematic oversaturation, stylized filters, AI artifacts，worst quality, inconsistent motion, blurry, jittery, distorted face, deformed face, ugly, aged skin, wrinkles, asymmetric eyes, extra fingers, mutated hands, bad anatomy, static image, frozen, oversaturated, cartoon, anime, plastic skin, motion smear, transition cuts, scene change, text overlay, watermark",
+      "74:value": 0,
+      "77:batch_size": 1,
+      "91:cfg": 1,
+      "91:add_noise": true,
+      "91:noise_seed": 922235551959693,
+      "99:sigmas": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0",
+      "102:tile_size": 512,
+      "102:overlap": 64,
+      "102:temporal_size": 4096,
+      "102:temporal_overlap": 8,
+      "141:expression": "ceil(a/1000)",
+      "142:expression": "ceil(a*b/8)*8+1",
+      "143:text": "1057",
+      "153:global_prompt": "",
+      "162:filename_prefix": "AnimateDiff",
+      "162:loop_count": 0,
+      "162:format": "video/h264-mp4",
+      "162:pix_fmt": "yuv420p",
+      "162:crf": 19,
+      "162:save_metadata": true,
+      "162:trim_to_audio": false,
+      "162:pingpong": false,
+      "162:save_output": true,
+      "167:Number": 1280,
+      "168:Number": 720,
+      "185:Number": "0.5",
+      "187:prompt": "A lively youthful Chinese female beauty livestreamer in her early twenties with bright sparkling almond eyes featuring crisp circular ring light catchlights in her pupils, smooth dewy fair skin with fresh natural makeup including peach pink blush flushed cheeks and glossy tinted lips, long softly curled chestnut brown hair with face-framing bangs, wearing a soft pink chunky knit cardigan over a white camisole with a delicate gold pendant necklace and small pearl stud earrings, holding a transparent glass serum bottle with a black dropper cap close to her chest, standing in a cozy home beauty livestream setup with a warm wooden shelf behind her displaying assorted skincare bottles toner jars and small product boxes, a pegboard hanging neatly arranged makeup brushes, a small acrylic tray with foundation and lipstick swatch cards in front, a soft pink LED neon sign glowing on the wall, illuminated by a large warm ring light creating soft even facial lighting and visible circular pupil reflections, captured by a stationary handheld phone camera with very subtle natural breathing sway, warm golden color grading, shallow depth of field with softly blurred bokeh background, authentic mobile livestream aesthetic",
+      "188:prompt": "She leans forward energetically toward the camera with a wide bright beaming smile and excitedly raised eyebrows, lifting the transparent serum bottle high near her face with both hands in a playful presenting gesture, tilting her head quickly to one side and back with bubbly energy, soft loose strands of her wavy hair bouncing around her cheeks while her sparkling eyes catch the warm ring light, mouth opening wide and animated as she greets her audience with explosive enthusiasm | She softens her posture leaning slightly closer with an earnest sincere expression and gently widened sparkly eyes conveying personal testimony, raising her index finger to delicately tap the outer corner of her own eye while her other hand still cradles the serum bottle near her collarbone, nodding emphatically twice for sincere emphasis, a few stray hair strands brush against her temple as her finger touches her face, lips moving expressively and warmly as she shares her real 28-day result | She moves her face noticeably closer to the camera lens with a confident playful challenging smile and slightly lifted chin showing off her bare unfiltered skin, gently brushing her fingertips along her cheekbone in a subtle skin-tap gesture, slow steady head turn from one side to the other to display both cheeks, fine flyaway baby hairs catching the warm light around her hairline, lips parted in a knowing cheeky smirk as she dares the viewers to look closely | She straightens her posture with a focused animated expert expression while keeping her bubbly energy, lifting her free hand to count off three ingredients on her fingers one by one then tapping the serum bottle label to highlight the formula, quick decisive head nods punctuating each ingredient name, her wavy hair swaying with each gesture and a single glossy strand falling across her shoulder, mouth animated and rapid-fire enthusiastic as she rattles off the ingredient list | She throws her shoulders back in mock shocked excitement with comically widened eyes and an exaggerated open-mouthed gasp at the price reveal, making a sweeping downward chopping hand gesture to slash the price while shaking the serum bottle for emphasis with the other hand, tilting her head back briefly in playful disbelief then snapping forward, hair flipping dramatically with the head movement and her pearl earring catching the light, lips forming a wide animated wow shape conveying unbeatable value | She leans urgently toward the camera with serious focused eyes and quick darting glances downward toward the imagined product link, pointing emphatically with her index finger toward the lower corner of the frame three times in rapid succession while clutching the serum bottle protectively to her chest, sharp small head jerks creating urgency, soft flyaway hairs fluttering from the rapid movement and her cheeks flushing slightly pinker with excitement, lips moving fast and sharply as she creates time pressure | She pulls back slightly with a triumphant beaming smile and bright wide-open eyes sealing the call to action, making a big confident come-on beckoning gesture with her free hand pulling viewers in then clapping once decisively, single sharp affirming nod, hair settling around her shoulders as a single glossy strand falls across her smile, mouth opening wide in a final commanding cheerful shout to grab the link",
+      "189:prompt": "150,180,90,210,210,120,60",
+      "190:num_images": "1",
+      "190:num_images.strength_1": 1,
+      "190:num_images.index_1": 0
+    },
+    "mediaOrder": [
+      "14:image",
+      "39:audio"
+    ],
+    "mediaOrderSource": "auto",
+    "apiNames": {
+      "1:weight_dtype": "weight_dtype",
+      "1:compute_dtype": "compute_dtype",
+      "1:patch_cublaslinear": "patch_cublaslinear",
+      "1:sage_attention": "sage_attention",
+      "1:enable_fp16_accumulation": "enable_fp16_accumulation",
+      "2:strength_model": "strength_model",
+      "8:type": "type",
+      "8:device": "device",
+      "10:device": "device_2",
+      "10:weight_dtype": "weight_dtype_2",
+      "11:device": "device_3",
+      "11:weight_dtype": "weight_dtype_3",
+      "14:image": "ref_image_0",
+      "15:upscale_method": "upscale_method",
+      "15:keep_proportion": "keep_proportion",
+      "15:pad_color": "pad_color",
+      "15:crop_position": "crop_position",
+      "15:divisible_by": "divisible_by",
+      "15:device": "device_4",
+      "16:use_custom_resolution": "use_custom_resolution",
+      "16:resolution": "resolution",
+      "39:audio": "ref_audio_0",
+      "41:start_time": "start_time",
+      "41:end_time": "end_time",
+      "44:Number": "Number",
+      "60:text": "prompt",
+      "74:value": "value",
+      "77:batch_size": "batch_size",
+      "91:cfg": "cfg",
+      "91:add_noise": "add_noise",
+      "91:noise_seed": "noise_seed",
+      "99:sigmas": "sigmas",
+      "102:tile_size": "tile_size",
+      "102:overlap": "overlap",
+      "102:temporal_size": "temporal_size",
+      "102:temporal_overlap": "temporal_overlap",
+      "141:expression": "expression",
+      "142:expression": "expression_2",
+      "143:text": "prompt_2",
+      "153:global_prompt": "global_prompt",
+      "162:filename_prefix": "filename_prefix",
+      "162:loop_count": "loop_count",
+      "162:format": "format",
+      "162:pix_fmt": "pix_fmt",
+      "162:crf": "crf",
+      "162:save_metadata": "save_metadata",
+      "162:trim_to_audio": "trim_to_audio",
+      "162:pingpong": "pingpong",
+      "162:save_output": "save_output",
+      "167:Number": "Number_2",
+      "168:Number": "Number_3",
+      "185:Number": "Number_4",
+      "187:prompt": "prompt_3",
+      "188:prompt": "prompt_4",
+      "189:prompt": "prompt_5",
+      "190:num_images": "num_images",
+      "190:num_images.strength_1": "num_images_strength_1",
+      "190:num_images.index_1": "num_images_index_1"
+    }
+  }
+}

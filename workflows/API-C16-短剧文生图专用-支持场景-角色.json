@@ -1,0 +1,508 @@
+{
+  "11": {
+    "inputs": {
+      "vae_name": "ae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "加载VAE"
+    }
+  },
+  "12": {
+    "inputs": {
+      "clip_name": "qwen_3_4b.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "加载CLIP"
+    }
+  },
+  "14": {
+    "inputs": {
+      "lora_name": "Zimage/Z-Image-Fun-Lora-Distill-8-Steps-2603-ComfyUI.safetensors",
+      "strength_model": 0.5,
+      "model": [
+        "33",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "LoRA加载器（仅模型）"
+    }
+  },
+  "16": {
+    "inputs": {
+      "text": "泛黄，发绿，模糊，低分辨率，低质量图像，扭曲的肢体，诡异的外观，丑陋，AI感，噪点，网格感，JPEG压缩条纹，异常的肢体，水印，乱码，意义不明的字符，泛蓝",
+      "clip": [
+        "12",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "17": {
+    "inputs": {
+      "samples": [
+        "22",
+        0
+      ],
+      "vae": [
+        "11",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "18": {
+    "inputs": {
+      "unet_name": "Zimage/z_image_bf16.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "UNet加载器"
+    }
+  },
+  "21": {
+    "inputs": {
+      "width": [
+        "60",
+        0
+      ],
+      "height": [
+        "61",
+        0
+      ],
+      "batch_size": 1
+    },
+    "class_type": "EmptyLatentImage",
+    "_meta": {
+      "title": "空Latent图像"
+    }
+  },
+  "22": {
+    "inputs": {
+      "seed": 34341318406080,
+      "steps": 8,
+      "cfg": 1,
+      "sampler_name": "res_2s_ode",
+      "scheduler": "kl_optimal",
+      "denoise": 1,
+      "model": [
+        "14",
+        0
+      ],
+      "positive": [
+        "24",
+        0
+      ],
+      "negative": [
+        "16",
+        0
+      ],
+      "latent_image": [
+        "21",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "23": {
+    "inputs": {
+      "lora_name": "Zimage/Kook_Zimage_瑶光.safetensors",
+      "strength_model": 0.5000000000000001,
+      "model": [
+        "18",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "LoRA加载器（仅模型）"
+    }
+  },
+  "24": {
+    "inputs": {
+      "text": [
+        "49",
+        0
+      ],
+      "clip": [
+        "12",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "33": {
+    "inputs": {
+      "lora_name": "Zimage/Kook_Zimage_如梦似幻.safetensors",
+      "strength_model": 0.7000000000000002,
+      "model": [
+        "23",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "LoRA加载器（仅模型）"
+    }
+  },
+  "49": {
+    "inputs": {
+      "text": "真人写实风格，文艺电影高级构图，镜头呼吸感，沉浸式叙事氛围感拉满；柔和漫射自然光叠加经典伦勃朗光影，真实立体光影层次，光影斑驳错落，胶片颗粒质感，画面高级有故事感。景深层次自然；人物肌肤纹理真实细腻，原生真实肌肤质感，人物情态生动自然、情绪饱满。江湖故事感。侧身，古典仕女造型的少女，梳明代高发髻，点缀精致的珠花与绒花发饰，侧边一绺发束垂在前胸。身着明制汉服：复古低饱和莫兰迪色调。上身是明制复原款紫藤色暗纹柔软质感琵琶袖圆领衫，长至腿部，刺绣团花纹样，下身搭配明制浅姜黄色轻纱马面裙四季花卉纹样，裙摆垂坠飘逸。手持一柄雾蓝色缂丝团扇，扇面绣有折枝玉兰花纹样。姿态优雅，走出中式古宅，视线低垂含着一丝温婉的笑意。旁边秀丽双鬟侍女（明制交领衫外搭圆领长比甲下着百褶裙）轻撩珠帘，昏暗散光营造出宁静、怀旧的氛围，大光圈虚化背景，突出人物的立体轮廓与温婉气质，营造出慵懒随性的氛围感与沉浸式的现场感。"
+    },
+    "class_type": "CR Text",
+    "_meta": {
+      "title": "🔤 CR Text"
+    }
+  },
+  "50": {
+    "inputs": {
+      "upscale_method": "lanczos",
+      "megapixels": 0.30000000000000004,
+      "resolution_steps": 1,
+      "image": [
+        "17",
+        0
+      ]
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "缩放图像（像素）"
+    }
+  },
+  "53": {
+    "inputs": {
+      "model": "seedvr2_ema_3b_fp8_e4m3fn.safetensors",
+      "device": "cuda:0",
+      "blocks_to_swap": 32,
+      "swap_io_components": true,
+      "offload_device": "cpu",
+      "cache_model": "sdpa",
+      "attention_mode": "sageattn_2"
+    },
+    "class_type": "SeedVR2LoadDiTModel",
+    "_meta": {
+      "title": "SeedVR2 (Down)Load DiT Model"
+    }
+  },
+  "54": {
+    "inputs": {
+      "model": "ema_vae_fp16.safetensors",
+      "device": "cuda:0",
+      "encode_tiled": true,
+      "encode_tile_size": 1024,
+      "encode_tile_overlap": 128,
+      "decode_tiled": true,
+      "decode_tile_size": 1024,
+      "decode_tile_overlap": 128,
+      "tile_debug": "false",
+      "offload_device": "cpu",
+      "cache_model": false
+    },
+    "class_type": "SeedVR2LoadVAEModel",
+    "_meta": {
+      "title": "SeedVR2 (Down)Load VAE Model"
+    }
+  },
+  "58": {
+    "inputs": {
+      "filename_prefix": "comfyui",
+      "images": [
+        "72",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "保存图像"
+    }
+  },
+  "60": {
+    "inputs": {
+      "value": 1920
+    },
+    "class_type": "INTConstant",
+    "_meta": {
+      "title": "INT Constant"
+    }
+  },
+  "61": {
+    "inputs": {
+      "value": 1024
+    },
+    "class_type": "INTConstant",
+    "_meta": {
+      "title": "INT Constant"
+    }
+  },
+  "63": {
+    "inputs": {
+      "text": "情绪氛围感拉满，暗朦，光朦，胶片颗粒质感，层次丰富，，朦胧美学，光的美学,POV视角，对焦模糊，缤纷泛影，质感和肌理，透射暖金微光，超广角，强透视，延伸感，灰青橙黄褪色胶片粗颗粒，低光与高曝，低饱和，高对比反差，光影模糊、弱印象派，超现实，朦胧渐变，暗灰色调氛围，逆朦，过曝，泛朦，模糊弥散渐变，粒子高噪点、光影层次，复古，抽象，空灵，梦幻，大张力角度+故事感，印象派技法，虚实结合的油画，模糊颗粒肌理，模糊感+颗粒感+肌理感+朦胧感，清新淡雅，治愈配色，色彩冷暖对比强烈，强调梦幻温暖的氛围感，微光，隐约看出形态，非传统构图方式，自序，艺术，高级的氛围感，梦幻，缪斯，复古风格，超强复古颗粒感，低饱和"
+    },
+    "class_type": "CR Text",
+    "_meta": {
+      "title": "🔤 CR Text"
+    }
+  },
+  "72": {
+    "inputs": {
+      "seed": 2346985954,
+      "resolution": 1080,
+      "max_resolution": 0,
+      "batch_size": 5,
+      "uniform_batch_size": false,
+      "color_correction": "lab",
+      "temporal_overlap": 0,
+      "prepend_frames": 0,
+      "input_noise_scale": 0,
+      "latent_noise_scale": 0,
+      "offload_device": "cpu",
+      "enable_debug": false,
+      "image": [
+        "50",
+        0
+      ],
+      "dit": [
+        "53",
+        0
+      ],
+      "vae": [
+        "54",
+        0
+      ]
+    },
+    "class_type": "SeedVR2VideoUpscaler",
+    "_meta": {
+      "title": "SeedVR2视频放大器"
+    }
+  },
+  "_api_config": {
+    "customLabels": {
+      "12:type": "type",
+      "12:device": "device",
+      "14:strength_model": "strength_model",
+      "16:text": "提示词",
+      "18:weight_dtype": "weight_dtype",
+      "21:batch_size": "批次大小",
+      "22:seed": "随机种子",
+      "22:steps": "迭代步数",
+      "22:cfg": "CFG Scale",
+      "22:denoise": "denoise",
+      "23:lora_name": "lora_name",
+      "23:strength_model": "strength_model",
+      "33:lora_name": "lora_name",
+      "33:strength_model": "strength_model",
+      "49:text": "提示词",
+      "50:upscale_method": "upscale_method",
+      "50:megapixels": "megapixels",
+      "50:resolution_steps": "resolution_steps",
+      "53:device": "device",
+      "53:blocks_to_swap": "blocks_to_swap",
+      "53:swap_io_components": "swap_io_components",
+      "53:offload_device": "offload_device",
+      "53:cache_model": "cache_model",
+      "53:attention_mode": "attention_mode",
+      "54:device": "device",
+      "54:encode_tiled": "encode_tiled",
+      "54:encode_tile_size": "encode_tile_size",
+      "54:encode_tile_overlap": "encode_tile_overlap",
+      "54:decode_tiled": "decode_tiled",
+      "54:decode_tile_size": "decode_tile_size",
+      "54:decode_tile_overlap": "decode_tile_overlap",
+      "54:tile_debug": "tile_debug",
+      "54:offload_device": "offload_device",
+      "54:cache_model": "cache_model",
+      "58:filename_prefix": "文件名前缀",
+      "60:value": "value",
+      "61:value": "value",
+      "63:text": "提示词",
+      "72:seed": "随机种子",
+      "72:batch_size": "批次大小",
+      "72:resolution": "resolution",
+      "72:max_resolution": "max_resolution",
+      "72:uniform_batch_size": "uniform_batch_size",
+      "72:color_correction": "color_correction",
+      "72:temporal_overlap": "temporal_overlap",
+      "72:prepend_frames": "prepend_frames",
+      "72:input_noise_scale": "input_noise_scale",
+      "72:latent_noise_scale": "latent_noise_scale",
+      "72:offload_device": "offload_device",
+      "72:enable_debug": "enable_debug"
+    },
+    "enabledParams": {
+      "12:type": false,
+      "12:device": false,
+      "14:strength_model": false,
+      "16:text": false,
+      "18:weight_dtype": false,
+      "21:batch_size": false,
+      "22:seed": true,
+      "22:steps": false,
+      "22:cfg": false,
+      "22:denoise": false,
+      "23:lora_name": false,
+      "23:strength_model": false,
+      "33:lora_name": false,
+      "33:strength_model": false,
+      "49:text": true,
+      "50:upscale_method": false,
+      "50:megapixels": false,
+      "50:resolution_steps": false,
+      "53:device": false,
+      "53:blocks_to_swap": false,
+      "53:swap_io_components": false,
+      "53:offload_device": false,
+      "53:cache_model": false,
+      "53:attention_mode": false,
+      "54:device": false,
+      "54:encode_tiled": false,
+      "54:encode_tile_size": false,
+      "54:encode_tile_overlap": false,
+      "54:decode_tiled": false,
+      "54:decode_tile_size": false,
+      "54:decode_tile_overlap": false,
+      "54:tile_debug": false,
+      "54:offload_device": false,
+      "54:cache_model": false,
+      "58:filename_prefix": false,
+      "60:value": true,
+      "61:value": true,
+      "63:text": false,
+      "72:seed": false,
+      "72:batch_size": false,
+      "72:resolution": false,
+      "72:max_resolution": false,
+      "72:uniform_batch_size": false,
+      "72:color_correction": false,
+      "72:temporal_overlap": false,
+      "72:prepend_frames": false,
+      "72:input_noise_scale": false,
+      "72:latent_noise_scale": false,
+      "72:offload_device": false,
+      "72:enable_debug": false
+    },
+    "formValues": {
+      "12:type": "qwen_image",
+      "12:device": "default",
+      "14:strength_model": 0.5,
+      "16:text": "泛黄，发绿，模糊，低分辨率，低质量图像，扭曲的肢体，诡异的外观，丑陋，AI感，噪点，网格感，JPEG压缩条纹，异常的肢体，水印，乱码，意义不明的字符，泛蓝",
+      "18:weight_dtype": "default",
+      "21:batch_size": 1,
+      "22:seed": 34341318406080,
+      "22:steps": 8,
+      "22:cfg": 1,
+      "22:denoise": 1,
+      "23:lora_name": "Zimage/Kook_Zimage_瑶光.safetensors",
+      "23:strength_model": 0.5000000000000001,
+      "33:lora_name": "Zimage/Kook_Zimage_如梦似幻.safetensors",
+      "33:strength_model": 0.7000000000000002,
+      "49:text": "真人写实风格，文艺电影高级构图，镜头呼吸感，沉浸式叙事氛围感拉满；柔和漫射自然光叠加经典伦勃朗光影，真实立体光影层次，光影斑驳错落，胶片颗粒质感，画面高级有故事感。景深层次自然；人物肌肤纹理真实细腻，原生真实肌肤质感，人物情态生动自然、情绪饱满。江湖故事感。侧身，古典仕女造型的少女，梳明代高发髻，点缀精致的珠花与绒花发饰，侧边一绺发束垂在前胸。身着明制汉服：复古低饱和莫兰迪色调。上身是明制复原款紫藤色暗纹柔软质感琵琶袖圆领衫，长至腿部，刺绣团花纹样，下身搭配明制浅姜黄色轻纱马面裙四季花卉纹样，裙摆垂坠飘逸。手持一柄雾蓝色缂丝团扇，扇面绣有折枝玉兰花纹样。姿态优雅，走出中式古宅，视线低垂含着一丝温婉的笑意。旁边秀丽双鬟侍女（明制交领衫外搭圆领长比甲下着百褶裙）轻撩珠帘，昏暗散光营造出宁静、怀旧的氛围，大光圈虚化背景，突出人物的立体轮廓与温婉气质，营造出慵懒随性的氛围感与沉浸式的现场感。",
+      "50:upscale_method": "lanczos",
+      "50:megapixels": 0.30000000000000004,
+      "50:resolution_steps": 1,
+      "53:device": "cuda:0",
+      "53:blocks_to_swap": 32,
+      "53:swap_io_components": true,
+      "53:offload_device": "cpu",
+      "53:cache_model": "sdpa",
+      "53:attention_mode": "sageattn_2",
+      "54:device": "cuda:0",
+      "54:encode_tiled": true,
+      "54:encode_tile_size": 1024,
+      "54:encode_tile_overlap": 128,
+      "54:decode_tiled": true,
+      "54:decode_tile_size": 1024,
+      "54:decode_tile_overlap": 128,
+      "54:tile_debug": "false",
+      "54:offload_device": "cpu",
+      "54:cache_model": false,
+      "58:filename_prefix": "comfyui",
+      "60:value": 1920,
+      "61:value": 1024,
+      "63:text": "情绪氛围感拉满，暗朦，光朦，胶片颗粒质感，层次丰富，，朦胧美学，光的美学,POV视角，对焦模糊，缤纷泛影，质感和肌理，透射暖金微光，超广角，强透视，延伸感，灰青橙黄褪色胶片粗颗粒，低光与高曝，低饱和，高对比反差，光影模糊、弱印象派，超现实，朦胧渐变，暗灰色调氛围，逆朦，过曝，泛朦，模糊弥散渐变，粒子高噪点、光影层次，复古，抽象，空灵，梦幻，大张力角度+故事感，印象派技法，虚实结合的油画，模糊颗粒肌理，模糊感+颗粒感+肌理感+朦胧感，清新淡雅，治愈配色，色彩冷暖对比强烈，强调梦幻温暖的氛围感，微光，隐约看出形态，非传统构图方式，自序，艺术，高级的氛围感，梦幻，缪斯，复古风格，超强复古颗粒感，低饱和",
+      "72:seed": 2346985954,
+      "72:batch_size": 5,
+      "72:resolution": 1080,
+      "72:max_resolution": 0,
+      "72:uniform_batch_size": false,
+      "72:color_correction": "lab",
+      "72:temporal_overlap": 0,
+      "72:prepend_frames": 0,
+      "72:input_noise_scale": 0,
+      "72:latent_noise_scale": 0,
+      "72:offload_device": "cpu",
+      "72:enable_debug": false
+    },
+    "mediaOrder": [],
+    "mediaOrderSource": "auto",
+    "apiNames": {
+      "12:type": "type",
+      "12:device": "device",
+      "14:strength_model": "strength_model",
+      "16:text": "prompt",
+      "18:weight_dtype": "weight_dtype",
+      "21:batch_size": "batch_size",
+      "22:seed": "seed",
+      "22:steps": "steps",
+      "22:cfg": "cfg",
+      "22:denoise": "denoise",
+      "23:lora_name": "lora_name",
+      "23:strength_model": "strength_model_2",
+      "33:lora_name": "lora_name_2",
+      "33:strength_model": "strength_model_3",
+      "49:text": "prompt_2",
+      "50:upscale_method": "upscale_method",
+      "50:megapixels": "megapixels",
+      "50:resolution_steps": "resolution_steps",
+      "53:device": "device_2",
+      "53:blocks_to_swap": "blocks_to_swap",
+      "53:swap_io_components": "swap_io_components",
+      "53:offload_device": "offload_device",
+      "53:cache_model": "cache_model",
+      "53:attention_mode": "attention_mode",
+      "54:device": "device_3",
+      "54:encode_tiled": "encode_tiled",
+      "54:encode_tile_size": "encode_tile_size",
+      "54:encode_tile_overlap": "encode_tile_overlap",
+      "54:decode_tiled": "decode_tiled",
+      "54:decode_tile_size": "decode_tile_size",
+      "54:decode_tile_overlap": "decode_tile_overlap",
+      "54:tile_debug": "tile_debug",
+      "54:offload_device": "offload_device_2",
+      "54:cache_model": "cache_model_2",
+      "58:filename_prefix": "filename_prefix",
+      "60:value": "value",
+      "61:value": "value_2",
+      "63:text": "prompt_3",
+      "72:seed": "seed_2",
+      "72:batch_size": "batch_size_2",
+      "72:resolution": "resolution",
+      "72:max_resolution": "max_resolution",
+      "72:uniform_batch_size": "uniform_batch_size",
+      "72:color_correction": "color_correction",
+      "72:temporal_overlap": "temporal_overlap",
+      "72:prepend_frames": "prepend_frames",
+      "72:input_noise_scale": "input_noise_scale",
+      "72:latent_noise_scale": "latent_noise_scale",
+      "72:offload_device": "offload_device_3",
+      "72:enable_debug": "enable_debug"
+    }
+  }
+}

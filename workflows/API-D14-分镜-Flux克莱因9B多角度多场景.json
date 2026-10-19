@@ -1,0 +1,634 @@
+{
+  "35": {
+    "inputs": {
+      "text": "Role: 视觉连续性导演 (Visual Continuity Director)\n1. 核心机制：焦点接力 (Focus Relay)\n\n为了实现“流水般”的叙事，你必须遵循微观因果律，而非单纯的动作。\n接力规则：\n\n物理接力：镜头 A 结尾手触碰到门 -> 镜头 B 从门被推开的缝隙看进去。\n视线接力：镜头 A 结尾角色看向天空 -> 镜头 B 也是仰视视角，展示角色眼中的景象。\n环境接力：镜头 A 结尾一阵风吹乱头发 -> 镜头 B 是一片被风吹起的树叶掠过镜头。\n\n2. 图像调性自适应 (Tone Adaptation) - 关键步骤\n\n在生成前，请先判断【参考图像】的属性：\n类型 A [静谧/情感]：衔接靠光影变化、微表情、眼泪、风吹草动。\n类型 B [悬疑/探索]：衔接靠脚步移动、手部触碰、手电筒光束、门的开合。\n类型 C [激烈/战斗]：衔接靠速度线、碰撞、碎片、物理位移。\n\n3. 9镜头通用流体结构 (Universal Fluid Structure)\n\n无论什么类型，必须严格遵循以下镜头焦点的转移逻辑：\n\n镜头1 [全景入画]：大环境 -> 视觉锚点(Visual Anchor) 处于环境中。\n镜头2 [推进/聚焦]：镜头推近 -> 聚焦于 Visual Anchor 的某个局部（眼睛/手/配饰）。\n镜头3 [触发/诱因]：环境发生微小变化（光线移动/风吹过/出现声音），引起 Visual Anchor 注意。\n镜头4 [反应/互动]：Visual Anchor 做出反应（转头/伸手/起步/眼神流转）。\n镜头5 [过程/流动]：Visual Anchor 正在进行某个动作（行走/奔跑/抚摸/哭泣），强调动作的进行时。\n镜头6 [高点/特写]：动作的关键瞬间或情绪的最高点（手指触碰物体/泪水滴落/全力冲刺）。\n镜头7 [变化/后果]：由于镜头6的动作，环境产生了反馈（物体亮起/花瓣散开/门打开/敌人倒下）。\n镜头8 [余韵/局部]：聚焦于变化的后果细节（发光的纹路/地上的水渍/飘落的羽毛）。\n镜头9 [拉远/出画]：镜头拉远，Visual Anchor 与改变后的环境融为一体或离开。\n\n4. 参考案例 (Non-Combat Case: 情感/治愈)\n\n(假设输入：夕阳下抱着吉他的女孩)\nAI Output:\nNext Scene：1) 远景/逆光 :: 夕阳将金色的光辉洒满草地，抱着木吉他的长发女孩独自坐在山坡的长椅上，身影被拉得很长 :: 宁静，暖色调\nNext Scene：2) 推进/侧面特写 :: 镜头缓慢推进，微风轻轻吹起抱着木吉他的长发女孩耳边的碎发，她的睫毛在夕阳下闪烁微光 :: 细腻，发丝飘动\nNext Scene：3) 特写/手部 :: 抱着木吉他的长发女孩的纤细手指轻轻按在琴弦上，空气中仿佛凝固着即将弹奏前的寂静 :: 准备动作，指尖细节\nNext Scene：4) 中景/开始 :: 抱着木吉他的长发女孩的手腕轻柔地摆动，拨响了第一根琴弦，琴弦震动的波纹仿佛在空气中扩散 :: 动作起始，优雅\nNext Scene：5) 环绕镜头/动态 :: 随着旋律的流淌，抱着木吉他的长发女孩闭上眼睛沉浸在音乐中，镜头围绕她缓慢旋转，捕捉她陶醉的神情 :: 沉浸感，流动\nNext Scene：6) 极近特写/高潮 :: 抱着木吉他的长发女孩眼角滑落一滴晶莹的泪珠，泪珠正好滴落在琴箱的边缘，折射出夕阳的红光 :: 情绪爆发，微距美学\nNext Scene：7) 过肩镜头/视线 :: 顺着抱着木吉他的长发女孩睁开的视线望去，远处的飞鸟正成群结队地飞向落日 :: 视线引导，开阔\nNext Scene：8) 远景/背面 :: 抱着木吉他的长发女孩停止了弹奏，依然保持着抱琴的姿势，看着飞鸟消失在地平线 :: 动作结束，留白\nNext Scene：9) 大远景/拉高 :: 镜头垂直拉高，抱着木吉他的长发女孩变成了草地上一个小小的点，被巨大的星空夜幕逐渐笼罩 :: 时间流逝，结局\n\n5. 正式执行 (Execute)\n\n请分析我上传的图片，首先判断是[静谧/情感]、[悬疑/探索]还是[激烈/战斗]，然后提取Visual Anchor，严格按照“焦点接力”逻辑生成8行分镜。\n要求：禁止废话，禁止空行，禁止代词，确保镜头之间有电影剪辑般的逻辑连贯性。\n\n# : 强制排版约束 (Output Layout) - 重要\n1.  **紧凑输出**：所有输出必须是一个**连续的文本块**。\n2.  **零空行**：在 `Next Scene` 与 `Next Scene` 之间，**严禁插入空行**。\n3.  **换行符**：仅允许使用单次换行（Single Line Break），禁止使用段落分行。\n\n# Example (排版正确示范)\nNext Scene：...\nNext Scene：...\nNext Scene：...\n(注意：上面这三行是紧挨着的，中间没有空隙)\n\n# Action\n请执行生成，确保结果紧凑无空行。"
+    },
+    "class_type": "Text Multiline",
+    "_meta": {
+      "title": "Text Multiline"
+    }
+  },
+  "219": {
+    "inputs": {
+      "max_tokens": 1024,
+      "top_k": 30,
+      "top_p": 0.9,
+      "min_p": 0.05,
+      "typical_p": 1,
+      "temperature": 0.8,
+      "repeat_penalty": 1,
+      "frequency_penalty": 0,
+      "mirostat_mode": 0,
+      "mirostat_eta": 0.1,
+      "mirostat_tau": 5,
+      "state_uid": 0,
+      "present_penalty": 1
+    },
+    "class_type": "llama_cpp_parameters",
+    "_meta": {
+      "title": "Llama-cpp Parameters"
+    }
+  },
+  "221": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "K采样器选择"
+    }
+  },
+  "222": {
+    "inputs": {
+      "noise_seed": 704576192057704
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "随机噪波"
+    }
+  },
+  "223": {
+    "inputs": {
+      "cfg": 1,
+      "model": [
+        "239",
+        0
+      ],
+      "positive": [
+        "246",
+        0
+      ],
+      "negative": [
+        "248",
+        0
+      ]
+    },
+    "class_type": "CFGGuider",
+    "_meta": {
+      "title": "CFG引导器"
+    }
+  },
+  "225": {
+    "inputs": {
+      "text": [
+        "267",
+        0
+      ],
+      "clip": [
+        "236",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "226": {
+    "inputs": {
+      "steps": 4,
+      "width": [
+        "250",
+        0
+      ],
+      "height": [
+        "250",
+        1
+      ]
+    },
+    "class_type": "Flux2Scheduler",
+    "_meta": {
+      "title": "Flux2调度器"
+    }
+  },
+  "227": {
+    "inputs": {
+      "noise": [
+        "222",
+        0
+      ],
+      "guider": [
+        "223",
+        0
+      ],
+      "sampler": [
+        "221",
+        0
+      ],
+      "sigmas": [
+        "226",
+        0
+      ],
+      "latent_image": [
+        "251",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "自定义采样器（高级）"
+    }
+  },
+  "232": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "加载VAE"
+    }
+  },
+  "236": {
+    "inputs": {
+      "clip_name": "qwen_3_8b_fp8mixed.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "加载CLIP"
+    }
+  },
+  "239": {
+    "inputs": {
+      "unet_name": "flux/flux-2-klein-9b-fp8.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "UNet加载器"
+    }
+  },
+  "241": {
+    "inputs": {
+      "text": "",
+      "clip": [
+        "236",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "242": {
+    "inputs": {
+      "pixels": [
+        "249",
+        0
+      ],
+      "vae": [
+        "232",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE编码"
+    }
+  },
+  "245": {
+    "inputs": {
+      "filename_prefix": "ComfyUI",
+      "images": [
+        "258",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "保存图像"
+    }
+  },
+  "246": {
+    "inputs": {
+      "conditioning": [
+        "225",
+        0
+      ],
+      "latent": [
+        "242",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "参考Latent"
+    }
+  },
+  "248": {
+    "inputs": {
+      "conditioning": [
+        "241",
+        0
+      ],
+      "latent": [
+        "242",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "参考Latent"
+    }
+  },
+  "249": {
+    "inputs": {
+      "aspect_ratio": "original",
+      "proportional_width": 1,
+      "proportional_height": 1,
+      "fit": "letterbox",
+      "method": "lanczos",
+      "round_to_multiple": "8",
+      "scale_to_side": "longest",
+      "scale_to_length": 1920,
+      "background_color": "#000000",
+      "image": [
+        "259",
+        0
+      ]
+    },
+    "class_type": "LayerUtility: ImageScaleByAspectRatio V2",
+    "_meta": {
+      "title": "图层工具：按宽高比缩放 V2"
+    }
+  },
+  "250": {
+    "inputs": {
+      "image": [
+        "249",
+        0
+      ]
+    },
+    "class_type": "GetImageSize",
+    "_meta": {
+      "title": "获取图像尺寸"
+    }
+  },
+  "251": {
+    "inputs": {
+      "width": [
+        "249",
+        3
+      ],
+      "height": [
+        "249",
+        4
+      ],
+      "batch_size": 1
+    },
+    "class_type": "EmptyFlux2LatentImage",
+    "_meta": {
+      "title": "空Latent图像（Flux2）"
+    }
+  },
+  "253": {
+    "inputs": {
+      "value": 1280
+    },
+    "class_type": "INTConstant",
+    "_meta": {
+      "title": "INT Constant"
+    }
+  },
+  "254": {
+    "inputs": {
+      "value": 720
+    },
+    "class_type": "INTConstant",
+    "_meta": {
+      "title": "INT Constant"
+    }
+  },
+  "258": {
+    "inputs": {
+      "samples": [
+        "227",
+        0
+      ],
+      "vae": [
+        "232",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "259": {
+    "inputs": {
+      "image": "123.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "262": {
+    "inputs": {
+      "preset_prompt": "Normal - Describe",
+      "custom_prompt": "",
+      "system_prompt": [
+        "35",
+        0
+      ],
+      "inference_mode": "images",
+      "max_frames": 24,
+      "max_size": 256,
+      "seed": 804775286795464,
+      "force_offload": false,
+      "save_states": false,
+      "llama_model": [
+        "263",
+        0
+      ],
+      "parameters": [
+        "219",
+        0
+      ],
+      "images": [
+        "249",
+        0
+      ]
+    },
+    "class_type": "llama_cpp_instruct_adv",
+    "_meta": {
+      "title": "Llama-cpp Instruct"
+    }
+  },
+  "263": {
+    "inputs": {
+      "model": "Qwen3.5-9B-Uncensored-HauhauCS-Aggressive-Q8_0.gguf",
+      "mmproj": "mmproj-Qwen3.5-9B-Uncensored-HauhauCS-Aggressive-BF16.gguf",
+      "chat_handler": "Qwen3.5",
+      "n_ctx": 8192,
+      "vram_limit": -1,
+      "image_min_tokens": 0,
+      "image_max_tokens": 0,
+      "load_mtp": false
+    },
+    "class_type": "llama_cpp_model_loader",
+    "_meta": {
+      "title": "Llama-cpp Model Loader"
+    }
+  },
+  "267": {
+    "inputs": {
+      "prompt": [
+        "262",
+        1
+      ],
+      "start_index": 0,
+      "max_rows": 1000,
+      "remove_empty_lines": true
+    },
+    "class_type": "easy promptLine",
+    "_meta": {
+      "title": "提示词行"
+    }
+  },
+  "268": {
+    "inputs": {
+      "text": [
+        "262",
+        1
+      ]
+    },
+    "class_type": "ShowText|pysssss",
+    "_meta": {
+      "title": "Show Text 🐍"
+    }
+  },
+  "_api_config": {
+    "customLabels": {
+      "35:text": "提示词",
+      "219:max_tokens": "max_tokens",
+      "219:top_k": "top_k",
+      "219:top_p": "top_p",
+      "219:min_p": "min_p",
+      "219:typical_p": "typical_p",
+      "219:temperature": "temperature",
+      "219:repeat_penalty": "repeat_penalty",
+      "219:frequency_penalty": "frequency_penalty",
+      "219:mirostat_mode": "mirostat_mode",
+      "219:mirostat_eta": "mirostat_eta",
+      "219:mirostat_tau": "mirostat_tau",
+      "219:state_uid": "state_uid",
+      "219:present_penalty": "present_penalty",
+      "222:noise_seed": "noise_seed",
+      "223:cfg": "CFG Scale",
+      "226:steps": "迭代步数",
+      "236:type": "type",
+      "236:device": "device",
+      "239:weight_dtype": "weight_dtype",
+      "241:text": "提示词",
+      "245:filename_prefix": "文件名前缀",
+      "249:aspect_ratio": "aspect_ratio",
+      "249:proportional_width": "proportional_width",
+      "249:proportional_height": "proportional_height",
+      "249:fit": "fit",
+      "249:method": "method",
+      "249:round_to_multiple": "round_to_multiple",
+      "249:scale_to_side": "scale_to_side",
+      "249:scale_to_length": "scale_to_length",
+      "249:background_color": "background_color",
+      "251:batch_size": "批次大小",
+      "253:value": "value",
+      "254:value": "value",
+      "259:image": "参考图 0",
+      "262:seed": "随机种子",
+      "262:preset_prompt": "preset_prompt",
+      "262:custom_prompt": "custom_prompt",
+      "262:inference_mode": "inference_mode",
+      "262:max_frames": "max_frames",
+      "262:max_size": "max_size",
+      "262:force_offload": "force_offload",
+      "262:save_states": "save_states",
+      "263:model": "model",
+      "263:mmproj": "mmproj",
+      "263:chat_handler": "chat_handler",
+      "263:n_ctx": "n_ctx",
+      "263:vram_limit": "vram_limit",
+      "263:image_min_tokens": "image_min_tokens",
+      "263:image_max_tokens": "image_max_tokens",
+      "263:load_mtp": "load_mtp",
+      "267:start_index": "start_index",
+      "267:max_rows": "max_rows",
+      "267:remove_empty_lines": "remove_empty_lines"
+    },
+    "enabledParams": {
+      "35:text": false,
+      "219:max_tokens": false,
+      "219:top_k": false,
+      "219:top_p": false,
+      "219:min_p": false,
+      "219:typical_p": false,
+      "219:temperature": false,
+      "219:repeat_penalty": false,
+      "219:frequency_penalty": false,
+      "219:mirostat_mode": false,
+      "219:mirostat_eta": false,
+      "219:mirostat_tau": false,
+      "219:state_uid": false,
+      "219:present_penalty": false,
+      "222:noise_seed": false,
+      "223:cfg": false,
+      "226:steps": false,
+      "236:type": false,
+      "236:device": false,
+      "239:weight_dtype": false,
+      "241:text": false,
+      "245:filename_prefix": false,
+      "249:aspect_ratio": false,
+      "249:proportional_width": false,
+      "249:proportional_height": false,
+      "249:fit": false,
+      "249:method": false,
+      "249:round_to_multiple": false,
+      "249:scale_to_side": false,
+      "249:scale_to_length": false,
+      "249:background_color": false,
+      "251:batch_size": false,
+      "253:value": false,
+      "254:value": false,
+      "259:image": true,
+      "262:seed": false,
+      "262:preset_prompt": false,
+      "262:custom_prompt": false,
+      "262:inference_mode": false,
+      "262:max_frames": false,
+      "262:max_size": false,
+      "262:force_offload": false,
+      "262:save_states": false,
+      "263:model": false,
+      "263:mmproj": false,
+      "263:chat_handler": false,
+      "263:n_ctx": false,
+      "263:vram_limit": false,
+      "263:image_min_tokens": false,
+      "263:image_max_tokens": false,
+      "263:load_mtp": false,
+      "267:start_index": false,
+      "267:max_rows": false,
+      "267:remove_empty_lines": false
+    },
+    "formValues": {
+      "35:text": "Role: 视觉连续性导演 (Visual Continuity Director)\n1. 核心机制：焦点接力 (Focus Relay)\n\n为了实现“流水般”的叙事，你必须遵循微观因果律，而非单纯的动作。\n接力规则：\n\n物理接力：镜头 A 结尾手触碰到门 -> 镜头 B 从门被推开的缝隙看进去。\n视线接力：镜头 A 结尾角色看向天空 -> 镜头 B 也是仰视视角，展示角色眼中的景象。\n环境接力：镜头 A 结尾一阵风吹乱头发 -> 镜头 B 是一片被风吹起的树叶掠过镜头。\n\n2. 图像调性自适应 (Tone Adaptation) - 关键步骤\n\n在生成前，请先判断【参考图像】的属性：\n类型 A [静谧/情感]：衔接靠光影变化、微表情、眼泪、风吹草动。\n类型 B [悬疑/探索]：衔接靠脚步移动、手部触碰、手电筒光束、门的开合。\n类型 C [激烈/战斗]：衔接靠速度线、碰撞、碎片、物理位移。\n\n3. 9镜头通用流体结构 (Universal Fluid Structure)\n\n无论什么类型，必须严格遵循以下镜头焦点的转移逻辑：\n\n镜头1 [全景入画]：大环境 -> 视觉锚点(Visual Anchor) 处于环境中。\n镜头2 [推进/聚焦]：镜头推近 -> 聚焦于 Visual Anchor 的某个局部（眼睛/手/配饰）。\n镜头3 [触发/诱因]：环境发生微小变化（光线移动/风吹过/出现声音），引起 Visual Anchor 注意。\n镜头4 [反应/互动]：Visual Anchor 做出反应（转头/伸手/起步/眼神流转）。\n镜头5 [过程/流动]：Visual Anchor 正在进行某个动作（行走/奔跑/抚摸/哭泣），强调动作的进行时。\n镜头6 [高点/特写]：动作的关键瞬间或情绪的最高点（手指触碰物体/泪水滴落/全力冲刺）。\n镜头7 [变化/后果]：由于镜头6的动作，环境产生了反馈（物体亮起/花瓣散开/门打开/敌人倒下）。\n镜头8 [余韵/局部]：聚焦于变化的后果细节（发光的纹路/地上的水渍/飘落的羽毛）。\n镜头9 [拉远/出画]：镜头拉远，Visual Anchor 与改变后的环境融为一体或离开。\n\n4. 参考案例 (Non-Combat Case: 情感/治愈)\n\n(假设输入：夕阳下抱着吉他的女孩)\nAI Output:\nNext Scene：1) 远景/逆光 :: 夕阳将金色的光辉洒满草地，抱着木吉他的长发女孩独自坐在山坡的长椅上，身影被拉得很长 :: 宁静，暖色调\nNext Scene：2) 推进/侧面特写 :: 镜头缓慢推进，微风轻轻吹起抱着木吉他的长发女孩耳边的碎发，她的睫毛在夕阳下闪烁微光 :: 细腻，发丝飘动\nNext Scene：3) 特写/手部 :: 抱着木吉他的长发女孩的纤细手指轻轻按在琴弦上，空气中仿佛凝固着即将弹奏前的寂静 :: 准备动作，指尖细节\nNext Scene：4) 中景/开始 :: 抱着木吉他的长发女孩的手腕轻柔地摆动，拨响了第一根琴弦，琴弦震动的波纹仿佛在空气中扩散 :: 动作起始，优雅\nNext Scene：5) 环绕镜头/动态 :: 随着旋律的流淌，抱着木吉他的长发女孩闭上眼睛沉浸在音乐中，镜头围绕她缓慢旋转，捕捉她陶醉的神情 :: 沉浸感，流动\nNext Scene：6) 极近特写/高潮 :: 抱着木吉他的长发女孩眼角滑落一滴晶莹的泪珠，泪珠正好滴落在琴箱的边缘，折射出夕阳的红光 :: 情绪爆发，微距美学\nNext Scene：7) 过肩镜头/视线 :: 顺着抱着木吉他的长发女孩睁开的视线望去，远处的飞鸟正成群结队地飞向落日 :: 视线引导，开阔\nNext Scene：8) 远景/背面 :: 抱着木吉他的长发女孩停止了弹奏，依然保持着抱琴的姿势，看着飞鸟消失在地平线 :: 动作结束，留白\nNext Scene：9) 大远景/拉高 :: 镜头垂直拉高，抱着木吉他的长发女孩变成了草地上一个小小的点，被巨大的星空夜幕逐渐笼罩 :: 时间流逝，结局\n\n5. 正式执行 (Execute)\n\n请分析我上传的图片，首先判断是[静谧/情感]、[悬疑/探索]还是[激烈/战斗]，然后提取Visual Anchor，严格按照“焦点接力”逻辑生成8行分镜。\n要求：禁止废话，禁止空行，禁止代词，确保镜头之间有电影剪辑般的逻辑连贯性。\n\n# : 强制排版约束 (Output Layout) - 重要\n1.  **紧凑输出**：所有输出必须是一个**连续的文本块**。\n2.  **零空行**：在 `Next Scene` 与 `Next Scene` 之间，**严禁插入空行**。\n3.  **换行符**：仅允许使用单次换行（Single Line Break），禁止使用段落分行。\n\n# Example (排版正确示范)\nNext Scene：...\nNext Scene：...\nNext Scene：...\n(注意：上面这三行是紧挨着的，中间没有空隙)\n\n# Action\n请执行生成，确保结果紧凑无空行。",
+      "219:max_tokens": 1024,
+      "219:top_k": 30,
+      "219:top_p": 0.9,
+      "219:min_p": 0.05,
+      "219:typical_p": 1,
+      "219:temperature": 0.8,
+      "219:repeat_penalty": 1,
+      "219:frequency_penalty": 0,
+      "219:mirostat_mode": 0,
+      "219:mirostat_eta": 0.1,
+      "219:mirostat_tau": 5,
+      "219:state_uid": 0,
+      "219:present_penalty": 1,
+      "222:noise_seed": 704576192057704,
+      "223:cfg": 1,
+      "226:steps": 4,
+      "236:type": "flux2",
+      "236:device": "default",
+      "239:weight_dtype": "default",
+      "241:text": "",
+      "245:filename_prefix": "ComfyUI",
+      "249:aspect_ratio": "original",
+      "249:proportional_width": 1,
+      "249:proportional_height": 1,
+      "249:fit": "letterbox",
+      "249:method": "lanczos",
+      "249:round_to_multiple": "8",
+      "249:scale_to_side": "longest",
+      "249:scale_to_length": 1920,
+      "249:background_color": "#000000",
+      "251:batch_size": 1,
+      "253:value": 1280,
+      "254:value": 720,
+      "259:image": {},
+      "262:seed": 804775286795464,
+      "262:preset_prompt": "Normal - Describe",
+      "262:custom_prompt": "",
+      "262:inference_mode": "images",
+      "262:max_frames": 24,
+      "262:max_size": 256,
+      "262:force_offload": false,
+      "262:save_states": false,
+      "263:model": "Qwen3.5-9B-Uncensored-HauhauCS-Aggressive-Q8_0.gguf",
+      "263:mmproj": "mmproj-Qwen3.5-9B-Uncensored-HauhauCS-Aggressive-BF16.gguf",
+      "263:chat_handler": "Qwen3.5",
+      "263:n_ctx": 8192,
+      "263:vram_limit": -1,
+      "263:image_min_tokens": 0,
+      "263:image_max_tokens": 0,
+      "263:load_mtp": false,
+      "267:start_index": 0,
+      "267:max_rows": 1000,
+      "267:remove_empty_lines": true
+    },
+    "mediaOrder": [
+      "259:image"
+    ],
+    "mediaOrderSource": "auto",
+    "apiNames": {
+      "35:text": "prompt",
+      "219:max_tokens": "max_tokens",
+      "219:top_k": "top_k",
+      "219:top_p": "top_p",
+      "219:min_p": "min_p",
+      "219:typical_p": "typical_p",
+      "219:temperature": "temperature",
+      "219:repeat_penalty": "repeat_penalty",
+      "219:frequency_penalty": "frequency_penalty",
+      "219:mirostat_mode": "mirostat_mode",
+      "219:mirostat_eta": "mirostat_eta",
+      "219:mirostat_tau": "mirostat_tau",
+      "219:state_uid": "state_uid",
+      "219:present_penalty": "present_penalty",
+      "222:noise_seed": "noise_seed",
+      "223:cfg": "cfg",
+      "226:steps": "steps",
+      "236:type": "type",
+      "236:device": "device",
+      "239:weight_dtype": "weight_dtype",
+      "241:text": "prompt_2",
+      "245:filename_prefix": "filename_prefix",
+      "249:aspect_ratio": "aspect_ratio",
+      "249:proportional_width": "proportional_width",
+      "249:proportional_height": "proportional_height",
+      "249:fit": "fit",
+      "249:method": "method",
+      "249:round_to_multiple": "round_to_multiple",
+      "249:scale_to_side": "scale_to_side",
+      "249:scale_to_length": "scale_to_length",
+      "249:background_color": "background_color",
+      "251:batch_size": "batch_size",
+      "253:value": "value",
+      "254:value": "value_2",
+      "259:image": "ref_image_0",
+      "262:seed": "seed",
+      "262:preset_prompt": "preset_prompt",
+      "262:custom_prompt": "custom_prompt",
+      "262:inference_mode": "inference_mode",
+      "262:max_frames": "max_frames",
+      "262:max_size": "max_size",
+      "262:force_offload": "force_offload",
+      "262:save_states": "save_states",
+      "263:model": "model",
+      "263:mmproj": "mmproj",
+      "263:chat_handler": "chat_handler",
+      "263:n_ctx": "n_ctx",
+      "263:vram_limit": "vram_limit",
+      "263:image_min_tokens": "image_min_tokens",
+      "263:image_max_tokens": "image_max_tokens",
+      "263:load_mtp": "load_mtp",
+      "267:start_index": "start_index",
+      "267:max_rows": "max_rows",
+      "267:remove_empty_lines": "remove_empty_lines"
+    }
+  }
+}

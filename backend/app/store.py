@@ -1,0 +1,245 @@
+"""SQLite 持久层：项目 / 镜头 / 任务 / 素材。
+
+设计原则：单文件、零外部依赖、可随时用 DB Browser 打开。
+"""
+from __future__ import annotations
+
+import json
+import sqlite3
+import threading
+import time
+import uuid
+from pathlib import Path
+from typing import Any, Iterable
+
+from .config import settings
+
+DB_PATH = Path(settings.paths["data"]) / "director.db"
+_lock = threading.RLock()
+
+
+def _now() -> float:
+    return time.time()
+
+
+def new_id(prefix: str) -> str:
+    return f"{prefix}_{uuid.uuid4().hex[:12]}"
+
+
+def connect() -> sqlite3.Connection:
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA foreign_keys=ON")
+    return conn
+
+
+def init_db() -> None:
+    """建表/升级全部交给 Alembic（见 app/migrate.py 与 backend/alembic/versions）。"""
+    from .migrate import ensure_schema
+
+    ensure_schema()
+    with _lock, connect() as conn:
+        conn.execute("PRAGMA journal_mode=WAL")
+
+
+def _row(r: sqlite3.Row | None) -> dict | None:
+    if r is None:
+        return None
+    d = dict(r)
+    for key in ("inputs", "outputs", "meta"):
+        if key in d and isinstance(d[key], str):
+            try:
+                d[key] = json.loads(d[key])
+            except Exception:
+                pass
+    if isinstance(d.get("values_json"), str):
+        try:
+            d["values"] = json.loads(d["values_json"])
+        except Exception:
+            d["values"] = {}
+    d.pop("values_json", None)
+    if isinstance(d.get("path"), str) and d["path"].startswith("data/"):
+        d["path"] = d["path"][5:]
+    return d
+
+
+def _rows(rs: Iterable[sqlite3.Row]) -> list[dict]:
+    return [_row(r) for r in rs]  # type: ignore[list-item]
+
+
+# ---------------- projects ----------------
+def create_project(name: str, style: str = "", notes: str = "") -> dict:
+    pid = new_id("prj")
+    with _lock, connect() as conn:
+        conn.execute(
+            "INSERT INTO projects(id,name,style,notes,created_at) VALUES(?,?,?,?,?)",
+            (pid, name, style, notes, _now()),
+        )
+    return get_project(pid)  # type: ignore[return-value]
+
+
+def list_projects() -> list[dict]:
+    with _lock, connect() as conn:
+        return _rows(conn.execute("SELECT * FROM projects ORDER BY created_at DESC"))
+
+
+def get_project(pid: str) -> dict | None:
+    with _lock, connect() as conn:
+        return _row(conn.execute("SELECT * FROM projects WHERE id=?", (pid,)).fetchone())
+
+
+def delete_project(pid: str) -> None:
+    with _lock, connect() as conn:
+        conn.execute("DELETE FROM projects WHERE id=?", (pid,))
+
+
+# ---------------- shots ----------------
+def create_shot(project_id: str, title: str = "", preset_id: str = "", prompt: str = "") -> dict:
+    sid = new_id("shot")
+    with _lock, connect() as conn:
+        idx = conn.execute(
+            "SELECT COALESCE(MAX(idx),-1)+1 FROM shots WHERE project_id=?", (project_id,)
+        ).fetchone()[0]
+        conn.execute(
+            "INSERT INTO shots(id,project_id,idx,title,preset_id,prompt,created_at) VALUES(?,?,?,?,?,?,?)",
+            (sid, project_id, idx, title, preset_id, prompt, _now()),
+        )
+    return get_shot(sid)  # type: ignore[return-value]
+
+
+def list_shots(project_id: str) -> list[dict]:
+    with _lock, connect() as conn:
+        return _rows(
+            conn.execute("SELECT * FROM shots WHERE project_id=? ORDER BY idx", (project_id,))
+        )
+
+
+def get_shot(sid: str) -> dict | None:
+    with _lock, connect() as conn:
+        return _row(conn.execute("SELECT * FROM shots WHERE id=?", (sid,)).fetchone())
+
+
+def update_shot(sid: str, **fields: Any) -> None:
+    allowed = {
+        k: v for k, v in fields.items()
+        if k in {"title", "preset_id", "prompt", "cover", "idx", "last_frame"}
+    }
+    if "values" in fields and fields["values"] is not None:
+        allowed["values_json"] = json.dumps(fields["values"], ensure_ascii=False)
+    if not allowed:
+        return
+    sets = ", ".join(f"{k}=?" for k in allowed)
+    with _lock, connect() as conn:
+        conn.execute(f"UPDATE shots SET {sets} WHERE id=?", (*allowed.values(), sid))
+
+
+def list_jobs_by_shot(shot_id: str, limit: int = 20) -> list[dict]:
+    with _lock, connect() as conn:
+        return _rows(conn.execute(
+            "SELECT * FROM jobs WHERE shot_id=? ORDER BY created_at DESC LIMIT ?", (shot_id, limit)
+        ))
+
+
+def delete_shot(sid: str) -> None:
+    with _lock, connect() as conn:
+        conn.execute("DELETE FROM shots WHERE id=?", (sid,))
+
+
+# ---------------- assets ----------------
+def add_asset(kind: str, path: str, comfy_name: str = "", size: int = 0, width: int = 0, height: int = 0, meta: dict | None = None) -> dict:
+    aid = new_id("ast")
+    with _lock, connect() as conn:
+        conn.execute(
+            "INSERT INTO assets(id,kind,path,comfy_name,width,height,size,meta,created_at) VALUES(?,?,?,?,?,?,?,?,?)",
+            (aid, kind, path, comfy_name, width, height, size, json.dumps(meta or {}), _now()),
+        )
+    return get_asset(aid)  # type: ignore[return-value]
+
+
+def get_asset(aid: str) -> dict | None:
+    with _lock, connect() as conn:
+        return _row(conn.execute("SELECT * FROM assets WHERE id=?", (aid,)).fetchone())
+
+
+def list_assets(kind: str | None = None, limit: int = 100) -> list[dict]:
+    with _lock, connect() as conn:
+        if kind:
+            return _rows(conn.execute("SELECT * FROM assets WHERE kind=? ORDER BY created_at DESC LIMIT ?", (kind, limit)))
+        return _rows(conn.execute("SELECT * FROM assets ORDER BY created_at DESC LIMIT ?", (limit,)))
+
+
+# ---------------- jobs ----------------
+def create_job(preset_id: str, inputs: dict, project_id: str = "", shot_id: str = "") -> dict:
+    jid = new_id("job")
+    with _lock, connect() as conn:
+        conn.execute(
+            "INSERT INTO jobs(id,project_id,shot_id,preset_id,status,progress,message,inputs,created_at) VALUES(?,?,?,?,?,?,?,?,?)",
+            (jid, project_id, shot_id, preset_id, "queued", 0, "排队中", json.dumps(inputs, ensure_ascii=False), _now()),
+        )
+    return get_job(jid)  # type: ignore[return-value]
+
+
+def update_job(jid: str, **fields: Any) -> None:
+    if "outputs" in fields and not isinstance(fields["outputs"], str):
+        fields["outputs"] = json.dumps(fields["outputs"], ensure_ascii=False)
+    if "inputs" in fields and not isinstance(fields["inputs"], str):
+        fields["inputs"] = json.dumps(fields["inputs"], ensure_ascii=False)
+    allowed = {
+        "status", "progress", "message", "comfy_prompt_id", "inputs",
+        "outputs", "error", "started_at", "finished_at", "project_id", "shot_id",
+    }
+    fields = {k: v for k, v in fields.items() if k in allowed}
+    if not fields:
+        return
+    sets = ", ".join(f"{k}=?" for k in fields)
+    with _lock, connect() as conn:
+        conn.execute(f"UPDATE jobs SET {sets} WHERE id=?", (*fields.values(), jid))
+
+
+def get_job(jid: str) -> dict | None:
+    with _lock, connect() as conn:
+        return _row(conn.execute("SELECT * FROM jobs WHERE id=?", (jid,)).fetchone())
+
+
+def list_jobs(limit: int = 50, status: str | None = None) -> list[dict]:
+    with _lock, connect() as conn:
+        if status:
+            return _rows(conn.execute("SELECT * FROM jobs WHERE status=? ORDER BY created_at DESC LIMIT ?", (status, limit)))
+        return _rows(conn.execute("SELECT * FROM jobs ORDER BY created_at DESC LIMIT ?", (limit,)))
+
+
+def recover_jobs() -> None:
+    """进程重启后，把仍在中间态的任务标为失败，避免前端永远转圈。"""
+    with _lock, connect() as conn:
+        conn.execute(
+            "UPDATE jobs SET status='failed', error='服务重启导致中断', finished_at=? "
+            "WHERE status IN ('queued','uploading','running')",
+            (_now(),),
+        )
+
+
+# ---------------- settings ----------------
+def get_setting(key: str, default: str = "") -> str:
+    with _lock, connect() as conn:
+        row = conn.execute("SELECT value FROM settings WHERE key=?", (key,)).fetchone()
+    return row["value"] if row else default
+
+
+def set_setting(key: str, value: str) -> None:
+    with _lock, connect() as conn:
+        conn.execute(
+            "INSERT INTO settings(key,value,updated_at) VALUES(?,?,?) "
+            "ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at",
+            (key, value, _now()),
+        )
+
+
+def list_settings() -> dict[str, str]:
+    with _lock, connect() as conn:
+        return {r["key"]: r["value"] for r in conn.execute("SELECT key,value FROM settings")}
+
+
+def delete_setting(key: str) -> None:
+    with _lock, connect() as conn:
+        conn.execute("DELETE FROM settings WHERE key=?", (key,))

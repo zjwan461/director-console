@@ -1,0 +1,372 @@
+{
+  "122": {
+    "inputs": {
+      "clip_name": "qwen3vl_4b_fp8_scaled.safetensors",
+      "type": "krea2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "加载CLIP"
+    }
+  },
+  "123": {
+    "inputs": {
+      "vae_name": "qwen_image_vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "加载VAE"
+    }
+  },
+  "125": {
+    "inputs": {
+      "pixels": [
+        "136",
+        0
+      ],
+      "vae": [
+        "123",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE编码"
+    }
+  },
+  "127": {
+    "inputs": {
+      "samples": [
+        "142",
+        0
+      ],
+      "vae": [
+        "123",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "128": {
+    "inputs": {
+      "unet_name": "krea/krea2_turbo_int8_convrot.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "UNet加载器"
+    }
+  },
+  "129": {
+    "inputs": {
+      "filename_prefix": "krea2_identity_edit",
+      "images": [
+        "127",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "保存图像"
+    }
+  },
+  "131": {
+    "inputs": {
+      "image": [
+        "136",
+        0
+      ]
+    },
+    "class_type": "GetImageSize",
+    "_meta": {
+      "title": "获取图像尺寸"
+    }
+  },
+  "132": {
+    "inputs": {
+      "ref_boost": 1,
+      "ref_boost_a": 1,
+      "fit_mode": "fit",
+      "model": [
+        "145",
+        0
+      ],
+      "source_latent": [
+        "125",
+        0
+      ],
+      "vae": [
+        "123",
+        0
+      ],
+      "source_image": [
+        "136",
+        0
+      ]
+    },
+    "class_type": "Krea2EditModelPatch",
+    "_meta": {
+      "title": "Krea2 Edit (source patch)"
+    }
+  },
+  "133": {
+    "inputs": {
+      "prompt": "",
+      "grounding_px": 768,
+      "system_prompt": "",
+      "clip": [
+        "122",
+        0
+      ],
+      "image": [
+        "136",
+        0
+      ]
+    },
+    "class_type": "Krea2EditGroundedEncode",
+    "_meta": {
+      "title": "negative (leave empty)"
+    }
+  },
+  "136": {
+    "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "upscale_method": "lanczos",
+      "keep_proportion": "resize",
+      "pad_color": "0, 0, 0",
+      "crop_position": "center",
+      "divisible_by": 2,
+      "device": "cpu",
+      "image": [
+        "146",
+        0
+      ]
+    },
+    "class_type": "ImageResizeKJv2",
+    "_meta": {
+      "title": "Resize Image v2"
+    }
+  },
+  "141": {
+    "inputs": {
+      "width": 1536,
+      "height": 1024,
+      "batch_size": 1
+    },
+    "class_type": "EmptySD3LatentImage",
+    "_meta": {
+      "title": "空Latent图像（SD3）"
+    }
+  },
+  "142": {
+    "inputs": {
+      "seed": 311378956942475,
+      "steps": 10,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 1,
+      "model": [
+        "132",
+        0
+      ],
+      "positive": [
+        "143",
+        0
+      ],
+      "negative": [
+        "133",
+        0
+      ],
+      "latent_image": [
+        "141",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "143": {
+    "inputs": {
+      "prompt": "Convert the character in the image to a Character Sheet showing a face close-up, front full body, side full body and back full body views",
+      "grounding_px": 0,
+      "system_prompt": "",
+      "clip": [
+        "122",
+        0
+      ],
+      "image": [
+        "136",
+        0
+      ]
+    },
+    "class_type": "Krea2EditGroundedEncode",
+    "_meta": {
+      "title": "Krea2 Edit (grounded encode)"
+    }
+  },
+  "145": {
+    "inputs": {
+      "lora_name": "krea2/krea2_4panel.safetensors",
+      "strength_model": 1,
+      "model": [
+        "128",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "LoRA加载器（仅模型）"
+    }
+  },
+  "146": {
+    "inputs": {
+      "image": "123.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Body Reference"
+    }
+  },
+  "_api_config": {
+    "customLabels": {
+      "122:type": "type",
+      "122:device": "device",
+      "128:weight_dtype": "weight_dtype",
+      "129:filename_prefix": "文件名前缀",
+      "132:ref_boost": "ref_boost",
+      "132:ref_boost_a": "ref_boost_a",
+      "132:fit_mode": "fit_mode",
+      "133:prompt": "prompt",
+      "133:grounding_px": "grounding_px",
+      "133:system_prompt": "system_prompt",
+      "136:width": "宽度",
+      "136:height": "高度",
+      "136:upscale_method": "upscale_method",
+      "136:keep_proportion": "keep_proportion",
+      "136:pad_color": "pad_color",
+      "136:crop_position": "crop_position",
+      "136:divisible_by": "divisible_by",
+      "136:device": "device",
+      "141:width": "宽度",
+      "141:height": "高度",
+      "141:batch_size": "批次大小",
+      "142:seed": "随机种子",
+      "142:steps": "迭代步数",
+      "142:cfg": "CFG Scale",
+      "142:denoise": "denoise",
+      "143:prompt": "prompt",
+      "143:grounding_px": "grounding_px",
+      "143:system_prompt": "system_prompt",
+      "145:strength_model": "strength_model",
+      "146:image": "参考图 0"
+    },
+    "enabledParams": {
+      "122:type": false,
+      "122:device": false,
+      "128:weight_dtype": false,
+      "129:filename_prefix": false,
+      "132:ref_boost": false,
+      "132:ref_boost_a": false,
+      "132:fit_mode": false,
+      "133:prompt": false,
+      "133:grounding_px": false,
+      "133:system_prompt": false,
+      "136:width": false,
+      "136:height": false,
+      "136:upscale_method": false,
+      "136:keep_proportion": false,
+      "136:pad_color": false,
+      "136:crop_position": false,
+      "136:divisible_by": false,
+      "136:device": false,
+      "141:width": true,
+      "141:height": true,
+      "141:batch_size": false,
+      "142:seed": true,
+      "142:steps": false,
+      "142:cfg": false,
+      "142:denoise": false,
+      "143:prompt": false,
+      "143:grounding_px": false,
+      "143:system_prompt": false,
+      "145:strength_model": false,
+      "146:image": true
+    },
+    "formValues": {
+      "122:type": "krea2",
+      "122:device": "default",
+      "128:weight_dtype": "default",
+      "129:filename_prefix": "krea2_identity_edit",
+      "132:ref_boost": 1,
+      "132:ref_boost_a": 1,
+      "132:fit_mode": "fit",
+      "133:prompt": "",
+      "133:grounding_px": 768,
+      "133:system_prompt": "",
+      "136:width": 1024,
+      "136:height": 1024,
+      "136:upscale_method": "lanczos",
+      "136:keep_proportion": "resize",
+      "136:pad_color": "0, 0, 0",
+      "136:crop_position": "center",
+      "136:divisible_by": 2,
+      "136:device": "cpu",
+      "141:width": 1536,
+      "141:height": 1024,
+      "141:batch_size": 1,
+      "142:seed": 311378956942475,
+      "142:steps": 10,
+      "142:cfg": 1,
+      "142:denoise": 1,
+      "143:prompt": "Convert the character in the image to a Character Sheet showing a face close-up, front full body, side full body and back full body views",
+      "143:grounding_px": 0,
+      "143:system_prompt": "",
+      "145:strength_model": 1,
+      "146:image": null
+    },
+    "mediaOrder": [
+      "146:image"
+    ],
+    "mediaOrderSource": "auto",
+    "apiNames": {
+      "122:type": "type",
+      "122:device": "device",
+      "128:weight_dtype": "weight_dtype",
+      "129:filename_prefix": "filename_prefix",
+      "132:ref_boost": "ref_boost",
+      "132:ref_boost_a": "ref_boost_a",
+      "132:fit_mode": "fit_mode",
+      "133:prompt": "prompt",
+      "133:grounding_px": "grounding_px",
+      "133:system_prompt": "system_prompt",
+      "136:width": "width",
+      "136:height": "height",
+      "136:upscale_method": "upscale_method",
+      "136:keep_proportion": "keep_proportion",
+      "136:pad_color": "pad_color",
+      "136:crop_position": "crop_position",
+      "136:divisible_by": "divisible_by",
+      "136:device": "device_2",
+      "141:width": "width_2",
+      "141:height": "height_2",
+      "141:batch_size": "batch_size",
+      "142:seed": "seed",
+      "142:steps": "steps",
+      "142:cfg": "cfg",
+      "142:denoise": "denoise",
+      "143:prompt": "prompt_2",
+      "143:grounding_px": "grounding_px_2",
+      "143:system_prompt": "system_prompt_2",
+      "145:strength_model": "strength_model",
+      "146:image": "ref_image_0"
+    }
+  }
+}

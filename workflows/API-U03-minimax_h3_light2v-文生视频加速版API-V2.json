@@ -1,0 +1,461 @@
+{
+  "92": {
+    "inputs": {
+      "filename_prefix": "video/MiniMax_H3",
+      "format": "auto",
+      "codec": "auto",
+      "video": [
+        "122",
+        0
+      ]
+    },
+    "class_type": "SaveVideo",
+    "_meta": {
+      "title": "保存视频"
+    }
+  },
+  "120": {
+    "inputs": {
+      "预设分辨率": "自定义",
+      "横竖对调": false,
+      "批量大小": 1,
+      "自定义宽": 864,
+      "自定义高": 480,
+      "缩放倍数": "32"
+    },
+    "class_type": "WJILatentPreset",
+    "_meta": {
+      "title": "📐 Latent预设 (Empty Latent Preset)"
+    }
+  },
+  "122": {
+    "inputs": {
+      "clean_file_cache": true,
+      "clean_processes": true,
+      "clean_dlls": true,
+      "retry_times": 3,
+      "anything": [
+        "138",
+        0
+      ]
+    },
+    "class_type": "RAMCleanup",
+    "_meta": {
+      "title": "🎈RAM-Cleanup"
+    }
+  },
+  "128": {
+    "inputs": {
+      "vae_name": "minimax_h3_video_vae_fp16.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "加载VAE"
+    }
+  },
+  "129": {
+    "inputs": {
+      "vae_name": "minimax_h3_audio_vae_fp32.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "加载VAE"
+    }
+  },
+  "130": {
+    "inputs": {
+      "samples": [
+        "147",
+        0
+      ],
+      "vae": [
+        "129",
+        0
+      ]
+    },
+    "class_type": "VAEDecodeAudio",
+    "_meta": {
+      "title": "VAE解码（音频）"
+    }
+  },
+  "131": {
+    "inputs": {
+      "samples": [
+        "147",
+        0
+      ],
+      "vae": [
+        "128",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "132": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "K采样器选择"
+    }
+  },
+  "133": {
+    "inputs": {
+      "scheduler": "simple",
+      "steps": 12,
+      "denoise": 1,
+      "model": [
+        "149",
+        0
+      ]
+    },
+    "class_type": "BasicScheduler",
+    "_meta": {
+      "title": "基本调度器"
+    }
+  },
+  "134": {
+    "inputs": {
+      "noise": [
+        "137",
+        0
+      ],
+      "guider": [
+        "135",
+        0
+      ],
+      "sampler": [
+        "132",
+        0
+      ],
+      "sigmas": [
+        "150",
+        0
+      ],
+      "latent_image": [
+        "139",
+        1
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "自定义采样器（高级）"
+    }
+  },
+  "135": {
+    "inputs": {
+      "model": [
+        "149",
+        0
+      ],
+      "conditioning": [
+        "139",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "基本引导器"
+    }
+  },
+  "136": {
+    "inputs": {
+      "clip_name": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+      "type": "minimax",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "加载CLIP"
+    }
+  },
+  "137": {
+    "inputs": {
+      "noise_seed": 1
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "随机噪波"
+    }
+  },
+  "138": {
+    "inputs": {
+      "fps": 24,
+      "bit_depth": 8,
+      "images": [
+        "131",
+        0
+      ],
+      "audio": [
+        "130",
+        0
+      ]
+    },
+    "class_type": "CreateVideo",
+    "_meta": {
+      "title": "创建视频"
+    }
+  },
+  "139": {
+    "inputs": {
+      "prompt": "Vaporwave title sequence look: pink and blue gradient palette, VHS tracking artifacts, Greek statue motifs, chrome palm trees, RGB chromatic aberration, lo-fi retro atmosphere, mood languid and nostalgic.\n\nTimeline:\n[0s-1s] VHS static opens the frame, the title \"COMFYUI\" appears with RGB split and a slight horizontal jitter.\n[1s-2.5s] Hard cut, a Greek plaster bust close-up, pink-purple gradient sky, a pixelated sun.\n[2.5s-4s] Clean \"STARRING\" credits appear, \"LATENT\" and \"CONTROLNET\" each shown exactly once.\n[4s-5s] Final card \"DIRECTED BY COMFYUI\" holds, one VHS tracking glitch settling into stability.\n\nHard cuts only, transitions landing with tape jumps, no push-ins, no dissolves.\n\nAudio: lo-fi vaporwave score, slow drum machine with soft bass, VHS tape-noise sample joins at 2.5s, melody fading for the last 1s.\n\nAll text must be clearly legible, do not misspell English, no Chinese characters, do not repeat names or job titles, no soft dissolves, no subtitle bars.",
+      "width": [
+        "120",
+        1
+      ],
+      "height": [
+        "120",
+        2
+      ],
+      "length": [
+        "140",
+        1
+      ],
+      "clip": [
+        "136",
+        0
+      ],
+      "vae": [
+        "128",
+        0
+      ]
+    },
+    "class_type": "MiniMaxH3ImageToVideo",
+    "_meta": {
+      "title": "MiniMax H3 Image to Video"
+    }
+  },
+  "140": {
+    "inputs": {
+      "expression": "max(5, round(a * 24)) + (5 - (max(5, round(a * 24)) % 17)) % 17",
+      "values.a": [
+        "141",
+        0
+      ]
+    },
+    "class_type": "ComfyMathExpression",
+    "_meta": {
+      "title": "数学表达式"
+    }
+  },
+  "141": {
+    "inputs": {
+      "value": 5
+    },
+    "class_type": "PrimitiveFloat",
+    "_meta": {
+      "title": "Float (duration)"
+    }
+  },
+  "142": {
+    "inputs": {
+      "unet_name": "minimax/minimax_h3_fl2va_pruned_int8_convrot.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "UNet加载器"
+    }
+  },
+  "144": {
+    "inputs": {
+      "lora_name": "minimax/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors",
+      "strength_model": 0.75,
+      "model": [
+        "142",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "LoRA加载器（仅模型）"
+    }
+  },
+  "147": {
+    "inputs": {
+      "offload_model": true,
+      "offload_cache": true,
+      "anything": [
+        "134",
+        0
+      ]
+    },
+    "class_type": "VRAMCleanup",
+    "_meta": {
+      "title": "🎈VRAM-Cleanup"
+    }
+  },
+  "149": {
+    "inputs": {
+      "attention": "comfy kitchen attention",
+      "model": [
+        "144",
+        0
+      ]
+    },
+    "class_type": "ModelAttentionBackend",
+    "_meta": {
+      "title": "ModelAttentionBackend"
+    }
+  },
+  "150": {
+    "inputs": {
+      "sigmas": [
+        "133",
+        0
+      ],
+      "extra_steps": 2,
+      "start_at_sigma": 0.65,
+      "end_at_sigma": 0,
+      "spacing": "cosine"
+    },
+    "class_type": "H3SigmaRefiner",
+    "_meta": {
+      "title": "H3 Sigma Refiner"
+    }
+  },
+  "_api_config": {
+    "customLabels": {
+      "92:filename_prefix": "文件名前缀",
+      "92:format": "format",
+      "92:codec": "codec",
+      "120:预设分辨率": "预设分辨率",
+      "120:横竖对调": "横竖对调",
+      "120:批量大小": "批量大小",
+      "120:自定义宽": "自定义宽",
+      "120:自定义高": "自定义高",
+      "120:缩放倍数": "缩放倍数",
+      "122:clean_file_cache": "clean_file_cache",
+      "122:clean_processes": "clean_processes",
+      "122:clean_dlls": "clean_dlls",
+      "122:retry_times": "retry_times",
+      "133:steps": "迭代步数",
+      "133:denoise": "denoise",
+      "136:type": "type",
+      "136:device": "device",
+      "137:noise_seed": "noise_seed",
+      "138:fps": "fps",
+      "138:bit_depth": "bit_depth",
+      "139:prompt": "prompt",
+      "140:expression": "expression",
+      "141:value": "value",
+      "142:weight_dtype": "weight_dtype",
+      "144:strength_model": "strength_model",
+      "147:offload_model": "offload_model",
+      "147:offload_cache": "offload_cache",
+      "149:attention": "attention",
+      "150:extra_steps": "extra_steps",
+      "150:start_at_sigma": "start_at_sigma",
+      "150:end_at_sigma": "end_at_sigma",
+      "150:spacing": "spacing"
+    },
+    "enabledParams": {
+      "92:filename_prefix": false,
+      "92:format": false,
+      "92:codec": false,
+      "120:预设分辨率": false,
+      "120:横竖对调": false,
+      "120:批量大小": false,
+      "120:自定义宽": true,
+      "120:自定义高": true,
+      "120:缩放倍数": false,
+      "122:clean_file_cache": false,
+      "122:clean_processes": false,
+      "122:clean_dlls": false,
+      "122:retry_times": false,
+      "133:steps": false,
+      "133:denoise": false,
+      "136:type": false,
+      "136:device": false,
+      "137:noise_seed": false,
+      "138:fps": false,
+      "138:bit_depth": false,
+      "139:prompt": true,
+      "140:expression": false,
+      "141:value": true,
+      "142:weight_dtype": false,
+      "144:strength_model": false,
+      "147:offload_model": false,
+      "147:offload_cache": false,
+      "149:attention": false,
+      "150:extra_steps": false,
+      "150:start_at_sigma": false,
+      "150:end_at_sigma": false,
+      "150:spacing": false
+    },
+    "formValues": {
+      "92:filename_prefix": "video/MiniMax_H3",
+      "92:format": "auto",
+      "92:codec": "auto",
+      "120:预设分辨率": "自定义",
+      "120:横竖对调": false,
+      "120:批量大小": 1,
+      "120:自定义宽": 864,
+      "120:自定义高": 480,
+      "120:缩放倍数": "32",
+      "122:clean_file_cache": true,
+      "122:clean_processes": true,
+      "122:clean_dlls": true,
+      "122:retry_times": 3,
+      "133:steps": 12,
+      "133:denoise": 1,
+      "136:type": "minimax",
+      "136:device": "default",
+      "137:noise_seed": 1,
+      "138:fps": 24,
+      "138:bit_depth": 8,
+      "139:prompt": "Vaporwave title sequence look: pink and blue gradient palette, VHS tracking artifacts, Greek statue motifs, chrome palm trees, RGB chromatic aberration, lo-fi retro atmosphere, mood languid and nostalgic.\n\nTimeline:\n[0s-1s] VHS static opens the frame, the title \"COMFYUI\" appears with RGB split and a slight horizontal jitter.\n[1s-2.5s] Hard cut, a Greek plaster bust close-up, pink-purple gradient sky, a pixelated sun.\n[2.5s-4s] Clean \"STARRING\" credits appear, \"LATENT\" and \"CONTROLNET\" each shown exactly once.\n[4s-5s] Final card \"DIRECTED BY COMFYUI\" holds, one VHS tracking glitch settling into stability.\n\nHard cuts only, transitions landing with tape jumps, no push-ins, no dissolves.\n\nAudio: lo-fi vaporwave score, slow drum machine with soft bass, VHS tape-noise sample joins at 2.5s, melody fading for the last 1s.\n\nAll text must be clearly legible, do not misspell English, no Chinese characters, do not repeat names or job titles, no soft dissolves, no subtitle bars.",
+      "140:expression": "max(5, round(a * 24)) + (5 - (max(5, round(a * 24)) % 17)) % 17",
+      "141:value": 5,
+      "142:weight_dtype": "default",
+      "144:strength_model": 0.75,
+      "147:offload_model": true,
+      "147:offload_cache": true,
+      "149:attention": "comfy kitchen attention",
+      "150:extra_steps": 2,
+      "150:start_at_sigma": 0.65,
+      "150:end_at_sigma": 0,
+      "150:spacing": "cosine"
+    },
+    "mediaOrder": [],
+    "mediaOrderSource": "auto",
+    "apiNames": {
+      "92:filename_prefix": "filename_prefix",
+      "92:format": "format",
+      "92:codec": "codec",
+      "120:预设分辨率": "param_2",
+      "120:横竖对调": "param",
+      "120:批量大小": "param_3",
+      "120:自定义宽": "param_4",
+      "120:自定义高": "param_5",
+      "120:缩放倍数": "param_6",
+      "122:clean_file_cache": "clean_file_cache",
+      "122:clean_processes": "clean_processes",
+      "122:clean_dlls": "clean_dlls",
+      "122:retry_times": "retry_times",
+      "133:steps": "steps",
+      "133:denoise": "denoise",
+      "136:type": "type",
+      "136:device": "device",
+      "137:noise_seed": "noise_seed",
+      "138:fps": "fps",
+      "138:bit_depth": "bit_depth",
+      "139:prompt": "prompt",
+      "140:expression": "expression",
+      "141:value": "value",
+      "142:weight_dtype": "weight_dtype",
+      "144:strength_model": "strength_model",
+      "147:offload_model": "offload_model",
+      "147:offload_cache": "offload_cache",
+      "149:attention": "attention",
+      "150:extra_steps": "extra_steps",
+      "150:start_at_sigma": "start_at_sigma",
+      "150:end_at_sigma": "end_at_sigma",
+      "150:spacing": "spacing"
+    }
+  }
+}

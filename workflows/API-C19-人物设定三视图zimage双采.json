@@ -1,0 +1,788 @@
+{
+  "17": {
+    "inputs": {
+      "filename_prefix": "comfyui",
+      "images": [
+        "62",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "保存图像"
+    }
+  },
+  "36": {
+    "inputs": {
+      "text1": [
+        "40",
+        0
+      ],
+      "text2": "",
+      "text3": "",
+      "text4": "",
+      "combine_order": "",
+      "separator": ","
+    },
+    "class_type": "TextConcatenator",
+    "_meta": {
+      "title": "文本拼接🐠meeeyo.com"
+    }
+  },
+  "37": {
+    "inputs": {
+      "max_tokens": 2048,
+      "top_k": 30,
+      "top_p": 0.9,
+      "min_p": 0.05,
+      "typical_p": 1,
+      "temperature": 0.8,
+      "repeat_penalty": 1,
+      "frequency_penalty": 0,
+      "present_penalty": 1,
+      "mirostat_mode": 0,
+      "mirostat_eta": 0.1,
+      "mirostat_tau": 5,
+      "state_uid": 0
+    },
+    "class_type": "llama_cpp_parameters",
+    "_meta": {
+      "title": "Llama-cpp Parameters"
+    }
+  },
+  "38": {
+    "inputs": {
+      "preset_prompt": "Empty - Nothing",
+      "custom_prompt": [
+        "42",
+        0
+      ],
+      "system_prompt": "Role: 影视级角色视觉真值 (Ground Truth) 提示词生成专家\n\nObjective: 将用户输入的简短角色设定，转化为结构极度严谨、专为 Krea 2 优化的高质量 “四视图角色基准资产 (Character Benchmark Asset)” 提示词。\n\nWorkflow:\n解析核心概念：提取用户输入的角色身份、性别、世界观背景及核心特征，如用户未提及面孔需要使用亚洲脸型。\n\n细节丰满化：根据世界观自动推演符合逻辑的面部特征、发型、服装材质、磨损细节及标志性道具。\n\n严格映射模板：填入以下为 Krea 2 优化的标准化结构。\nOutput Structure & Constraints（必须严格遵循）:\n\nA professional clean four-view character turnaround benchmark sheet, on a single seamless pure white industrial studio background, no borders, no frames, no dividing lines, no panel edges, no rounded corners anywhere arranged horizontally side-by-side, seamless pure white industrial studio background, no shadows, technical reference model sheet, orthographic views, maximum consistency across all panels.\n\n[角色核心定义与布局] [在此处结合用户设定，例如：赛博朋克世界的义体强化男黑客]，highly detailed character design reference sheet.\n\nPanel 1/4 (Head Close-up): Extreme close-up portrait from front, only head and shoulders, razor sharp 8K facial details, perfect reproduction of facial bone structure, [详细描述肤质特征，如：Her makeup is soft yet eye-catching: large, glossy eyes, a delicate pink blush, faint freckles across her cheeks, sharp eyeliner, and smooth gradient lips.], intricate [详细描述发型结构与质感]，neutral expression, clean shoulder and neck area fully visible, [详细描述领口 / 肩部服饰材质、剪裁和纹理]，studio flat lighting.\n\nPanel 2/4 (Front Full Body): Full body front view, neutral standing pose, arms naturally hanging at sides, hands relaxed, straight posture, 1:1 realistic body proportions.\n\nPanel 3/4 (Side Full Body): Full body side view (profile), same neutral standing pose, arms naturally at sides, maintaining exact same body proportions and details.\n\nPanel 4/4 (Back Full Body): Full body back view, same neutral standing pose, arms naturally at sides, maintaining exact same body proportions and details.\n\nGlobal Consistency Constraints:\n\nPerfect 100% identity consistency across all four panels — identical face, exact same hairstyle and hair flow, identical body shape and proportions, identical clothing in every angle. Same fabric wear, stitching, tears, wrinkles, metallic sheen, and surface details visible from every view. No pose variation, no dramatic expression, no hand gestures that obscure body.\n\nClothing & Material Details:\n\nCharacter wearing complete [设定风格] outfit in all views, consisting of [列举 4-5 个具体材质与配件，例如：matte black reinforced tactical jacket with carbon fiber panels, distressed leather pants, exposed cybernetic arm plating, glowing neon circuit accents, heavy combat boots], precise tailoring, visible stitching lines, realistic fabric folds, material wear and tear, metallic reflections and matte textures all consistently rendered.\n\nTechnical & Quality Constraints:\n\n8K ultra sharp resolution, infinite depth of field (F/32), zero bokeh, everything in perfect razor focus, flat diffuse studio lighting with even illumination from all angles, no strong shadows, no ambient color cast, pure technical white background, maximum material detail and surface fidelity, cinematic yet documentary reference style.\n\nsingle continuous white backdrop with no panel borders or separations.\n\nSystem Instructions:\n面部和服装描述必须具体到材质名称、物理状态、磨损程度和结构细节。\n\n最终输出仅包含生成的完整英文提示词，不要输出序言和评论。",
+      "inference_mode": "one by one",
+      "max_frames": 24,
+      "max_size": 256,
+      "seed": 1071842007640491,
+      "force_offload": false,
+      "save_states": false,
+      "llama_model": [
+        "39",
+        0
+      ],
+      "parameters": [
+        "37",
+        0
+      ]
+    },
+    "class_type": "llama_cpp_instruct_adv",
+    "_meta": {
+      "title": "Llama-cpp Instruct"
+    }
+  },
+  "39": {
+    "inputs": {
+      "model": "Qwen3.5-9B-Uncensored-HauhauCS-Aggressive-Q8_0.gguf",
+      "mmproj": "mmproj-Qwen3.5-9B-Uncensored-HauhauCS-Aggressive-BF16.gguf",
+      "chat_handler": "Qwen3.5",
+      "n_ctx": 8192,
+      "vram_limit": -1,
+      "image_min_tokens": 0,
+      "image_max_tokens": 0,
+      "load_mtp": false
+    },
+    "class_type": "llama_cpp_model_loader",
+    "_meta": {
+      "title": "Llama-cpp Model Loader"
+    }
+  },
+  "40": {
+    "inputs": {
+      "offload_model": true,
+      "offload_cache": true,
+      "anything": [
+        "41",
+        0
+      ]
+    },
+    "class_type": "VRAMCleanup",
+    "_meta": {
+      "title": "🎈VRAM-Cleanup"
+    }
+  },
+  "41": {
+    "inputs": {
+      "clean_file_cache": true,
+      "clean_processes": true,
+      "clean_dlls": true,
+      "retry_times": 3,
+      "anything": [
+        "38",
+        0
+      ]
+    },
+    "class_type": "RAMCleanup",
+    "_meta": {
+      "title": "🎈RAM-Cleanup"
+    }
+  },
+  "42": {
+    "inputs": {
+      "prompt": "年轻东亚女性半机械改造人，端正自然站立，双臂自然垂于身体两侧，双手放松，标准写实人体比例，无缝纯白工业影棚背景，突出人物主体。佩戴一体式哑光钛金属智能 AR 眼镜，淡蓝色增透镀膜镜片，镜腿嵌入细条冷蓝光效指示灯；右侧太阳穴延伸至脸颊处外露银色精密机械义体结构，表面带有蚀刻电路纹理与微弱冰蓝色发光指示灯。冷调白皙肤质，利落的银灰色哑光烟熏眼妆，低饱和灰粉哑光唇色；齐肩顺直直发，深黑底色夹杂银蓝色挑染，发丝富有细腻金属光泽；颈部佩戴细款银色金属项圈，带有微型数据接口，表情冷静冷峻，气质锐利。全身穿着未来感镭射机能风套装，高领修身镭射幻彩连体打底，面料随光线角度呈现银紫蓝三色渐变虹彩光泽，表面带有细密暗纹导电电路；外搭短款截短式哑光黑机能马甲，配有模块化快拆卡扣与反光条装饰；高腰修身工装长裤，裤腿带有多组立体口袋与脚踝束带设计，膝盖处内嵌半透明机械护板结构；脚穿厚底增高机能运动鞋，鞋身带有反光条与镭射装饰条。剪裁利落合身，面料带有自然垂坠褶皱，材质质感真实细腻，镭射面料的幻彩渐变效果自然通透。均匀柔和的影棚平光照明，光线全方位均匀覆盖，无强烈硬阴影，精准还原镭射面料的幻彩质感与机械部件的冷冽金属光泽。8K 超高清分辨率，极致清晰锐利，全景深全画面合焦，无虚化散景，写实赛博朋克风格，专业角色设定参考质感。"
+    },
+    "class_type": "CR Prompt Text",
+    "_meta": {
+      "title": "⚙️ CR Prompt Text"
+    }
+  },
+  "47": {
+    "inputs": {
+      "width": 1920,
+      "height": 1080,
+      "batch_size": 1
+    },
+    "class_type": "EmptyLatentImage",
+    "_meta": {
+      "title": "空Latent图像"
+    }
+  },
+  "48": {
+    "inputs": {
+      "ckpt_name": "Zimage/Z-Image-Base-8steps-White_Marble-AIO_v2-bf16.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple",
+    "_meta": {
+      "title": "Checkpoint加载器（简易）"
+    }
+  },
+  "49": {
+    "inputs": {
+      "seed": 0,
+      "steps": 8,
+      "cfg": 1,
+      "sampler_name": "res_2s",
+      "scheduler": "linear_quadratic",
+      "denoise": 1,
+      "model": [
+        "48",
+        0
+      ],
+      "positive": [
+        "50",
+        0
+      ],
+      "negative": [
+        "51",
+        0
+      ],
+      "latent_image": [
+        "47",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "50": {
+    "inputs": {
+      "text": [
+        "36",
+        0
+      ],
+      "clip": [
+        "48",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "51": {
+    "inputs": {
+      "conditioning": [
+        "50",
+        0
+      ]
+    },
+    "class_type": "ConditioningZeroOut",
+    "_meta": {
+      "title": "条件零化"
+    }
+  },
+  "57": {
+    "inputs": {
+      "add_noise": "enable",
+      "noise_seed": 0,
+      "steps": 8,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "start_at_step": 5,
+      "end_at_step": 10000,
+      "return_with_leftover_noise": "disable",
+      "model": [
+        "58",
+        0
+      ],
+      "positive": [
+        "50",
+        0
+      ],
+      "negative": [
+        "51",
+        0
+      ],
+      "latent_image": [
+        "49",
+        0
+      ]
+    },
+    "class_type": "KSamplerAdvanced",
+    "_meta": {
+      "title": "K采样器（高级）"
+    }
+  },
+  "58": {
+    "inputs": {
+      "unet_name": "Zimage/z_image_turbo_bf16.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "UNet加载器"
+    }
+  },
+  "59": {
+    "inputs": {
+      "samples": [
+        "57",
+        0
+      ],
+      "vae": [
+        "48",
+        2
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "62": {
+    "inputs": {
+      "offload_model": true,
+      "offload_cache": true,
+      "anything": [
+        "65",
+        0
+      ]
+    },
+    "class_type": "VRAMCleanup",
+    "_meta": {
+      "title": "🎈VRAM-Cleanup"
+    }
+  },
+  "63": {
+    "inputs": {
+      "upscale_method": "lanczos",
+      "scale_by": 0.5000000000000001,
+      "image": [
+        "59",
+        0
+      ]
+    },
+    "class_type": "ImageScaleBy",
+    "_meta": {
+      "title": "缩放图像（比例）"
+    }
+  },
+  "65": {
+    "inputs": {
+      "clean_file_cache": true,
+      "clean_processes": true,
+      "clean_dlls": true,
+      "retry_times": 3,
+      "anything": [
+        "69",
+        0
+      ]
+    },
+    "class_type": "RAMCleanup",
+    "_meta": {
+      "title": "🎈RAM-Cleanup"
+    }
+  },
+  "67": {
+    "inputs": {
+      "model": "seedvr2_ema_3b-Q4_K_M.gguf",
+      "device": "cuda:0",
+      "blocks_to_swap": 32,
+      "swap_io_components": true,
+      "offload_device": "cpu",
+      "cache_model": "sdpa",
+      "attention_mode": "sageattn_2"
+    },
+    "class_type": "SeedVR2LoadDiTModel",
+    "_meta": {
+      "title": "SeedVR2 (Down)Load DiT Model"
+    }
+  },
+  "68": {
+    "inputs": {
+      "model": "ema_vae_fp16.safetensors",
+      "device": "cuda:0",
+      "encode_tiled": true,
+      "encode_tile_size": 1024,
+      "encode_tile_overlap": 128,
+      "decode_tiled": true,
+      "decode_tile_size": 1024,
+      "decode_tile_overlap": 128,
+      "tile_debug": "false",
+      "offload_device": "cpu",
+      "cache_model": false
+    },
+    "class_type": "SeedVR2LoadVAEModel",
+    "_meta": {
+      "title": "SeedVR2 (Down)Load VAE Model"
+    }
+  },
+  "69": {
+    "inputs": {
+      "seed": 3649704726,
+      "resolution": 2048,
+      "max_resolution": 4096,
+      "batch_size": 5,
+      "uniform_batch_size": false,
+      "color_correction": "lab",
+      "temporal_overlap": 0,
+      "prepend_frames": 0,
+      "input_noise_scale": 0,
+      "latent_noise_scale": 0,
+      "offload_device": "cpu",
+      "enable_debug": false,
+      "image": [
+        "63",
+        0
+      ],
+      "dit": [
+        "67",
+        0
+      ],
+      "vae": [
+        "68",
+        0
+      ]
+    },
+    "class_type": "SeedVR2VideoUpscaler",
+    "_meta": {
+      "title": "SeedVR2 Video Upscaler (v2.5.24)"
+    }
+  },
+  "70": {
+    "inputs": {
+      "text_0": "A professional clean four-view character turnaround benchmark sheet, on a single seamless pure white industrial studio background, no borders, no frames, no dividing lines, no panel edges, no rounded corners anywhere arranged horizontally side-by-side, seamless pure white industrial studio background, no shadows, technical reference model sheet, orthographic views, maximum consistency across all panels.\n\nYoung East Asian female cybernetic android with natural stance, arms hanging naturally at sides, hands relaxed, standard realistic human proportions, highly detailed character design reference sheet.\n\nPanel 1/4 (Head Close-up): Extreme close-up portrait from front, only head and shoulders, razor sharp 8K facial details, perfect reproduction of facial bone structure, cold-toned porcelain skin texture with a smooth, synthetic sheen, makeup consists of sharp smoky eyeshadow in matte silver-grey tones, low-saturation dusty pink matte lipstick, precise eyeliner; intricate shoulder-length straight hair with deep black base and silver-blue挑染 (tweeds), fine metallic luster on individual strands, sleek finish; neutral cool expression with sharp gaze, clean neck and shoulder area fully visible; wearing integrated matte titanium smart AR glasses with monolithic design, light blue anti-reflective coating lenses, temple arms embedded with thin strip cold blue LED indicator lights extending to the cheekbone, revealing exposed silver precision mechanical endoskeleton structure on the right temple area extending to the cheek, surface features etched circuit board textures and faint ice-blue glowing status LEDs, fine grain texture on metal casing.\n\nPanel 2/4 (Front Full Body): Full body front view, neutral standing pose, arms naturally hanging at sides, hands relaxed, straight posture, 1:1 realistic body proportions, wearing futuristic laser-future functionalist suit ensemble. Base layer is high-neck slim-fit laser holographic bodysuit made of smart fabric that shifts between silver-purple-blue tri-color iridescent rainbow luster depending on light angle, surface embedded with fine dark pattern conductive circuit lines; outer layer is short cropped matte black tactical vest with modular quick-release buckles and reflective strip decorations, structured stitching; high-waisted slim-fit cargo trousers featuring multiple 3D utility pockets and ankle strap design, knees embedded with semi-transparent mechanical armor plates showing internal gear structures; footwear consists of thick-soled platform futuristic sneakers with reflective strips and laser decorative bands, rubber sole texture with tread details.\n\nPanel 3/4 (Side Full Body): Full body side view (profile), same neutral standing pose, arms naturally at sides, maintaining exact same body proportions and details, showcasing the side profile of the silver-blue hair weave, the depth of the layered laser bodysuit and matte black vest, the structural lines of the cargo pants' 3D pockets, the profile of the mechanical knee armor, the side view of the AR glasses' temple extension and cheek-mounted endoskeleton, and the bulk of the thick-soled sneaker.\n\nPanel 4/4 (Back Full Body): Full body back view, same neutral standing pose, arms naturally at sides, maintaining exact same body proportions and details, showing the straight back silhouette of the high-neck laser bodysuit, the cropped length and seam placement of the matte black tactical vest, the rear panel design of the cargo pants with utility loops, the sleek contour of the metallic choker with mini data port visible at the nape, and the clean lines of the futuristic sneaker sole.\n\nGlobal Consistency Constraints:\n\nPerfect 100% identity consistency across all four panels — identical face, exact same hairstyle and hair flow (deep black with silver-blue metallic tints), identical body shape and proportions, identical clothing in every angle. Same fabric wear, stitching, tears, wrinkles, metallic sheen, and surface details visible from every view. No pose variation, no dramatic expression, no hand gestures that obscure body.\n\nClothing & Material Details:\n\nCharacter wearing complete futuristic laser-functional outfit in all views, consisting of iridescent smart-fabric bodysuit (silver-purple-blue gradient with conductive circuit print), matte black tactical vest (textured synthetic leather with modular buckles), high-waisted cargo trousers (durable technical nylon with 3D pockets and mechanical knee inserts), thick-soled platform sneakers (matte rubber with reflective strips and laser accents), fine silver metallic choker (polished steel with micro-data port), and integrated titanium AR glasses (brushed titanium with LED indicators and exposed cheek-mounted endoskeleton). Precise tailoring, visible stitching lines, realistic fabric folds, material wear and tear, metallic reflections and matte textures all consistently rendered.\n\nTechnical & Quality Constraints:\n\n8K ultra sharp resolution, infinite depth of field (F/32), zero bokeh, everything in perfect razor focus, flat diffuse studio lighting with even illumination from all angles, no strong shadows, no ambient color cast, pure technical white background, maximum material detail and surface fidelity, cinematic yet documentary reference style.\n\nsingle continuous white backdrop with no panel borders or separations.",
+      "text": [
+        "36",
+        0
+      ]
+    },
+    "class_type": "ShowText|pysssss",
+    "_meta": {
+      "title": "Show Text 🐍"
+    }
+  },
+  "_api_config": {
+    "customLabels": {
+      "17:filename_prefix": "文件名前缀",
+      "36:text2": "text2",
+      "36:text3": "text3",
+      "36:text4": "text4",
+      "36:combine_order": "combine_order",
+      "36:separator": "separator",
+      "37:max_tokens": "max_tokens",
+      "37:top_k": "top_k",
+      "37:top_p": "top_p",
+      "37:min_p": "min_p",
+      "37:typical_p": "typical_p",
+      "37:temperature": "temperature",
+      "37:repeat_penalty": "repeat_penalty",
+      "37:frequency_penalty": "frequency_penalty",
+      "37:present_penalty": "present_penalty",
+      "37:mirostat_mode": "mirostat_mode",
+      "37:mirostat_eta": "mirostat_eta",
+      "37:mirostat_tau": "mirostat_tau",
+      "37:state_uid": "state_uid",
+      "38:seed": "随机种子",
+      "38:preset_prompt": "preset_prompt",
+      "38:system_prompt": "system_prompt",
+      "38:inference_mode": "inference_mode",
+      "38:max_frames": "max_frames",
+      "38:max_size": "max_size",
+      "38:force_offload": "force_offload",
+      "38:save_states": "save_states",
+      "39:model": "model",
+      "39:mmproj": "mmproj",
+      "39:chat_handler": "chat_handler",
+      "39:n_ctx": "n_ctx",
+      "39:vram_limit": "vram_limit",
+      "39:image_min_tokens": "image_min_tokens",
+      "39:image_max_tokens": "image_max_tokens",
+      "39:load_mtp": "load_mtp",
+      "40:offload_model": "offload_model",
+      "40:offload_cache": "offload_cache",
+      "41:clean_file_cache": "clean_file_cache",
+      "41:clean_processes": "clean_processes",
+      "41:clean_dlls": "clean_dlls",
+      "41:retry_times": "retry_times",
+      "42:prompt": "prompt",
+      "47:width": "宽度",
+      "47:height": "高度",
+      "47:batch_size": "批次大小",
+      "49:seed": "随机种子",
+      "49:steps": "迭代步数",
+      "49:cfg": "CFG Scale",
+      "49:denoise": "denoise",
+      "57:steps": "迭代步数",
+      "57:cfg": "CFG Scale",
+      "57:add_noise": "add_noise",
+      "57:noise_seed": "noise_seed",
+      "57:start_at_step": "start_at_step",
+      "57:end_at_step": "end_at_step",
+      "57:return_with_leftover_noise": "return_with_leftover_noise",
+      "58:weight_dtype": "weight_dtype",
+      "62:offload_model": "offload_model",
+      "62:offload_cache": "offload_cache",
+      "63:upscale_method": "upscale_method",
+      "63:scale_by": "scale_by",
+      "65:clean_file_cache": "clean_file_cache",
+      "65:clean_processes": "clean_processes",
+      "65:clean_dlls": "clean_dlls",
+      "65:retry_times": "retry_times",
+      "67:model": "model",
+      "67:device": "device",
+      "67:blocks_to_swap": "blocks_to_swap",
+      "67:swap_io_components": "swap_io_components",
+      "67:offload_device": "offload_device",
+      "67:cache_model": "cache_model",
+      "67:attention_mode": "attention_mode",
+      "68:device": "device",
+      "68:encode_tiled": "encode_tiled",
+      "68:encode_tile_size": "encode_tile_size",
+      "68:encode_tile_overlap": "encode_tile_overlap",
+      "68:decode_tiled": "decode_tiled",
+      "68:decode_tile_size": "decode_tile_size",
+      "68:decode_tile_overlap": "decode_tile_overlap",
+      "68:tile_debug": "tile_debug",
+      "68:offload_device": "offload_device",
+      "68:cache_model": "cache_model",
+      "69:seed": "随机种子",
+      "69:batch_size": "批次大小",
+      "69:resolution": "resolution",
+      "69:max_resolution": "max_resolution",
+      "69:uniform_batch_size": "uniform_batch_size",
+      "69:color_correction": "color_correction",
+      "69:temporal_overlap": "temporal_overlap",
+      "69:prepend_frames": "prepend_frames",
+      "69:input_noise_scale": "input_noise_scale",
+      "69:latent_noise_scale": "latent_noise_scale",
+      "69:offload_device": "offload_device",
+      "69:enable_debug": "enable_debug",
+      "70:text_0": "text_0"
+    },
+    "enabledParams": {
+      "17:filename_prefix": false,
+      "36:text2": false,
+      "36:text3": false,
+      "36:text4": false,
+      "36:combine_order": false,
+      "36:separator": false,
+      "37:max_tokens": false,
+      "37:top_k": false,
+      "37:top_p": false,
+      "37:min_p": false,
+      "37:typical_p": false,
+      "37:temperature": false,
+      "37:repeat_penalty": false,
+      "37:frequency_penalty": false,
+      "37:present_penalty": false,
+      "37:mirostat_mode": false,
+      "37:mirostat_eta": false,
+      "37:mirostat_tau": false,
+      "37:state_uid": false,
+      "38:seed": false,
+      "38:preset_prompt": false,
+      "38:system_prompt": false,
+      "38:inference_mode": false,
+      "38:max_frames": false,
+      "38:max_size": false,
+      "38:force_offload": false,
+      "38:save_states": false,
+      "39:model": false,
+      "39:mmproj": false,
+      "39:chat_handler": false,
+      "39:n_ctx": false,
+      "39:vram_limit": false,
+      "39:image_min_tokens": false,
+      "39:image_max_tokens": false,
+      "39:load_mtp": false,
+      "40:offload_model": false,
+      "40:offload_cache": false,
+      "41:clean_file_cache": false,
+      "41:clean_processes": false,
+      "41:clean_dlls": false,
+      "41:retry_times": false,
+      "42:prompt": true,
+      "47:width": true,
+      "47:height": true,
+      "47:batch_size": false,
+      "49:seed": false,
+      "49:steps": false,
+      "49:cfg": false,
+      "49:denoise": false,
+      "57:steps": false,
+      "57:cfg": false,
+      "57:add_noise": false,
+      "57:noise_seed": false,
+      "57:start_at_step": false,
+      "57:end_at_step": false,
+      "57:return_with_leftover_noise": false,
+      "58:weight_dtype": false,
+      "62:offload_model": false,
+      "62:offload_cache": false,
+      "63:upscale_method": false,
+      "63:scale_by": false,
+      "65:clean_file_cache": false,
+      "65:clean_processes": false,
+      "65:clean_dlls": false,
+      "65:retry_times": false,
+      "67:model": false,
+      "67:device": false,
+      "67:blocks_to_swap": false,
+      "67:swap_io_components": false,
+      "67:offload_device": false,
+      "67:cache_model": false,
+      "67:attention_mode": false,
+      "68:device": false,
+      "68:encode_tiled": false,
+      "68:encode_tile_size": false,
+      "68:encode_tile_overlap": false,
+      "68:decode_tiled": false,
+      "68:decode_tile_size": false,
+      "68:decode_tile_overlap": false,
+      "68:tile_debug": false,
+      "68:offload_device": false,
+      "68:cache_model": false,
+      "69:seed": false,
+      "69:batch_size": false,
+      "69:resolution": false,
+      "69:max_resolution": false,
+      "69:uniform_batch_size": false,
+      "69:color_correction": false,
+      "69:temporal_overlap": false,
+      "69:prepend_frames": false,
+      "69:input_noise_scale": false,
+      "69:latent_noise_scale": false,
+      "69:offload_device": false,
+      "69:enable_debug": false,
+      "70:text_0": false
+    },
+    "formValues": {
+      "17:filename_prefix": "comfyui",
+      "36:text2": "",
+      "36:text3": "",
+      "36:text4": "",
+      "36:combine_order": "",
+      "36:separator": ",",
+      "37:max_tokens": 2048,
+      "37:top_k": 30,
+      "37:top_p": 0.9,
+      "37:min_p": 0.05,
+      "37:typical_p": 1,
+      "37:temperature": 0.8,
+      "37:repeat_penalty": 1,
+      "37:frequency_penalty": 0,
+      "37:present_penalty": 1,
+      "37:mirostat_mode": 0,
+      "37:mirostat_eta": 0.1,
+      "37:mirostat_tau": 5,
+      "37:state_uid": 0,
+      "38:seed": 1071842007640491,
+      "38:preset_prompt": "Empty - Nothing",
+      "38:system_prompt": "Role: 影视级角色视觉真值 (Ground Truth) 提示词生成专家\n\nObjective: 将用户输入的简短角色设定，转化为结构极度严谨、专为 Krea 2 优化的高质量 “四视图角色基准资产 (Character Benchmark Asset)” 提示词。\n\nWorkflow:\n解析核心概念：提取用户输入的角色身份、性别、世界观背景及核心特征，如用户未提及面孔需要使用亚洲脸型。\n\n细节丰满化：根据世界观自动推演符合逻辑的面部特征、发型、服装材质、磨损细节及标志性道具。\n\n严格映射模板：填入以下为 Krea 2 优化的标准化结构。\nOutput Structure & Constraints（必须严格遵循）:\n\nA professional clean four-view character turnaround benchmark sheet, on a single seamless pure white industrial studio background, no borders, no frames, no dividing lines, no panel edges, no rounded corners anywhere arranged horizontally side-by-side, seamless pure white industrial studio background, no shadows, technical reference model sheet, orthographic views, maximum consistency across all panels.\n\n[角色核心定义与布局] [在此处结合用户设定，例如：赛博朋克世界的义体强化男黑客]，highly detailed character design reference sheet.\n\nPanel 1/4 (Head Close-up): Extreme close-up portrait from front, only head and shoulders, razor sharp 8K facial details, perfect reproduction of facial bone structure, [详细描述肤质特征，如：Her makeup is soft yet eye-catching: large, glossy eyes, a delicate pink blush, faint freckles across her cheeks, sharp eyeliner, and smooth gradient lips.], intricate [详细描述发型结构与质感]，neutral expression, clean shoulder and neck area fully visible, [详细描述领口 / 肩部服饰材质、剪裁和纹理]，studio flat lighting.\n\nPanel 2/4 (Front Full Body): Full body front view, neutral standing pose, arms naturally hanging at sides, hands relaxed, straight posture, 1:1 realistic body proportions.\n\nPanel 3/4 (Side Full Body): Full body side view (profile), same neutral standing pose, arms naturally at sides, maintaining exact same body proportions and details.\n\nPanel 4/4 (Back Full Body): Full body back view, same neutral standing pose, arms naturally at sides, maintaining exact same body proportions and details.\n\nGlobal Consistency Constraints:\n\nPerfect 100% identity consistency across all four panels — identical face, exact same hairstyle and hair flow, identical body shape and proportions, identical clothing in every angle. Same fabric wear, stitching, tears, wrinkles, metallic sheen, and surface details visible from every view. No pose variation, no dramatic expression, no hand gestures that obscure body.\n\nClothing & Material Details:\n\nCharacter wearing complete [设定风格] outfit in all views, consisting of [列举 4-5 个具体材质与配件，例如：matte black reinforced tactical jacket with carbon fiber panels, distressed leather pants, exposed cybernetic arm plating, glowing neon circuit accents, heavy combat boots], precise tailoring, visible stitching lines, realistic fabric folds, material wear and tear, metallic reflections and matte textures all consistently rendered.\n\nTechnical & Quality Constraints:\n\n8K ultra sharp resolution, infinite depth of field (F/32), zero bokeh, everything in perfect razor focus, flat diffuse studio lighting with even illumination from all angles, no strong shadows, no ambient color cast, pure technical white background, maximum material detail and surface fidelity, cinematic yet documentary reference style.\n\nsingle continuous white backdrop with no panel borders or separations.\n\nSystem Instructions:\n面部和服装描述必须具体到材质名称、物理状态、磨损程度和结构细节。\n\n最终输出仅包含生成的完整英文提示词，不要输出序言和评论。",
+      "38:inference_mode": "one by one",
+      "38:max_frames": 24,
+      "38:max_size": 256,
+      "38:force_offload": false,
+      "38:save_states": false,
+      "39:model": "Qwen3.5-9B-Uncensored-HauhauCS-Aggressive-Q8_0.gguf",
+      "39:mmproj": "mmproj-Qwen3.5-9B-Uncensored-HauhauCS-Aggressive-BF16.gguf",
+      "39:chat_handler": "Qwen3.5",
+      "39:n_ctx": 8192,
+      "39:vram_limit": -1,
+      "39:image_min_tokens": 0,
+      "39:image_max_tokens": 0,
+      "39:load_mtp": false,
+      "40:offload_model": true,
+      "40:offload_cache": true,
+      "41:clean_file_cache": true,
+      "41:clean_processes": true,
+      "41:clean_dlls": true,
+      "41:retry_times": 3,
+      "42:prompt": "年轻东亚女性半机械改造人，端正自然站立，双臂自然垂于身体两侧，双手放松，标准写实人体比例，无缝纯白工业影棚背景，突出人物主体。佩戴一体式哑光钛金属智能 AR 眼镜，淡蓝色增透镀膜镜片，镜腿嵌入细条冷蓝光效指示灯；右侧太阳穴延伸至脸颊处外露银色精密机械义体结构，表面带有蚀刻电路纹理与微弱冰蓝色发光指示灯。冷调白皙肤质，利落的银灰色哑光烟熏眼妆，低饱和灰粉哑光唇色；齐肩顺直直发，深黑底色夹杂银蓝色挑染，发丝富有细腻金属光泽；颈部佩戴细款银色金属项圈，带有微型数据接口，表情冷静冷峻，气质锐利。全身穿着未来感镭射机能风套装，高领修身镭射幻彩连体打底，面料随光线角度呈现银紫蓝三色渐变虹彩光泽，表面带有细密暗纹导电电路；外搭短款截短式哑光黑机能马甲，配有模块化快拆卡扣与反光条装饰；高腰修身工装长裤，裤腿带有多组立体口袋与脚踝束带设计，膝盖处内嵌半透明机械护板结构；脚穿厚底增高机能运动鞋，鞋身带有反光条与镭射装饰条。剪裁利落合身，面料带有自然垂坠褶皱，材质质感真实细腻，镭射面料的幻彩渐变效果自然通透。均匀柔和的影棚平光照明，光线全方位均匀覆盖，无强烈硬阴影，精准还原镭射面料的幻彩质感与机械部件的冷冽金属光泽。8K 超高清分辨率，极致清晰锐利，全景深全画面合焦，无虚化散景，写实赛博朋克风格，专业角色设定参考质感。",
+      "47:width": 1920,
+      "47:height": 1080,
+      "47:batch_size": 1,
+      "49:seed": 0,
+      "49:steps": 8,
+      "49:cfg": 1,
+      "49:denoise": 1,
+      "57:steps": 8,
+      "57:cfg": 1,
+      "57:add_noise": "enable",
+      "57:noise_seed": 0,
+      "57:start_at_step": 5,
+      "57:end_at_step": 10000,
+      "57:return_with_leftover_noise": "disable",
+      "58:weight_dtype": "default",
+      "62:offload_model": true,
+      "62:offload_cache": true,
+      "63:upscale_method": "lanczos",
+      "63:scale_by": 0.5000000000000001,
+      "65:clean_file_cache": true,
+      "65:clean_processes": true,
+      "65:clean_dlls": true,
+      "65:retry_times": 3,
+      "67:model": "seedvr2_ema_3b-Q4_K_M.gguf",
+      "67:device": "cuda:0",
+      "67:blocks_to_swap": 32,
+      "67:swap_io_components": true,
+      "67:offload_device": "cpu",
+      "67:cache_model": "sdpa",
+      "67:attention_mode": "sageattn_2",
+      "68:device": "cuda:0",
+      "68:encode_tiled": true,
+      "68:encode_tile_size": 1024,
+      "68:encode_tile_overlap": 128,
+      "68:decode_tiled": true,
+      "68:decode_tile_size": 1024,
+      "68:decode_tile_overlap": 128,
+      "68:tile_debug": "false",
+      "68:offload_device": "cpu",
+      "68:cache_model": false,
+      "69:seed": 3649704726,
+      "69:batch_size": 5,
+      "69:resolution": 2048,
+      "69:max_resolution": 4096,
+      "69:uniform_batch_size": false,
+      "69:color_correction": "lab",
+      "69:temporal_overlap": 0,
+      "69:prepend_frames": 0,
+      "69:input_noise_scale": 0,
+      "69:latent_noise_scale": 0,
+      "69:offload_device": "cpu",
+      "69:enable_debug": false,
+      "70:text_0": "A professional clean four-view character turnaround benchmark sheet, on a single seamless pure white industrial studio background, no borders, no frames, no dividing lines, no panel edges, no rounded corners anywhere arranged horizontally side-by-side, seamless pure white industrial studio background, no shadows, technical reference model sheet, orthographic views, maximum consistency across all panels.\n\nYoung East Asian female cybernetic android with natural stance, arms hanging naturally at sides, hands relaxed, standard realistic human proportions, highly detailed character design reference sheet.\n\nPanel 1/4 (Head Close-up): Extreme close-up portrait from front, only head and shoulders, razor sharp 8K facial details, perfect reproduction of facial bone structure, cold-toned porcelain skin texture with a smooth, synthetic sheen, makeup consists of sharp smoky eyeshadow in matte silver-grey tones, low-saturation dusty pink matte lipstick, precise eyeliner; intricate shoulder-length straight hair with deep black base and silver-blue挑染 (tweeds), fine metallic luster on individual strands, sleek finish; neutral cool expression with sharp gaze, clean neck and shoulder area fully visible; wearing integrated matte titanium smart AR glasses with monolithic design, light blue anti-reflective coating lenses, temple arms embedded with thin strip cold blue LED indicator lights extending to the cheekbone, revealing exposed silver precision mechanical endoskeleton structure on the right temple area extending to the cheek, surface features etched circuit board textures and faint ice-blue glowing status LEDs, fine grain texture on metal casing.\n\nPanel 2/4 (Front Full Body): Full body front view, neutral standing pose, arms naturally hanging at sides, hands relaxed, straight posture, 1:1 realistic body proportions, wearing futuristic laser-future functionalist suit ensemble. Base layer is high-neck slim-fit laser holographic bodysuit made of smart fabric that shifts between silver-purple-blue tri-color iridescent rainbow luster depending on light angle, surface embedded with fine dark pattern conductive circuit lines; outer layer is short cropped matte black tactical vest with modular quick-release buckles and reflective strip decorations, structured stitching; high-waisted slim-fit cargo trousers featuring multiple 3D utility pockets and ankle strap design, knees embedded with semi-transparent mechanical armor plates showing internal gear structures; footwear consists of thick-soled platform futuristic sneakers with reflective strips and laser decorative bands, rubber sole texture with tread details.\n\nPanel 3/4 (Side Full Body): Full body side view (profile), same neutral standing pose, arms naturally at sides, maintaining exact same body proportions and details, showcasing the side profile of the silver-blue hair weave, the depth of the layered laser bodysuit and matte black vest, the structural lines of the cargo pants' 3D pockets, the profile of the mechanical knee armor, the side view of the AR glasses' temple extension and cheek-mounted endoskeleton, and the bulk of the thick-soled sneaker.\n\nPanel 4/4 (Back Full Body): Full body back view, same neutral standing pose, arms naturally at sides, maintaining exact same body proportions and details, showing the straight back silhouette of the high-neck laser bodysuit, the cropped length and seam placement of the matte black tactical vest, the rear panel design of the cargo pants with utility loops, the sleek contour of the metallic choker with mini data port visible at the nape, and the clean lines of the futuristic sneaker sole.\n\nGlobal Consistency Constraints:\n\nPerfect 100% identity consistency across all four panels — identical face, exact same hairstyle and hair flow (deep black with silver-blue metallic tints), identical body shape and proportions, identical clothing in every angle. Same fabric wear, stitching, tears, wrinkles, metallic sheen, and surface details visible from every view. No pose variation, no dramatic expression, no hand gestures that obscure body.\n\nClothing & Material Details:\n\nCharacter wearing complete futuristic laser-functional outfit in all views, consisting of iridescent smart-fabric bodysuit (silver-purple-blue gradient with conductive circuit print), matte black tactical vest (textured synthetic leather with modular buckles), high-waisted cargo trousers (durable technical nylon with 3D pockets and mechanical knee inserts), thick-soled platform sneakers (matte rubber with reflective strips and laser accents), fine silver metallic choker (polished steel with micro-data port), and integrated titanium AR glasses (brushed titanium with LED indicators and exposed cheek-mounted endoskeleton). Precise tailoring, visible stitching lines, realistic fabric folds, material wear and tear, metallic reflections and matte textures all consistently rendered.\n\nTechnical & Quality Constraints:\n\n8K ultra sharp resolution, infinite depth of field (F/32), zero bokeh, everything in perfect razor focus, flat diffuse studio lighting with even illumination from all angles, no strong shadows, no ambient color cast, pure technical white background, maximum material detail and surface fidelity, cinematic yet documentary reference style.\n\nsingle continuous white backdrop with no panel borders or separations."
+    },
+    "mediaOrder": [],
+    "mediaOrderSource": "auto",
+    "apiNames": {
+      "17:filename_prefix": "filename_prefix",
+      "36:text2": "text2",
+      "36:text3": "text3",
+      "36:text4": "text4",
+      "36:combine_order": "combine_order",
+      "36:separator": "separator",
+      "37:max_tokens": "max_tokens",
+      "37:top_k": "top_k",
+      "37:top_p": "top_p",
+      "37:min_p": "min_p",
+      "37:typical_p": "typical_p",
+      "37:temperature": "temperature",
+      "37:repeat_penalty": "repeat_penalty",
+      "37:frequency_penalty": "frequency_penalty",
+      "37:present_penalty": "present_penalty",
+      "37:mirostat_mode": "mirostat_mode",
+      "37:mirostat_eta": "mirostat_eta",
+      "37:mirostat_tau": "mirostat_tau",
+      "37:state_uid": "state_uid",
+      "38:seed": "seed",
+      "38:preset_prompt": "preset_prompt",
+      "38:system_prompt": "system_prompt",
+      "38:inference_mode": "inference_mode",
+      "38:max_frames": "max_frames",
+      "38:max_size": "max_size",
+      "38:force_offload": "force_offload",
+      "38:save_states": "save_states",
+      "39:model": "model",
+      "39:mmproj": "mmproj",
+      "39:chat_handler": "chat_handler",
+      "39:n_ctx": "n_ctx",
+      "39:vram_limit": "vram_limit",
+      "39:image_min_tokens": "image_min_tokens",
+      "39:image_max_tokens": "image_max_tokens",
+      "39:load_mtp": "load_mtp",
+      "40:offload_model": "offload_model",
+      "40:offload_cache": "offload_cache",
+      "41:clean_file_cache": "clean_file_cache",
+      "41:clean_processes": "clean_processes",
+      "41:clean_dlls": "clean_dlls",
+      "41:retry_times": "retry_times",
+      "42:prompt": "prompt",
+      "47:width": "width",
+      "47:height": "height",
+      "47:batch_size": "batch_size",
+      "49:seed": "seed_2",
+      "49:steps": "steps",
+      "49:cfg": "cfg",
+      "49:denoise": "denoise",
+      "57:steps": "steps_2",
+      "57:cfg": "cfg_2",
+      "57:add_noise": "add_noise",
+      "57:noise_seed": "noise_seed",
+      "57:start_at_step": "start_at_step",
+      "57:end_at_step": "end_at_step",
+      "57:return_with_leftover_noise": "return_with_leftover_noise",
+      "58:weight_dtype": "weight_dtype",
+      "62:offload_model": "offload_model_2",
+      "62:offload_cache": "offload_cache_2",
+      "63:upscale_method": "upscale_method",
+      "63:scale_by": "scale_by",
+      "65:clean_file_cache": "clean_file_cache_2",
+      "65:clean_processes": "clean_processes_2",
+      "65:clean_dlls": "clean_dlls_2",
+      "65:retry_times": "retry_times_2",
+      "67:model": "model_2",
+      "67:device": "device",
+      "67:blocks_to_swap": "blocks_to_swap",
+      "67:swap_io_components": "swap_io_components",
+      "67:offload_device": "offload_device",
+      "67:cache_model": "cache_model",
+      "67:attention_mode": "attention_mode",
+      "68:device": "device_2",
+      "68:encode_tiled": "encode_tiled",
+      "68:encode_tile_size": "encode_tile_size",
+      "68:encode_tile_overlap": "encode_tile_overlap",
+      "68:decode_tiled": "decode_tiled",
+      "68:decode_tile_size": "decode_tile_size",
+      "68:decode_tile_overlap": "decode_tile_overlap",
+      "68:tile_debug": "tile_debug",
+      "68:offload_device": "offload_device_2",
+      "68:cache_model": "cache_model_2",
+      "69:seed": "seed_3",
+      "69:batch_size": "batch_size_2",
+      "69:resolution": "resolution",
+      "69:max_resolution": "max_resolution",
+      "69:uniform_batch_size": "uniform_batch_size",
+      "69:color_correction": "color_correction",
+      "69:temporal_overlap": "temporal_overlap",
+      "69:prepend_frames": "prepend_frames",
+      "69:input_noise_scale": "input_noise_scale",
+      "69:latent_noise_scale": "latent_noise_scale",
+      "69:offload_device": "offload_device_3",
+      "69:enable_debug": "enable_debug",
+      "70:text_0": "text_0"
+    }
+  }
+}

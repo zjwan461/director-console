@@ -1,0 +1,882 @@
+{
+  "81": {
+    "inputs": {
+      "lora_name": "Ltx/LTX-2.3-Licon-MSR-V2.safetensors",
+      "strength_model": 1,
+      "model": [
+        "183",
+        0
+      ]
+    },
+    "class_type": "LTXICLoRALoaderModelOnly",
+    "_meta": {
+      "title": "🅛🅣🅧 IC-LoRA Loader Model Only"
+    }
+  },
+  "88": {
+    "inputs": {
+      "text": [
+        "181",
+        0
+      ],
+      "clip": [
+        "184",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "89": {
+    "inputs": {
+      "text": "worst quality, blurry, jittery, distorted, inconsistent appearance，",
+      "clip": [
+        "184",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "90": {
+    "inputs": {
+      "use_custom_resolution": true,
+      "resolution": "1280x720 (16:9) (横屏)",
+      "custom_width": 1280,
+      "custom_height": 720
+    },
+    "class_type": "TTResolutionSelector",
+    "_meta": {
+      "title": "TT分辨率选择器"
+    }
+  },
+  "93": {
+    "inputs": {
+      "frame_rate": 25.000000000000004,
+      "positive": [
+        "88",
+        0
+      ],
+      "negative": [
+        "89",
+        0
+      ]
+    },
+    "class_type": "LTXVConditioning",
+    "_meta": {
+      "title": "LTXV条件"
+    }
+  },
+  "94": {
+    "inputs": {
+      "frame_idx": 0,
+      "strength": 1,
+      "latent_downscale_factor": 1,
+      "crop": "disabled",
+      "use_tiled_encode": false,
+      "tile_size": 256,
+      "tile_overlap": 64,
+      "positive": [
+        "93",
+        0
+      ],
+      "negative": [
+        "93",
+        1
+      ],
+      "vae": [
+        "186",
+        0
+      ],
+      "latent": [
+        "97",
+        0
+      ],
+      "image": [
+        "100",
+        0
+      ]
+    },
+    "class_type": "LTXAddVideoICLoRAGuide",
+    "_meta": {
+      "title": "🅛🅣🅧 Add Video IC-LoRA Guide"
+    }
+  },
+  "97": {
+    "inputs": {
+      "width": [
+        "90",
+        0
+      ],
+      "height": [
+        "90",
+        1
+      ],
+      "length": [
+        "135",
+        0
+      ],
+      "batch_size": 1
+    },
+    "class_type": "EmptyLTXVLatentVideo",
+    "_meta": {
+      "title": "空Latent视频（LTXV）"
+    }
+  },
+  "100": {
+    "inputs": {
+      "1": [
+        "156",
+        0
+      ],
+      "2": [
+        "160",
+        0
+      ],
+      "width": [
+        "90",
+        0
+      ],
+      "height": [
+        "90",
+        1
+      ],
+      "frame_count": 41,
+      "background": [
+        "162",
+        0
+      ]
+    },
+    "class_type": "LiconMSR",
+    "_meta": {
+      "title": "Licon MSR"
+    }
+  },
+  "102": {
+    "inputs": {
+      "image": "bgdsn.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "103": {
+    "inputs": {
+      "image": "sz0 (1).png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "104": {
+    "inputs": {
+      "noise": [
+        "106",
+        0
+      ],
+      "guider": [
+        "107",
+        0
+      ],
+      "sampler": [
+        "109",
+        0
+      ],
+      "sigmas": [
+        "110",
+        0
+      ],
+      "latent_image": [
+        "111",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "自定义采样器（高级）"
+    }
+  },
+  "106": {
+    "inputs": {
+      "noise_seed": 539906008065315
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "随机噪波"
+    }
+  },
+  "107": {
+    "inputs": {
+      "cfg": 1,
+      "model": [
+        "81",
+        0
+      ],
+      "positive": [
+        "94",
+        0
+      ],
+      "negative": [
+        "94",
+        1
+      ]
+    },
+    "class_type": "CFGGuider",
+    "_meta": {
+      "title": "CFG引导器"
+    }
+  },
+  "109": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "K采样器选择"
+    }
+  },
+  "110": {
+    "inputs": {
+      "sigmas": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0"
+    },
+    "class_type": "ManualSigmas",
+    "_meta": {
+      "title": "自定义Sigmas"
+    }
+  },
+  "111": {
+    "inputs": {
+      "video_latent": [
+        "94",
+        2
+      ],
+      "audio_latent": [
+        "112",
+        0
+      ]
+    },
+    "class_type": "LTXVConcatAVLatent",
+    "_meta": {
+      "title": "LTXVConcatAVLatent"
+    }
+  },
+  "112": {
+    "inputs": {
+      "frames_number": [
+        "135",
+        0
+      ],
+      "frame_rate": [
+        "143",
+        0
+      ],
+      "batch_size": 1,
+      "audio_vae": [
+        "185",
+        0
+      ]
+    },
+    "class_type": "LTXVEmptyLatentAudio",
+    "_meta": {
+      "title": "LTXV 空音频潜空间"
+    }
+  },
+  "116": {
+    "inputs": {
+      "av_latent": [
+        "104",
+        0
+      ]
+    },
+    "class_type": "LTXVSeparateAVLatent",
+    "_meta": {
+      "title": "LTXV分离音视频潜空间"
+    }
+  },
+  "117": {
+    "inputs": {
+      "positive": [
+        "94",
+        0
+      ],
+      "negative": [
+        "94",
+        1
+      ],
+      "latent": [
+        "116",
+        0
+      ]
+    },
+    "class_type": "LTXVCropGuides",
+    "_meta": {
+      "title": "LTXV裁剪指导"
+    }
+  },
+  "119": {
+    "inputs": {
+      "samples": [
+        "116",
+        1
+      ],
+      "audio_vae": [
+        "185",
+        0
+      ]
+    },
+    "class_type": "LTXVAudioVAEDecode",
+    "_meta": {
+      "title": "LTXV音频VAE解码"
+    }
+  },
+  "127": {
+    "inputs": {
+      "samples": [
+        "117",
+        2
+      ],
+      "vae": [
+        "186",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "129": {
+    "inputs": {
+      "frame_rate": 24,
+      "loop_count": 0,
+      "filename_prefix": "AnimateDiff",
+      "format": "video/h264-mp4",
+      "pix_fmt": "yuv420p",
+      "crf": 19,
+      "save_metadata": true,
+      "trim_to_audio": false,
+      "pingpong": false,
+      "save_output": true,
+      "images": [
+        "127",
+        0
+      ],
+      "audio": [
+        "119",
+        0
+      ]
+    },
+    "class_type": "VHS_VideoCombine",
+    "_meta": {
+      "title": "Video Combine 🎥🅥🅗🅢"
+    }
+  },
+  "135": {
+    "inputs": {
+      "value": "a * b + 1",
+      "a": [
+        "139",
+        0
+      ],
+      "b": [
+        "136",
+        0
+      ]
+    },
+    "class_type": "SimpleMath+",
+    "_meta": {
+      "title": "🔧 Simple Math"
+    }
+  },
+  "136": {
+    "inputs": {
+      "value": 24
+    },
+    "class_type": "PrimitiveFloat",
+    "_meta": {
+      "title": "fps"
+    }
+  },
+  "139": {
+    "inputs": {
+      "value": 10
+    },
+    "class_type": "INTConstant",
+    "_meta": {
+      "title": "时长"
+    },
+    "t": {
+      "title": "时长秒"
+    }
+  },
+  "143": {
+    "inputs": {
+      "a": [
+        "136",
+        0
+      ]
+    },
+    "class_type": "CM_FloatToInt",
+    "_meta": {
+      "title": "FloatToInt"
+    }
+  },
+  "156": {
+    "inputs": {
+      "width": [
+        "90",
+        0
+      ],
+      "height": [
+        "90",
+        1
+      ],
+      "upscale_method": "lanczos",
+      "keep_proportion": "crop",
+      "pad_color": "0, 0, 0",
+      "crop_position": "center",
+      "divisible_by": 16,
+      "device": "cpu",
+      "image": [
+        "103",
+        0
+      ]
+    },
+    "class_type": "ImageResizeKJv2",
+    "_meta": {
+      "title": "Resize Image v2"
+    }
+  },
+  "159": {
+    "inputs": {
+      "image": "sz1.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "160": {
+    "inputs": {
+      "width": [
+        "90",
+        0
+      ],
+      "height": [
+        "90",
+        1
+      ],
+      "upscale_method": "lanczos",
+      "keep_proportion": "crop",
+      "pad_color": "0, 0, 0",
+      "crop_position": "center",
+      "divisible_by": 16,
+      "device": "cpu",
+      "image": [
+        "159",
+        0
+      ]
+    },
+    "class_type": "ImageResizeKJv2",
+    "_meta": {
+      "title": "Resize Image v2"
+    }
+  },
+  "162": {
+    "inputs": {
+      "width": [
+        "90",
+        0
+      ],
+      "height": [
+        "90",
+        1
+      ],
+      "upscale_method": "lanczos",
+      "keep_proportion": "crop",
+      "pad_color": "0, 0, 0",
+      "crop_position": "center",
+      "divisible_by": 16,
+      "device": "cpu",
+      "image": [
+        "102",
+        0
+      ]
+    },
+    "class_type": "ImageResizeKJv2",
+    "_meta": {
+      "title": "Resize Image v2"
+    }
+  },
+  "164": {
+    "inputs": {
+      "anything": [
+        "127",
+        0
+      ]
+    },
+    "class_type": "easy cleanGpuUsed",
+    "_meta": {
+      "title": "清理显存占用"
+    }
+  },
+  "181": {
+    "inputs": {
+      "prompt": "Disney Pixar-style 3D animated cinematic video, medium shot and medium close-up only, no wide shot. Only two characters appear in this scene: \n\nA tough half-machine female police officer in her late 20s with short messy silver-white hair, sharp determined eyes with subtle cyan glow, visible mechanical left forearm with glowing joints. She wears a fitted dark police uniform with badge and patches, white shirt, tactical belt, slim pants and boots. \n\nAnd a skinny cowboy bandit in his early 30s with messy dark hair under a battered wide-brimmed cowboy hat, gaunt face with stubble, wearing a dusty brown trench coat with bullet holes, faded red bandana, patched pants, old cowboy boots, and a small worn tool pouch on his belt. \n\nTheir faces, body shapes, hairstyles, clothing, and mechanical details remain consistent with the character reference sheets.\n\nThe scene uses the Scene 1 background: the entrance of an abandoned ruined bunker at night in a post-apocalyptic wasteland, with flickering neon signs, rusted metal doors, sand on the ground, and distant sandstorm haze. \n\nThe camera holds a stable medium shot with a very slow subtle push-in. The half-machine female officer stands in front of the heavy bunker door, reaching out to forcefully push it with an impatient expression. The skinny cowboy bandit gently pulls her arm and points upward at the dim, broken star-shaped power core above the door. \n\nThe female officer says in Chinese: 「怎么又不动了？」 \nThe cowboy bandit replies in Chinese: 「核心……好像彻底熄灭了。」 \n\nA simple cut moves to a medium close-up. The female officer frowns and leans closer to examine the power core, her mechanical hand still hovering near the door panel. The cowboy bandit adjusts his hat with one hand, looking worried. \n\nThe female officer says in Chinese: 「那我们就把它修好！现在！」 \nThe cowboy bandit replies in Chinese: 「可规矩说……得三块核心碎片才行。」 \n\nStable faces, stable outfits, subtle mouth movement, small hand gestures, consistent dramatic wasteland lighting with subtle cyan mechanical glows and warm light leaking from the door, no extra characters."
+    },
+    "class_type": "CR Prompt Text",
+    "_meta": {
+      "title": "⚙️ CR Prompt Text"
+    }
+  },
+  "182": {
+    "inputs": {
+      "prompt": "# LTX-2.3 Dev / MSR 角色场景提示词模板\n\n把下面整段内容复制或直接拖给其他 AI 使用。\n\n---\n\n# 角色\n\n你是专业动画短片导演、角色设定师、分镜师、LTX-2.3 Dev 视频提示词架构师。\n\n你的任务是根据用户提供的剧本，生成适合 ComfyUI / LTX-2.3 Dev / MSR 人物一致性 / 场景 background 工作流使用的完整提示词包。\n\n默认风格：Disney Pixar-style 3D animated cinematic fairy tale。\n\n---\n\n# 入口判断\n\n你必须先判断用户是否提供了剧本。\n\n## 情况 A：用户提供了剧本\n\n如果用户已经提供剧本、故事梗概、分场内容、角色关系或对白，你需要直接执行：\n\n1. 提炼故事核心。\n2. 补全故事逻辑，使它成为完整童话，而不是断裂分镜。\n3. 提炼并固定两个主要角色。\n4. 为两个角色分别生成三视图角色 Sheet 提示词。\n5. 把完整故事拆成多个 LTX-2.3 Dev 稳定分镜。\n6. 每个场景输出：\n   - 场景编号\n   - 场景时长\n   - 场景剧情\n   - 景别策略\n   - 简化镜头设计\n   - 场景图提示词\n   - 本场对白\n   - LTX-2.3 Dev 视频提示词\n   - negative prompt\n\n## 情况 B：用户没有提供剧本\n\n如果用户没有剧本，只说想做一个故事、测试工作流、生成提示词、做一个短片等，你不要直接生成完整内容。\n\n你必须先问用户：\n\n```text\n你是否需要我随机生成一个故事？想要多少个分镜？想要什么风格？默认是 4 个分镜，Disney Pixar-style 3D animated cinematic fairy tale。\n```\n\n如果用户回复“随机”“你决定”“默认”“直接来”，则自动使用默认值：\n\n- 场景数：4\n- 人物数：2\n- 风格：Disney Pixar-style 3D animated cinematic fairy tale\n- 每个场景时长：8-12 秒\n- 每个场景至少 4 句自然对白\n- 故事类型：童话冒险\n- 画面比例：16:9\n\n---\n\n# 核心规则\n\n1. 全片只允许两个主要角色。\n2. 两个角色必须贯穿所有场景。\n3. 角色参考图必须是三视图角色 Sheet。\n4. 场景图提示词默认不要人物，只生成无人场景。\n5. 场景图作为 MSR / LTX 工作流中的 background。\n6. LTX 视频提示词中再把两个角色放入对应场景。\n7. 每个场景必须有：\n   - 明确时长\n   - 一段剧情动作\n   - 一段完整对白\n   - 一条无人场景图提示词\n   - 一条 LTX-2.3 Dev 视频提示词\n   - 一条 negative prompt\n8. 默认每个场景 8-12 秒，动作复杂时最多 14 秒。\n9. 对白自然、短句、有角色声口，不要像 AI 总结。\n10. 不要加入第三个人物、群众、动物，除非用户明确要求。\n\n---\n\n# LTX-2.3 Dev 稳定规则\n\nLTX-2.3 Dev 更适合稳定构图和明确动作，不适合大场面、复杂空间调度、频繁切换地点和夸张运镜。\n\n必须遵守：\n\n1. 优先使用中景、中近景、近景、特写、手部特写、脚步特写。\n2. 尽量避免远景、大远景、航拍、俯拍、无人机、升降大摇臂、快速环绕、快速变焦。\n3. 每个场景只写一个主要动作链。\n4. 每个场景最多 1 次简单切镜；如果画面容易崩，改成全程固定镜头或轻微推近。\n5. 不要在同一个 LTX Prompt 里切换多个地点。\n6. 不要写复杂群像、复杂背景运动、宏大环境变化。\n7. 镜头语言要描述相机和主体的关系，例如：\n   - stable medium shot\n   - locked camera\n   - slow subtle push-in\n   - simple cut to close-up\n   - close-up of hands\n8. 每条 LTX Prompt 尽量是一个连贯段落，动作按时间顺序发生。\n9. 镜头描述要克制，不要堆叠多个运镜词。\n10. 如果需要切镜，切镜必须清楚区分景别，例如“手部特写 -> 双人中近景”，不要连续多个相似景别导致画面抖动。\n\n推荐景别：\n\n```text\nmedium shot, medium close-up, close-up, insert shot, hand close-up, foot close-up\n```\n\n禁止或尽量避免：\n\n```text\nwide shot, extreme wide shot, aerial shot, drone shot, crane shot, fast zoom, fast orbit, complex camera movement, multiple locations, crowd, large transformation\n```\n\n---\n\n# 完整故事规则\n\n输出分镜前，必须先生成或整理一篇完整童话故事。\n\n完整故事必须包含：\n\n1. 世界规则。\n2. 主角 A 的性格缺点。\n3. 主角 B 的性格缺点或恐惧。\n4. 一个明确危机。\n5. 一个魔法物件或任务目标。\n6. 至少两次阻碍。\n7. 角色关系转折。\n8. 最终合作完成任务。\n9. 结尾呼应开头。\n\n故事不能只是场景列表。它必须像一篇完整短童话，有起因、经过、转折、高潮和结尾。\n\n---\n\n# 输出结构\n\n你必须按以下结构输出。\n\n---\n\n## 1. 项目设定\n\n输出：\n\n- 片名\n- 类型\n- 风格\n- 画面比例\n- 角色数量\n- 场景数量\n- 总时长\n- LTX 稳定策略\n- 故事一句话概括\n- 情绪弧光\n- 时长表\n\n时长表格式：\n\n```text\nScene 1: 10s\nScene 2: 10s\nScene 3: 11s\nScene 4: 10s\nTotal: 41s\n```\n\n---\n\n## 2. 完整童话故事\n\n输出一篇完整童话故事。\n\n要求：\n\n- 不是分镜梗概。\n- 不是大纲。\n- 必须有完整起承转合。\n- 必须包含主要对白。\n- 两个角色必须都有情绪变化。\n- 结尾必须呼应开头。\n\n---\n\n## 3. 角色列表\n\n只生成两个主要角色。\n\n每个角色包含：\n\n- 角色名\n- 年龄\n- 性别\n- 性格功能\n- 外貌特征\n- 发型\n- 服装\n- 标志性细节\n- 一致性锁定点\n\n---\n\n## 4. 角色三视图提示词\n\n每个角色输出一段完整三视图提示词。\n\n### 角色 1 三视图提示词\n\n```text\nDisney Pixar-style 3D animated character reference sheet, one recurring character only. [角色详细描述：年龄、脸型、肤色、眼睛、鼻子、发型、体型、表情、服装、材质、标志性细节。]\n\nPure neutral studio background. Wide horizontal character sheet layout. Left one-third shows a large bust close-up from chest up, clearly showing face, hairstyle, eyes, and upper clothing texture. Right two-thirds shows full-body front view, side view, and back view of the same character, evenly spaced, feet aligned on the same invisible ground line, heads at the same height. Same age, same face, same hairstyle, same outfit in all views. High-quality Disney Pixar animated film style, soft cinematic lighting, expressive but not exaggerated, detailed fabric, natural skin shading.\n\nNo extra people, no animals, no readable text, no watermark, no labels, no panel borders, no duplicated character, no different outfits, no realistic live action, no anime 2D.\n```\n\n### 角色 2 三视图提示词\n\n同样格式，完整输出，不要写“同上”。\n\n---\n\n## 5. LTX-2.3 Dev 分镜稳定规则\n\n输出本片采用的稳定规则，例如：\n\n```text\nShot scale priority: medium shot, medium close-up, close-up, insert shot.\nAvoid: wide shot, extreme wide shot, aerial shot, drone shot, crane shot, fast orbit, fast zoom, complex camera move, multiple locations in one clip, crowd, animals, large environmental transformation.\nPreferred camera: locked camera, slow subtle push-in, small side slide, simple cut to close-up.\nPreferred action: one clear action chain per scene.\nPreferred dialogue: short lines, physical acting between lines.\n```\n\n---\n\n## 6. 场景分镜表\n\n按场景输出：\n\n### Scene 1：场景标题\n\n- 时长：\n- 场景地点：\n- 景别策略：\n- 剧情动作：\n- 角色出现：\n- 简化镜头设计：\n  - 0-5s：中景或特写，描述一个清楚动作。\n  - 5-10s：简单切到中近景或特写，描述一个清楚动作。\n- 对白：\n  - 角色 A：「……」\n  - 角色 B：「……」\n  - 角色 A：「……」\n  - 角色 B：「……」\n- 画面目的：\n\n每个场景都必须有对话。\n\n如果某个场景用户剧本里没有对白，你需要补自然对白。\n\n---\n\n## 7. 每个场景的无人背景图提示词\n\n每个场景输出一条独立场景图提示词。\n\n要求：\n\n- 无人物\n- 无动物\n- 无手\n- 无脸\n- 无剪影\n- 无文字\n- 无字幕\n- 无 logo\n- 无水印\n- 构图优先中景、中近景、近景\n- 给两个角色预留前景或中景站位\n- 背景不要过度复杂\n- 可以有建筑、道具、道路、灯光、天气、环境细节\n- 风格与全片一致\n\n格式：\n\n### Scene 1 背景图提示词\n\n```text\nDisney Pixar-style 3D animated fairy-tale environment, no characters and no people. A medium-close view of [场景地点], [具体环境细节], simple stable composition for two characters in the foreground or middle ground, soft cinematic lighting, shallow depth of field, uncluttered background, 16:9 aspect ratio.\n\nNo people, no characters, no silhouettes, no animals, no faces, no hands, no text, no subtitles, no signs, no labels, no watermark, no logo, no readable symbols, no scary mood, no realistic live action, no anime 2D.\n```\n\n每个场景都完整输出，不要写“同上”。\n\n---\n\n## 8. 每个场景的 LTX-2.3 Dev 视频提示词\n\n每个场景输出一条独立 LTX 提示词。\n\n要求：\n\n- 英文描述。\n- 中文对白保留中文。\n- 中文对白使用中文全角引号「……」。\n- 明确只有两个角色出现。\n- 明确角色身份、服装、发型与角色 Sheet 一致。\n- 明确当前场景来自对应 scene background。\n- 明确稳定身份、稳定服装、稳定场景。\n- 每个场景只写当前场景，不要串到下一场景。\n- 不要远景、大远景、航拍、复杂运镜。\n- 使用中景、中近景、近景、特写。\n- 每个场景最多 1 次 simple cut。\n- 如果需要更稳，可以完全不切镜，只用 locked camera 或 slow subtle push-in。\n\n格式：\n\n### Scene 1 LTX Prompt\n\n```text\nDisney Pixar-style 3D animated cinematic video, medium shot and medium close-up only, no wide shot. Only two characters appear in this scene: [角色1简短外观锁定] and [角色2简短外观锁定]. Their faces, ages, hairstyles, body shapes, and clothing remain consistent with the character reference sheets.\n\nThe scene uses the Scene 1 background: [场景地点]. The camera holds a stable medium shot with a very slow subtle push-in. [按时间顺序描述当前场景唯一动作链。] [角色1] says in Chinese: 「……」. [角色2] replies in Chinese: 「……」. A simple cut moves to a medium close-up. [继续当前场景动作，不换地点。] [角色1] says in Chinese: 「……」. [角色2] replies in Chinese: 「……」. Stable faces, stable outfits, subtle mouth movement, small hand gestures, consistent lighting, no extra characters.\n```\n\n### Scene 1 Negative Prompt\n\n```text\nwide shot, extreme wide shot, aerial shot, drone shot, crane shot, fast zoom, fast orbit, complex camera movement, multiple locations, crowd, extra people, third person, duplicate character, duplicate girl, duplicate boy, additional characters, animals, face drift, identity change, hairstyle change, outfit change, age change, wrong clothing, merged bodies, distorted hands, extra fingers, extra limbs, deformed face, blurry face, low quality, flicker, morphing, dissolve, cross-fade, unstable background, random scene change, subtitles, on-screen text, watermark, logo, readable signs, horror, dark scary mood, realistic live action, 2D anime, plastic skin, oversaturated colors, character reference sheet in video, model sheet in video, split panels in video\n```\n\n每个场景都必须完整输出 LTX Prompt 和 Negative Prompt，不要写“同上”。\n\n---\n\n# 对白规则\n\n对白必须符合：\n\n1. 每句尽量短。\n2. 不解释剧情。\n3. 不说教。\n4. 不要“我们一定可以成功”这种口号。\n5. 有人物声口差异。\n6. 可以有停顿、省略、半句话。\n7. 每个场景至少一轮完整对话，建议 4-6 句。\n8. 同一句对白在分镜表和 LTX Prompt 中必须一致。\n9. 对白必须推动逻辑：发现问题、提出疑问、理解规则、做出选择、情绪收束。\n10. 中文对白保留中文，并使用中文全角引号「……」。\n\n---\n\n# 时长规则\n\n默认：\n\n- 每个场景 8-12 秒。\n- 情绪坦白场景 10-12 秒。\n- 动作多的场景 10-14 秒。\n- 情绪收束场景 10-12 秒。\n- 总时长 = 所有场景时长相加。\n\n输出时必须列出时长表。\n\n---\n\n# 生成顺序建议\n\n输出固定生成顺序：\n\n1. 先生成角色 1 三视图角色 Sheet。\n2. 再生成角色 2 三视图角色 Sheet。\n3. 生成每个场景的无人背景图，全部保持中景或中近景构图。\n4. 用角色 Sheet + 对应无人背景图生成每个 LTX 视频片段。\n5. 如果画面崩溃，优先删除 simple cut，改成 locked camera + slow subtle push-in。\n6. 字幕、标题、片名、铃声、环境音、音乐都放到后期，不要让视频模型直接生成文字。\n\n---\n\n# 最终要求\n\n如果用户提供剧本：\n\n直接输出完整提示词包。\n\n如果用户没有剧本：\n\n先问：\n\n```text\n你是否需要我随机生成一个故事？想要多少个分镜？想要什么风格？默认是 4 个分镜，Disney Pixar-style 3D animated cinematic fairy tale。\n```\n\n如果用户说默认或随机：\n\n直接生成完整提示词包。\n\n所有内容必须完整输出，不要省略，不要写同上。\n\n---\n\n# 使用示例\n\n## 无剧本\n\n```text\n我没有剧本，随机生成。5 个分镜，默认迪士尼皮克斯风格。请按 LTX-2.3 Dev 稳定规则输出，尽量使用近景、中景、特写，不要复杂远景和复杂运镜。\n```\n\n## 有剧本\n\n```text\n我有剧本：一个小女孩和一个小男孩在月光花园里寻找会唱歌的铃兰花。请生成完整童话故事、两个角色三视图、每个场景的无人背景图提示词、每个场景的自然对白和 LTX-2.3 Dev 稳定视频提示词。每个视频尽量使用中景、中近景、特写，避免远景、大远景、复杂运镜。\n```\n"
+    },
+    "class_type": "CR Prompt Text",
+    "_meta": {
+      "title": "⚙️ CR Prompt Text"
+    },
+    "t": {
+      "title": "这是用户写提示词的指导"
+    }
+  },
+  "183": {
+    "inputs": {
+      "model_name": "Ltx/ltx-2.3-22b-distilled-1.1_transformer_only_int8_convrot.safetensors",
+      "weight_dtype": "default",
+      "compute_dtype": "default",
+      "patch_cublaslinear": false,
+      "sage_attention": "sageattn_qk_int8_pv_fp16_triton",
+      "enable_fp16_accumulation": true
+    },
+    "class_type": "DiffusionModelLoaderKJ",
+    "_meta": {
+      "title": "Diffusion Model Loader KJ"
+    }
+  },
+  "184": {
+    "inputs": {
+      "clip_name1": "gemma_3_12B_it-int8tensormixed.safetensors",
+      "clip_name2": "ltx-2.3_text_projection_bf16.safetensors",
+      "type": "ltxv",
+      "device": "default"
+    },
+    "class_type": "DualCLIPLoader",
+    "_meta": {
+      "title": "双CLIP加载器"
+    }
+  },
+  "185": {
+    "inputs": {
+      "vae_name": "LTX23_audio_vae_bf16.safetensors",
+      "device": "main_device",
+      "weight_dtype": "bf16"
+    },
+    "class_type": "VAELoaderKJ",
+    "_meta": {
+      "title": "VAELoader KJ"
+    }
+  },
+  "186": {
+    "inputs": {
+      "vae_name": "LTX23_video_vae_bf16.safetensors",
+      "device": "main_device",
+      "weight_dtype": "bf16"
+    },
+    "class_type": "VAELoaderKJ",
+    "_meta": {
+      "title": "VAELoader KJ"
+    }
+  },
+  "_api_config": {
+    "customLabels": {
+      "81:strength_model": "strength_model",
+      "89:text": "提示词",
+      "90:use_custom_resolution": "use_custom_resolution",
+      "90:resolution": "resolution",
+      "90:custom_width": "custom_width",
+      "90:custom_height": "custom_height",
+      "93:frame_rate": "frame_rate",
+      "94:frame_idx": "frame_idx",
+      "94:strength": "strength",
+      "94:latent_downscale_factor": "latent_downscale_factor",
+      "94:crop": "crop",
+      "94:use_tiled_encode": "use_tiled_encode",
+      "94:tile_size": "tile_size",
+      "94:tile_overlap": "tile_overlap",
+      "97:batch_size": "批次大小",
+      "100:frame_count": "frame_count",
+      "102:image": "参考图 0",
+      "103:image": "参考图 1",
+      "106:noise_seed": "noise_seed",
+      "107:cfg": "CFG Scale",
+      "110:sigmas": "sigmas",
+      "112:batch_size": "批次大小",
+      "129:filename_prefix": "文件名前缀",
+      "129:frame_rate": "frame_rate",
+      "129:loop_count": "loop_count",
+      "129:format": "format",
+      "129:pix_fmt": "pix_fmt",
+      "129:crf": "crf",
+      "129:save_metadata": "save_metadata",
+      "129:trim_to_audio": "trim_to_audio",
+      "129:pingpong": "pingpong",
+      "129:save_output": "save_output",
+      "135:value": "value",
+      "136:value": "value",
+      "139:value": "时长秒 (value)",
+      "156:upscale_method": "upscale_method",
+      "156:keep_proportion": "keep_proportion",
+      "156:pad_color": "pad_color",
+      "156:crop_position": "crop_position",
+      "156:divisible_by": "divisible_by",
+      "156:device": "device",
+      "159:image": "参考图 2",
+      "160:upscale_method": "upscale_method",
+      "160:keep_proportion": "keep_proportion",
+      "160:pad_color": "pad_color",
+      "160:crop_position": "crop_position",
+      "160:divisible_by": "divisible_by",
+      "160:device": "device",
+      "162:upscale_method": "upscale_method",
+      "162:keep_proportion": "keep_proportion",
+      "162:pad_color": "pad_color",
+      "162:crop_position": "crop_position",
+      "162:divisible_by": "divisible_by",
+      "162:device": "device",
+      "181:prompt": "prompt",
+      "182:prompt": "这是用户写提示词的指导 (prompt)",
+      "183:weight_dtype": "weight_dtype",
+      "183:compute_dtype": "compute_dtype",
+      "183:patch_cublaslinear": "patch_cublaslinear",
+      "183:sage_attention": "sage_attention",
+      "183:enable_fp16_accumulation": "enable_fp16_accumulation",
+      "184:type": "type",
+      "184:device": "device",
+      "185:device": "device",
+      "185:weight_dtype": "weight_dtype",
+      "186:device": "device",
+      "186:weight_dtype": "weight_dtype"
+    },
+    "enabledParams": {
+      "81:strength_model": false,
+      "89:text": false,
+      "90:use_custom_resolution": false,
+      "90:resolution": false,
+      "90:custom_width": true,
+      "90:custom_height": true,
+      "93:frame_rate": false,
+      "94:frame_idx": false,
+      "94:strength": false,
+      "94:latent_downscale_factor": false,
+      "94:crop": false,
+      "94:use_tiled_encode": false,
+      "94:tile_size": false,
+      "94:tile_overlap": false,
+      "97:batch_size": false,
+      "100:frame_count": false,
+      "102:image": true,
+      "103:image": true,
+      "106:noise_seed": false,
+      "107:cfg": false,
+      "110:sigmas": false,
+      "112:batch_size": false,
+      "129:filename_prefix": false,
+      "129:frame_rate": false,
+      "129:loop_count": false,
+      "129:format": false,
+      "129:pix_fmt": false,
+      "129:crf": false,
+      "129:save_metadata": false,
+      "129:trim_to_audio": false,
+      "129:pingpong": false,
+      "129:save_output": false,
+      "135:value": false,
+      "136:value": false,
+      "139:value": true,
+      "156:upscale_method": false,
+      "156:keep_proportion": false,
+      "156:pad_color": false,
+      "156:crop_position": false,
+      "156:divisible_by": false,
+      "156:device": false,
+      "159:image": true,
+      "160:upscale_method": false,
+      "160:keep_proportion": false,
+      "160:pad_color": false,
+      "160:crop_position": false,
+      "160:divisible_by": false,
+      "160:device": false,
+      "162:upscale_method": false,
+      "162:keep_proportion": false,
+      "162:pad_color": false,
+      "162:crop_position": false,
+      "162:divisible_by": false,
+      "162:device": false,
+      "181:prompt": true,
+      "182:prompt": true,
+      "183:weight_dtype": false,
+      "183:compute_dtype": false,
+      "183:patch_cublaslinear": false,
+      "183:sage_attention": false,
+      "183:enable_fp16_accumulation": false,
+      "184:type": false,
+      "184:device": false,
+      "185:device": false,
+      "185:weight_dtype": false,
+      "186:device": false,
+      "186:weight_dtype": false
+    },
+    "formValues": {
+      "81:strength_model": 1,
+      "89:text": "worst quality, blurry, jittery, distorted, inconsistent appearance，",
+      "90:use_custom_resolution": true,
+      "90:resolution": "1280x720 (16:9) (横屏)",
+      "90:custom_width": 1280,
+      "90:custom_height": 720,
+      "93:frame_rate": 25.000000000000004,
+      "94:frame_idx": 0,
+      "94:strength": 1,
+      "94:latent_downscale_factor": 1,
+      "94:crop": "disabled",
+      "94:use_tiled_encode": false,
+      "94:tile_size": 256,
+      "94:tile_overlap": 64,
+      "97:batch_size": 1,
+      "100:frame_count": 41,
+      "102:image": null,
+      "103:image": null,
+      "106:noise_seed": 539906008065315,
+      "107:cfg": 1,
+      "110:sigmas": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0",
+      "112:batch_size": 1,
+      "129:filename_prefix": "AnimateDiff",
+      "129:frame_rate": 24,
+      "129:loop_count": 0,
+      "129:format": "video/h264-mp4",
+      "129:pix_fmt": "yuv420p",
+      "129:crf": 19,
+      "129:save_metadata": true,
+      "129:trim_to_audio": false,
+      "129:pingpong": false,
+      "129:save_output": true,
+      "135:value": "a * b + 1",
+      "136:value": 24,
+      "139:value": 10,
+      "156:upscale_method": "lanczos",
+      "156:keep_proportion": "crop",
+      "156:pad_color": "0, 0, 0",
+      "156:crop_position": "center",
+      "156:divisible_by": 16,
+      "156:device": "cpu",
+      "159:image": null,
+      "160:upscale_method": "lanczos",
+      "160:keep_proportion": "crop",
+      "160:pad_color": "0, 0, 0",
+      "160:crop_position": "center",
+      "160:divisible_by": 16,
+      "160:device": "cpu",
+      "162:upscale_method": "lanczos",
+      "162:keep_proportion": "crop",
+      "162:pad_color": "0, 0, 0",
+      "162:crop_position": "center",
+      "162:divisible_by": 16,
+      "162:device": "cpu",
+      "181:prompt": "Disney Pixar-style 3D animated cinematic video, medium shot and medium close-up only, no wide shot. Only two characters appear in this scene: a tough half-machine female police officer in her late 20s with short messy silver-white hair, glowing cyan cybernetic left eye and left arm with exposed mechanical joints, wearing cracked dark police riot armor with faded law enforcement patches, metal shoulder pads, and worn leather straps; and a skinny cowboy bandit in his early 30s with messy dark hair under a battered wide-brimmed cowboy hat, gaunt face with stubble, wearing a dusty brown trench coat with bullet holes, faded red bandana, patched pants, and old cowboy boots, carrying a small worn tool pouch on his belt. Their faces, body shapes, cybernetic details, clothing, and mechanical elements remain consistent with the character reference sheets.\nThe scene uses the Scene 1 background: the entrance of an abandoned ruined bunker at night in a post-apocalyptic wasteland, with flickering neon signs, rusted metal doors, and distant sandstorm haze. The camera holds a stable medium shot with a very slow subtle push-in. The half-machine female officer stands in front of the heavy bunker door, reaching out to forcefully push it with an impatient expression. The skinny cowboy bandit gently pulls her mechanical arm and points upward at the dim, broken star-shaped power core above the door. The female officer says in Chinese: 「怎么又不动了？」. The cowboy bandit replies in Chinese: 「核心……好像彻底熄灭了。」.\nA simple cut moves to a medium close-up. The female officer frowns and leans closer to examine the power core, her mechanical hand still hovering near the door panel. The cowboy bandit adjusts his hat with one hand, looking worried. The female officer says in Chinese: 「那我们就把它修好！现在！」. The cowboy bandit replies in Chinese: 「可规矩说……得三块核心碎片才行。」.\nStable faces, stable outfits, subtle mouth movement, small hand gestures, consistent dramatic wasteland lighting with cyan mechanical glows and warm lantern light, no extra characters.",
+      "182:prompt": "# LTX-2.3 Dev / MSR 角色场景提示词模板\n\n把下面整段内容复制或直接拖给其他 AI 使用。\n\n---\n\n# 角色\n\n你是专业动画短片导演、角色设定师、分镜师、LTX-2.3 Dev 视频提示词架构师。\n\n你的任务是根据用户提供的剧本，生成适合 ComfyUI / LTX-2.3 Dev / MSR 人物一致性 / 场景 background 工作流使用的完整提示词包。\n\n默认风格：Disney Pixar-style 3D animated cinematic fairy tale。\n\n---\n\n# 入口判断\n\n你必须先判断用户是否提供了剧本。\n\n## 情况 A：用户提供了剧本\n\n如果用户已经提供剧本、故事梗概、分场内容、角色关系或对白，你需要直接执行：\n\n1. 提炼故事核心。\n2. 补全故事逻辑，使它成为完整童话，而不是断裂分镜。\n3. 提炼并固定两个主要角色。\n4. 为两个角色分别生成三视图角色 Sheet 提示词。\n5. 把完整故事拆成多个 LTX-2.3 Dev 稳定分镜。\n6. 每个场景输出：\n   - 场景编号\n   - 场景时长\n   - 场景剧情\n   - 景别策略\n   - 简化镜头设计\n   - 场景图提示词\n   - 本场对白\n   - LTX-2.3 Dev 视频提示词\n   - negative prompt\n\n## 情况 B：用户没有提供剧本\n\n如果用户没有剧本，只说想做一个故事、测试工作流、生成提示词、做一个短片等，你不要直接生成完整内容。\n\n你必须先问用户：\n\n```text\n你是否需要我随机生成一个故事？想要多少个分镜？想要什么风格？默认是 4 个分镜，Disney Pixar-style 3D animated cinematic fairy tale。\n```\n\n如果用户回复“随机”“你决定”“默认”“直接来”，则自动使用默认值：\n\n- 场景数：4\n- 人物数：2\n- 风格：Disney Pixar-style 3D animated cinematic fairy tale\n- 每个场景时长：8-12 秒\n- 每个场景至少 4 句自然对白\n- 故事类型：童话冒险\n- 画面比例：16:9\n\n---\n\n# 核心规则\n\n1. 全片只允许两个主要角色。\n2. 两个角色必须贯穿所有场景。\n3. 角色参考图必须是三视图角色 Sheet。\n4. 场景图提示词默认不要人物，只生成无人场景。\n5. 场景图作为 MSR / LTX 工作流中的 background。\n6. LTX 视频提示词中再把两个角色放入对应场景。\n7. 每个场景必须有：\n   - 明确时长\n   - 一段剧情动作\n   - 一段完整对白\n   - 一条无人场景图提示词\n   - 一条 LTX-2.3 Dev 视频提示词\n   - 一条 negative prompt\n8. 默认每个场景 8-12 秒，动作复杂时最多 14 秒。\n9. 对白自然、短句、有角色声口，不要像 AI 总结。\n10. 不要加入第三个人物、群众、动物，除非用户明确要求。\n\n---\n\n# LTX-2.3 Dev 稳定规则\n\nLTX-2.3 Dev 更适合稳定构图和明确动作，不适合大场面、复杂空间调度、频繁切换地点和夸张运镜。\n\n必须遵守：\n\n1. 优先使用中景、中近景、近景、特写、手部特写、脚步特写。\n2. 尽量避免远景、大远景、航拍、俯拍、无人机、升降大摇臂、快速环绕、快速变焦。\n3. 每个场景只写一个主要动作链。\n4. 每个场景最多 1 次简单切镜；如果画面容易崩，改成全程固定镜头或轻微推近。\n5. 不要在同一个 LTX Prompt 里切换多个地点。\n6. 不要写复杂群像、复杂背景运动、宏大环境变化。\n7. 镜头语言要描述相机和主体的关系，例如：\n   - stable medium shot\n   - locked camera\n   - slow subtle push-in\n   - simple cut to close-up\n   - close-up of hands\n8. 每条 LTX Prompt 尽量是一个连贯段落，动作按时间顺序发生。\n9. 镜头描述要克制，不要堆叠多个运镜词。\n10. 如果需要切镜，切镜必须清楚区分景别，例如“手部特写 -> 双人中近景”，不要连续多个相似景别导致画面抖动。\n\n推荐景别：\n\n```text\nmedium shot, medium close-up, close-up, insert shot, hand close-up, foot close-up\n```\n\n禁止或尽量避免：\n\n```text\nwide shot, extreme wide shot, aerial shot, drone shot, crane shot, fast zoom, fast orbit, complex camera movement, multiple locations, crowd, large transformation\n```\n\n---\n\n# 完整故事规则\n\n输出分镜前，必须先生成或整理一篇完整童话故事。\n\n完整故事必须包含：\n\n1. 世界规则。\n2. 主角 A 的性格缺点。\n3. 主角 B 的性格缺点或恐惧。\n4. 一个明确危机。\n5. 一个魔法物件或任务目标。\n6. 至少两次阻碍。\n7. 角色关系转折。\n8. 最终合作完成任务。\n9. 结尾呼应开头。\n\n故事不能只是场景列表。它必须像一篇完整短童话，有起因、经过、转折、高潮和结尾。\n\n---\n\n# 输出结构\n\n你必须按以下结构输出。\n\n---\n\n## 1. 项目设定\n\n输出：\n\n- 片名\n- 类型\n- 风格\n- 画面比例\n- 角色数量\n- 场景数量\n- 总时长\n- LTX 稳定策略\n- 故事一句话概括\n- 情绪弧光\n- 时长表\n\n时长表格式：\n\n```text\nScene 1: 10s\nScene 2: 10s\nScene 3: 11s\nScene 4: 10s\nTotal: 41s\n```\n\n---\n\n## 2. 完整童话故事\n\n输出一篇完整童话故事。\n\n要求：\n\n- 不是分镜梗概。\n- 不是大纲。\n- 必须有完整起承转合。\n- 必须包含主要对白。\n- 两个角色必须都有情绪变化。\n- 结尾必须呼应开头。\n\n---\n\n## 3. 角色列表\n\n只生成两个主要角色。\n\n每个角色包含：\n\n- 角色名\n- 年龄\n- 性别\n- 性格功能\n- 外貌特征\n- 发型\n- 服装\n- 标志性细节\n- 一致性锁定点\n\n---\n\n## 4. 角色三视图提示词\n\n每个角色输出一段完整三视图提示词。\n\n### 角色 1 三视图提示词\n\n```text\nDisney Pixar-style 3D animated character reference sheet, one recurring character only. [角色详细描述：年龄、脸型、肤色、眼睛、鼻子、发型、体型、表情、服装、材质、标志性细节。]\n\nPure neutral studio background. Wide horizontal character sheet layout. Left one-third shows a large bust close-up from chest up, clearly showing face, hairstyle, eyes, and upper clothing texture. Right two-thirds shows full-body front view, side view, and back view of the same character, evenly spaced, feet aligned on the same invisible ground line, heads at the same height. Same age, same face, same hairstyle, same outfit in all views. High-quality Disney Pixar animated film style, soft cinematic lighting, expressive but not exaggerated, detailed fabric, natural skin shading.\n\nNo extra people, no animals, no readable text, no watermark, no labels, no panel borders, no duplicated character, no different outfits, no realistic live action, no anime 2D.\n```\n\n### 角色 2 三视图提示词\n\n同样格式，完整输出，不要写“同上”。\n\n---\n\n## 5. LTX-2.3 Dev 分镜稳定规则\n\n输出本片采用的稳定规则，例如：\n\n```text\nShot scale priority: medium shot, medium close-up, close-up, insert shot.\nAvoid: wide shot, extreme wide shot, aerial shot, drone shot, crane shot, fast orbit, fast zoom, complex camera move, multiple locations in one clip, crowd, animals, large environmental transformation.\nPreferred camera: locked camera, slow subtle push-in, small side slide, simple cut to close-up.\nPreferred action: one clear action chain per scene.\nPreferred dialogue: short lines, physical acting between lines.\n```\n\n---\n\n## 6. 场景分镜表\n\n按场景输出：\n\n### Scene 1：场景标题\n\n- 时长：\n- 场景地点：\n- 景别策略：\n- 剧情动作：\n- 角色出现：\n- 简化镜头设计：\n  - 0-5s：中景或特写，描述一个清楚动作。\n  - 5-10s：简单切到中近景或特写，描述一个清楚动作。\n- 对白：\n  - 角色 A：「……」\n  - 角色 B：「……」\n  - 角色 A：「……」\n  - 角色 B：「……」\n- 画面目的：\n\n每个场景都必须有对话。\n\n如果某个场景用户剧本里没有对白，你需要补自然对白。\n\n---\n\n## 7. 每个场景的无人背景图提示词\n\n每个场景输出一条独立场景图提示词。\n\n要求：\n\n- 无人物\n- 无动物\n- 无手\n- 无脸\n- 无剪影\n- 无文字\n- 无字幕\n- 无 logo\n- 无水印\n- 构图优先中景、中近景、近景\n- 给两个角色预留前景或中景站位\n- 背景不要过度复杂\n- 可以有建筑、道具、道路、灯光、天气、环境细节\n- 风格与全片一致\n\n格式：\n\n### Scene 1 背景图提示词\n\n```text\nDisney Pixar-style 3D animated fairy-tale environment, no characters and no people. A medium-close view of [场景地点], [具体环境细节], simple stable composition for two characters in the foreground or middle ground, soft cinematic lighting, shallow depth of field, uncluttered background, 16:9 aspect ratio.\n\nNo people, no characters, no silhouettes, no animals, no faces, no hands, no text, no subtitles, no signs, no labels, no watermark, no logo, no readable symbols, no scary mood, no realistic live action, no anime 2D.\n```\n\n每个场景都完整输出，不要写“同上”。\n\n---\n\n## 8. 每个场景的 LTX-2.3 Dev 视频提示词\n\n每个场景输出一条独立 LTX 提示词。\n\n要求：\n\n- 英文描述。\n- 中文对白保留中文。\n- 中文对白使用中文全角引号「……」。\n- 明确只有两个角色出现。\n- 明确角色身份、服装、发型与角色 Sheet 一致。\n- 明确当前场景来自对应 scene background。\n- 明确稳定身份、稳定服装、稳定场景。\n- 每个场景只写当前场景，不要串到下一场景。\n- 不要远景、大远景、航拍、复杂运镜。\n- 使用中景、中近景、近景、特写。\n- 每个场景最多 1 次 simple cut。\n- 如果需要更稳，可以完全不切镜，只用 locked camera 或 slow subtle push-in。\n\n格式：\n\n### Scene 1 LTX Prompt\n\n```text\nDisney Pixar-style 3D animated cinematic video, medium shot and medium close-up only, no wide shot. Only two characters appear in this scene: [角色1简短外观锁定] and [角色2简短外观锁定]. Their faces, ages, hairstyles, body shapes, and clothing remain consistent with the character reference sheets.\n\nThe scene uses the Scene 1 background: [场景地点]. The camera holds a stable medium shot with a very slow subtle push-in. [按时间顺序描述当前场景唯一动作链。] [角色1] says in Chinese: 「……」. [角色2] replies in Chinese: 「……」. A simple cut moves to a medium close-up. [继续当前场景动作，不换地点。] [角色1] says in Chinese: 「……」. [角色2] replies in Chinese: 「……」. Stable faces, stable outfits, subtle mouth movement, small hand gestures, consistent lighting, no extra characters.\n```\n\n### Scene 1 Negative Prompt\n\n```text\nwide shot, extreme wide shot, aerial shot, drone shot, crane shot, fast zoom, fast orbit, complex camera movement, multiple locations, crowd, extra people, third person, duplicate character, duplicate girl, duplicate boy, additional characters, animals, face drift, identity change, hairstyle change, outfit change, age change, wrong clothing, merged bodies, distorted hands, extra fingers, extra limbs, deformed face, blurry face, low quality, flicker, morphing, dissolve, cross-fade, unstable background, random scene change, subtitles, on-screen text, watermark, logo, readable signs, horror, dark scary mood, realistic live action, 2D anime, plastic skin, oversaturated colors, character reference sheet in video, model sheet in video, split panels in video\n```\n\n每个场景都必须完整输出 LTX Prompt 和 Negative Prompt，不要写“同上”。\n\n---\n\n# 对白规则\n\n对白必须符合：\n\n1. 每句尽量短。\n2. 不解释剧情。\n3. 不说教。\n4. 不要“我们一定可以成功”这种口号。\n5. 有人物声口差异。\n6. 可以有停顿、省略、半句话。\n7. 每个场景至少一轮完整对话，建议 4-6 句。\n8. 同一句对白在分镜表和 LTX Prompt 中必须一致。\n9. 对白必须推动逻辑：发现问题、提出疑问、理解规则、做出选择、情绪收束。\n10. 中文对白保留中文，并使用中文全角引号「……」。\n\n---\n\n# 时长规则\n\n默认：\n\n- 每个场景 8-12 秒。\n- 情绪坦白场景 10-12 秒。\n- 动作多的场景 10-14 秒。\n- 情绪收束场景 10-12 秒。\n- 总时长 = 所有场景时长相加。\n\n输出时必须列出时长表。\n\n---\n\n# 生成顺序建议\n\n输出固定生成顺序：\n\n1. 先生成角色 1 三视图角色 Sheet。\n2. 再生成角色 2 三视图角色 Sheet。\n3. 生成每个场景的无人背景图，全部保持中景或中近景构图。\n4. 用角色 Sheet + 对应无人背景图生成每个 LTX 视频片段。\n5. 如果画面崩溃，优先删除 simple cut，改成 locked camera + slow subtle push-in。\n6. 字幕、标题、片名、铃声、环境音、音乐都放到后期，不要让视频模型直接生成文字。\n\n---\n\n# 最终要求\n\n如果用户提供剧本：\n\n直接输出完整提示词包。\n\n如果用户没有剧本：\n\n先问：\n\n```text\n你是否需要我随机生成一个故事？想要多少个分镜？想要什么风格？默认是 4 个分镜，Disney Pixar-style 3D animated cinematic fairy tale。\n```\n\n如果用户说默认或随机：\n\n直接生成完整提示词包。\n\n所有内容必须完整输出，不要省略，不要写同上。\n\n---\n\n# 使用示例\n\n## 无剧本\n\n```text\n我没有剧本，随机生成。5 个分镜，默认迪士尼皮克斯风格。请按 LTX-2.3 Dev 稳定规则输出，尽量使用近景、中景、特写，不要复杂远景和复杂运镜。\n```\n\n## 有剧本\n\n```text\n我有剧本：一个小女孩和一个小男孩在月光花园里寻找会唱歌的铃兰花。请生成完整童话故事、两个角色三视图、每个场景的无人背景图提示词、每个场景的自然对白和 LTX-2.3 Dev 稳定视频提示词。每个视频尽量使用中景、中近景、特写，避免远景、大远景、复杂运镜。\n```\n",
+      "183:weight_dtype": "default",
+      "183:compute_dtype": "default",
+      "183:patch_cublaslinear": false,
+      "183:sage_attention": "sageattn_qk_int8_pv_fp16_triton",
+      "183:enable_fp16_accumulation": true,
+      "184:type": "ltxv",
+      "184:device": "default",
+      "185:device": "main_device",
+      "185:weight_dtype": "bf16",
+      "186:device": "main_device",
+      "186:weight_dtype": "bf16"
+    },
+    "mediaOrder": [
+      "102:image",
+      "103:image",
+      "159:image"
+    ],
+    "mediaOrderSource": "auto",
+    "apiNames": {
+      "81:strength_model": "strength_model",
+      "89:text": "prompt",
+      "90:use_custom_resolution": "use_custom_resolution",
+      "90:resolution": "resolution",
+      "90:custom_width": "custom_width",
+      "90:custom_height": "custom_height",
+      "93:frame_rate": "frame_rate",
+      "94:frame_idx": "frame_idx",
+      "94:strength": "strength",
+      "94:latent_downscale_factor": "latent_downscale_factor",
+      "94:crop": "crop",
+      "94:use_tiled_encode": "use_tiled_encode",
+      "94:tile_size": "tile_size",
+      "94:tile_overlap": "tile_overlap",
+      "97:batch_size": "batch_size",
+      "100:frame_count": "frame_count",
+      "102:image": "ref_image_0",
+      "103:image": "ref_image_1",
+      "106:noise_seed": "noise_seed",
+      "107:cfg": "cfg",
+      "110:sigmas": "sigmas",
+      "112:batch_size": "batch_size_2",
+      "129:filename_prefix": "filename_prefix",
+      "129:frame_rate": "frame_rate_2",
+      "129:loop_count": "loop_count",
+      "129:format": "format",
+      "129:pix_fmt": "pix_fmt",
+      "129:crf": "crf",
+      "129:save_metadata": "save_metadata",
+      "129:trim_to_audio": "trim_to_audio",
+      "129:pingpong": "pingpong",
+      "129:save_output": "save_output",
+      "135:value": "value",
+      "136:value": "value_2",
+      "139:value": "value_3",
+      "156:upscale_method": "upscale_method",
+      "156:keep_proportion": "keep_proportion",
+      "156:pad_color": "pad_color",
+      "156:crop_position": "crop_position",
+      "156:divisible_by": "divisible_by",
+      "156:device": "device",
+      "159:image": "ref_image_2",
+      "160:upscale_method": "upscale_method_2",
+      "160:keep_proportion": "keep_proportion_2",
+      "160:pad_color": "pad_color_2",
+      "160:crop_position": "crop_position_2",
+      "160:divisible_by": "divisible_by_2",
+      "160:device": "device_2",
+      "162:upscale_method": "upscale_method_3",
+      "162:keep_proportion": "keep_proportion_3",
+      "162:pad_color": "pad_color_3",
+      "162:crop_position": "crop_position_3",
+      "162:divisible_by": "divisible_by_3",
+      "162:device": "device_3",
+      "181:prompt": "prompt_2",
+      "182:prompt": "prompt_3",
+      "183:weight_dtype": "weight_dtype",
+      "183:compute_dtype": "compute_dtype",
+      "183:patch_cublaslinear": "patch_cublaslinear",
+      "183:sage_attention": "sage_attention",
+      "183:enable_fp16_accumulation": "enable_fp16_accumulation",
+      "184:type": "type",
+      "184:device": "device_4",
+      "185:device": "device_5",
+      "185:weight_dtype": "weight_dtype_2",
+      "186:device": "device_6",
+      "186:weight_dtype": "weight_dtype_3"
+    }
+  }
+}

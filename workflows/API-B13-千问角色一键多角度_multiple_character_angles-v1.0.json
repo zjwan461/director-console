@@ -1,0 +1,1947 @@
+{
+  "25": {
+    "inputs": {
+      "image": "123.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Character Image"
+    }
+  },
+  "31": {
+    "inputs": {
+      "filename_prefix": "ComfyUI-close_up",
+      "images": [
+        "65:33:19",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image - Close up"
+    }
+  },
+  "34": {
+    "inputs": {
+      "filename_prefix": "ComfyUI-wide_shot",
+      "images": [
+        "65:35:80",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image - Wide shot"
+    }
+  },
+  "36": {
+    "inputs": {
+      "filename_prefix": "ComfyUI-45_right",
+      "images": [
+        "65:37:89",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image - 45 right"
+    }
+  },
+  "38": {
+    "inputs": {
+      "filename_prefix": "ComfyUI-90_right",
+      "images": [
+        "65:39:98",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image - 90 right"
+    }
+  },
+  "41": {
+    "inputs": {
+      "filename_prefix": "ComfyUI-aerial_view",
+      "images": [
+        "65:42:116",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image - Aerial view"
+    }
+  },
+  "43": {
+    "inputs": {
+      "filename_prefix": "ComfyUI-low_angle",
+      "images": [
+        "65:44:125",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image - Low angle"
+    }
+  },
+  "45": {
+    "inputs": {
+      "filename_prefix": "ComfyUI-45_left",
+      "images": [
+        "65:46:134",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image - 45 left"
+    }
+  },
+  "47": {
+    "inputs": {
+      "filename_prefix": "ComfyUI-90_left",
+      "images": [
+        "65:40:107",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image - 90 left"
+    }
+  },
+  "66": {
+    "inputs": {
+      "value": " Turn the camera to a close-up.\n"
+    },
+    "class_type": "PrimitiveStringMultiline",
+    "_meta": {
+      "title": "Prompt Close up"
+    }
+  },
+  "67": {
+    "inputs": {
+      "value": "Turn the camera to a wide-angle lens.\n"
+    },
+    "class_type": "PrimitiveStringMultiline",
+    "_meta": {
+      "title": "Prompt Wide angle"
+    }
+  },
+  "68": {
+    "inputs": {
+      "value": "Rotate the camera 90 degrees to the right.\n"
+    },
+    "class_type": "PrimitiveStringMultiline",
+    "_meta": {
+      "title": "Prompt 90deg right"
+    }
+  },
+  "69": {
+    "inputs": {
+      "value": "Rotate the camera 45 degrees to the right.\n"
+    },
+    "class_type": "PrimitiveStringMultiline",
+    "_meta": {
+      "title": "Prompt 45deg right"
+    }
+  },
+  "70": {
+    "inputs": {
+      "value": "Turn the camera to an aerial view."
+    },
+    "class_type": "PrimitiveStringMultiline",
+    "_meta": {
+      "title": "Prompt Aerial view"
+    }
+  },
+  "71": {
+    "inputs": {
+      "value": "Turn the camera to a low-angle view."
+    },
+    "class_type": "PrimitiveStringMultiline",
+    "_meta": {
+      "title": "Prompt Low angle"
+    }
+  },
+  "72": {
+    "inputs": {
+      "value": "Rotate the camera 90 degrees to the left."
+    },
+    "class_type": "PrimitiveStringMultiline",
+    "_meta": {
+      "title": "Prompt 90deg"
+    }
+  },
+  "73": {
+    "inputs": {
+      "value": "Rotate the camera 45 degrees to the left."
+    },
+    "class_type": "PrimitiveStringMultiline",
+    "_meta": {
+      "title": "Prompt Left 45deg"
+    }
+  },
+  "48:9": {
+    "inputs": {
+      "vae_name": "qwen_image_vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "加载VAE"
+    }
+  },
+  "48:10": {
+    "inputs": {
+      "clip_name": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "加载CLIP"
+    }
+  },
+  "48:12": {
+    "inputs": {
+      "unet_name": "qwen/qwen_image_edit_2509_fp8_e4m3fn.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "UNet加载器"
+    }
+  },
+  "48:20": {
+    "inputs": {
+      "lora_name": "Qwen/Qwen-Edit-2509-Multiple-angles.safetensors",
+      "strength_model": 1,
+      "model": [
+        "48:26",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "LoRA加载器（仅模型）"
+    }
+  },
+  "48:26": {
+    "inputs": {
+      "lora_name": "Qwen/Qwen-Image-Edit-2509-Lightning-4steps-V1.0-bf16.safetensors",
+      "strength_model": 1,
+      "model": [
+        "48:12",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "LoRA加载器（仅模型）"
+    }
+  },
+  "65:35:76": {
+    "inputs": {
+      "strength": 1,
+      "model": [
+        "65:35:77",
+        0
+      ]
+    },
+    "class_type": "CFGNorm",
+    "_meta": {
+      "title": "CFG归一化"
+    }
+  },
+  "65:35:77": {
+    "inputs": {
+      "shift": 3,
+      "model": [
+        "48:20",
+        0
+      ]
+    },
+    "class_type": "ModelSamplingAuraFlow",
+    "_meta": {
+      "title": "采样算法（AuraFlow）"
+    }
+  },
+  "65:35:78": {
+    "inputs": {
+      "pixels": [
+        "65:35:82",
+        0
+      ],
+      "vae": [
+        "48:9",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE编码"
+    }
+  },
+  "65:35:79": {
+    "inputs": {
+      "prompt": "",
+      "clip": [
+        "48:10",
+        0
+      ],
+      "vae": [
+        "48:9",
+        0
+      ],
+      "image1": [
+        "65:35:82",
+        0
+      ]
+    },
+    "class_type": "TextEncodeQwenImageEditPlus",
+    "_meta": {
+      "title": "文本编码（QwenImageEditPlus）"
+    }
+  },
+  "65:35:80": {
+    "inputs": {
+      "samples": [
+        "65:35:81",
+        0
+      ],
+      "vae": [
+        "48:9",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "65:35:81": {
+    "inputs": {
+      "seed": 402889010088319,
+      "steps": 4,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 1,
+      "model": [
+        "65:35:76",
+        0
+      ],
+      "positive": [
+        "65:35:84",
+        0
+      ],
+      "negative": [
+        "65:35:79",
+        0
+      ],
+      "latent_image": [
+        "65:35:78",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "65:35:82": {
+    "inputs": {
+      "upscale_method": "nearest-exact",
+      "megapixels": 1,
+      "resolution_steps": 1,
+      "image": [
+        "25",
+        0
+      ]
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "缩放图像（像素）"
+    }
+  },
+  "65:35:83": {
+    "inputs": {
+      "images": [
+        "65:35:80",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "预览图像"
+    }
+  },
+  "65:35:84": {
+    "inputs": {
+      "prompt": [
+        "67",
+        0
+      ],
+      "clip": [
+        "48:10",
+        0
+      ],
+      "vae": [
+        "48:9",
+        0
+      ],
+      "image1": [
+        "65:35:82",
+        0
+      ]
+    },
+    "class_type": "TextEncodeQwenImageEditPlus",
+    "_meta": {
+      "title": "文本编码（QwenImageEditPlus）"
+    }
+  },
+  "65:37:85": {
+    "inputs": {
+      "strength": 1,
+      "model": [
+        "65:37:86",
+        0
+      ]
+    },
+    "class_type": "CFGNorm",
+    "_meta": {
+      "title": "CFG归一化"
+    }
+  },
+  "65:37:86": {
+    "inputs": {
+      "shift": 3,
+      "model": [
+        "48:20",
+        0
+      ]
+    },
+    "class_type": "ModelSamplingAuraFlow",
+    "_meta": {
+      "title": "采样算法（AuraFlow）"
+    }
+  },
+  "65:37:87": {
+    "inputs": {
+      "pixels": [
+        "65:37:91",
+        0
+      ],
+      "vae": [
+        "48:9",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE编码"
+    }
+  },
+  "65:37:88": {
+    "inputs": {
+      "prompt": "",
+      "clip": [
+        "48:10",
+        0
+      ],
+      "vae": [
+        "48:9",
+        0
+      ],
+      "image1": [
+        "65:37:91",
+        0
+      ]
+    },
+    "class_type": "TextEncodeQwenImageEditPlus",
+    "_meta": {
+      "title": "文本编码（QwenImageEditPlus）"
+    }
+  },
+  "65:37:89": {
+    "inputs": {
+      "samples": [
+        "65:37:90",
+        0
+      ],
+      "vae": [
+        "48:9",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "65:37:90": {
+    "inputs": {
+      "seed": 562386646925033,
+      "steps": 4,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 1,
+      "model": [
+        "65:37:85",
+        0
+      ],
+      "positive": [
+        "65:37:93",
+        0
+      ],
+      "negative": [
+        "65:37:88",
+        0
+      ],
+      "latent_image": [
+        "65:37:87",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "65:37:91": {
+    "inputs": {
+      "upscale_method": "nearest-exact",
+      "megapixels": 1,
+      "resolution_steps": 1,
+      "image": [
+        "25",
+        0
+      ]
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "缩放图像（像素）"
+    }
+  },
+  "65:37:92": {
+    "inputs": {
+      "images": [
+        "65:37:89",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "预览图像"
+    }
+  },
+  "65:37:93": {
+    "inputs": {
+      "prompt": [
+        "69",
+        0
+      ],
+      "clip": [
+        "48:10",
+        0
+      ],
+      "vae": [
+        "48:9",
+        0
+      ],
+      "image1": [
+        "65:37:91",
+        0
+      ]
+    },
+    "class_type": "TextEncodeQwenImageEditPlus",
+    "_meta": {
+      "title": "文本编码（QwenImageEditPlus）"
+    }
+  },
+  "65:39:94": {
+    "inputs": {
+      "strength": 1,
+      "model": [
+        "65:39:95",
+        0
+      ]
+    },
+    "class_type": "CFGNorm",
+    "_meta": {
+      "title": "CFG归一化"
+    }
+  },
+  "65:39:95": {
+    "inputs": {
+      "shift": 3,
+      "model": [
+        "48:20",
+        0
+      ]
+    },
+    "class_type": "ModelSamplingAuraFlow",
+    "_meta": {
+      "title": "采样算法（AuraFlow）"
+    }
+  },
+  "65:39:96": {
+    "inputs": {
+      "pixels": [
+        "65:39:100",
+        0
+      ],
+      "vae": [
+        "48:9",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE编码"
+    }
+  },
+  "65:39:97": {
+    "inputs": {
+      "prompt": "",
+      "clip": [
+        "48:10",
+        0
+      ],
+      "vae": [
+        "48:9",
+        0
+      ],
+      "image1": [
+        "65:39:100",
+        0
+      ]
+    },
+    "class_type": "TextEncodeQwenImageEditPlus",
+    "_meta": {
+      "title": "文本编码（QwenImageEditPlus）"
+    }
+  },
+  "65:39:98": {
+    "inputs": {
+      "samples": [
+        "65:39:99",
+        0
+      ],
+      "vae": [
+        "48:9",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "65:39:99": {
+    "inputs": {
+      "seed": 383526459830779,
+      "steps": 4,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 1,
+      "model": [
+        "65:39:94",
+        0
+      ],
+      "positive": [
+        "65:39:102",
+        0
+      ],
+      "negative": [
+        "65:39:97",
+        0
+      ],
+      "latent_image": [
+        "65:39:96",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "65:39:100": {
+    "inputs": {
+      "upscale_method": "nearest-exact",
+      "megapixels": 1,
+      "resolution_steps": 1,
+      "image": [
+        "25",
+        0
+      ]
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "缩放图像（像素）"
+    }
+  },
+  "65:39:101": {
+    "inputs": {
+      "images": [
+        "65:39:98",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "预览图像"
+    }
+  },
+  "65:39:102": {
+    "inputs": {
+      "prompt": [
+        "68",
+        0
+      ],
+      "clip": [
+        "48:10",
+        0
+      ],
+      "vae": [
+        "48:9",
+        0
+      ],
+      "image1": [
+        "65:39:100",
+        0
+      ]
+    },
+    "class_type": "TextEncodeQwenImageEditPlus",
+    "_meta": {
+      "title": "文本编码（QwenImageEditPlus）"
+    }
+  },
+  "65:42:112": {
+    "inputs": {
+      "strength": 1,
+      "model": [
+        "65:42:113",
+        0
+      ]
+    },
+    "class_type": "CFGNorm",
+    "_meta": {
+      "title": "CFG归一化"
+    }
+  },
+  "65:42:113": {
+    "inputs": {
+      "shift": 3,
+      "model": [
+        "48:20",
+        0
+      ]
+    },
+    "class_type": "ModelSamplingAuraFlow",
+    "_meta": {
+      "title": "采样算法（AuraFlow）"
+    }
+  },
+  "65:42:114": {
+    "inputs": {
+      "pixels": [
+        "65:42:118",
+        0
+      ],
+      "vae": [
+        "48:9",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE编码"
+    }
+  },
+  "65:42:115": {
+    "inputs": {
+      "prompt": "",
+      "clip": [
+        "48:10",
+        0
+      ],
+      "vae": [
+        "48:9",
+        0
+      ],
+      "image1": [
+        "65:42:118",
+        0
+      ]
+    },
+    "class_type": "TextEncodeQwenImageEditPlus",
+    "_meta": {
+      "title": "文本编码（QwenImageEditPlus）"
+    }
+  },
+  "65:42:116": {
+    "inputs": {
+      "samples": [
+        "65:42:117",
+        0
+      ],
+      "vae": [
+        "48:9",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "65:42:117": {
+    "inputs": {
+      "seed": 304274197107951,
+      "steps": 4,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 1,
+      "model": [
+        "65:42:112",
+        0
+      ],
+      "positive": [
+        "65:42:120",
+        0
+      ],
+      "negative": [
+        "65:42:115",
+        0
+      ],
+      "latent_image": [
+        "65:42:114",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "65:42:118": {
+    "inputs": {
+      "upscale_method": "nearest-exact",
+      "megapixels": 1,
+      "resolution_steps": 1,
+      "image": [
+        "25",
+        0
+      ]
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "缩放图像（像素）"
+    }
+  },
+  "65:42:119": {
+    "inputs": {
+      "images": [
+        "65:42:116",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "预览图像"
+    }
+  },
+  "65:42:120": {
+    "inputs": {
+      "prompt": [
+        "70",
+        0
+      ],
+      "clip": [
+        "48:10",
+        0
+      ],
+      "vae": [
+        "48:9",
+        0
+      ],
+      "image1": [
+        "65:42:118",
+        0
+      ]
+    },
+    "class_type": "TextEncodeQwenImageEditPlus",
+    "_meta": {
+      "title": "文本编码（QwenImageEditPlus）"
+    }
+  },
+  "65:44:121": {
+    "inputs": {
+      "strength": 1,
+      "model": [
+        "65:44:122",
+        0
+      ]
+    },
+    "class_type": "CFGNorm",
+    "_meta": {
+      "title": "CFG归一化"
+    }
+  },
+  "65:44:122": {
+    "inputs": {
+      "shift": 3,
+      "model": [
+        "48:20",
+        0
+      ]
+    },
+    "class_type": "ModelSamplingAuraFlow",
+    "_meta": {
+      "title": "采样算法（AuraFlow）"
+    }
+  },
+  "65:44:123": {
+    "inputs": {
+      "pixels": [
+        "65:44:127",
+        0
+      ],
+      "vae": [
+        "48:9",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE编码"
+    }
+  },
+  "65:44:124": {
+    "inputs": {
+      "prompt": "",
+      "clip": [
+        "48:10",
+        0
+      ],
+      "vae": [
+        "48:9",
+        0
+      ],
+      "image1": [
+        "65:44:127",
+        0
+      ]
+    },
+    "class_type": "TextEncodeQwenImageEditPlus",
+    "_meta": {
+      "title": "文本编码（QwenImageEditPlus）"
+    }
+  },
+  "65:44:125": {
+    "inputs": {
+      "samples": [
+        "65:44:126",
+        0
+      ],
+      "vae": [
+        "48:9",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "65:44:126": {
+    "inputs": {
+      "seed": 857546686987208,
+      "steps": 4,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 1,
+      "model": [
+        "65:44:121",
+        0
+      ],
+      "positive": [
+        "65:44:128",
+        0
+      ],
+      "negative": [
+        "65:44:124",
+        0
+      ],
+      "latent_image": [
+        "65:44:123",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "65:44:127": {
+    "inputs": {
+      "upscale_method": "nearest-exact",
+      "megapixels": 1,
+      "resolution_steps": 1,
+      "image": [
+        "25",
+        0
+      ]
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "缩放图像（像素）"
+    }
+  },
+  "65:44:128": {
+    "inputs": {
+      "prompt": [
+        "71",
+        0
+      ],
+      "clip": [
+        "48:10",
+        0
+      ],
+      "vae": [
+        "48:9",
+        0
+      ],
+      "image1": [
+        "65:44:127",
+        0
+      ]
+    },
+    "class_type": "TextEncodeQwenImageEditPlus",
+    "_meta": {
+      "title": "文本编码（QwenImageEditPlus）"
+    }
+  },
+  "65:44:129": {
+    "inputs": {
+      "images": [
+        "65:44:125",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "预览图像"
+    }
+  },
+  "65:46:130": {
+    "inputs": {
+      "strength": 1,
+      "model": [
+        "65:46:131",
+        0
+      ]
+    },
+    "class_type": "CFGNorm",
+    "_meta": {
+      "title": "CFG归一化"
+    }
+  },
+  "65:46:131": {
+    "inputs": {
+      "shift": 3,
+      "model": [
+        "48:20",
+        0
+      ]
+    },
+    "class_type": "ModelSamplingAuraFlow",
+    "_meta": {
+      "title": "采样算法（AuraFlow）"
+    }
+  },
+  "65:46:132": {
+    "inputs": {
+      "pixels": [
+        "65:46:135",
+        0
+      ],
+      "vae": [
+        "48:9",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE编码"
+    }
+  },
+  "65:46:133": {
+    "inputs": {
+      "prompt": "",
+      "clip": [
+        "48:10",
+        0
+      ],
+      "vae": [
+        "48:9",
+        0
+      ],
+      "image1": [
+        "65:46:135",
+        0
+      ]
+    },
+    "class_type": "TextEncodeQwenImageEditPlus",
+    "_meta": {
+      "title": "文本编码（QwenImageEditPlus）"
+    }
+  },
+  "65:46:134": {
+    "inputs": {
+      "samples": [
+        "65:46:138",
+        0
+      ],
+      "vae": [
+        "48:9",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "65:46:135": {
+    "inputs": {
+      "upscale_method": "nearest-exact",
+      "megapixels": 1,
+      "resolution_steps": 1,
+      "image": [
+        "25",
+        0
+      ]
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "缩放图像（像素）"
+    }
+  },
+  "65:46:136": {
+    "inputs": {
+      "images": [
+        "65:46:134",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "预览图像"
+    }
+  },
+  "65:46:137": {
+    "inputs": {
+      "prompt": [
+        "73",
+        0
+      ],
+      "clip": [
+        "48:10",
+        0
+      ],
+      "vae": [
+        "48:9",
+        0
+      ],
+      "image1": [
+        "65:46:135",
+        0
+      ]
+    },
+    "class_type": "TextEncodeQwenImageEditPlus",
+    "_meta": {
+      "title": "文本编码（QwenImageEditPlus）"
+    }
+  },
+  "65:46:138": {
+    "inputs": {
+      "seed": 215662363811280,
+      "steps": 4,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 1,
+      "model": [
+        "65:46:130",
+        0
+      ],
+      "positive": [
+        "65:46:137",
+        0
+      ],
+      "negative": [
+        "65:46:133",
+        0
+      ],
+      "latent_image": [
+        "65:46:132",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "65:40:103": {
+    "inputs": {
+      "strength": 1,
+      "model": [
+        "65:40:104",
+        0
+      ]
+    },
+    "class_type": "CFGNorm",
+    "_meta": {
+      "title": "CFG归一化"
+    }
+  },
+  "65:40:104": {
+    "inputs": {
+      "shift": 3,
+      "model": [
+        "48:20",
+        0
+      ]
+    },
+    "class_type": "ModelSamplingAuraFlow",
+    "_meta": {
+      "title": "采样算法（AuraFlow）"
+    }
+  },
+  "65:40:105": {
+    "inputs": {
+      "pixels": [
+        "65:40:109",
+        0
+      ],
+      "vae": [
+        "48:9",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE编码"
+    }
+  },
+  "65:40:106": {
+    "inputs": {
+      "prompt": "",
+      "clip": [
+        "48:10",
+        0
+      ],
+      "vae": [
+        "48:9",
+        0
+      ],
+      "image1": [
+        "65:40:109",
+        0
+      ]
+    },
+    "class_type": "TextEncodeQwenImageEditPlus",
+    "_meta": {
+      "title": "文本编码（QwenImageEditPlus）"
+    }
+  },
+  "65:40:107": {
+    "inputs": {
+      "samples": [
+        "65:40:108",
+        0
+      ],
+      "vae": [
+        "48:9",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "65:40:108": {
+    "inputs": {
+      "seed": 961129755697136,
+      "steps": 4,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 1,
+      "model": [
+        "65:40:103",
+        0
+      ],
+      "positive": [
+        "65:40:111",
+        0
+      ],
+      "negative": [
+        "65:40:106",
+        0
+      ],
+      "latent_image": [
+        "65:40:105",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "65:40:109": {
+    "inputs": {
+      "upscale_method": "nearest-exact",
+      "megapixels": 1,
+      "resolution_steps": 1,
+      "image": [
+        "25",
+        0
+      ]
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "缩放图像（像素）"
+    }
+  },
+  "65:40:110": {
+    "inputs": {
+      "images": [
+        "65:40:107",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "预览图像"
+    }
+  },
+  "65:40:111": {
+    "inputs": {
+      "prompt": [
+        "72",
+        0
+      ],
+      "clip": [
+        "48:10",
+        0
+      ],
+      "vae": [
+        "48:9",
+        0
+      ],
+      "image1": [
+        "65:40:109",
+        0
+      ]
+    },
+    "class_type": "TextEncodeQwenImageEditPlus",
+    "_meta": {
+      "title": "文本编码（QwenImageEditPlus）"
+    }
+  },
+  "65:33:8": {
+    "inputs": {
+      "strength": 1,
+      "model": [
+        "65:33:11",
+        0
+      ]
+    },
+    "class_type": "CFGNorm",
+    "_meta": {
+      "title": "CFG归一化"
+    }
+  },
+  "65:33:11": {
+    "inputs": {
+      "shift": 3,
+      "model": [
+        "48:20",
+        0
+      ]
+    },
+    "class_type": "ModelSamplingAuraFlow",
+    "_meta": {
+      "title": "采样算法（AuraFlow）"
+    }
+  },
+  "65:33:14": {
+    "inputs": {
+      "prompt": "",
+      "clip": [
+        "48:10",
+        0
+      ],
+      "vae": [
+        "48:9",
+        0
+      ],
+      "image1": [
+        "65:33:28",
+        0
+      ]
+    },
+    "class_type": "TextEncodeQwenImageEditPlus",
+    "_meta": {
+      "title": "文本编码（QwenImageEditPlus）"
+    }
+  },
+  "65:33:19": {
+    "inputs": {
+      "samples": [
+        "65:33:21",
+        0
+      ],
+      "vae": [
+        "48:9",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "65:33:21": {
+    "inputs": {
+      "seed": 542533487875154,
+      "steps": 4,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 1,
+      "model": [
+        "65:33:8",
+        0
+      ],
+      "positive": [
+        "65:33:17",
+        0
+      ],
+      "negative": [
+        "65:33:14",
+        0
+      ],
+      "latent_image": [
+        "65:33:13",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "65:33:28": {
+    "inputs": {
+      "upscale_method": "nearest-exact",
+      "megapixels": 1,
+      "resolution_steps": 1,
+      "image": [
+        "25",
+        0
+      ]
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "缩放图像（像素）"
+    }
+  },
+  "65:33:32": {
+    "inputs": {
+      "images": [
+        "65:33:19",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "预览图像"
+    }
+  },
+  "65:33:17": {
+    "inputs": {
+      "prompt": [
+        "66",
+        0
+      ],
+      "clip": [
+        "48:10",
+        0
+      ],
+      "vae": [
+        "48:9",
+        0
+      ],
+      "image1": [
+        "65:33:28",
+        0
+      ]
+    },
+    "class_type": "TextEncodeQwenImageEditPlus",
+    "_meta": {
+      "title": "文本编码（QwenImageEditPlus）"
+    }
+  },
+  "65:33:13": {
+    "inputs": {
+      "pixels": [
+        "65:33:28",
+        0
+      ],
+      "vae": [
+        "48:9",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE编码"
+    }
+  },
+  "_api_config": {
+    "customLabels": {
+      "25:image": "参考图 0",
+      "31:filename_prefix": "文件名前缀",
+      "34:filename_prefix": "文件名前缀",
+      "36:filename_prefix": "文件名前缀",
+      "38:filename_prefix": "文件名前缀",
+      "41:filename_prefix": "文件名前缀",
+      "43:filename_prefix": "文件名前缀",
+      "45:filename_prefix": "文件名前缀",
+      "47:filename_prefix": "文件名前缀",
+      "66:value": "value",
+      "67:value": "value",
+      "68:value": "value",
+      "69:value": "value",
+      "70:value": "value",
+      "71:value": "value",
+      "72:value": "value",
+      "73:value": "value",
+      "48:10:type": "type",
+      "48:10:device": "device",
+      "48:12:weight_dtype": "weight_dtype",
+      "48:20:strength_model": "strength_model",
+      "48:26:strength_model": "strength_model",
+      "65:35:76:strength": "strength",
+      "65:35:77:shift": "shift",
+      "65:35:79:prompt": "prompt",
+      "65:35:81:seed": "随机种子",
+      "65:35:81:steps": "迭代步数",
+      "65:35:81:cfg": "CFG Scale",
+      "65:35:81:denoise": "denoise",
+      "65:35:82:upscale_method": "upscale_method",
+      "65:35:82:megapixels": "megapixels",
+      "65:35:82:resolution_steps": "resolution_steps",
+      "65:37:85:strength": "strength",
+      "65:37:86:shift": "shift",
+      "65:37:88:prompt": "prompt",
+      "65:37:90:seed": "随机种子",
+      "65:37:90:steps": "迭代步数",
+      "65:37:90:cfg": "CFG Scale",
+      "65:37:90:denoise": "denoise",
+      "65:37:91:upscale_method": "upscale_method",
+      "65:37:91:megapixels": "megapixels",
+      "65:37:91:resolution_steps": "resolution_steps",
+      "65:39:94:strength": "strength",
+      "65:39:95:shift": "shift",
+      "65:39:97:prompt": "prompt",
+      "65:39:99:seed": "随机种子",
+      "65:39:99:steps": "迭代步数",
+      "65:39:99:cfg": "CFG Scale",
+      "65:39:99:denoise": "denoise",
+      "65:39:100:upscale_method": "upscale_method",
+      "65:39:100:megapixels": "megapixels",
+      "65:39:100:resolution_steps": "resolution_steps",
+      "65:42:112:strength": "strength",
+      "65:42:113:shift": "shift",
+      "65:42:115:prompt": "prompt",
+      "65:42:117:seed": "随机种子",
+      "65:42:117:steps": "迭代步数",
+      "65:42:117:cfg": "CFG Scale",
+      "65:42:117:denoise": "denoise",
+      "65:42:118:upscale_method": "upscale_method",
+      "65:42:118:megapixels": "megapixels",
+      "65:42:118:resolution_steps": "resolution_steps",
+      "65:44:121:strength": "strength",
+      "65:44:122:shift": "shift",
+      "65:44:124:prompt": "prompt",
+      "65:44:126:seed": "随机种子",
+      "65:44:126:steps": "迭代步数",
+      "65:44:126:cfg": "CFG Scale",
+      "65:44:126:denoise": "denoise",
+      "65:44:127:upscale_method": "upscale_method",
+      "65:44:127:megapixels": "megapixels",
+      "65:44:127:resolution_steps": "resolution_steps",
+      "65:46:130:strength": "strength",
+      "65:46:131:shift": "shift",
+      "65:46:133:prompt": "prompt",
+      "65:46:135:upscale_method": "upscale_method",
+      "65:46:135:megapixels": "megapixels",
+      "65:46:135:resolution_steps": "resolution_steps",
+      "65:46:138:seed": "随机种子",
+      "65:46:138:steps": "迭代步数",
+      "65:46:138:cfg": "CFG Scale",
+      "65:46:138:denoise": "denoise",
+      "65:40:103:strength": "strength",
+      "65:40:104:shift": "shift",
+      "65:40:106:prompt": "prompt",
+      "65:40:108:seed": "随机种子",
+      "65:40:108:steps": "迭代步数",
+      "65:40:108:cfg": "CFG Scale",
+      "65:40:108:denoise": "denoise",
+      "65:40:109:upscale_method": "upscale_method",
+      "65:40:109:megapixels": "megapixels",
+      "65:40:109:resolution_steps": "resolution_steps",
+      "65:33:8:strength": "strength",
+      "65:33:11:shift": "shift",
+      "65:33:14:prompt": "prompt",
+      "65:33:21:seed": "随机种子",
+      "65:33:21:steps": "迭代步数",
+      "65:33:21:cfg": "CFG Scale",
+      "65:33:21:denoise": "denoise",
+      "65:33:28:upscale_method": "upscale_method",
+      "65:33:28:megapixels": "megapixels",
+      "65:33:28:resolution_steps": "resolution_steps"
+    },
+    "enabledParams": {
+      "25:image": true,
+      "31:filename_prefix": false,
+      "34:filename_prefix": false,
+      "36:filename_prefix": false,
+      "38:filename_prefix": false,
+      "41:filename_prefix": false,
+      "43:filename_prefix": false,
+      "45:filename_prefix": false,
+      "47:filename_prefix": false,
+      "66:value": false,
+      "67:value": false,
+      "68:value": false,
+      "69:value": false,
+      "70:value": false,
+      "71:value": false,
+      "72:value": false,
+      "73:value": false,
+      "48:10:type": false,
+      "48:10:device": false,
+      "48:12:weight_dtype": false,
+      "48:20:strength_model": false,
+      "48:26:strength_model": false,
+      "65:35:76:strength": false,
+      "65:35:77:shift": false,
+      "65:35:79:prompt": false,
+      "65:35:81:seed": false,
+      "65:35:81:steps": false,
+      "65:35:81:cfg": false,
+      "65:35:81:denoise": false,
+      "65:35:82:upscale_method": false,
+      "65:35:82:megapixels": false,
+      "65:35:82:resolution_steps": false,
+      "65:37:85:strength": false,
+      "65:37:86:shift": false,
+      "65:37:88:prompt": false,
+      "65:37:90:seed": false,
+      "65:37:90:steps": false,
+      "65:37:90:cfg": false,
+      "65:37:90:denoise": false,
+      "65:37:91:upscale_method": false,
+      "65:37:91:megapixels": false,
+      "65:37:91:resolution_steps": false,
+      "65:39:94:strength": false,
+      "65:39:95:shift": false,
+      "65:39:97:prompt": false,
+      "65:39:99:seed": false,
+      "65:39:99:steps": false,
+      "65:39:99:cfg": false,
+      "65:39:99:denoise": false,
+      "65:39:100:upscale_method": false,
+      "65:39:100:megapixels": false,
+      "65:39:100:resolution_steps": false,
+      "65:42:112:strength": false,
+      "65:42:113:shift": false,
+      "65:42:115:prompt": false,
+      "65:42:117:seed": false,
+      "65:42:117:steps": false,
+      "65:42:117:cfg": false,
+      "65:42:117:denoise": false,
+      "65:42:118:upscale_method": false,
+      "65:42:118:megapixels": false,
+      "65:42:118:resolution_steps": false,
+      "65:44:121:strength": false,
+      "65:44:122:shift": false,
+      "65:44:124:prompt": false,
+      "65:44:126:seed": false,
+      "65:44:126:steps": false,
+      "65:44:126:cfg": false,
+      "65:44:126:denoise": false,
+      "65:44:127:upscale_method": false,
+      "65:44:127:megapixels": false,
+      "65:44:127:resolution_steps": false,
+      "65:46:130:strength": false,
+      "65:46:131:shift": false,
+      "65:46:133:prompt": false,
+      "65:46:135:upscale_method": false,
+      "65:46:135:megapixels": false,
+      "65:46:135:resolution_steps": false,
+      "65:46:138:seed": false,
+      "65:46:138:steps": false,
+      "65:46:138:cfg": false,
+      "65:46:138:denoise": false,
+      "65:40:103:strength": false,
+      "65:40:104:shift": false,
+      "65:40:106:prompt": false,
+      "65:40:108:seed": false,
+      "65:40:108:steps": false,
+      "65:40:108:cfg": false,
+      "65:40:108:denoise": false,
+      "65:40:109:upscale_method": false,
+      "65:40:109:megapixels": false,
+      "65:40:109:resolution_steps": false,
+      "65:33:8:strength": false,
+      "65:33:11:shift": false,
+      "65:33:14:prompt": false,
+      "65:33:21:seed": false,
+      "65:33:21:steps": false,
+      "65:33:21:cfg": false,
+      "65:33:21:denoise": false,
+      "65:33:28:upscale_method": false,
+      "65:33:28:megapixels": false,
+      "65:33:28:resolution_steps": false
+    },
+    "formValues": {
+      "25:image": null,
+      "31:filename_prefix": "ComfyUI-close_up",
+      "34:filename_prefix": "ComfyUI-wide_shot",
+      "36:filename_prefix": "ComfyUI-45_right",
+      "38:filename_prefix": "ComfyUI-90_right",
+      "41:filename_prefix": "ComfyUI-aerial_view",
+      "43:filename_prefix": "ComfyUI-low_angle",
+      "45:filename_prefix": "ComfyUI-45_left",
+      "47:filename_prefix": "ComfyUI-90_left",
+      "66:value": " Turn the camera to a close-up.\n",
+      "67:value": "Turn the camera to a wide-angle lens.\n",
+      "68:value": "Rotate the camera 90 degrees to the right.\n",
+      "69:value": "Rotate the camera 45 degrees to the right.\n",
+      "70:value": "Turn the camera to an aerial view.",
+      "71:value": "Turn the camera to a low-angle view.",
+      "72:value": "Rotate the camera 90 degrees to the left.",
+      "73:value": "Rotate the camera 45 degrees to the left.",
+      "48:10:type": "qwen_image",
+      "48:10:device": "default",
+      "48:12:weight_dtype": "default",
+      "48:20:strength_model": 1,
+      "48:26:strength_model": 1,
+      "65:35:76:strength": 1,
+      "65:35:77:shift": 3,
+      "65:35:79:prompt": "",
+      "65:35:81:seed": 402889010088319,
+      "65:35:81:steps": 4,
+      "65:35:81:cfg": 1,
+      "65:35:81:denoise": 1,
+      "65:35:82:upscale_method": "nearest-exact",
+      "65:35:82:megapixels": 1,
+      "65:35:82:resolution_steps": 1,
+      "65:37:85:strength": 1,
+      "65:37:86:shift": 3,
+      "65:37:88:prompt": "",
+      "65:37:90:seed": 562386646925033,
+      "65:37:90:steps": 4,
+      "65:37:90:cfg": 1,
+      "65:37:90:denoise": 1,
+      "65:37:91:upscale_method": "nearest-exact",
+      "65:37:91:megapixels": 1,
+      "65:37:91:resolution_steps": 1,
+      "65:39:94:strength": 1,
+      "65:39:95:shift": 3,
+      "65:39:97:prompt": "",
+      "65:39:99:seed": 383526459830779,
+      "65:39:99:steps": 4,
+      "65:39:99:cfg": 1,
+      "65:39:99:denoise": 1,
+      "65:39:100:upscale_method": "nearest-exact",
+      "65:39:100:megapixels": 1,
+      "65:39:100:resolution_steps": 1,
+      "65:42:112:strength": 1,
+      "65:42:113:shift": 3,
+      "65:42:115:prompt": "",
+      "65:42:117:seed": 304274197107951,
+      "65:42:117:steps": 4,
+      "65:42:117:cfg": 1,
+      "65:42:117:denoise": 1,
+      "65:42:118:upscale_method": "nearest-exact",
+      "65:42:118:megapixels": 1,
+      "65:42:118:resolution_steps": 1,
+      "65:44:121:strength": 1,
+      "65:44:122:shift": 3,
+      "65:44:124:prompt": "",
+      "65:44:126:seed": 857546686987208,
+      "65:44:126:steps": 4,
+      "65:44:126:cfg": 1,
+      "65:44:126:denoise": 1,
+      "65:44:127:upscale_method": "nearest-exact",
+      "65:44:127:megapixels": 1,
+      "65:44:127:resolution_steps": 1,
+      "65:46:130:strength": 1,
+      "65:46:131:shift": 3,
+      "65:46:133:prompt": "",
+      "65:46:135:upscale_method": "nearest-exact",
+      "65:46:135:megapixels": 1,
+      "65:46:135:resolution_steps": 1,
+      "65:46:138:seed": 215662363811280,
+      "65:46:138:steps": 4,
+      "65:46:138:cfg": 1,
+      "65:46:138:denoise": 1,
+      "65:40:103:strength": 1,
+      "65:40:104:shift": 3,
+      "65:40:106:prompt": "",
+      "65:40:108:seed": 961129755697136,
+      "65:40:108:steps": 4,
+      "65:40:108:cfg": 1,
+      "65:40:108:denoise": 1,
+      "65:40:109:upscale_method": "nearest-exact",
+      "65:40:109:megapixels": 1,
+      "65:40:109:resolution_steps": 1,
+      "65:33:8:strength": 1,
+      "65:33:11:shift": 3,
+      "65:33:14:prompt": "",
+      "65:33:21:seed": 542533487875154,
+      "65:33:21:steps": 4,
+      "65:33:21:cfg": 1,
+      "65:33:21:denoise": 1,
+      "65:33:28:upscale_method": "nearest-exact",
+      "65:33:28:megapixels": 1,
+      "65:33:28:resolution_steps": 1
+    },
+    "mediaOrder": [
+      "25:image"
+    ],
+    "mediaOrderSource": "auto",
+    "apiNames": {
+      "25:image": "ref_image_0",
+      "31:filename_prefix": "filename_prefix",
+      "34:filename_prefix": "filename_prefix_2",
+      "36:filename_prefix": "filename_prefix_3",
+      "38:filename_prefix": "filename_prefix_4",
+      "41:filename_prefix": "filename_prefix_5",
+      "43:filename_prefix": "filename_prefix_6",
+      "45:filename_prefix": "filename_prefix_7",
+      "47:filename_prefix": "filename_prefix_8",
+      "66:value": "prompt_9",
+      "67:value": "prompt_10",
+      "68:value": "prompt_11",
+      "69:value": "prompt_12",
+      "70:value": "prompt_13",
+      "71:value": "prompt_14",
+      "72:value": "prompt_15",
+      "73:value": "prompt_16",
+      "48:10:type": "type",
+      "48:10:device": "device",
+      "48:12:weight_dtype": "weight_dtype",
+      "48:20:strength_model": "strength_model",
+      "48:26:strength_model": "strength_model_2",
+      "65:35:76:strength": "strength_2",
+      "65:35:77:shift": "shift_2",
+      "65:35:79:prompt": "prompt_2",
+      "65:35:81:seed": "seed_2",
+      "65:35:81:steps": "steps_2",
+      "65:35:81:cfg": "cfg_2",
+      "65:35:81:denoise": "denoise_2",
+      "65:35:82:upscale_method": "upscale_method_2",
+      "65:35:82:megapixels": "megapixels_2",
+      "65:35:82:resolution_steps": "resolution_steps_2",
+      "65:37:85:strength": "strength_3",
+      "65:37:86:shift": "shift_3",
+      "65:37:88:prompt": "prompt_3",
+      "65:37:90:seed": "seed_3",
+      "65:37:90:steps": "steps_3",
+      "65:37:90:cfg": "cfg_3",
+      "65:37:90:denoise": "denoise_3",
+      "65:37:91:upscale_method": "upscale_method_3",
+      "65:37:91:megapixels": "megapixels_3",
+      "65:37:91:resolution_steps": "resolution_steps_3",
+      "65:39:94:strength": "strength_4",
+      "65:39:95:shift": "shift_4",
+      "65:39:97:prompt": "prompt_4",
+      "65:39:99:seed": "seed_4",
+      "65:39:99:steps": "steps_4",
+      "65:39:99:cfg": "cfg_4",
+      "65:39:99:denoise": "denoise_4",
+      "65:39:100:upscale_method": "upscale_method_4",
+      "65:39:100:megapixels": "megapixels_4",
+      "65:39:100:resolution_steps": "resolution_steps_4",
+      "65:42:112:strength": "strength_6",
+      "65:42:113:shift": "shift_6",
+      "65:42:115:prompt": "prompt_6",
+      "65:42:117:seed": "seed_6",
+      "65:42:117:steps": "steps_6",
+      "65:42:117:cfg": "cfg_6",
+      "65:42:117:denoise": "denoise_6",
+      "65:42:118:upscale_method": "upscale_method_6",
+      "65:42:118:megapixels": "megapixels_6",
+      "65:42:118:resolution_steps": "resolution_steps_6",
+      "65:44:121:strength": "strength_7",
+      "65:44:122:shift": "shift_7",
+      "65:44:124:prompt": "prompt_7",
+      "65:44:126:seed": "seed_7",
+      "65:44:126:steps": "steps_7",
+      "65:44:126:cfg": "cfg_7",
+      "65:44:126:denoise": "denoise_7",
+      "65:44:127:upscale_method": "upscale_method_7",
+      "65:44:127:megapixels": "megapixels_7",
+      "65:44:127:resolution_steps": "resolution_steps_7",
+      "65:46:130:strength": "strength_8",
+      "65:46:131:shift": "shift_8",
+      "65:46:133:prompt": "prompt_8",
+      "65:46:135:upscale_method": "upscale_method_8",
+      "65:46:135:megapixels": "megapixels_8",
+      "65:46:135:resolution_steps": "resolution_steps_8",
+      "65:46:138:seed": "seed_8",
+      "65:46:138:steps": "steps_8",
+      "65:46:138:cfg": "cfg_8",
+      "65:46:138:denoise": "denoise_8",
+      "65:40:103:strength": "strength_5",
+      "65:40:104:shift": "shift_5",
+      "65:40:106:prompt": "prompt_5",
+      "65:40:108:seed": "seed_5",
+      "65:40:108:steps": "steps_5",
+      "65:40:108:cfg": "cfg_5",
+      "65:40:108:denoise": "denoise_5",
+      "65:40:109:upscale_method": "upscale_method_5",
+      "65:40:109:megapixels": "megapixels_5",
+      "65:40:109:resolution_steps": "resolution_steps_5",
+      "65:33:8:strength": "strength",
+      "65:33:11:shift": "shift",
+      "65:33:14:prompt": "prompt",
+      "65:33:21:seed": "seed",
+      "65:33:21:steps": "steps",
+      "65:33:21:cfg": "cfg",
+      "65:33:21:denoise": "denoise",
+      "65:33:28:upscale_method": "upscale_method",
+      "65:33:28:megapixels": "megapixels",
+      "65:33:28:resolution_steps": "resolution_steps"
+    }
+  }
+}

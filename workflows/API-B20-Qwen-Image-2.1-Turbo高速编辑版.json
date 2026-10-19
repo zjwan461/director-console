@@ -1,0 +1,208 @@
+{
+  "4": {
+    "inputs": {
+      "prompt": "Remove background",
+      "negative_prompt": "",
+      "resolution": 1024,
+      "clip": [
+        "22:2",
+        0
+      ],
+      "images.image_1": [
+        "21",
+        0
+      ],
+      "vae": [
+        "22:3",
+        0
+      ]
+    },
+    "class_type": "TextEncodeQwenImage21",
+    "_meta": {
+      "title": "2.1编辑条件 · 提示词＋参考图＋VAE"
+    }
+  },
+  "5": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "K采样器选择"
+    }
+  },
+  "6": {
+    "inputs": {
+      "sigmas": "1, 0.978453, 0.95418, 0.926626, 0.89508, 0.845148, 0.704534, 0.414568, 0"
+    },
+    "class_type": "ManualSigmas",
+    "_meta": {
+      "title": "官方8步Sigma · 末尾0"
+    }
+  },
+  "7": {
+    "inputs": {
+      "add_noise": true,
+      "noise_seed": 58497728357106,
+      "cfg": 1,
+      "model": [
+        "22:1",
+        0
+      ],
+      "positive": [
+        "4",
+        0
+      ],
+      "negative": [
+        "4",
+        1
+      ],
+      "sampler": [
+        "5",
+        0
+      ],
+      "sigmas": [
+        "6",
+        0
+      ],
+      "latent_image": [
+        "4",
+        2
+      ]
+    },
+    "class_type": "SamplerCustom",
+    "_meta": {
+      "title": "编辑采样 · 随机种子避免噪声重放"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "7",
+        0
+      ],
+      "vae": [
+        "22:3",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "comfyui",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "保存图像"
+    }
+  },
+  "21": {
+    "inputs": {
+      "image": "nv_c0396ee8e152.jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "参考图1 · 请上传或选择图片"
+    }
+  },
+  "22:3": {
+    "inputs": {
+      "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "加载VAE"
+    }
+  },
+  "22:2": {
+    "inputs": {
+      "clip_name": "qwen3vl_8b_bf16.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "加载CLIP"
+    }
+  },
+  "22:1": {
+    "inputs": {
+      "unet_name": "qwen/qwen_image_2.1_bf16.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "UNet加载器"
+    }
+  },
+  "_api_config": {
+    "customLabels": {
+      "4:prompt": "提示词",
+      "4:negative_prompt": "negative_prompt",
+      "4:resolution": "resolution",
+      "6:sigmas": "sigmas",
+      "7:cfg": "CFG Scale",
+      "7:add_noise": "add_noise",
+      "7:noise_seed": "noise_seed",
+      "9:filename_prefix": "文件名前缀",
+      "21:image": "参考图 0",
+      "22:2:type": "type",
+      "22:2:device": "device",
+      "22:1:weight_dtype": "weight_dtype"
+    },
+    "enabledParams": {
+      "4:prompt": true,
+      "4:negative_prompt": true,
+      "4:resolution": false,
+      "6:sigmas": false,
+      "7:cfg": false,
+      "7:add_noise": false,
+      "7:noise_seed": false,
+      "9:filename_prefix": false,
+      "21:image": true,
+      "22:2:type": false,
+      "22:2:device": false,
+      "22:1:weight_dtype": false
+    },
+    "formValues": {
+      "4:prompt": "Remove background",
+      "4:negative_prompt": "",
+      "4:resolution": 1024,
+      "6:sigmas": "1, 0.978453, 0.95418, 0.926626, 0.89508, 0.845148, 0.704534, 0.414568, 0",
+      "7:cfg": 1,
+      "7:add_noise": true,
+      "7:noise_seed": 58497728357106,
+      "9:filename_prefix": "comfyui",
+      "21:image": null,
+      "22:2:type": "qwen_image",
+      "22:2:device": "default",
+      "22:1:weight_dtype": "default"
+    },
+    "mediaOrder": [
+      "21:image"
+    ],
+    "mediaOrderSource": "auto",
+    "apiNames": {
+      "4:prompt": "prompt",
+      "4:negative_prompt": "negative_prompt",
+      "4:resolution": "resolution",
+      "6:sigmas": "sigmas",
+      "7:cfg": "cfg",
+      "7:add_noise": "add_noise",
+      "7:noise_seed": "noise_seed",
+      "9:filename_prefix": "filename_prefix",
+      "21:image": "ref_image_0",
+      "22:2:type": "type",
+      "22:2:device": "device",
+      "22:1:weight_dtype": "weight_dtype"
+    }
+  }
+}
