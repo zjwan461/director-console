@@ -31,6 +31,10 @@ data/*.log
 .DS_Store
 Thumbs.db
 .idea/
-.vscode/
+# .vscode 只提交共享的调试配置
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/settings.json
 *.tsbuildinfo
 web/*.tsbuildinfo

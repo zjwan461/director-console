@@ -1,0 +1,125 @@
+{
+  // 导演台调试配置：后端 FastAPI + 前端 Vite/React
+  // 后端默认用系统 Python（可在设置里改解释器）；前端调试需要 Vite dev server。
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "后端：FastAPI（uvicorn --reload）",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": [
+        "app.main:app",
+        "--reload",
+        "--reload-dir",
+        "${workspaceFolder}/backend/app",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "6200"
+      ],
+      "cwd": "${workspaceFolder}/backend",
+      "env": {
+        "PYTHONUNBUFFERED": "1",
+        "PYTHONPATH": "${workspaceFolder}/backend"
+      },
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "subProcess": true
+    },
+    {
+      "name": "后端：FastAPI（无 reload，断点最稳）",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": [
+        "app.main:app",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "6200"
+      ],
+      "cwd": "${workspaceFolder}/backend",
+      "env": {
+        "PYTHONUNBUFFERED": "1",
+        "PYTHONPATH": "${workspaceFolder}/backend"
+      },
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "后端：当前 Python 文件",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${file}",
+      "cwd": "${workspaceFolder}/backend",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/backend"
+      },
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "后端：附加到已运行进程（debugpy :5678）",
+      // 先用：python -m debugpy --listen 5678 -m uvicorn app.main:app --port 6200
+      "type": "debugpy",
+      "request": "attach",
+      "connect": {
+        "host": "127.0.0.1",
+        "port": 5678
+      },
+      "pathMappings": [
+        {
+          "localRoot": "${workspaceFolder}/backend",
+          "remoteRoot": "."
+        }
+      ],
+      "justMyCode": true
+    },
+    {
+      "name": "前端：Chrome 调试（Vite dev）",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://127.0.0.1:5273",
+      "webRoot": "${workspaceFolder}/web",
+      "sourceMaps": true,
+      "preLaunchTask": "web: npm run dev",
+      "userDataDir": false
+    },
+    {
+      "name": "前端：Edge 调试（Vite dev）",
+      "type": "msedge",
+      "request": "launch",
+      "url": "http://127.0.0.1:5273",
+      "webRoot": "${workspaceFolder}/web",
+      "sourceMaps": true,
+      "preLaunchTask": "web: npm run dev"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "全栈：后端 + 前端",
+      "configurations": [
+        "后端：FastAPI（uvicorn --reload）",
+        "前端：Chrome 调试（Vite dev）"
+      ],
+      "stopAll": true,
+      "presentation": {
+        "group": "1",
+        "order": 1
+      }
+    },
+    {
+      "name": "全栈：后端 + 前端（Edge）",
+      "configurations": [
+        "后端：FastAPI（uvicorn --reload）",
+        "前端：Edge 调试（Vite dev）"
+      ],
+      "stopAll": true,
+      "presentation": {
+        "group": "1",
+        "order": 2
+      }
+    }
+  ]
+}
