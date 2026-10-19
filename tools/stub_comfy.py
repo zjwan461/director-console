@@ -84,6 +84,11 @@ class Handler(BaseHTTPRequestHandler):
                         ]
                     }
                 }
+            elif any(
+                isinstance(node, dict) and node.get("class_type") == "SaveImage"
+                for node in workflow.values()
+            ):
+                outputs = {"58": {"images": [{"filename": "stub_image.png", "subfolder": "", "type": "output"}]}}
             else:
                 outputs = {"9": {"gifs": [{"filename": "stub_output.mp4", "subfolder": "", "type": "output"}]}}
             return self._json({

@@ -233,13 +233,22 @@ class JobRunner:
                     target.write_bytes(blob)
                     kind = _kind_of(filename)
                     rel = target.relative_to(Path(settings.paths["outputs"])).as_posix()
-                    results.append({
+                    item = {
                         "kind": kind,
                         "name": filename,
                         "url": f"/media/outputs/{rel}",
                         "node": node_id,
                         "size": len(blob),
-                    })
+                    }
+                    # 图片产物自动进素材库，方便后续图生视频直接选
+                    if kind == "image":
+                        data_rel = target.relative_to(Path(settings.paths["data"])).as_posix()
+                        asset = store.add_asset(
+                            "image", data_rel, size=len(blob),
+                            meta={"from_job": job_id, "node": node_id},
+                        )
+                        item["asset_id"] = asset["id"]
+                    results.append(item)
         return results
 
 

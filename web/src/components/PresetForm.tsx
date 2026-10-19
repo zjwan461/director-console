@@ -76,6 +76,23 @@ export default function PresetFields({ card, values, onChange, assets, setAssets
     }
   }
 
+  const [pickerKey, setPickerKey] = useState<string | null>(null)
+  const [pickerAssets, setPickerAssets] = useState<Asset[]>([])
+  const [pickerLoading, setPickerLoading] = useState(false)
+
+  const openPicker = async (key: string) => {
+    setPickerKey(key)
+    setPickerLoading(true)
+    try {
+      const res = await api.assets('image', 24)
+      setPickerAssets(res.items)
+    } catch {
+      setPickerAssets([])
+    } finally {
+      setPickerLoading(false)
+    }
+  }
+
   const runAssist = async () => {
     if (!assistField) return
     if (!aiConfigured) {
@@ -123,7 +140,35 @@ export default function PresetFields({ card, values, onChange, assets, setAssets
               onChange={(v) => onChange(field.key, v)}
               onUpload={(file) => void uploadField(field, file)}
               onAssist={field.assist ? () => { setAssistKey(field.key); setAssistError('') } : undefined}
+              onPick={field.type === 'image' ? () => void openPicker(field.key) : undefined}
             />
+            {pickerKey === field.key && (
+              <div className="assist">
+                <div className="row" style={{ justifyContent: 'space-between' }}>
+                  <b>素材库（最近图片）</b>
+                  <button className="ghost tiny" onClick={() => setPickerKey(null)}>关闭</button>
+                </div>
+                {pickerLoading && <div className="msg">加载中…</div>}
+                {!pickerLoading && pickerAssets.length === 0 && (
+                  <div className="msg">还没有图片素材，先用「剧照 / 角色图」生成一张。</div>
+                )}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(96px, 1fr))', gap: 8 }}>
+                  {pickerAssets.map((a) => (
+                    <img
+                      key={a.id}
+                      src={a.url}
+                      alt={a.id}
+                      style={{ width: '100%', height: 96, objectFit: 'cover', borderRadius: 8, cursor: 'pointer' }}
+                      onClick={() => {
+                        setAssets((prev) => ({ ...prev, [field.key]: a }))
+                        onChange(field.key, a.id)
+                        setPickerKey(null)
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
             {open && (
               <div className="assist">
                 <b>提示词助手 · {modeLabel[assistField.assist || ''] || assistField.assist}</b>
@@ -183,9 +228,10 @@ interface FieldProps {
   onChange: (value: unknown) => void
   onUpload: (file: File) => void
   onAssist?: () => void
+  onPick?: () => void
 }
 
-function FieldRenderer({ field, value, asset, onChange, onUpload, onAssist }: FieldProps) {
+function FieldRenderer({ field, value, asset, onChange, onUpload, onAssist, onPick }: FieldProps) {
   const inputRef = useRef<HTMLInputElement>(null)
 
   if (field.type === 'textarea') {
@@ -231,6 +277,11 @@ function FieldRenderer({ field, value, asset, onChange, onUpload, onAssist }: Fi
             e.target.value = ''
           }}
         />
+        {field.type === 'image' && onPick && (
+          <button className="ghost" style={{ alignSelf: 'flex-start', fontSize: 12 }} onClick={onPick}>
+            从素材库选（生成过的图）
+          </button>
+        )}
       </div>
     )
   }
@@ -238,13 +289,19 @@ function FieldRenderer({ field, value, asset, onChange, onUpload, onAssist }: Fi
   if (field.type === 'size') {
     const size = (value as { aspect?: string; megapixels?: number }) || {}
     const presets = field.presets || []
-    const MP_OPTIONS: Array<{ mp: number; label: string }> = [
-      { mp: 0.2, label: '省显存草稿' },
-      { mp: 0.4, label: '推荐' },
-      { mp: 0.7, label: '清晰' },
-      { mp: 1.0, label: '高画质' },
-      { mp: 1.5, label: '显存要求高' },
-    ]
+    const mpLabel = (mp: number) => {
+      if (mp >= 2) return '高分辨率'
+      if (mp >= 1.5) return '显存要求高'
+      if (mp >= 1) return '高画质'
+      if (mp >= 0.7) return '清晰'
+      if (mp >= 0.4) return '推荐'
+      return '省显存草稿'
+    }
+    const MP_OPTIONS: Array<{ mp: number; label: string }> = (
+      field.megapixels_options && field.megapixels_options.length
+        ? field.megapixels_options
+        : [0.2, 0.4, 0.7, 1.0, 1.5]
+    ).map((mp) => ({ mp, label: mpLabel(mp) }))
     const current = Number(size.megapixels ?? 0.4)
     // 工作流默认值可能不在预设里（比如 1.2 / 0.9），补一条“自定义”避免选择框回落到第一项
     const options = MP_OPTIONS.some((o) => Math.abs(o.mp - current) < 1e-6)

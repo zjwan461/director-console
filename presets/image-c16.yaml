@@ -1,0 +1,31 @@
+id: image.c16
+name: 剧照 / 角色图（C16）
+badge: 先出图
+category: image
+output_kind: image
+order: 5
+desc: 短剧场景与角色专用文生图：先写清人物、服装、场景与光位，出一张能当首帧的图。
+hint: 出图后会自动进素材库；去「图生视频 / 首尾帧 / 多参考」卡里点「从素材库选」就能拿它当首帧。
+workflow: API-C16-短剧文生图专用-支持场景-角色.json
+timeout: 1800
+fields:
+  - key: prompt
+    bind: "49:text"
+    type: textarea
+    label: 画面描述
+    rows: 10
+    required: true
+    placeholder: 例：冷调古装短剧，雪夜山门前，蓝衣女子回身，红衣同伴在侧，红灯笼与积雪，电影感构图，浅景深
+  - key: size
+    type: size
+    label: 画幅
+    mode: wh
+    width: "60:value"
+    height: "61:value"
+    default_aspect: "16:9"
+    default_megapixels: 2.0
+    megapixels_options: [0.8, 1.0, 1.5, 2.0]
+  - key: seed
+    bind: "22:seed"
+    type: seed
+    label: 随机种子

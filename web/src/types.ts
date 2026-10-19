@@ -33,6 +33,7 @@ export interface PresetField {
   default_aspect?: string
   default_megapixels?: number
   options?: string[]
+  megapixels_options?: number[]
 }
 
 export interface Preset {

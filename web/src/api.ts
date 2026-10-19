@@ -56,6 +56,9 @@ export const api = {
     return request<Asset>('/api/assets/upload', { method: 'POST', body: form })
   },
 
+  assets: (kind?: string, limit = 24) =>
+    request<{ items: Asset[] }>(`/api/assets?limit=${limit}${kind ? `&kind=${kind}` : ''}`),
+
   createJob: (preset_id: string, inputs: Record<string, unknown>) =>
     request<Job>('/api/jobs', {
       method: 'POST',
