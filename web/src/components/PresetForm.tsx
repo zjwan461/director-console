@@ -174,7 +174,7 @@ export default function PresetFields({ card, values, onChange, assets, setAssets
                 <b>提示词助手 · {modeLabel[assistField.assist || ''] || assistField.assist}</b>
                 <small>
                   {aiConfigured
-                    ? '用一句人话描述你想要的画面，模型会扩写成 H3 规范格式。'
+                    ? '用一句人话描述你想要的画面，模型会扩写成规范提示词。'
                     : '尚未配置提示词模型（config.yaml 的 ai.api_key）。填好内容后点生成会提示配置方法。'}
                 </small>
                 <textarea

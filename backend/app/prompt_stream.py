@@ -14,6 +14,7 @@ from .config import settings
 router = APIRouter()
 
 MODES = {
+    "t2i": "imagePrompt",
     "t2v": "keyframeT2va",
     "i2v": "keyframeI2va",
     "flf2v": "keyframeFl2va",

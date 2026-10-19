@@ -550,6 +550,7 @@ async def delete_render(render_id: str) -> dict:
 
 # ---------------------------------------------------------------- 提示词助手
 PROMPT_MODES = {
+    "t2i": {"key": "imagePrompt", "label": "文生图", "desc": "写图片提示词"},
     "t2v": {"key": "keyframeT2va", "label": "文生视频", "desc": "没有任何参考图"},
     "i2v": {"key": "keyframeI2va", "label": "图生视频", "desc": "一张首帧"},
     "flf2v": {"key": "keyframeFl2va", "label": "首尾帧", "desc": "首帧 + 尾帧"},

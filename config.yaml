@@ -2,9 +2,9 @@ app:
   host: 127.0.0.1
   port: 6200
 
-# ComfyUI 连接方式：mock（无显卡跑通链路）| local（本机启动）| ssh（远程机）| external（已有服务）
+# ComfyUI 连接方式：local（本机启动，默认）| ssh（远程机）| external（已有服务）| mock（无显卡跑通链路）
 comfy:
-  mode: mock
+  mode: local
   base_url: http://127.0.0.1:8188
   timeout: 30
   # 是否读取系统代理（HTTP_PROXY/HTTPS_PROXY）。云端地址走公司代理时改成 true；

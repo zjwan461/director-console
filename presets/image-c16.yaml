@@ -15,6 +15,7 @@ fields:
     label: 画面描述
     rows: 10
     required: true
+    assist: t2i
     placeholder: 例：冷调古装短剧，雪夜山门前，蓝衣女子回身，红衣同伴在侧，红灯笼与积雪，电影感构图，浅景深
   - key: size
     type: size
