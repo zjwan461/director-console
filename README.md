@@ -213,6 +213,14 @@ data/          SQLite / 上传 / 产物 / ComfyUI 日志
 - `mock` 模式产物是占位文件，不是真视频
 - 单机单用户，没有账号体系；多机并发是下一阶段
 
+## 许可证
+
+本项目代码采用 **Apache License 2.0**，全文见 [LICENSE](LICENSE)，第三方与来源声明见 [NOTICE](NOTICE)。
+
+需要注意：`workflows/` 与 `content/` 里的工作流、提示词、占位素材来自 Zealman ComfyUI 镜像，
+**不在 Apache-2.0 授权范围内**，版权归原作者（该镜像声明「禁止基于本镜像二次开发后发布」）。
+对外发布前请替换这些素材或取得授权。
+
 ## 安全提醒
 
 - 访问令牌以明文存在本地 `data/director.db` 的 `settings` 表里，只适合单人/内网使用；

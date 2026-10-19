@@ -1,0 +1,35 @@
+Director Console（ComfyUI 导演台）
+Copyright 2026 zjwan461
+
+This product is licensed under the Apache License, Version 2.0.
+See the LICENSE file for the full text.
+
+--------------------------------------------------------------------------------
+第三方便携资源说明（不在 Apache-2.0 授权范围内）
+
+本仓库的代码（backend/、web/、tools/、presets/、alembic 迁移等）由本项目作者编写，
+采用 Apache-2.0。但下列目录中的素材来自第三方，版权归原作者，**不适用 Apache-2.0**：
+
+1. workflows/*.json
+   来源：Zealman ComfyUI 镜像（v9.3x）内置的 API 工作流。
+   该镜像的说明明确写着「禁止基于本镜像二次开发后发布」。这些 JSON 仅作为
+   本地调试/学习的素材保留；对外分发前请自行取得原作者授权，或替换为你自己的
+   工作流。
+
+2. content/
+   - skill-prompt.json              MiniMax-H3 提示词系统提示（来自上述镜像）
+   - u-series-defaults.json         U 系列快捷生成参数（来自上述镜像）
+   - apiimageprompt.yaml            示例提示词库（来自上述镜像）
+   - blank/blank-image.png 等       空白占位素材（来自上述镜像）
+   - h3-full-reference-guide.txt    H3 全参考模式改写规范
+
+3. docs/*.png
+   本项目界面截图，随代码一同以 Apache-2.0 提供。
+
+如果你要基于本项目做对外发布的产品，建议：
+- 删除或替换 workflows/ 与 content/ 中的第三方素材；
+- 保留本 NOTICE 与 LICENSE；
+- 在前端「关于」页展示 Apache-2.0 与第三方声明。
+
+第三方开源依赖（FastAPI、SQLAlchemy、Alembic、React、Vite 等）遵循各自许可证，
+详见各自的发行包与 package-lock.json。
