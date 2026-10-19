@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import { api, formatBytes } from '../api'
 import type { Asset, Preset, PresetField, PromptMode } from '../types'
 
@@ -33,12 +33,27 @@ interface Props {
 }
 
 export default function PresetFields({ card, values, onChange, assets, setAssets, onError }: Props) {
-  const [assistField, setAssistField] = useState<PresetField | null>(null)
+  const [assistKey, setAssistKey] = useState<string | null>(null)
   const [brief, setBrief] = useState('')
   const [assisting, setAssisting] = useState(false)
   const [assistError, setAssistError] = useState('')
   const [modes, setModes] = useState<PromptMode[]>([])
   const [aiConfigured, setAiConfigured] = useState(false)
+
+  const assistField = card.fields.find((f) => f.key === assistKey) || null
+  const assistRef = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    // 切能力卡时关掉助手，避免停在上一个卡的字段上
+    setAssistKey(null)
+    setAssistError('')
+  }, [card.id])
+
+  useEffect(() => {
+    if (!assistField) return
+    assistRef.current?.focus()
+    assistRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [assistKey])
 
   useEffect(() => {
     api.promptModes().then((res) => {
@@ -60,12 +75,16 @@ export default function PresetFields({ card, values, onChange, assets, setAssets
 
   const runAssist = async () => {
     if (!assistField) return
+    if (!aiConfigured) {
+      setAssistError('还没有配置提示词模型：在 config.yaml 设置 ai.api_key 后重试（需要 OpenAI 兼容接口）。')
+      return
+    }
     setAssisting(true)
     setAssistError('')
     try {
       const res = await api.rewrite(assistField.assist || 't2v', brief)
       onChange(assistField.key, res.content)
-      setAssistField(null)
+      setAssistKey(null)
       setBrief('')
     } catch (err) {
       setAssistError(err instanceof Error ? err.message : String(err))
@@ -78,41 +97,49 @@ export default function PresetFields({ card, values, onChange, assets, setAssets
 
   return (
     <div className="form">
-      {card.fields.map((field) => (
-        <FieldRenderer
-          key={field.key}
-          field={field}
-          value={values[field.key]}
-          asset={assets[field.key]}
-          onChange={(v) => onChange(field.key, v)}
-          onUpload={(file) => void uploadField(field, file)}
-          onAssist={field.assist ? () => { setAssistField(field); setAssistError('') } : undefined}
-        />
-      ))}
-
-      {assistField && (
-        <div className="assist">
-          <b>提示词助手 · {modeLabel[assistField.assist || ''] || assistField.assist}</b>
-          <small>
-            {aiConfigured
-              ? '用一句人话描述你想要的画面，模型会扩写成 H3 规范格式。'
-              : '尚未配置提示词模型（config.yaml 的 ai.api_key），配置后才能一键扩写。'}
-          </small>
-          <textarea
-            rows={5}
-            value={brief}
-            placeholder="例：雪夜，女侠推门走入寺庙，镜头跟拍，冷调，有旁白"
-            onChange={(e) => setBrief(e.target.value)}
-          />
-          {assistError && <div className="notice err">{assistError}</div>}
-          <div className="row">
-            <button className="primary" disabled={!aiConfigured || assisting || !brief.trim()} onClick={() => void runAssist()}>
-              {assisting ? <><span className="spin" /> 生成中</> : '生成提示词'}
-            </button>
-            <button className="ghost" onClick={() => setAssistField(null)}>取消</button>
-          </div>
-        </div>
-      )}
+      {card.fields.map((field) => {
+        const open = assistKey === field.key && assistField
+        return (
+          <Fragment key={field.key}>
+            <FieldRenderer
+              field={field}
+              value={values[field.key]}
+              asset={assets[field.key]}
+              onChange={(v) => onChange(field.key, v)}
+              onUpload={(file) => void uploadField(field, file)}
+              onAssist={field.assist ? () => { setAssistKey(field.key); setAssistError('') } : undefined}
+            />
+            {open && (
+              <div className="assist">
+                <b>提示词助手 · {modeLabel[assistField.assist || ''] || assistField.assist}</b>
+                <small>
+                  {aiConfigured
+                    ? '用一句人话描述你想要的画面，模型会扩写成 H3 规范格式。'
+                    : '尚未配置提示词模型（config.yaml 的 ai.api_key）。填好内容后点生成会提示配置方法。'}
+                </small>
+                <textarea
+                  ref={assistRef}
+                  rows={5}
+                  value={brief}
+                  placeholder="例：雪夜，女侠推门走入寺庙，镜头跟拍，冷调，有旁白"
+                  onChange={(e) => setBrief(e.target.value)}
+                />
+                {assistError && <div className="notice err">{assistError}</div>}
+                <div className="row">
+                  <button
+                    className="primary"
+                    disabled={assisting || !brief.trim()}
+                    onClick={() => void runAssist()}
+                  >
+                    {assisting ? <><span className="spin" /> 生成中</> : '生成提示词'}
+                  </button>
+                  <button className="ghost" onClick={() => { setAssistKey(null); setAssistError('') }}>取消</button>
+                </div>
+              </div>
+            )}
+          </Fragment>
+        )
+      })}
     </div>
   )
 }
