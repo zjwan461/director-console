@@ -308,6 +308,38 @@ async def retry_job(job_id: str) -> dict:
     return new
 
 
+class JobSaveAsShot(BaseModel):
+    project_id: str
+    title: str = ""
+
+
+@app.post("/api/jobs/{job_id}/save-as-shot")
+async def save_job_as_shot(job_id: str, body: JobSaveAsShot) -> dict:
+    """把创作台的一次生成结果落成镜头，并把任务归属回填。"""
+    job = store.get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="任务不存在")
+    if job.get("shot_id"):
+        raise HTTPException(status_code=400, detail="这个任务已经属于某个镜头")
+    project = store.get_project(body.project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="项目不存在")
+
+    shot = store.create_shot(
+        project["id"],
+        body.title or f"镜头 {len(store.list_shots(project['id'])) + 1}",
+        job.get("preset_id") or "",
+    )
+    store.update_shot(shot["id"], values=job.get("inputs") or {})
+    store.update_job(job_id, project_id=project["id"], shot_id=shot["id"])
+
+    updated = store.get_job(job_id)
+    if updated and updated.get("status") == "succeeded" and updated.get("outputs"):
+        await runner._attach_last_frame(updated, updated["outputs"])
+
+    return _enrich_shot(store.get_shot(shot["id"]) or shot)
+
+
 # ---------------------------------------------------------------- 项目 / 镜头
 class ProjectCreate(BaseModel):
     name: str

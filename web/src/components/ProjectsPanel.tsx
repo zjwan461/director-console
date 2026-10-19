@@ -333,6 +333,16 @@ export default function ProjectsPanel() {
                     用上一镜末帧 {prevShot.last_frame_ambiguous ? '（占位）' : ''}
                   </button>
                 )}
+                <button
+                  className="ghost"
+                  onClick={() => {
+                    void saveShot().then(() => {
+                      window.location.href = `/?tab=studio&fromShot=${shot.id}`
+                    })
+                  }}
+                >
+                  在创作台打开
+                </button>
               </div>
 
               <PresetFields

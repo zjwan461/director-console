@@ -57,6 +57,25 @@ python tools/stub_comfy.py --port 8199 --token secret123
 - [x] M3 成片：镜头勾选排序、逐段标准化、拼接、抽封面（需要本机有 ffmpeg）
 - [ ] M4 真实环境联调：local / ssh 模式接上 GPU 机
 
+## 创作台 ↔ 项目
+
+两边现在互通了：
+
+- **创作台 → 保存为镜头**：试出满意的一条后，点当前任务下方的「保存为镜头…」，
+  选项目、填标题即可。会把 `preset_id + 全部参数` 写成新镜头，把这次 job 归属回填，
+  并自动抽末帧挂到该镜头（所以下一镜能直接用它当首帧）。
+- **项目 → 在创作台打开**：镜头编辑器里点「在创作台打开」，会把该镜头的参数带进创作台，
+  顶部出现提示条；改完点「保存回该镜头」覆盖，或「返回项目」放弃。
+
+对应接口：
+
+```bash
+POST /api/jobs/{job_id}/save-as-shot   # {project_id, title}
+GET  /api/shots/{shot_id}              # 带 values / last_frame_url
+```
+
+![从镜头打开创作台](docs/preview-from-shot.png)
+
 ## 成片导出（M3）
 
 「项目」页底部就是成片面板：

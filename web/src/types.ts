@@ -60,6 +60,8 @@ export interface Output {
 export interface Job {
   id: string
   preset_id: string
+  project_id?: string
+  shot_id?: string
   status: 'queued' | 'uploading' | 'running' | 'succeeded' | 'failed' | 'canceled'
   progress: number
   message?: string

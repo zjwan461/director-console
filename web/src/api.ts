@@ -66,6 +66,12 @@ export const api = {
   job: (id: string) => request<Job>(`/api/jobs/${id}`),
   cancelJob: (id: string) => request<{ ok: boolean }>(`/api/jobs/${id}/cancel`, { method: 'POST' }),
   retryJob: (id: string) => request<Job>(`/api/jobs/${id}/retry`, { method: 'POST' }),
+  saveJobAsShot: (jobId: string, project_id: string, title: string) =>
+    request<Shot>(`/api/jobs/${jobId}/save-as-shot`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ project_id, title }),
+    }),
 
   promptModes: () => request<{ items: PromptMode[]; ai_configured: boolean; model: string }>('/api/prompt/modes'),  rewrite: (mode: string, brief: string) =>
     request<{ ok: boolean; content: string }>('/api/prompt/rewrite', {
@@ -86,6 +92,7 @@ export const api = {
   deleteProject: (id: string) => request<{ ok: boolean }>(`/api/projects/${id}`, { method: 'DELETE' }),
 
   shots: (projectId: string) => request<{ items: Shot[] }>(`/api/projects/${projectId}/shots`),
+  shot: (id: string) => request<Shot>(`/api/shots/${id}`),
   createShot: (project_id: string, title: string, preset_id: string) =>
     request<Shot>('/api/shots', {
       method: 'POST',

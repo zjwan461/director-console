@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, formatBytes } from '../api'
-import type { Asset, Job, Preset } from '../types'
+import type { Asset, Job, Preset, Project, Shot } from '../types'
 import PresetFields, { makeDefaults } from './PresetForm'
 
 interface Props {
@@ -8,6 +8,8 @@ interface Props {
   onGoJobs: () => void
   serviceReady: boolean
 }
+
+const MEDIA_TYPES = new Set(['image', 'video', 'audio'])
 
 export default function StudioPanel({ onJobCreated, onGoJobs, serviceReady }: Props) {
   const [cards, setCards] = useState<Preset[]>([])
@@ -18,8 +20,33 @@ export default function StudioPanel({ onJobCreated, onGoJobs, serviceReady }: Pr
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
+  // 从项目镜头带参数进来
+  const [fromShot, setFromShot] = useState<Shot | null>(null)
+  // 保存为镜头
+  const [saveOpen, setSaveOpen] = useState(false)
+  const [projects, setProjects] = useState<Project[]>([])
+  const [saveProjectId, setSaveProjectId] = useState('')
+  const [saveTitle, setSaveTitle] = useState('')
+  const [saveBusy, setSaveBusy] = useState(false)
+  const [savedShot, setSavedShot] = useState<Shot | null>(null)
+  const [notice, setNotice] = useState('')
+
   const setAssets = (updater: (prev: Record<string, Asset>) => Record<string, Asset>) =>
     setAssetsState((prev) => updater(prev))
+
+  const loadAssets = async (card: Preset, merged: Record<string, unknown>) => {
+    for (const field of card.fields) {
+      if (!MEDIA_TYPES.has(field.type)) continue
+      const id = merged[field.key]
+      if (typeof id !== 'string' || !id) continue
+      try {
+        const asset = await api.asset(id)
+        setAssetsState((prev) => ({ ...prev, [field.key]: asset }))
+      } catch {
+        // 素材可能已被清理
+      }
+    }
+  }
 
   const selectCard = (card: Preset) => {
     setSelected(card)
@@ -27,11 +54,32 @@ export default function StudioPanel({ onJobCreated, onGoJobs, serviceReady }: Pr
     setAssetsState({})
     setActiveJob(null)
     setError('')
+    setFromShot(null)
+    setSavedShot(null)
+    setNotice('')
+    setSaveOpen(false)
   }
 
   useEffect(() => {
-    api.presets().then((res) => {
+    api.presets().then(async (res) => {
       setCards(res.items)
+      const fromShotId = new URLSearchParams(window.location.search).get('fromShot')
+      if (fromShotId) {
+        try {
+          const shot = await api.shot(fromShotId)
+          const card = res.items.find((c) => c.id === shot.preset_id)
+          if (card) {
+            const merged = { ...makeDefaults(card), ...(shot.values || {}) }
+            setSelected(card)
+            setValues(merged)
+            setFromShot(shot)
+            await loadAssets(card, merged)
+            return
+          }
+        } catch {
+          // 镜头不存在就退回默认
+        }
+      }
       if (res.items.length) selectCard(res.items[0])
     }).catch((err) => setError(String(err)))
   }, [])
@@ -52,11 +100,53 @@ export default function StudioPanel({ onJobCreated, onGoJobs, serviceReady }: Pr
     try {
       const job = await api.createJob(selected.id, values)
       setActiveJob(job)
+      setSavedShot(null)
+      setSaveOpen(false)
       onJobCreated(job)
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  const openSave = async () => {
+    setSaveOpen(true)
+    setNotice('')
+    try {
+      const res = await api.projects()
+      setProjects(res.items)
+      if (!saveProjectId && res.items.length) setSaveProjectId(res.items[0].id)
+    } catch (err) {
+      setError(String(err))
+    }
+  }
+
+  const saveAsShot = async () => {
+    if (!activeJob || !saveProjectId) return
+    setSaveBusy(true)
+    setError('')
+    try {
+      const shot = await api.saveJobAsShot(activeJob.id, saveProjectId, saveTitle)
+      setSavedShot(shot)
+      setActiveJob({ ...activeJob, project_id: shot.project_id, shot_id: shot.id })
+      setSaveOpen(false)
+      setSaveTitle('')
+      setNotice(`已保存为镜头「${shot.title}」，可以去项目页继续编辑或合成。`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setSaveBusy(false)
+    }
+  }
+
+  const saveBackToShot = async () => {
+    if (!fromShot) return
+    try {
+      await api.patchShot(fromShot.id, { values })
+      setNotice(`已把当前参数覆盖回镜头「${fromShot.title}」`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
     }
   }
 
@@ -69,6 +159,23 @@ export default function StudioPanel({ onJobCreated, onGoJobs, serviceReady }: Pr
         </div>
         {!serviceReady && <span className="badge err">ComfyUI 未连接</span>}
       </div>
+
+      {fromShot && (
+        <div className="notice" style={{ marginBottom: 12, display: 'flex', gap: 12, alignItems: 'center' }}>
+          <span style={{ flex: 1 }}>
+            正在编辑项目镜头「{fromShot.title || '未命名'}」的参数；试完可以覆盖回该镜头。
+          </span>
+          <button className="ghost" onClick={() => void saveBackToShot()}>保存回该镜头</button>
+          <a href="?tab=projects"><button className="ghost">返回项目</button></a>
+        </div>
+      )}
+      {notice && <div className="notice" style={{ marginBottom: 12 }}>{notice}</div>}
+      {savedShot && (
+        <div className="notice" style={{ marginBottom: 12, display: 'flex', gap: 12, alignItems: 'center' }}>
+          <span style={{ flex: 1 }}>这次结果已存为镜头「{savedShot.title}」。</span>
+          <a href="?tab=projects"><button className="ghost">去项目页</button></a>
+        </div>
+      )}
 
       <div className="card-grid">
         {cards.map((card) => (
@@ -129,6 +236,48 @@ export default function StudioPanel({ onJobCreated, onGoJobs, serviceReady }: Pr
           <div className="bar"><i style={{ width: `${Math.round((activeJob.progress || 0) * 100)}%` }} /></div>
           {activeJob.error && <div className="notice err" style={{ marginTop: 10 }}>{activeJob.error}</div>}
           <OutputGrid job={activeJob} />
+
+          {activeJob.status === 'succeeded' && !activeJob.shot_id && !savedShot && (
+            <div style={{ marginTop: 12 }}>
+              {!saveOpen ? (
+                <button onClick={() => void openSave()}>保存为镜头…</button>
+              ) : (
+                <div className="assist">
+                  <b>保存为镜头</b>
+                  <small>把这次的参数和产物挂到某个项目下，之后能在项目页继续改、接末帧、进成片。</small>
+                  {!projects.length ? (
+                    <div className="notice">还没有项目。先去「项目」页新建一个。</div>
+                  ) : (
+                    <>
+                      <div className="row">
+                        <select value={saveProjectId} onChange={(e) => setSaveProjectId(e.target.value)}>
+                          {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                        </select>
+                        <input
+                          className="grow"
+                          placeholder="镜头标题（可留空自动编号）"
+                          value={saveTitle}
+                          onChange={(e) => setSaveTitle(e.target.value)}
+                        />
+                      </div>
+                      <div className="row">
+                        <button className="primary" disabled={saveBusy || !saveProjectId} onClick={() => void saveAsShot()}>
+                          {saveBusy ? <><span className="spin" /> 保存中</> : '保存'}
+                        </button>
+                        <button className="ghost" onClick={() => setSaveOpen(false)}>取消</button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeJob.shot_id && !savedShot && (
+            <div className="notice" style={{ marginTop: 10 }}>
+              该任务已归属镜头 {activeJob.shot_id}。
+            </div>
+          )}
         </div>
       )}
     </div>
