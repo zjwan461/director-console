@@ -25,6 +25,7 @@ from .config import settings
 from .jobs import runner
 from .launcher import LaunchError, get_launcher
 from .presets import default_values, get_card, load_cards, public_card, validate
+from .prompt_stream import router as prompt_stream_router
 
 ROOT = Path(settings.paths["root"])
 DATA = Path(settings.paths["data"])
@@ -34,6 +35,8 @@ CONTENT = Path(settings.paths["content"])
 WEB_DIST = Path(settings.paths["web_dist"])
 
 app = FastAPI(title="ComfyUI 导演台", version="0.1.0")
+app.include_router(prompt_stream_router)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

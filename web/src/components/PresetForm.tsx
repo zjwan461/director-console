@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
-import { api, formatBytes } from '../api'
+import { api, formatBytes, rewriteStream } from '../api'
 import type { Asset, Preset, PresetField, PromptMode } from '../types'
 
 export function makeDefaults(card: Preset): Record<string, unknown> {
@@ -39,6 +39,9 @@ export default function PresetFields({ card, values, onChange, assets, setAssets
   const [assistError, setAssistError] = useState('')
   const [modes, setModes] = useState<PromptMode[]>([])
   const [aiConfigured, setAiConfigured] = useState(false)
+  const [streamText, setStreamText] = useState('')
+  const [assistDone, setAssistDone] = useState(false)
+  const abortRef = useRef<AbortController | null>(null)
 
   const assistField = card.fields.find((f) => f.key === assistKey) || null
   const assistRef = useRef<HTMLTextAreaElement>(null)
@@ -76,20 +79,32 @@ export default function PresetFields({ card, values, onChange, assets, setAssets
   const runAssist = async () => {
     if (!assistField) return
     if (!aiConfigured) {
-      setAssistError('还没有配置提示词模型：在 config.yaml 设置 ai.api_key 后重试（需要 OpenAI 兼容接口）。')
+      setAssistError('还没有配置提示词模型：在 config.yaml 设置 ai.api_key 后重试。')
       return
     }
     setAssisting(true)
     setAssistError('')
+    setStreamText('')
+    setAssistDone(false)
+    const controller = new AbortController()
+    abortRef.current = controller
     try {
-      const res = await api.rewrite(assistField.assist || 't2v', brief)
-      onChange(assistField.key, res.content)
-      setAssistKey(null)
-      setBrief('')
+      await rewriteStream(assistField.assist || 't2v', brief, {
+        onDelta: (text) => setStreamText((prev) => prev + text),
+        onDone: (content) => {
+          setStreamText(content)
+          onChange(assistField.key, content)
+          setAssistDone(true)
+        },
+        onError: (message) => setAssistError(message),
+      }, controller.signal)
     } catch (err) {
-      setAssistError(err instanceof Error ? err.message : String(err))
+      if (!controller.signal.aborted) {
+        setAssistError(err instanceof Error ? err.message : String(err))
+      }
     } finally {
       setAssisting(false)
+      abortRef.current = null
     }
   }
 
@@ -124,6 +139,12 @@ export default function PresetFields({ card, values, onChange, assets, setAssets
                   placeholder="例：雪夜，女侠推门走入寺庙，镜头跟拍，冷调，有旁白"
                   onChange={(e) => setBrief(e.target.value)}
                 />
+                {(assisting || streamText) && (
+                  <pre className="logs" style={{ maxHeight: 220, whiteSpace: 'pre-wrap' }}>
+                    {streamText || '正在生成…'}
+                  </pre>
+                )}
+                {assistDone && <div className="notice">已填入下方描述框，可以继续修改。</div>}
                 {assistError && <div className="notice err">{assistError}</div>}
                 <div className="row">
                   <button
@@ -133,7 +154,18 @@ export default function PresetFields({ card, values, onChange, assets, setAssets
                   >
                     {assisting ? <><span className="spin" /> 生成中</> : '生成提示词'}
                   </button>
-                  <button className="ghost" onClick={() => { setAssistKey(null); setAssistError('') }}>取消</button>
+                  <button
+                    className="ghost"
+                    onClick={() => {
+                      if (assisting) abortRef.current?.abort()
+                      setAssistKey(null)
+                      setAssistError('')
+                      setStreamText('')
+                      setAssistDone(false)
+                    }}
+                  >
+                    {assisting ? '停止' : '关闭'}
+                  </button>
                 </div>
               </div>
             )}

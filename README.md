@@ -78,7 +78,8 @@ ai:
 ```
 
 - 改完**保存即生效**：后端按文件修改时间自动重载 `config.yaml` / `config.local.yaml`，不用重启；
-- 模型返回的是 JSON，后端会转成 H3 习惯的六段式文本
+- 生成过程走 **SSE 流式返回**，界面实时显示，结束自动填进描述框
+- 模型返回的是 JSON，前端会转成 H3 习惯的六段式文本
   （`subject_definitions` / `summary` / `retention_analysis` / `detailed_description` / `overall_soundscape` / `non_diegetic_music`）再填进描述框；
 - 没配 key 时按钮仍可点，会提示去哪里配。
 

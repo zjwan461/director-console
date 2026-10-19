@@ -155,3 +155,93 @@ export function timeAgo(ts?: number): string {
   if (diff < 86400) return `${Math.floor(diff / 3600)} 小时前`
   return `${Math.floor(diff / 86400)} 天前`
 }
+
+const PROMPT_ORDER = [
+  'subject_definitions',
+  'summary',
+  'retention_analysis',
+  'detailed_description',
+  'overall_soundscape',
+  'non_diegetic_music',
+]
+
+export function formatPrompt(raw: string): string {
+  const text = (raw || "").trim().replace(/^```(?:json)?/i, "").replace(/```$/, "").trim()
+  let data: unknown
+  try { data = JSON.parse(text) } catch { return raw }
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return raw
+  const obj = data as Record<string, unknown>
+  const keys = [...PROMPT_ORDER.filter((k) => k in obj), ...Object.keys(obj).filter((k) => !PROMPT_ORDER.includes(k))]
+  return keys.map((key) => {
+    const value = obj[key]
+    const body = Array.isArray(value) ? value.map(String).filter(Boolean).join('\\n') : typeof value === 'string' ? value : JSON.stringify(value)
+    return key + ":\\n" + body
+  }).join('\\n\\n')
+}
+
+export interface StreamHandlers {
+  onDelta: (text: string) => void
+  onDone: (content: string) => void
+  onError: (message: string) => void
+}
+
+export async function rewriteStream(
+  mode: string,
+  brief: string,
+  handlers: StreamHandlers,
+  signal?: AbortSignal,
+): Promise<void> {
+  const resp = await fetch('/api/prompt/rewrite/stream', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mode, brief }),
+    signal,
+  })
+  if (!resp.ok) {
+    const text = await resp.text()
+    let message = text || '请求失败'
+    try { message = JSON.parse(text).detail || message } catch { /* ignore */ }
+    handlers.onError(message)
+    return
+  }
+  if (!resp.body) {
+    handlers.onError('当前浏览器不支持流式响应')
+    return
+  }
+  const reader = resp.body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ""
+  let acc = ""
+  let finished = false
+  while (!finished) {
+    const { value, done } = await reader.read()
+    if (value) buffer += decoder.decode(value, { stream: true })
+    let idx = buffer.indexOf('\n\n')
+    while (idx !== -1) {
+      const block = buffer.slice(0, idx)
+      buffer = buffer.slice(idx + 2)
+      let event = "message"
+      const data: string[] = []
+      for (const line of block.split("\n")) {
+        if (line.startsWith("event:")) event = line.slice(6).trim()
+        else if (line.startsWith("data:")) data.push(line.slice(5).trim())
+      }
+      if (data.length) {
+        const payload = data.join("\n")
+        if (event === "error") {
+          try { handlers.onError(JSON.parse(payload).message) } catch { handlers.onError(payload) }
+          return
+        }
+        if (payload.indexOf("DONE") !== -1) { finished = true; break }
+        try {
+          const obj = JSON.parse(payload)
+          const delta = obj.choices && obj.choices[0] && obj.choices[0].delta && obj.choices[0].delta.content
+          if (delta) { acc += delta; handlers.onDelta(delta) }
+        } catch { /* ignore */ }
+      }
+      idx = buffer.indexOf("\n\n")
+    }
+    if (done) break
+  }
+  handlers.onDone(formatPrompt(acc))
+}
