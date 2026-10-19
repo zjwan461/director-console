@@ -179,9 +179,21 @@ function FieldRenderer({ field, value, asset, onChange, onUpload, onAssist }: Fi
   if (field.type === 'size') {
     const size = (value as { aspect?: string; megapixels?: number }) || {}
     const presets = field.presets || []
+    const MP_OPTIONS: Array<{ mp: number; label: string }> = [
+      { mp: 0.2, label: '省显存草稿' },
+      { mp: 0.4, label: '推荐' },
+      { mp: 0.7, label: '清晰' },
+      { mp: 1.0, label: '高画质' },
+      { mp: 1.5, label: '显存要求高' },
+    ]
+    const current = Number(size.megapixels ?? 0.4)
+    // 工作流默认值可能不在预设里（比如 1.2 / 0.9），补一条“自定义”避免选择框回落到第一项
+    const options = MP_OPTIONS.some((o) => Math.abs(o.mp - current) < 1e-6)
+      ? MP_OPTIONS
+      : [...MP_OPTIONS, { mp: current, label: '自定义' }].sort((a, b) => a.mp - b.mp)
     return (
       <div className="field">
-        <label><span>{field.label}</span><span className="meta">{size.aspect} · {size.megapixels} MP</span></label>
+        <label><span>{field.label}</span><span className="meta">{size.aspect} · {current} MP</span></label>
         <div className="chips">
           {presets.map((preset) => (
             <button
@@ -197,14 +209,14 @@ function FieldRenderer({ field, value, asset, onChange, onUpload, onAssist }: Fi
         <div className="row">
           <select
             className="grow"
-            value={String(size.megapixels ?? 0.4)}
+            value={String(current)}
             onChange={(e) => onChange({ ...size, megapixels: Number(e.target.value) })}
           >
-            <option value="0.2">0.2 MP · 省显存草稿</option>
-            <option value="0.4">0.4 MP · 推荐</option>
-            <option value="0.7">0.7 MP · 清晰</option>
-            <option value="1.0">1.0 MP · 高画质</option>
-            <option value="1.5">1.5 MP · 显存要求高</option>
+            {options.map((opt) => (
+              <option key={opt.mp} value={String(opt.mp)}>
+                {opt.mp.toFixed(1)} MP · {opt.label}
+              </option>
+            ))}
           </select>
         </div>
       </div>
