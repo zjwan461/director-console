@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { api, timeAgo } from '../api'
 import type { Job } from '../types'
 import { OutputGrid } from './StudioPanel'
@@ -16,30 +16,100 @@ const STATUS_LABEL: Record<Job['status'], string> = {
   canceled: '已取消',
 }
 
+const PAGE_SIZE = 20
+
+/** 把「首屏刷新」的新数据合并进已加载列表：更新已有项状态、头部插入新任务，保留已翻页的旧数据。 */
+function mergeFresh(prev: Job[], fresh: Job[]): Job[] {
+  const freshIds = new Set(fresh.map((job) => job.id))
+  const cutoff = fresh.length ? fresh[fresh.length - 1].created_at : Number.NEGATIVE_INFINITY
+  // 早于首屏末条的任务属于已翻页的历史数据，直接保留（不重复）。
+  const tail = prev.filter((job) => job.created_at < cutoff && !freshIds.has(job.id))
+  return [...fresh, ...tail]
+}
+
 export default function JobsPanel({ refreshKey }: Props) {
   const [jobs, setJobs] = useState<Job[]>([])
   const [filter, setFilter] = useState<'all' | Job['status']>('all')
   const [expanded, setExpanded] = useState<string>('')
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [hasMore, setHasMore] = useState(true)
 
-  const load = () => {
-    api.jobs(60)
-      .then((res) => setJobs(res.items))
-      .catch((err) => setError(String(err)))
-  }
+  const cursorRef = useRef<string | null>(null)
+  const loadingRef = useRef(false)
+  const hasMoreRef = useRef(true)
+  const sentinelRef = useRef<HTMLDivElement | null>(null)
 
+  const statusParam = filter === 'all' ? undefined : filter
+
+  const loadPage = useCallback(
+    async (reset: boolean) => {
+      if (loadingRef.current) return
+      if (!reset && !hasMoreRef.current) return
+      loadingRef.current = true
+      setLoading(true)
+      try {
+        const cursor = reset ? null : cursorRef.current
+        const res = await api.jobs(PAGE_SIZE, statusParam, cursor)
+        setJobs((prev) => {
+          if (reset) return res.items
+          const seen = new Set(prev.map((job) => job.id))
+          return [...prev, ...res.items.filter((job) => !seen.has(job.id))]
+        })
+        cursorRef.current = res.next_cursor
+        hasMoreRef.current = res.has_more
+        setHasMore(res.has_more)
+        setError('')
+      } catch (err) {
+        setError(err instanceof Error ? err.message : String(err))
+      } finally {
+        loadingRef.current = false
+        setLoading(false)
+      }
+    },
+    [statusParam],
+  )
+
+  // 切换分页/筛选时重置并加载首屏
   useEffect(() => {
-    load()
-    const timer = setInterval(load, 3000)
+    cursorRef.current = null
+    hasMoreRef.current = true
+    setHasMore(true)
+    setJobs([])
+    void loadPage(true)
+  }, [refreshKey, filter, loadPage])
+
+  // 首屏轮询：只刷新最新一页，合并更新状态 & 插入新任务（不影响已加载的历史与滚动位置）
+  useEffect(() => {
+    const timer = setInterval(() => {
+      api
+        .jobs(PAGE_SIZE, statusParam)
+        .then((res) => setJobs((prev) => (prev.length ? mergeFresh(prev, res.items) : res.items)))
+        .catch(() => undefined)
+    }, 3000)
     return () => clearInterval(timer)
-  }, [refreshKey])
+  }, [statusParam])
+
+  // 滚动到底部自动加载下一页
+  useEffect(() => {
+    const el = sentinelRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) void loadPage(false)
+      },
+      { rootMargin: '200px' },
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [loadPage, hasMore])
 
   const shown = filter === 'all' ? jobs : jobs.filter((job) => job.status === filter)
 
   const cancel = async (id: string) => {
     try {
       await api.cancelJob(id)
-      load()
+      void loadPage(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     }
@@ -48,7 +118,7 @@ export default function JobsPanel({ refreshKey }: Props) {
   const retry = async (id: string) => {
     try {
       await api.retryJob(id)
-      load()
+      void loadPage(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     }
@@ -71,7 +141,7 @@ export default function JobsPanel({ refreshKey }: Props) {
       </div>
 
       {error && <div className="notice err">{error}</div>}
-      {!shown.length && <div className="empty">还没有任务。去创作台生成第一条吧。</div>}
+      {!shown.length && !loading && <div className="empty">还没有任务。去创作台生成第一条吧。</div>}
 
       <div className="job-list">
         {shown.map((job) => (
@@ -102,6 +172,11 @@ export default function JobsPanel({ refreshKey }: Props) {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* 触底哨兵：进入视口即加载下一页 */}
+      <div ref={sentinelRef} className="jobs-more">
+        {loading ? '加载中…' : hasMore ? '下滑加载更多' : shown.length ? '没有更多了' : ''}
       </div>
     </div>
   )

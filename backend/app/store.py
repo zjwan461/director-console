@@ -202,11 +202,49 @@ def get_job(jid: str) -> dict | None:
         return _row(conn.execute("SELECT * FROM jobs WHERE id=?", (jid,)).fetchone())
 
 
-def list_jobs(limit: int = 50, status: str | None = None) -> list[dict]:
+def _job_cursor(job: dict) -> str:
+    """游标 = created_at:id，配合 (created_at, id) 降序稳定分页。"""
+    return f"{job['created_at']}:{job['id']}"
+
+
+def _parse_job_cursor(cursor: str) -> tuple[float | None, str]:
+    ts, _, cid = cursor.partition(":")
+    try:
+        return float(ts), cid
+    except ValueError:
+        return None, ""
+
+
+def list_jobs(
+    limit: int = 50,
+    status: str | None = None,
+    cursor: str | None = None,
+) -> tuple[list[dict], bool, str | None]:
+    """按 created_at DESC 游标分页，返回 (items, has_more, next_cursor)。
+
+    游标分页比 offset 更适合“滚动到底部加载更多”：新任务插入头部时
+    不会造成老数据重复或漏读。
+    """
+    clauses: list[str] = []
+    params: list[Any] = []
+    if status:
+        clauses.append("status=?")
+        params.append(status)
+    if cursor:
+        ts, cid = _parse_job_cursor(cursor)
+        if ts is not None:
+            clauses.append("(created_at < ? OR (created_at = ? AND id < ?))")
+            params.extend([ts, ts, cid])
+    where = f" WHERE {' AND '.join(clauses)}" if clauses else ""
     with _lock, connect() as conn:
-        if status:
-            return _rows(conn.execute("SELECT * FROM jobs WHERE status=? ORDER BY created_at DESC LIMIT ?", (status, limit)))
-        return _rows(conn.execute("SELECT * FROM jobs ORDER BY created_at DESC LIMIT ?", (limit,)))
+        rows = _rows(conn.execute(
+            f"SELECT * FROM jobs{where} ORDER BY created_at DESC, id DESC LIMIT ?",
+            (*params, limit + 1),
+        ))
+    has_more = len(rows) > limit
+    rows = rows[:limit]
+    next_cursor = _job_cursor(rows[-1]) if (has_more and rows) else None
+    return rows, has_more, next_cursor
 
 
 def recover_jobs() -> None:

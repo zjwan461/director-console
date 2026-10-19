@@ -246,6 +246,8 @@ pre.logs {
 
 .empty { color: var(--muted); font-size: 12px; padding: 24px; text-align: center; border: 1px dashed var(--line); border-radius: 12px; }
 
+.jobs-more { color: var(--muted); font-size: 12px; padding: 18px 0; text-align: center; }
+
 .spin { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.25); border-top-color: #fff; border-radius: 50%; display: inline-block; animation: spin .8s linear infinite; vertical-align: -2px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 

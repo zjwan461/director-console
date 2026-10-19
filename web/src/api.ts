@@ -1,4 +1,4 @@
-import type { Asset, ComfySettings, Job, Preset, Project, PromptMode, Render, ServiceStatus, Shot } from './types'
+import type { Asset, ComfySettings, Job, JobsPage, Preset, Project, PromptMode, Render, ServiceStatus, Shot } from './types'
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const resp = await fetch(url, init)
@@ -65,7 +65,12 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ preset_id, inputs }),
     }),
-  jobs: (limit = 30) => request<{ items: Job[] }>(`/api/jobs?limit=${limit}`),
+  jobs: (limit = 20, status?: string, cursor?: string | null) => {
+    const params = new URLSearchParams({ limit: String(limit) })
+    if (status) params.set('status', status)
+    if (cursor) params.set('cursor', cursor)
+    return request<JobsPage>(`/api/jobs?${params.toString()}`)
+  },
   job: (id: string) => request<Job>(`/api/jobs/${id}`),
   cancelJob: (id: string) => request<{ ok: boolean }>(`/api/jobs/${id}/cancel`, { method: 'POST' }),
   retryJob: (id: string) => request<Job>(`/api/jobs/${id}/retry`, { method: 'POST' }),

@@ -291,8 +291,13 @@ async def create_job(body: JobCreate) -> dict:
 
 
 @app.get("/api/jobs")
-async def jobs(limit: int = Query(50, ge=1, le=200), status: str | None = None) -> dict:
-    return {"items": store.list_jobs(limit, status)}
+async def jobs(
+    limit: int = Query(20, ge=1, le=100),
+    status: str | None = None,
+    cursor: str | None = None,
+) -> dict:
+    items, has_more, next_cursor = store.list_jobs(limit, status, cursor)
+    return {"items": items, "has_more": has_more, "next_cursor": next_cursor}
 
 
 @app.get("/api/jobs/{job_id}")

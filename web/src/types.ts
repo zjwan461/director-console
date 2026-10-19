@@ -73,6 +73,12 @@ export interface Job {
   finished_at?: number
 }
 
+export interface JobsPage {
+  items: Job[]
+  has_more: boolean
+  next_cursor: string | null
+}
+
 export interface ComfySettings {
   mode: string
   base_url: string
