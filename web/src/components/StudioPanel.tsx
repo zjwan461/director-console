@@ -140,15 +140,29 @@ export function OutputGrid({ job }: { job: Job }) {
   return (
     <div className="card-grid" style={{ marginTop: 12 }}>
       {job.outputs.map((out, idx) => (
-        <div className="panel" key={`${out.url}-${idx}`} style={{ padding: 10 }}>
+        <div className="panel" key={`${out.url}-${out.name}-${idx}`} style={{ padding: 10 }}>
           {out.kind === 'video' && <video src={out.url} controls style={{ width: '100%', borderRadius: 8 }} />}
           {out.kind === 'image' && <img src={out.url} alt={out.name} style={{ width: '100%', borderRadius: 8 }} />}
           {out.kind === 'audio' && <audio src={out.url} controls style={{ width: '100%' }} />}
+          {out.kind === 'text' && (
+            <>
+              <pre className="logs" style={{ maxHeight: 320, whiteSpace: 'pre-wrap' }}>{out.text}</pre>
+              <button
+                className="ghost"
+                style={{ marginTop: 6 }}
+                onClick={() => void navigator.clipboard.writeText(out.text || '')}
+              >
+                复制文本
+              </button>
+            </>
+          )}
           {out.kind === 'file' && <a href={out.url} target="_blank" rel="noreferrer">{out.name}</a>}
-          <div style={{ marginTop: 6, color: 'var(--muted)', fontSize: 12 }}>
-            {out.name} {out.size ? `· ${formatBytes(out.size)}` : ''}{' '}
-            <a href={out.url} download>下载</a>
-          </div>
+          {out.kind !== 'text' && (
+            <div style={{ marginTop: 6, color: 'var(--muted)', fontSize: 12 }}>
+              {out.name} {out.size ? `· ${formatBytes(out.size)}` : ''}{' '}
+              {out.url && <a href={out.url} download>下载</a>}
+            </div>
+          )}
         </div>
       ))}
     </div>

@@ -1,0 +1,58 @@
+id: h3.prompt
+name: 提示词台
+badge: 只出文本
+category: text
+output_kind: text
+order: 12
+desc: 把一句人话扩写成 H3 的六段式分镜词，只出文本、不出视频。
+hint: 先在这里写词，再把结果贴进「多参考 / 九图」卡的描述框。参考图可传可不传。
+workflow: API-U00-minimax_h3提示词QWEN3.8群主版.json
+timeout: 1800
+placeholders:
+  image: blank-image.png
+  video: blank-video.mp4
+  audio: blank-audio.mp3
+fields:
+  - key: ref_1
+    bind: "1:image"
+    type: image
+    label: 参考图 1
+  - key: ref_2
+    bind: "2:image"
+    type: image
+    label: 参考图 2
+  - key: ref_3
+    bind: "3:image"
+    type: image
+    label: 参考图 3
+  - key: ref_4
+    bind: "4:image"
+    type: image
+    label: 参考图 4
+  - key: ref_5
+    bind: "5:image"
+    type: image
+    label: 参考图 5
+  - key: ref_6
+    bind: "6:image"
+    type: image
+    label: 参考图 6
+  - key: ref_7
+    bind: "7:image"
+    type: image
+    label: 参考图 7
+  - key: ref_8
+    bind: "8:image"
+    type: image
+    label: 参考图 8
+  - key: ref_9
+    bind: "9:image"
+    type: image
+    label: 参考图 9
+  - key: prompt
+    bind: "15:提示词"
+    type: textarea
+    label: 你想拍什么
+    rows: 8
+    required: true
+    placeholder: 例：图1的女主在雪夜走进寺庙，遇到图2的男主，两人对话，最后镜头推到屋檐的铜铃

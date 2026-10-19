@@ -1,0 +1,83 @@
+id: h3.u09
+name: 二采提清（U09）
+badge: 进阶
+category: video
+output_kind: video
+order: 55
+desc: 先低分辨率出一采定动态，再二采重绘提清；最多 9 张参考图。
+hint: 一采 0.4MP 别拉高（高了容易失败），二采 0.7~1.0MP 提清；单次仍不超过 15 秒。
+workflow: API-U09-9图版API-V2.json
+timeout: 5400
+placeholders:
+  image: blank-image.png
+  video: blank-video.mp4
+  audio: blank-audio.mp3
+fields:
+  - key: ref_1
+    bind: "137:image"
+    type: image
+    label: 参考图 1
+    required: true
+  - key: ref_2
+    bind: "139:image"
+    type: image
+    label: 参考图 2
+  - key: ref_3
+    bind: "146:image"
+    type: image
+    label: 参考图 3
+  - key: ref_4
+    bind: "147:image"
+    type: image
+    label: 参考图 4
+  - key: ref_5
+    bind: "148:image"
+    type: image
+    label: 参考图 5
+  - key: ref_6
+    bind: "149:image"
+    type: image
+    label: 参考图 6
+  - key: ref_7
+    bind: "150:image"
+    type: image
+    label: 参考图 7
+  - key: ref_8
+    bind: "151:image"
+    type: image
+    label: 参考图 8
+  - key: ref_9
+    bind: "170:image"
+    type: image
+    label: 参考图 9
+  - key: prompt
+    bind: "138:value"
+    type: textarea
+    label: 分镜描述
+    rows: 12
+    required: true
+    assist: r2v
+    placeholder: 可用「提示词助手」扩写成六段式，再贴进来
+  - key: size_draft
+    type: size
+    label: 一采画幅（草稿）
+    mode: aspect_mp
+    aspect: "320:aspect_ratio"
+    megapixels: "320:megapixels"
+    default_aspect: "16:9"
+    default_megapixels: 0.4
+  - key: size_final
+    type: size
+    label: 二采画幅（提清）
+    mode: aspect_mp
+    aspect: "321:aspect_ratio"
+    megapixels: "321:megapixels"
+    default_aspect: "16:9"
+    default_megapixels: 0.7
+  - key: duration
+    bind: "132:value"
+    type: duration
+    label: 时长（秒）
+    default: 10
+    min: 3
+    max: 15

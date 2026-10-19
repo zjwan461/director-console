@@ -204,6 +204,17 @@ class JobRunner:
         for node_id, payload in (entry.get("outputs") or {}).items():
             if not isinstance(payload, dict):
                 continue
+            # 纯文本输出（ShowText / PreviewAny 之类）
+            for key in ("text", "string"):
+                for item in payload.get(key, []) or []:
+                    if isinstance(item, str) and item.strip():
+                        results.append({
+                            "kind": "text",
+                            "name": "提示词",
+                            "text": item,
+                            "node": node_id,
+                            "url": "",
+                        })
             for key in OUTPUT_KEYS:
                 for item in payload.get(key, []) or []:
                     if not isinstance(item, dict):

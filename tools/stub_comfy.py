@@ -69,11 +69,28 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json({})
             if time.time() - entry["t"] < 2:
                 return self._json({})
+            workflow = entry.get("workflow") or {}
+            is_text_job = any(
+                isinstance(node, dict) and node.get("class_type") == "ZealmanLLM_Generate"
+                for node in workflow.values()
+            )
+            if is_text_job:
+                outputs = {
+                    "13": {
+                        "text": [
+                            "subject_definitions:\n<Subject 1> 是 <Picture 1> 中的主角。\n\n"
+                            "summary:\n[reference generation] 这是一段由 stub 返回的示例分镜词。\n\n"
+                            "detailed_description:\n[Shot 1] 中景，主角走向镜头，冷调日光，Static Shot。\n"
+                        ]
+                    }
+                }
+            else:
+                outputs = {"9": {"gifs": [{"filename": "stub_output.mp4", "subfolder": "", "type": "output"}]}}
             return self._json({
                 pid: {
                     "prompt": entry.get("workflow", []),
                     "status": {"completed": True, "status_str": "success", "messages": []},
-                    "outputs": {"9": {"gifs": [{"filename": "stub_output.mp4", "subfolder": "", "type": "output"}]}},
+                    "outputs": outputs,
                 }
             })
         if parsed.path == "/view":

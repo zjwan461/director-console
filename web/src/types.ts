@@ -53,6 +53,8 @@ export interface Output {
   url: string
   size?: number
   error?: string
+  text?: string
+  node?: string
 }
 
 export interface Job {

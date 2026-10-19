@@ -1,0 +1,87 @@
+id: h3.u30
+name: 九图 Ref2VA（U30）
+badge: 九图
+category: video
+output_kind: video
+order: 57
+desc: 官方参考生视频路线，9 图 + 3 音频，角色/场景/音色一起锁定。
+hint: 只传用得上的前几张，空位自动补白。0.7MP 起，显存紧张时降到 0.4。
+workflow: API-U30.json
+timeout: 5400
+placeholders:
+  image: blank-image.png
+  video: blank-video.mp4
+  audio: blank-audio.mp3
+fields:
+  - key: ref_1
+    bind: "259:ref_image_0"
+    type: image
+    label: 参考图 1
+    required: true
+  - key: ref_2
+    bind: "259:ref_image_1"
+    type: image
+    label: 参考图 2
+  - key: ref_3
+    bind: "259:ref_image_2"
+    type: image
+    label: 参考图 3
+  - key: ref_4
+    bind: "259:ref_image_3"
+    type: image
+    label: 参考图 4
+  - key: ref_5
+    bind: "259:ref_image_4"
+    type: image
+    label: 参考图 5
+  - key: ref_6
+    bind: "259:ref_image_5"
+    type: image
+    label: 参考图 6
+  - key: ref_7
+    bind: "259:ref_image_6"
+    type: image
+    label: 参考图 7
+  - key: ref_8
+    bind: "259:ref_image_7"
+    type: image
+    label: 参考图 8
+  - key: ref_9
+    bind: "259:ref_image_8"
+    type: image
+    label: 参考图 9
+  - key: audio_1
+    bind: "259:ref_audio_0"
+    type: audio
+    label: 参考音频 1
+  - key: audio_2
+    bind: "259:ref_audio_1"
+    type: audio
+    label: 参考音频 2
+  - key: audio_3
+    bind: "259:ref_audio_2"
+    type: audio
+    label: 参考音频 3
+  - key: prompt
+    bind: "259:prompt"
+    type: textarea
+    label: 分镜描述
+    rows: 12
+    required: true
+    assist: r2v
+    placeholder: 用 <Picture 1>… 指代参考图，写清每个镜头谁在做什么
+  - key: size
+    type: size
+    label: 画幅
+    mode: aspect_mp
+    aspect: "259:aspect_ratio"
+    megapixels: "259:megapixels"
+    default_aspect: "16:9"
+    default_megapixels: 0.7
+  - key: duration
+    bind: "259:seconds"
+    type: duration
+    label: 时长（秒）
+    default: 10
+    min: 3
+    max: 15
