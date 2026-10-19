@@ -32,3 +32,5 @@ data/*.log
 Thumbs.db
 .idea/
 .vscode/
+*.tsbuildinfo
+web/*.tsbuildinfo

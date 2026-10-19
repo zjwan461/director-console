@@ -18,6 +18,8 @@ from pydantic import BaseModel
 
 from . import store
 from . import runtime
+from . import ffmpeg
+from .render import runner as render_runner
 from .comfy import ComfyError, make_client, probe
 from .config import settings
 from .jobs import runner
@@ -52,12 +54,15 @@ app.mount("/media/files", StaticFiles(directory=str(DATA)), name="files")
 @app.on_event("startup")
 async def _startup() -> None:
     store.recover_jobs()
+    store.recover_renders()
     runner.start()
+    render_runner.start()
 
 
 @app.on_event("shutdown")
 async def _shutdown() -> None:
     await runner.stop()
+    await render_runner.stop()
 
 
 # ---------------------------------------------------------------- 基础
@@ -422,6 +427,77 @@ async def generate_shot(shot_id: str, body: ShotGenerate | None = None) -> dict:
 @app.get("/api/shots/{shot_id}/takes")
 async def shot_takes(shot_id: str, limit: int = 12) -> dict:
     return {"items": store.list_jobs_by_shot(shot_id, limit)}
+
+
+# ---------------------------------------------------------------- 成片导出
+def _enrich_render(render: dict) -> dict:
+    if render.get("output_path"):
+        render["output_url"] = f"/media/files/{render['output_path']}"
+        render["download_name"] = Path(render["output_path"]).name
+    if render.get("cover_path"):
+        render["cover_url"] = f"/media/files/{render['cover_path']}"
+    return render
+
+
+class RenderCreate(BaseModel):
+    shot_ids: list[str] = []
+    options: dict[str, Any] = {}
+
+
+@app.get("/api/ffmpeg/status")
+async def ffmpeg_status() -> dict:
+    return ffmpeg.status()
+
+
+@app.post("/api/projects/{project_id}/renders")
+async def create_render(project_id: str, body: RenderCreate) -> dict:
+    if not store.get_project(project_id):
+        raise HTTPException(status_code=404, detail="项目不存在")
+    shots = store.list_shots(project_id)
+    valid = {s["id"] for s in shots}
+    shot_ids = [sid for sid in body.shot_ids if sid in valid]
+    if not shot_ids:
+        raise HTTPException(status_code=400, detail="至少要选一个镜头")
+    options = {
+        "width": int(body.options.get("width") or 1280),
+        "height": int(body.options.get("height") or 720),
+        "fps": int(body.options.get("fps") or 24),
+        "cover_at": float(body.options.get("cover_at") or 1.0),
+    }
+    if options["width"] < 64 or options["height"] < 64:
+        raise HTTPException(status_code=400, detail="分辨率太小")
+    if not ffmpeg.status()["available"]:
+        raise HTTPException(status_code=400, detail=ffmpeg.status()["hint"])
+    render = store.create_render(project_id, shot_ids, options)
+    await render_runner.enqueue(render["id"])
+    return _enrich_render(render)
+
+
+@app.get("/api/projects/{project_id}/renders")
+async def list_renders(project_id: str, limit: int = 20) -> dict:
+    return {"items": [_enrich_render(r) for r in store.list_renders(project_id, limit)]}
+
+
+@app.get("/api/renders/{render_id}")
+async def render_detail(render_id: str) -> dict:
+    render = store.get_render(render_id)
+    if not render:
+        raise HTTPException(status_code=404, detail="成片任务不存在")
+    return _enrich_render(render)
+
+
+@app.delete("/api/renders/{render_id}")
+async def delete_render(render_id: str) -> dict:
+    render = store.get_render(render_id)
+    if not render:
+        raise HTTPException(status_code=404, detail="成片任务不存在")
+    folder = DATA / "renders" / render_id
+    if folder.exists():
+        import shutil
+        shutil.rmtree(folder, ignore_errors=True)
+    with store.connect() as conn:
+        conn.execute("DELETE FROM renders WHERE id=?", (render_id,))
+    return {"ok": True}
 
 
 # ---------------------------------------------------------------- 提示词助手

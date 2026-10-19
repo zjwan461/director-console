@@ -140,3 +140,19 @@ export interface Shot {
   values?: Record<string, unknown>
   created_at: number
 }
+
+export interface Render {
+  id: string
+  project_id: string
+  status: 'queued' | 'preparing' | 'rendering' | 'succeeded' | 'failed'
+  progress: number
+  message?: string
+  shot_ids: string[]
+  options?: Record<string, unknown>
+  output_url?: string
+  cover_url?: string
+  download_name?: string
+  error?: string
+  created_at: number
+  finished_at?: number
+}

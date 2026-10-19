@@ -47,7 +47,7 @@ def _row(r: sqlite3.Row | None) -> dict | None:
     if r is None:
         return None
     d = dict(r)
-    for key in ("inputs", "outputs", "meta"):
+    for key in ("inputs", "outputs", "meta", "shot_ids", "options"):
         if key in d and isinstance(d[key], str):
             try:
                 d[key] = json.loads(d[key])
@@ -243,3 +243,53 @@ def list_settings() -> dict[str, str]:
 def delete_setting(key: str) -> None:
     with _lock, connect() as conn:
         conn.execute("DELETE FROM settings WHERE key=?", (key,))
+
+# ---------------- renders ----------------
+def create_render(project_id: str, shot_ids: list[str], options: dict) -> dict:
+    rid = new_id("rnd")
+    with _lock, connect() as conn:
+        conn.execute(
+            "INSERT INTO renders(id,project_id,status,progress,message,shot_ids,options,created_at) "
+            "VALUES(?,?,?,?,?,?,?,?)",
+            (rid, project_id, "queued", 0, "排队中",
+             json.dumps(shot_ids, ensure_ascii=False),
+             json.dumps(options, ensure_ascii=False), _now()),
+        )
+    return get_render(rid)  # type: ignore[return-value]
+
+
+def update_render(rid: str, **fields: Any) -> None:
+    if "options" in fields and not isinstance(fields["options"], str):
+        fields["options"] = json.dumps(fields["options"], ensure_ascii=False)
+    allowed = {
+        "status", "progress", "message", "shot_ids", "options",
+        "output_path", "cover_path", "error", "started_at", "finished_at",
+    }
+    fields = {k: v for k, v in fields.items() if k in allowed}
+    if not fields:
+        return
+    sets = ", ".join(f"{k}=?" for k in fields)
+    with _lock, connect() as conn:
+        conn.execute(f"UPDATE renders SET {sets} WHERE id=?", (*fields.values(), rid))
+
+
+def get_render(rid: str) -> dict | None:
+    with _lock, connect() as conn:
+        return _row(conn.execute("SELECT * FROM renders WHERE id=?", (rid,)).fetchone())
+
+
+def list_renders(project_id: str, limit: int = 20) -> list[dict]:
+    with _lock, connect() as conn:
+        return _rows(conn.execute(
+            "SELECT * FROM renders WHERE project_id=? ORDER BY created_at DESC LIMIT ?",
+            (project_id, limit),
+        ))
+
+
+def recover_renders() -> None:
+    with _lock, connect() as conn:
+        conn.execute(
+            "UPDATE renders SET status='failed', error='服务重启导致中断', finished_at=? "
+            "WHERE status IN ('queued','preparing','rendering')",
+            (_now(),),
+        )

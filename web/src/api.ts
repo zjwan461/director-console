@@ -1,4 +1,4 @@
-import type { Asset, ComfySettings, Job, Preset, Project, PromptMode, ServiceStatus, Shot } from './types'
+import type { Asset, ComfySettings, Job, Preset, Project, PromptMode, Render, ServiceStatus, Shot } from './types'
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const resp = await fetch(url, init)
@@ -106,6 +106,17 @@ export const api = {
       body: JSON.stringify({ values }),
     }),
   takes: (id: string) => request<{ items: Job[] }>(`/api/shots/${id}/takes`),
+
+  ffmpegStatus: () => request<{ available: boolean; ffmpeg: string; ffprobe: string; hint: string }>('/api/ffmpeg/status'),
+  createRender: (projectId: string, shot_ids: string[], options: { width: number; height: number; fps: number }) =>
+    request<Render>(`/api/projects/${projectId}/renders`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ shot_ids, options }),
+    }),
+  renders: (projectId: string) => request<{ items: Render[] }>(`/api/projects/${projectId}/renders`),
+  render: (id: string) => request<Render>(`/api/renders/${id}`),
+  deleteRender: (id: string) => request<{ ok: boolean }>(`/api/renders/${id}`, { method: 'DELETE' }),
 }
 
 export function formatDuration(seconds?: number): string {

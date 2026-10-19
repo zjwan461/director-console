@@ -30,6 +30,12 @@ comfy:
     status: "pgrep -f 'python.*main.py' | head -n1"
     log: "tail -n 200 /root/ComfyUI/comfyui.log"
 
+# 成片导出（M3）。ffmpeg 不在 PATH 时填绝对路径，例如 D:/tools/ffmpeg/bin/ffmpeg.exe
+ffmpeg:
+  path: ""
+  crf: "20"
+  preset: "medium"
+
 # 提示词助手（OpenAI 兼容接口）。留空则界面只提示、不调用。
 ai:
   base_url: https://www.autodl.art/api/v1

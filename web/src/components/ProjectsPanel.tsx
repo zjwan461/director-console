@@ -3,6 +3,7 @@ import { api, timeAgo } from '../api'
 import type { Asset, Job, Preset, Project, Shot } from '../types'
 import PresetFields, { makeDefaults } from './PresetForm'
 import { OutputGrid, statusText } from './StudioPanel'
+import RenderPanel from './RenderPanel'
 
 const MEDIA_TYPES = new Set(['image', 'video', 'audio'])
 
@@ -383,6 +384,8 @@ export default function ProjectsPanel() {
           )}
         </section>
       </div>
+
+      {projectId && <RenderPanel projectId={projectId} shots={shots} />}
     </div>
   )
 }

@@ -54,8 +54,36 @@ python tools/stub_comfy.py --port 8199 --token secret123
 - [x] M1.5 能力卡扩充到 11 张（新增 U00 提示词台 / U09 二采 / U24 双采 / U30 / U22）
 - [x] M2 项目与分镜：项目 → 镜头表 → 镜间资产复用（末帧接首帧）
 - [x] M2.5 云端 ComfyUI：页面填地址/令牌，测试连接 + 持久化
-- [ ] M3 成片：镜头排序、ffmpeg 拼接/转码/封面
+- [x] M3 成片：镜头勾选排序、逐段标准化、拼接、抽封面（需要本机有 ffmpeg）
 - [ ] M4 真实环境联调：local / ssh 模式接上 GPU 机
+
+## 成片导出（M3）
+
+「项目」页底部就是成片面板：
+
+1. 勾选要合成的镜头（默认全选），用 ↑ ↓ 调整顺序；
+2. 选分辨率（横屏/竖屏 720p、1080p）与帧率（24/30）；
+3. 点「导出成片」，后台会逐段标准化 → 拼接 → 抽封面，完成后可预览/下载/删除。
+
+实现方式：
+
+- 每段先统一成相同分辨率、帧率、采样率（等比缩放 + 补边，不拉伸），再走 concat demuxer，避免音画不同步；
+- 没有音轨的片段自动补一段等长静音，保证每个输入都有音频；
+- 产物落在 `data/renders/<id>/final.mp4`，封面 `cover.jpg`，通过 `/media/files/` 访问；
+- 任务表 `renders` 由 Alembic `0004_renders` 管理，服务重启会把中断的导出标为失败。
+
+**ffmpeg 是硬依赖**：
+
+```yaml
+ffmpeg:
+  path: ""        # 留空自动找 PATH；也可以写 D:/tools/ffmpeg/bin/ffmpeg.exe
+  crf: "20"
+  preset: "medium"
+```
+
+没装时页面会显示「缺少 ffmpeg」，导出接口返回 400 并给出提示，不会产生半成品。
+
+![成片导出](docs/preview-render.png)
 
 ## 项目 / 分镜怎么用
 
@@ -210,6 +238,8 @@ backend/app/
   main.py      FastAPI 路由
   launcher.py  服务管家（local / ssh / external / mock）
   comfy.py     ComfyUI HTTP 客户端 + mock
+  ffmpeg.py    ffmpeg 探测 / 标准化 / 拼接 / 抽封面
+  render.py    成片导出任务执行器
   presets.py   能力卡加载、参数注入
   jobs.py      任务执行器
   store.py     SQLite
