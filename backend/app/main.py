@@ -26,6 +26,7 @@ from .jobs import runner
 from .launcher import LaunchError, get_launcher
 from .presets import default_values, get_card, load_cards, public_card, validate
 from .prompt_stream import router as prompt_stream_router
+from .model_check import check_models
 
 ROOT = Path(settings.paths["root"])
 DATA = Path(settings.paths["data"])
@@ -207,6 +208,16 @@ async def service_comfy() -> dict:
 async def presets() -> dict:
     cards = [public_card(c) for c in load_cards()]
     return {"items": cards, "count": len(cards)}
+
+
+@app.get("/api/models/check")
+async def models_check(card_id: str | None = None) -> dict:
+    try:
+        return await check_models(card_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except ComfyError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
 
 
 @app.get("/api/presets/{card_id}")

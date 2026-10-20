@@ -56,6 +56,27 @@ class Handler(BaseHTTPRequestHandler):
                     "vram_free": 21 * 1024 ** 3,
                 }],
             })
+        if parsed.path == "/object_info":
+            if not self._authorized():
+                return
+            def opts(values):
+                return [values, {}]
+            return self._json({
+                "UNETLoader": {"input": {"required": {"unet_name": opts([
+                    "minimax/minimax_h3_fl2va_pruned_int8_convrot.safetensors",
+                    "minimax/minimax_h3_ref2va_pruned_int8_convrot.safetensors",
+                ])}}},
+                "CLIPLoader": {"input": {"required": {"clip_name": opts([
+                    "qwen3vl_32b_minimax_h3_int8_convrot.safetensors",
+                ])}}},
+                "VAELoader": {"input": {"required": {"vae_name": opts([
+                    "minimax_h3_video_vae_int8_convrot.safetensors",
+                ])}}},
+                "LoraLoaderModelOnly": {"input": {"required": {"lora_name": opts([
+                    "minimax/H3_Combat_V2.safetensors",
+                ])}}},
+                "CheckpointLoaderSimple": {"input": {"required": {"ckpt_name": opts(["sdxl.safetensors"])}}},
+            })
         if parsed.path == "/queue":
             if not self._authorized():
                 return

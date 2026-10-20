@@ -83,6 +83,29 @@ ai:
   （`subject_definitions` / `summary` / `retention_analysis` / `detailed_description` / `overall_soundscape` / `non_diegetic_music`）再填进描述框；
 - 没配 key 时按钮仍可点，会提示去哪里配。
 
+## 模型检查
+
+「服务管家 → 模型检查」可以一键检查所有能力卡依赖的模型是否存在于当前连接的 ComfyUI：
+
+- 后端读取每张卡的工作流，抽出 `unet_name` / `clip_name` / `vae_name` / `lora_name` 等字段里的模型文件；
+- 调 ComfyUI `/object_info` 拿实际可用模型清单，按“相对路径或文件名”比对；
+- 缺失的列出文件名、所在目录类别、可复制的下载命令，以及 HuggingFace 搜索链接。
+
+命令模板来自配置：
+
+```yaml
+models:
+  comfy_root: "ComfyUI"          # 下载命令里的目标根目录
+  download_base: ""              # 例如 https://hf-mirror.com/your/repo/resolve/main
+```
+
+`download_base` 为空时命令里是 `"<下载地址>"` 占位；填了就拼成
+`<base>/<category>/<filename>`。
+
+> `mock` 模式没有真实模型清单，检查会直接提示“请配置真实 ComfyUI 地址”。
+
+![模型检查](docs/preview-model-check.png)
+
 ## 创作台 ↔ 项目
 
 两边现在互通了：

@@ -48,6 +48,11 @@ ai:
   # 也可直接指定代理（推荐写进 config.local.yaml）：http://host:port
   proxy: ""
 
+models:
+  # 下载命令里的 ComfyUI 根目录，以及可选的模型下载基地址
+  comfy_root: "ComfyUI"
+  download_base: ""
+
 ui:
   # 旧面板 / ComfyUI 作为「高级模式」入口，填了才显示
   advanced_panel: ""

@@ -176,3 +176,27 @@ export interface Render {
   created_at: number
   finished_at?: number
 }
+
+export interface ModelRef {
+  file: string
+  category: string
+  field: string
+  node: string
+  exists: boolean
+  command: string
+  search_url: string
+}
+
+export interface ModelCheckCard {
+  id: string
+  name: string
+  models: ModelRef[]
+  total: number
+  missing_count: number
+}
+
+export interface ModelCheckResult {
+  cards: ModelCheckCard[]
+  summary: { cards: number; models: number; missing: number }
+  comfy: { base_url: string }
+}

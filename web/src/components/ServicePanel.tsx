@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api, formatDuration, timeAgo } from '../api'
 import type { Job, ServiceStatus } from '../types'
+import ModelCheckPanel from './ModelCheckPanel'
 
 interface Props {
   status: ServiceStatus | null
@@ -153,6 +154,8 @@ export default function ServicePanel({ status, onRefresh }: Props) {
           <pre className="logs">{logs || '（云端模式下没有本地日志）'}</pre>
         </div>
       )}
+
+      <ModelCheckPanel />
 
       <div className="panel">
         <h2>最近的失败任务</h2>

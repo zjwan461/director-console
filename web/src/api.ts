@@ -1,4 +1,4 @@
-import type { Asset, ComfySettings, Job, JobsPage, Preset, Project, PromptMode, Render, ServiceStatus, Shot } from './types'
+import type { Asset, ComfySettings, Job, JobsPage, ModelCheckResult, Preset, Project, PromptMode, Render, ServiceStatus, Shot } from './types'
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const resp = await fetch(url, init)
@@ -121,6 +121,9 @@ export const api = {
       body: JSON.stringify({ values }),
     }),
   takes: (id: string) => request<{ items: Job[] }>(`/api/shots/${id}/takes`),
+
+  modelsCheck: (cardId?: string) =>
+    request<ModelCheckResult>(`/api/models/check${cardId ? `?card_id=${cardId}` : ''}`),
 
   ffmpegStatus: () => request<{ available: boolean; ffmpeg: string; ffprobe: string; hint: string }>('/api/ffmpeg/status'),
   createRender: (projectId: string, shot_ids: string[], options: { width: number; height: number; fps: number }) =>

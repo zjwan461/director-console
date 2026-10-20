@@ -181,6 +181,9 @@ class MockComfy(ComfyClient):
         # 最小可播放的 mp4 不好手搓，给一段可识别的文本占位，前端会按“模拟产物”提示
         return b"MOCK_COMFY_OUTPUT\n" + filename.encode()
 
+    async def object_info(self) -> dict:
+        raise ComfyError("模拟模式没有真实模型清单，请先在「ComfyUI 连接」里配置真实地址")
+
     async def interrupt(self) -> None:
         return None
 
