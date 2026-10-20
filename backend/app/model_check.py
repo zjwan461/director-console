@@ -87,7 +87,15 @@ async def _folder_files(category: str) -> set[str]:
         return hit[1]
     names: set[str] = set()
     try:
-        for item in await make_client().model_files(category):
+        # 目录名大小写可能和节点注册的不一致（SeedVR2 注册的是 models/SEEDVR2）
+        actual = category
+        registered = await _registered_folders()
+        if category not in registered:
+            for candidate in registered:
+                if candidate.lower() == category.lower():
+                    actual = candidate
+                    break
+        for item in await make_client().model_files(actual):
             names.add(str(item.get("name") if isinstance(item, dict) else item))
     except Exception:
         names = set()

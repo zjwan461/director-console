@@ -44,3 +44,11 @@ web/*.tsbuildinfo
 config.local.yaml
 .install-state.json
 logs/
+
+# 成片导出产物 / 下载的 ffmpeg 二进制
+data/renders/
+tools/ffmpeg
+tools/ffmpeg.exe
+tools/ffprobe
+tools/ffprobe.exe
+director-node-pack*.zip

@@ -250,6 +250,19 @@ ffmpeg:
 
 ## 节点包（director-node-pack.zip）
 
+**定位**：这是「ComfyUI 插件包」——任何需要额外放进官方 ComfyUI 的东西（custom_nodes、
+节点专用脚本/资源）都收在这里，保证一份 ComfyUI + 这个包就能跑全部能力卡。
+
+> 当前**尚未发布**到 GitHub Release（仓库还在 Gitee，GitHub 镜像未建）。
+> 现在部署用 `python install.py --from-comfy <已有ComfyUI>` 或 `--node-pack <本地zip>`；
+> `content/node-pack.json` 的 `urls` 留空，等 GitHub Release 建好再填。
+
+已知盲区：只通过「注册枚举值」生效的包（如 **RES4LYF** 提供 `res_2s_ode` 等采样器）
+不会被节点类扫描命中，目前不在包里；工作流用到时会自动降级到 `res_multistep`。
+后续会补「枚举值 → 来源包」的扫描。
+
+
+
 zip 不进 git（224 MB，且 Gitee 单文件限 100 MB）。分发方式：
 
 ```
