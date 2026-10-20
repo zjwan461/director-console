@@ -250,6 +250,64 @@ def build_bindings(card: dict, values: dict, media: dict[str, str]) -> dict[str,
     return binds
 
 
+def _enum_options(object_info: dict, class_type: str, field: str) -> list[str]:
+    info = object_info.get(class_type)
+    if not isinstance(info, dict):
+        return []
+    inputs = info.get("input") or {}
+    for section in ("required", "optional"):
+        spec = (inputs.get(section) or {}).get(field)
+        if isinstance(spec, list) and spec and isinstance(spec[0], list):
+            return [str(x) for x in spec[0]]
+    return []
+
+
+MODEL_EXTS = (".safetensors", ".ckpt", ".pt", ".pth", ".bin", ".gguf", ".sft")
+
+
+def _enum_options(object_info: dict, class_type: str, field: str) -> list[str]:
+    info = object_info.get(class_type)
+    if not isinstance(info, dict):
+        return []
+    inputs = info.get("input") or {}
+    for section in ("required", "optional"):
+        spec = (inputs.get(section) or {}).get(field)
+        if isinstance(spec, list) and spec and isinstance(spec[0], list):
+            return [str(x) for x in spec[0]]
+    return []
+
+
+def adapt_workflow_models(workflow: dict, object_info: dict) -> tuple[dict, list[dict]]:
+    """模型路径自适应。
+
+    同一个模型在不同机器上可能放在不同层级（`minimax/x.safetensors` vs 根目录 `x.safetensors`），
+    提交前按当前 ComfyUI 的 object_info 校正：值不在可选列表时，用文件名找唯一匹配替换。
+    """
+    if not object_info:
+        return workflow, []
+
+    changes: list[dict] = []
+    for node in workflow.values():
+        if not isinstance(node, dict):
+            continue
+        class_type = str(node.get("class_type") or "")
+        inputs = node.get("inputs")
+        if not class_type or not isinstance(inputs, dict):
+            continue
+        for field, value in list(inputs.items()):
+            if not isinstance(value, str) or not value.lower().endswith(MODEL_EXTS):
+                continue
+            options = _enum_options(object_info, class_type, field)
+            if not options or value in options:
+                continue
+            base = value.rsplit("/", 1)[-1]
+            matches = [o for o in options if o.rsplit("/", 1)[-1] == base]
+            if len(matches) == 1:
+                inputs[field] = matches[0]
+                changes.append({"good": value, "actual": matches[0], "node": class_type, "field": field})
+    return workflow, changes
+
+
 def apply_bindings(workflow: dict, binds: dict[str, Any]) -> dict:
     # API 格式 JSON 根上带 _api_config 等元数据，ComfyUI 会把它当成节点校验失败
     wf = {
