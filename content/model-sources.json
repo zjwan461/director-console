@@ -556,5 +556,41 @@
   "url": "https://huggingface.co/Kijai/WanVideo_comfy/resolve/main/WanAnimate_relight_lora_fp16.safetensors",
   "directory": "loras",
   "hash": ""
+ },
+ "minimax-h3_singularity_ref2va_v1.3_int8.safetensors": {
+  "name": "Minimax-h3_Singularity_ref2va_v1.3_int8.safetensors",
+  "url": "https://huggingface.co/WarmBloodAban/Minimax-h3_Singularity/resolve/main/Minimax-h3_Singularity_ref2va_v1.3_int8.safetensors",
+  "directory": "diffusion_models",
+  "hash": ""
+ },
+ "minimax-h3_singularity_ref2va_pruned_v1.3_int8.safetensors": {
+  "name": "Minimax-h3_Singularity_ref2va_Pruned_v1.3_int8.safetensors",
+  "url": "https://huggingface.co/WarmBloodAban/Minimax-h3_Singularity/resolve/main/Minimax-h3_Singularity_ref2va_Pruned_v1.3_int8.safetensors",
+  "directory": "diffusion_models",
+  "hash": ""
+ },
+ "minimax_h3_hybrid_fl2va_ref2va_b25-49-int8.safetensors": {
+  "name": "minimax_h3_hybrid_fl2va_ref2va_b25-49-int8.safetensors",
+  "url": "https://huggingface.co/smhfacct/Minimax-H3-fl2va-ref2va-hybrid-models/resolve/main/minimax_h3_hybrid_fl2va_ref2va_b25-49-int8.safetensors",
+  "directory": "diffusion_models",
+  "hash": ""
+ },
+ "h3_upscaler_lms_v0.1.safetensors": {
+  "name": "h3_upscaler_lms_v0.1.safetensors",
+  "url": "https://huggingface.co/Alissonerdx/Minimax-H3-ComfyUI/resolve/main/latent_upscaler/h3_upscaler_lms_v0.1.safetensors",
+  "directory": "upscale_models",
+  "hash": ""
+ },
+ "minimaxh3_semanticbridge_v1_t8_compat.safetensors": {
+  "name": "MiniMaxH3_SemanticBridge_v1_T8_Compat.safetensors",
+  "url": "https://huggingface.co/t8star/Semantic-Bridge-Comfy/resolve/main/models/semantic_bridge/t8_compat/MiniMaxH3_SemanticBridge_v1_T8_Compat.safetensors",
+  "directory": "loras",
+  "hash": ""
+ },
+ "z-image-fun-lora-distill-8-steps-2603-comfyui.safetensors": {
+  "name": "Z-Image-Fun-Lora-Distill-8-Steps-2603-ComfyUI.safetensors",
+  "url": "https://huggingface.co/alibaba-pai/Z-Image-Fun-Lora-Distill/resolve/main/Z-Image-Fun-Lora-Distill-8-Steps-2603-ComfyUI.safetensors",
+  "directory": "loras",
+  "hash": ""
  }
 }

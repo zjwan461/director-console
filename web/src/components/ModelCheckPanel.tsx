@@ -166,8 +166,14 @@ export default function ModelCheckPanel() {
                                 <button className="ghost tiny" onClick={() => void copy(m.command)}>
                                   {copied === m.command ? '已复制' : '复制命令'}
                                 </button>
-                                <a href={m.search_url} target="_blank" rel="noreferrer" style={{ fontSize: 12 }}>
-                                  在 HuggingFace 搜索
+                                <a href={m.search?.huggingface || m.search_url} target="_blank" rel="noreferrer" style={{ fontSize: 12 }}>
+                                  HF
+                                </a>
+                                <a href={m.search?.modelscope || '#'} target="_blank" rel="noreferrer" style={{ fontSize: 12 }}>
+                                  ModelScope
+                                </a>
+                                <a href={m.search?.civitai || '#'} target="_blank" rel="noreferrer" style={{ fontSize: 12 }}>
+                                  Civitai
                                 </a>
                               </div>
                             </>

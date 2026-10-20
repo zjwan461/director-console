@@ -158,6 +158,11 @@ async def check_models(card_id: str | None = None, source: str = "live") -> dict
                 "url": link,
                 "source": "workflow" if link else "none",
                 "search_url": "https://huggingface.co/models?search=" + quote(Path(name).stem),
+                "search": {
+                    "huggingface": "https://huggingface.co/models?search=" + quote(Path(name).stem),
+                    "modelscope": "https://modelscope.cn/models?name=" + quote(Path(name).stem),
+                    "civitai": "https://civitai.com/search/models?query=" + quote(Path(name).stem),
+                },
             })
         missing = [m for m in models if not m["exists"]]
         results.append({

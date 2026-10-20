@@ -1,7 +1,7 @@
 {
  "generated_from": "https://u648450-7917a00c08ae.westd.seetacloud.com:8443",
  "total": 36,
- "with_url": 28,
+ "with_url": 34,
  "models": [
   {
    "file": "ae.safetensors",
@@ -31,10 +31,11 @@
   {
    "file": "h3_upscaler_lms_v0.1.safetensors",
    "category": "upscale_models",
-   "url": "",
+   "url": "https://huggingface.co/Alissonerdx/Minimax-H3-ComfyUI/resolve/main/latent_upscaler/h3_upscaler_lms_v0.1.safetensors",
    "cards": [
     "h3.u22"
-   ]
+   ],
+   "source": "hf-search"
   },
   {
    "file": "minimax/H3_Combat_V2.safetensors",
@@ -48,18 +49,20 @@
   {
    "file": "minimax/Minimax-h3_Singularity_ref2va_Pruned_v1.3_int8.safetensors",
    "category": "diffusion_models",
-   "url": "",
+   "url": "https://huggingface.co/WarmBloodAban/Minimax-h3_Singularity/resolve/main/Minimax-h3_Singularity_ref2va_Pruned_v1.3_int8.safetensors",
    "cards": [
     "h3.u30"
-   ]
+   ],
+   "source": "hf-search"
   },
   {
    "file": "minimax/Minimax-h3_Singularity_ref2va_v1.3_int8.safetensors",
    "category": "diffusion_models",
-   "url": "",
+   "url": "https://huggingface.co/WarmBloodAban/Minimax-h3_Singularity/resolve/main/Minimax-h3_Singularity_ref2va_v1.3_int8.safetensors",
    "cards": [
     "h3.r2v9"
-   ]
+   ],
+   "source": "hf-search"
   },
   {
    "file": "minimax/minimax_h3_fl2v_turbo_4step_v1.0_768p_comfyui_bf16.safetensors",
@@ -100,11 +103,12 @@
   {
    "file": "minimax/minimax_h3_hybrid_fl2va_ref2va_b25-49-int8.safetensors",
    "category": "diffusion_models",
-   "url": "",
+   "url": "https://huggingface.co/smhfacct/Minimax-H3-fl2va-ref2va-hybrid-models/resolve/main/minimax_h3_hybrid_fl2va_ref2va_b25-49-int8.safetensors",
    "cards": [
     "h3.u24",
     "h3.u22"
-   ]
+   ],
+   "source": "hf-search"
   },
   {
    "file": "minimax/minimax_h3_ref2va_int8_convrot.safetensors",
@@ -285,11 +289,12 @@
   {
    "file": "t8_compat/MiniMaxH3_SemanticBridge_v1_T8_Compat.safetensors",
    "category": "loras",
-   "url": "",
+   "url": "https://huggingface.co/t8star/Semantic-Bridge-Comfy/resolve/main/models/semantic_bridge/t8_compat/MiniMaxH3_SemanticBridge_v1_T8_Compat.safetensors",
    "cards": [
     "h3.r2v9",
     "h3.u30"
-   ]
+   ],
+   "source": "hf-search"
   },
   {
    "file": "taeh3.safetensors",
@@ -326,10 +331,11 @@
   {
    "file": "Zimage/Z-Image-Fun-Lora-Distill-8-Steps-2603-ComfyUI.safetensors",
    "category": "loras",
-   "url": "",
+   "url": "https://huggingface.co/alibaba-pai/Z-Image-Fun-Lora-Distill/resolve/main/Z-Image-Fun-Lora-Distill-8-Steps-2603-ComfyUI.safetensors",
    "cards": [
     "image.c16"
-   ]
+   ],
+   "source": "hf-search"
   },
   {
    "file": "Zimage/z_image_bf16.safetensors",

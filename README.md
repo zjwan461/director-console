@@ -110,6 +110,12 @@ models:
 
 ![模型检查](docs/preview-model-check.png)
 
+### 找不到时的搜索入口
+
+每个未解析的模型后面都有三个搜索链接：**HuggingFace / ModelScope / Civitai**，
+按文件名（含中文名）带上 query，直接打开就能搜。HF 上找不到的社区权重，
+优先去 ModelScope 或 Civitai 搜同名文件。
+
 ### 手工补链接
 
 检查结果里每个模型都有「填写链接 / 编辑链接」：粘贴 HF 或任意 HTTP 直链保存后，
