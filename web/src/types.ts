@@ -99,6 +99,17 @@ export interface ServiceStatus {
   advanced_panel?: string
   comfy_web?: string
   settings?: ComfySettings
+  local?: {
+    url: string
+    running: boolean
+    health?: {
+      ok?: boolean
+      latency_ms?: number
+      error?: string
+      system?: Record<string, unknown>
+      devices?: Array<{ name?: string; vram_total?: number; vram_free?: number }>
+    }
+  }
   health?: {
     ok?: boolean
     mock?: boolean

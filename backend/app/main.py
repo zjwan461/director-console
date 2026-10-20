@@ -98,6 +98,15 @@ async def service_status() -> dict:
         else settings.get("ui.comfy_web", "")
     )
     status["settings"] = runtime.public_comfy_settings()
+
+    # 本地 ComfyUI 单独探活：与"当前对话走云端"是两件事
+    local_url = str(settings.get("comfy.local_url", "http://127.0.0.1:8188")).rstrip("/")
+    local_health = await probe(local_url, "", timeout=2.5)
+    status["local"] = {
+        "url": local_url,
+        "running": bool(local_health.get("ok")),
+        "health": local_health,
+    }
     return status
 
 

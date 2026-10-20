@@ -53,7 +53,8 @@ export default function ServicePanel({ status, onRefresh }: Props) {
     return () => clearInterval(timer)
   }, [showLogs, loadLogs])
 
-  const health = status?.health
+  const local = status?.local
+  const health = local?.health || status?.health
   const device = health?.devices?.[0]
   const vram = device?.vram_total
     ? `${(device.vram_total / 1024 ** 3).toFixed(1)} GB（空闲 ${((device.vram_free || 0) / 1024 ** 3).toFixed(1)} GB）`
@@ -74,15 +75,15 @@ export default function ServicePanel({ status, onRefresh }: Props) {
       <div className="panel">
         <h2>
           <span>
-            <span className={`status-dot ${status?.running ? (status.mode === 'mock' ? 'mock' : 'on') : ''}`} />{' '}
-            {status?.running ? 'ComfyUI 已就绪' : 'ComfyUI 未连接'}
+            <span className={`status-dot ${local?.running ? (status?.mode === 'mock' ? 'mock' : 'on') : ''}`} />{' '}
+            {local?.running ? '本地 ComfyUI 已连接' : '本地 ComfyUI 未连接'}
           </span>
-          <span className="badge">{status?.mode ?? '—'}</span>
+          <span className="badge">本机 {local?.url ?? ''}</span>
         </h2>
 
         <dl className="kv">
-          <dt>地址</dt><dd>{status?.base_url ?? '—'}</dd>
-          <dt>连接方式</dt><dd>{modeLabel(status?.mode)}</dd>
+          <dt>本地地址</dt><dd>{local?.url ?? status?.base_url ?? '—'}</dd>
+          <dt>当前会话</dt><dd>{modeLabel(status?.mode)}</dd>
           <dt>托管进程</dt>
           <dd>
             {status?.managed_pid
@@ -98,6 +99,13 @@ export default function ServicePanel({ status, onRefresh }: Props) {
           <dt>延迟</dt><dd>{health?.latency_ms != null ? `${health.latency_ms} ms` : '—'}</dd>
           {health?.error && (<><dt>错误</dt><dd style={{ color: 'var(--err)' }}>{health.error}</dd></>)}
         </dl>
+
+        {status && status.mode !== 'local' && status.mode !== 'ssh' && (
+          <div className="notice" style={{ marginTop: 10 }}>
+            当前任务走「{modeLabel(status.mode)}」，这张卡只反映本机 ComfyUI 是否在线。
+            想让面板托管启停，把上面的连接方式改成「本机」。
+          </div>
+        )}
 
         <div className="row-actions">
           <button
