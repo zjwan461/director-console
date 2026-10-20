@@ -38,7 +38,7 @@ HOST = sys.platform.startswith("win")
 VENV_PY = Path("Scripts/python.exe") if HOST else Path("bin/python")
 
 COMFY_LIGHT_DEPS = [
-    "psutil", "color-matcher", "mss", "opencv-python-headless",
+    "psutil", "color-matcher", "mss",
     "imageio", "imageio-ffmpeg", "diffusers", "accelerate", "sentencepiece",
     "spandrel", "matplotlib", "peft", "lark", "kornia", "av", "transformers",
     "huggingface_hub", "safetensors", "einops", "omegaconf", "gguf",
@@ -275,12 +275,25 @@ def step_comfy_nodes(inst: Installer) -> None:
     inst.log(f"  复制 {count} 个节点包")
 
 
+OPENCV_PIN = "opencv-contrib-python-headless==4.10.0.84"
+
+
 def step_node_deps(inst: Installer) -> None:
     py = inst.python_of(inst.comfy_venv)
     deps = list(COMFY_LIGHT_DEPS)
     if inst.args.with_heavy:
         deps += COMFY_HEAVY_DEPS
     inst.run([py, "-m", "pip", "install", *deps, "numpy<2", "scipy<1.14"])
+
+    # opencv-python / opencv-python-headless 混装会导致
+    #   cv2.dnn 没有 DictValue → import cv2 直接崩
+    # 统一成只保留一个 contrib-headless（同时带 dnn_superres 等 contrib 模块）
+    inst.log("  统一 cv2（卸载混装的 opencv 包）")
+    inst.run([py, "-m", "pip", "uninstall", "-y",
+              "opencv-python", "opencv-python-headless",
+              "opencv-contrib-python", "opencv-contrib-python-headless"], quiet=True)
+    inst.run([py, "-m", "pip", "install", "--force-reinstall", "--no-deps", OPENCV_PIN])
+    inst.run([py, "-c", "import cv2; print('  cv2', cv2.__version__, 'dnn', hasattr(cv2.dnn, 'DictValue'))"])
 
 
 def step_ffmpeg(inst: Installer) -> None:
