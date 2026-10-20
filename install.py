@@ -22,6 +22,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import platform
 import shutil
 import subprocess
 import sys
@@ -305,53 +306,152 @@ def step_node_deps(inst: Installer) -> None:
               "'dnn', hasattr(cv2.dnn, 'DictValue')); assert hasattr(cv2.dnn, 'DictValue')"])
 
 
+FULL_FFMPEG = {
+    "windows": "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip",
+    "linux-x86_64": "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz",
+    "linux-aarch64": "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linuxarm64-gpl.tar.xz",
+}
+
+
+def _platform_key() -> str:
+    if HOST:
+        return "windows"
+    machine = platform.machine().lower()
+    return "linux-aarch64" if machine in ("aarch64", "arm64") else "linux-x86_64"
+
+
+def _download(url: str, dst: Path, proxy: str) -> None:
+    """优先 urllib；某些公司代理会返回 407，退回 curl。"""
+    errors = []
+    try:
+        handlers = []
+        if proxy:
+            handlers.append(urllib.request.ProxyHandler({"http": proxy, "https": proxy}))
+        opener = urllib.request.build_opener(*handlers)
+        with opener.open(url, timeout=120) as resp, dst.open("wb") as fh:
+            shutil.copyfileobj(resp, fh)
+        if dst.exists() and dst.stat().st_size > 1024:
+            return
+        errors.append("urllib 下载内容过小")
+    except Exception as exc:
+        errors.append(f"urllib: {exc}")
+
+    curl = shutil.which("curl")
+    if curl:
+        cmd = [curl, "-sS", "-L", "--fail", "--retry", "2", "-o", str(dst)]
+        if proxy:
+            cmd += ["--proxy", proxy]
+        cmd.append(url)
+        proc = subprocess.run(cmd, capture_output=True, text=True)
+        if proc.returncode == 0 and dst.exists() and dst.stat().st_size > 1024:
+            return
+        errors.append(f"curl: {proc.stderr.strip()[:200]}")
+    raise RuntimeError("；".join(errors))
+
+
+def _extract(archive: pathlib.Path, dest: pathlib.Path) -> None:
+    dest.mkdir(parents=True, exist_ok=True)
+    if archive.suffix == ".zip":
+        with zipfile.ZipFile(archive) as zf:
+            zf.extractall(dest)
+    else:
+        import tarfile
+
+        with tarfile.open(archive) as tf:
+            tf.extractall(dest)
+
+
+def _verify_ffmpeg(binary: pathlib.Path) -> tuple[bool, str]:
+    try:
+        filters = subprocess.run([str(binary), "-hide_banner", "-filters"],
+                                 capture_output=True, text=True, timeout=60).stdout
+        encoders = subprocess.run([str(binary), "-hide_banner", "-encoders"],
+                                  capture_output=True, text=True, timeout=60).stdout
+    except Exception as exc:
+        return False, f"无法执行：{exc}"
+    need = {"subtitles": " subtitles " in filters, "xfade": " xfade " in filters,
+            "libx264": "libx264" in encoders}
+    missing = [k for k, ok in need.items() if not ok]
+    return (not missing), ("完整" if not missing else f"缺少 {', '.join(missing)}")
+
+
 def step_ffmpeg(inst: Installer) -> None:
-    """确保 ffmpeg 可用：PATH > 系统包管理 > imageio-ffmpeg 静态二进制。"""
+    """优先装 full 版 ffmpeg（libass/xfade/libx264），失败再用 imageio-ffmpeg 兜底。"""
     if inst.args.skip_ffmpeg:
         inst.log("  --skip-ffmpeg，跳过")
         return
     if inst.args.dry_run:
-        inst.log("  dry-run：将检测 PATH，缺失则装 imageio-ffmpeg 静态二进制")
+        inst.log("  dry-run：将尝试下载 full 版 ffmpeg，失败回退 imageio-ffmpeg")
         return
 
-    found = shutil.which("ffmpeg")
-    if found:
-        inst.state["ffmpeg_path"] = found
-        inst.log(f"  已在 PATH：{found}")
-        return
+    tools = ROOT / "tools" / "ffmpeg"
+    ffmpeg_bin = tools / ("ffmpeg.exe" if HOST else "ffmpeg")
+    ffprobe_bin = tools / ("ffprobe.exe" if HOST else "ffprobe")
 
-    if not HOST and inst.args.install_system_ffmpeg:
-        for cmd in (["apt-get", "install", "-y", "ffmpeg"],
-                    ["sudo", "apt-get", "install", "-y", "ffmpeg"]):
-            if not shutil.which(cmd[0]):
-                continue
-            try:
-                inst.run(cmd, quiet=True)
-                found = shutil.which("ffmpeg")
-                if found:
-                    inst.state["ffmpeg_path"] = found
-                    inst.log(f"  系统安装完成：{found}")
-                    return
-            except RuntimeError as exc:
-                inst.log(f"  {cmd[0]} 安装失败，继续尝试静态包：{exc}")
+    source = inst.args.ffmpeg_source
+    if source in ("auto", "system"):
+        found = shutil.which("ffmpeg")
+        if found:
+            ok, note = _verify_ffmpeg(pathlib.Path(found))
+            inst.log(f"  系统 ffmpeg：{found}（{note}）")
+            if ok or source == "system":
+                inst.state["ffmpeg_path"] = found
+                probe = shutil.which("ffprobe")
+                inst.state["ffprobe_path"] = probe or ""
+                return
 
-    # 兜底：用 imageio-ffmpeg 自带的静态二进制
-    py = inst.python_of(inst.panel_venv)
+    if source in ("auto", "full") and not (ffmpeg_bin.exists() and ffmpeg_bin.stat().st_size > 0):
+        url = inst.args.ffmpeg_url or FULL_FFMPEG[_platform_key()]
+        archive = ROOT / "logs" / Path(url).name
+        inst.log(f"  下载 full 版 ffmpeg：{url}")
+        try:
+            _download(url, archive, inst.args.proxy)
+            inst.log(f"  下载完成 {archive.stat().st_size / 1024 / 1024:.0f} MB，解压中")
+            unpack = ROOT / "logs" / "_ffmpeg"
+            if unpack.exists():
+                shutil.rmtree(unpack)
+            _extract(archive, unpack)
+            found_ff = next(unpack.rglob("ffmpeg.exe" if HOST else "ffmpeg"), None)
+            found_fp = next(unpack.rglob("ffprobe.exe" if HOST else "ffprobe"), None)
+            if not found_ff:
+                raise RuntimeError("压缩包里没有 ffmpeg")
+            tools.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(found_ff, ffmpeg_bin)
+            if found_fp:
+                shutil.copy2(found_fp, ffprobe_bin)
+            for b in (ffmpeg_bin, ffprobe_bin):
+                if b.exists() and not HOST:
+                    b.chmod(0o755)
+            ok, note = _verify_ffmpeg(ffmpeg_bin)
+            inst.log(f"  full 版自检：{note}")
+            if ok:
+                inst.state["ffmpeg_path"] = str(ffmpeg_bin)
+                inst.state["ffprobe_path"] = str(ffprobe_bin) if ffprobe_bin.exists() else ""
+                archive.unlink(missing_ok=True)
+                shutil.rmtree(unpack, ignore_errors=True)
+                return
+            raise RuntimeError(f"full 版缺少能力：{note}")
+        except Exception as exc:
+            inst.log(f"  [warn] full 版失败，回退 imageio-ffmpeg：{exc}")
+            archive.unlink(missing_ok=True)
+
+    # 兜底：imageio-ffmpeg
+    py = inst.python_of(inst.panel_venv) if (inst.panel_venv / VENV_PY).exists() else sys.executable
     inst.run([py, "-m", "pip", "install", "imageio-ffmpeg", "-q"])
-    tools = ROOT / "tools"
-    tools.mkdir(parents=True, exist_ok=True)
     code = "import imageio_ffmpeg;print(imageio_ffmpeg.get_ffmpeg_exe())"
     proc = subprocess.run([py, "-c", code], capture_output=True, text=True)
     if proc.returncode != 0 or not proc.stdout.strip():
-        inst.log("  [warn] imageio-ffmpeg 不可用，成片导出将无法使用")
+        inst.log("  [warn] 没有可用的 ffmpeg，成片导出不可用")
         return
     src = Path(proc.stdout.strip())
-    dst = tools / ("ffmpeg.exe" if HOST else "ffmpeg")
+    dst = tools.parent / ("ffmpeg.exe" if HOST else "ffmpeg")
     if not inst.args.dry_run:
         shutil.copy2(src, dst)
         dst.chmod(0o755)
+    ok, note = _verify_ffmpeg(dst)
     inst.state["ffmpeg_path"] = str(dst)
-    inst.log(f"  使用静态二进制：{dst}")
+    inst.state["ffprobe_path"] = ""
+    inst.log(f"  使用 imageio-ffmpeg：{dst}（{note}）")
 
 
 def step_config(inst: Installer) -> None:
@@ -514,8 +614,9 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--skip-comfy", action="store_true")
     p.add_argument("--comfy-only", action="store_true")
     p.add_argument("--skip-ffmpeg", action="store_true", help="不安装 ffmpeg")
-    p.add_argument("--install-system-ffmpeg", action="store_true",
-                   help="Linux 上尝试 apt-get 安装 ffmpeg（默认用 imageio-ffmpeg 静态包）")
+    p.add_argument("--ffmpeg-source", default="auto", choices=["auto", "full", "system", "imageio"],
+                   help="auto=系统优先→下载 full→imageio 兜底")
+    p.add_argument("--ffmpeg-url", default="", help="自定义 full 版下载地址（zip/tar.xz）")
     p.add_argument("--with-heavy", action="store_true", help="额外安装 demucs / whisper / llama 等重依赖")
     p.add_argument("--force", action="store_true", help="忽略状态文件，全部重跑")
     p.add_argument("--force-config", action="store_true", help="覆盖 config.local.yaml / 启动脚本")

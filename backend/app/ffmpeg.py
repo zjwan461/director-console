@@ -45,9 +45,11 @@ def ffmpeg_path() -> str | None:
     found = shutil.which("ffmpeg")
     if found:
         return found
-    bundled = Path(settings.paths["root"]) / "tools" / ("ffmpeg.exe" if os.name == "nt" else "ffmpeg")
-    if bundled.exists():
-        return str(bundled)
+    tools = Path(settings.paths["root"]) / "tools"
+    exe = "ffmpeg.exe" if os.name == "nt" else "ffmpeg"
+    for candidate in (tools / exe, tools / "ffmpeg" / exe):
+        if candidate.exists():
+            return str(candidate)
     return _imageio_ffmpeg()
 
 
