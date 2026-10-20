@@ -28,6 +28,17 @@ ASPECTS = {
     "21:9": (21, 9),
 }
 
+ASPECT_TO_LABEL = {
+    "1:1": "1:1 (Square)",
+    "2:3": "2:3 (Portrait Photo)",
+    "3:2": "3:2 (Photo)",
+    "3:4": "3:4 (Portrait Standard)",
+    "4:3": "4:3 (Standard)",
+    "9:16": "9:16 (Portrait Widescreen)",
+    "16:9": "16:9 (Widescreen)",
+    "21:9": "21:9 (Ultrawide)",
+}
+
 ASPECT_LABELS = {
     "16:9 (Widescreen)": "16:9 横屏",
     "9:16 (Portrait Widescreen)": "9:16 竖屏",
@@ -205,7 +216,7 @@ def build_bindings(card: dict, values: dict, media: dict[str, str]) -> dict[str,
             aspect = size.get("aspect") or f.get("default_aspect", "16:9")
             mp = float(size.get("megapixels") or f.get("default_megapixels", 0.4))
             if mode == "aspect_mp":
-                binds[f["aspect"]] = ASPECT_LABELS.get(aspect, aspect)
+                binds[f["aspect"]] = ASPECT_TO_LABEL.get(aspect, aspect)
                 binds[f["megapixels"]] = mp
             else:
                 w, h = size_from(aspect, mp)
@@ -240,7 +251,12 @@ def build_bindings(card: dict, values: dict, media: dict[str, str]) -> dict[str,
 
 
 def apply_bindings(workflow: dict, binds: dict[str, Any]) -> dict:
-    wf = copy.deepcopy(workflow)
+    # API 格式 JSON 根上带 _api_config 等元数据，ComfyUI 会把它当成节点校验失败
+    wf = {
+        key: value
+        for key, value in copy.deepcopy(workflow).items()
+        if isinstance(value, dict) and "class_type" in value
+    }
     for compound, value in binds.items():
         if ":" not in compound:
             continue

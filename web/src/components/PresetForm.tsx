@@ -79,6 +79,8 @@ export default function PresetFields({ card, values, onChange, assets, setAssets
   const [pickerKey, setPickerKey] = useState<string | null>(null)
   const [pickerAssets, setPickerAssets] = useState<Asset[]>([])
   const [pickerLoading, setPickerLoading] = useState(false)
+  const [uploadKey, setUploadKey] = useState<string | null>(null)
+  const mediaInputRef = useRef<HTMLInputElement>(null)
 
   const openPicker = async (key: string) => {
     setPickerKey(key)
@@ -125,11 +127,119 @@ export default function PresetFields({ card, values, onChange, assets, setAssets
     }
   }
 
+  const mediaFields = card.fields.filter((f) => f.type === 'image' || f.type === 'audio' || f.type === 'video')
+  const otherFields = card.fields.filter((f) => !(f.type === 'image' || f.type === 'audio' || f.type === 'video'))
+
+  const clearMedia = (key: string) => {
+    setAssets((prev) => {
+      const next = { ...prev }
+      delete next[key]
+      return next
+    })
+    onChange(key, '')
+  }
+
   const modeLabel = Object.fromEntries(modes.map((m) => [m.mode, m.label]))
 
   return (
     <div className="form">
-      {card.fields.map((field) => {
+      {mediaFields.length > 0 && (
+        <div className="field">
+          <label>
+            <span>素材</span>
+            <span className="meta">{mediaFields.length} 个槽位 · 点击上传</span>
+          </label>
+          <div className="media-tray">
+            {mediaFields.map((field, index) => {
+              const asset = assets[field.key]
+              return (
+                <div
+                  key={field.key}
+                  className={`media-slot ${asset ? 'filled' : ''}`}
+                  onClick={() => {
+                    setUploadKey(field.key)
+                    mediaInputRef.current?.click()
+                  }}
+                  title={field.label}
+                >
+                  <span className="idx">{index + 1}</span>
+                  {asset && field.type === 'image' && <img src={asset.url} alt={field.label} />}
+                  {asset && field.type !== 'image' && (
+                    <span style={{ fontSize: 11, padding: 6, textAlign: 'center' }}>
+                      {field.type === 'audio' ? '音频' : '视频'}<br />
+                      <span style={{ color: 'var(--muted)' }}>{asset.path.split('/').pop()}</span>
+                    </span>
+                  )}
+                  {!asset && (
+                    <span style={{ fontSize: 11, color: 'var(--muted)', textAlign: 'center', padding: 6 }}>
+                      {field.label}
+                    </span>
+                  )}
+                  {!asset && (
+                    <button
+                      className="slot-pick"
+                      onClick={(e) => { e.stopPropagation(); void openPicker(field.key) }}
+                      title="从素材库选"
+                    >
+                      库
+                    </button>
+                  )}
+                  {asset && (
+                    <button
+                      className="slot-clear"
+                      onClick={(e) => { e.stopPropagation(); clearMedia(field.key) }}
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+          {pickerKey && (
+            <div className="assist" style={{ marginTop: 10 }}>
+              <div className="row" style={{ justifyContent: 'space-between' }}>
+                <b>素材库（最近图片）</b>
+                <button className="ghost tiny" onClick={() => setPickerKey(null)}>关闭</button>
+              </div>
+              {pickerLoading && <div className="msg">加载中…</div>}
+              {!pickerLoading && pickerAssets.length === 0 && (
+                <div className="msg">还没有图片素材，先用「剧照 / 角色图」生成一张。</div>
+              )}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(96px, 1fr))', gap: 8 }}>
+                {pickerAssets.map((a) => (
+                  <img
+                    key={a.id}
+                    src={a.url}
+                    alt={a.id}
+                    style={{ width: '100%', height: 96, objectFit: 'cover', borderRadius: 8, cursor: 'pointer' }}
+                    onClick={() => {
+                      setAssets((prev) => ({ ...prev, [pickerKey]: a }))
+                      onChange(pickerKey, a.id)
+                      setPickerKey(null)
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          <input
+            ref={mediaInputRef}
+            type="file"
+            hidden
+            accept={mediaFields.find((f) => f.key === uploadKey)?.type === 'audio' ? 'audio/*' : mediaFields.find((f) => f.key === uploadKey)?.type === 'video' ? 'video/*' : 'image/*'}
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              const field = mediaFields.find((f) => f.key === uploadKey)
+              if (file && field) void uploadField(field, file)
+              e.target.value = ''
+            }}
+          />
+        </div>
+      )}
+
+      {otherFields.map((field) => {
         const open = assistKey === field.key && assistField
         return (
           <Fragment key={field.key}>
@@ -140,35 +250,7 @@ export default function PresetFields({ card, values, onChange, assets, setAssets
               onChange={(v) => onChange(field.key, v)}
               onUpload={(file) => void uploadField(field, file)}
               onAssist={field.assist ? () => { setAssistKey(field.key); setAssistError('') } : undefined}
-              onPick={field.type === 'image' ? () => void openPicker(field.key) : undefined}
             />
-            {pickerKey === field.key && (
-              <div className="assist">
-                <div className="row" style={{ justifyContent: 'space-between' }}>
-                  <b>素材库（最近图片）</b>
-                  <button className="ghost tiny" onClick={() => setPickerKey(null)}>关闭</button>
-                </div>
-                {pickerLoading && <div className="msg">加载中…</div>}
-                {!pickerLoading && pickerAssets.length === 0 && (
-                  <div className="msg">还没有图片素材，先用「剧照 / 角色图」生成一张。</div>
-                )}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(96px, 1fr))', gap: 8 }}>
-                  {pickerAssets.map((a) => (
-                    <img
-                      key={a.id}
-                      src={a.url}
-                      alt={a.id}
-                      style={{ width: '100%', height: 96, objectFit: 'cover', borderRadius: 8, cursor: 'pointer' }}
-                      onClick={() => {
-                        setAssets((prev) => ({ ...prev, [field.key]: a }))
-                        onChange(field.key, a.id)
-                        setPickerKey(null)
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
             {open && (
               <div className="assist">
                 <b>提示词助手 · {modeLabel[assistField.assist || ''] || assistField.assist}</b>

@@ -80,7 +80,10 @@ export default function StudioPanel({ onJobCreated, onGoJobs, serviceReady }: Pr
           // 镜头不存在就退回默认
         }
       }
-      if (res.items.length) selectCard(res.items[0])
+      const cardId = new URLSearchParams(window.location.search).get('card')
+      const wanted = cardId ? res.items.find((c) => c.id === cardId) : null
+      if (wanted) selectCard(wanted)
+      else if (res.items.length) selectCard(res.items[0])
     }).catch((err) => setError(String(err)))
   }, [])
 
@@ -195,8 +198,9 @@ export default function StudioPanel({ onJobCreated, onGoJobs, serviceReady }: Pr
         ))}
       </div>
 
+      <div className="studio-split">
       {selected && (
-        <div className="panel" style={{ marginTop: 16 }}>
+        <div className="panel">
           <h2>
             <span>{selected.name}</span>
             <span style={{ color: 'var(--muted)', fontSize: 11 }}>{selected.id}</span>
@@ -214,14 +218,24 @@ export default function StudioPanel({ onJobCreated, onGoJobs, serviceReady }: Pr
           />
 
           <div className="row-actions">
-            <button className="primary" disabled={submitting || !!selected.error} onClick={() => void submit()}>
-              {submitting ? <><span className="spin" /> 提交中</> : '开始生成'}
-            </button>
             <button className="ghost" onClick={() => selectCard(selected)}>重置表单</button>
             <button className="ghost" onClick={onGoJobs}>查看全部任务</button>
             {error && <span style={{ color: 'var(--err)', fontSize: 12 }}>{error}</span>}
           </div>
+
+          <div className="sticky-bar">
+            <span style={{ fontSize: 12, color: 'var(--muted)' }}>
+              {selected.name} · {summaryText(selected, values)}
+            </span>
+            <button className="primary" disabled={submitting || !!selected.error} onClick={() => void submit()}>
+              {submitting ? <><span className="spin" /> 提交中</> : '开始生成'}
+            </button>
+          </div>
         </div>
+      )}
+
+      {selected && !activeJob && (
+        <div className="panel empty">生成后结果显示在这里</div>
       )}
 
       {activeJob && (
@@ -280,8 +294,26 @@ export default function StudioPanel({ onJobCreated, onGoJobs, serviceReady }: Pr
           )}
         </div>
       )}
+      </div>
     </div>
   )
+}
+
+function summaryText(card: Preset, values: Record<string, unknown>): string {
+  const parts: string[] = []
+  const sizeField = card.fields.find((f) => f.type === 'size')
+  if (sizeField) {
+    const size = values[sizeField.key] as { aspect?: string; megapixels?: number } | undefined
+    if (size) parts.push(`${size.aspect || ''} · ${size.megapixels ?? ''} MP`)
+  }
+  const durationField = card.fields.find((f) => f.type === 'duration')
+  if (durationField) parts.push(`${values[durationField.key] ?? ''} 秒`)
+  const seedField = card.fields.find((f) => f.type === 'seed')
+  if (seedField) {
+    const seed = Number(values[seedField.key] ?? -1)
+    parts.push(seed < 0 ? '随机种子' : `种子 ${seed}`)
+  }
+  return parts.filter(Boolean).join(' · ')
 }
 
 export function OutputGrid({ job }: { job: Job }) {
