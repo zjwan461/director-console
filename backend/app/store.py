@@ -141,6 +141,18 @@ def list_jobs_by_shot(shot_id: str, limit: int = 20) -> list[dict]:
         ))
 
 
+def reorder_shots(project_id: str, ordered_ids: list[str]) -> list[dict]:
+    with _lock, connect() as conn:
+        valid = {r["id"] for r in conn.execute("SELECT id FROM shots WHERE project_id=?", (project_id,))}
+        idx = 0
+        for sid in ordered_ids:
+            if sid not in valid:
+                continue
+            conn.execute("UPDATE shots SET idx=? WHERE id=?", (idx, sid))
+            idx += 1
+    return list_shots(project_id)
+
+
 def delete_shot(sid: str) -> None:
     with _lock, connect() as conn:
         conn.execute("DELETE FROM shots WHERE id=?", (sid,))

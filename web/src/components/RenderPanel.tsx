@@ -12,9 +12,10 @@ const RESOLUTIONS = [
 interface Props {
   projectId: string
   shots: Shot[]
+  onReorder?: (ids: string[]) => void | Promise<void>
 }
 
-export default function RenderPanel({ projectId, shots }: Props) {
+export default function RenderPanel({ projectId, shots, onReorder }: Props) {
   const [selected, setSelected] = useState<string[]>([])
   const [resolution, setResolution] = useState(RESOLUTIONS[0].key)
   const [fps, setFps] = useState(24)
@@ -51,7 +52,7 @@ export default function RenderPanel({ projectId, shots }: Props) {
   }
 
   const ordered = useMemo(
-    () => selected.map((id) => shots.find((s) => s.id === id)).filter(Boolean) as Shot[],
+    () => shots.filter((s) => selected.includes(s.id)),
     [selected, shots],
   )
 
@@ -59,20 +60,13 @@ export default function RenderPanel({ projectId, shots }: Props) {
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
   }
 
-  const display = useMemo(
-    () => [...ordered, ...shots.filter((s) => !selected.includes(s.id))],
-    [ordered, shots, selected],
-  )
-
   const move = (id: string, dir: -1 | 1) => {
-    setSelected((prev) => {
-      const idx = prev.indexOf(id)
-      const next = idx + dir
-      if (idx < 0 || next < 0 || next >= prev.length) return prev
-      const copy = [...prev]
-      ;[copy[idx], copy[next]] = [copy[next], copy[idx]]
-      return copy
-    })
+    const idx = shots.findIndex((s) => s.id === id)
+    const next = idx + dir
+    if (idx < 0 || next < 0 || next >= shots.length) return
+    const ids = shots.map((s) => s.id)
+    ;[ids[idx], ids[next]] = [ids[next], ids[idx]]
+    void onReorder?.(ids)
   }
 
   const create = async () => {
@@ -121,7 +115,7 @@ export default function RenderPanel({ projectId, shots }: Props) {
       <div className="field">
         <label><span>镜头顺序（勾选 + 上下调整）</span><span className="meta">已选 {ordered.length} / {shots.length}</span></label>
         <div className="list">
-          {display.map((shot) => {
+          {shots.map((shot) => {
             const isSelected = selected.includes(shot.id)
             const pos = selected.indexOf(shot.id) + 1
             return (

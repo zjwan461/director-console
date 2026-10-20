@@ -228,6 +228,26 @@ export default function ProjectsPanel() {
     }
   }
 
+  const moveShot = async (id: string, dir: -1 | 1) => {
+    const idx = shots.findIndex((s) => s.id === id)
+    const next = idx + dir
+    if (idx < 0 || next < 0 || next >= shots.length) return
+    const ids = shots.map((s) => s.id)
+    ;[ids[idx], ids[next]] = [ids[next], ids[idx]]
+    setShots((prev) => {
+      const copy = [...prev]
+      ;[copy[idx], copy[next]] = [copy[next], copy[idx]]
+      return copy.map((s, i) => ({ ...s, idx: i }))
+    })
+    try {
+      const res = await api.reorderShots(projectId, ids)
+      setShots(res.items)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+      void loadShots(projectId, shot?.id || '')
+    }
+  }
+
   const deleteShot = async (id: string) => {
     if (!window.confirm('删除这个镜头？')) return
     try {
@@ -313,6 +333,8 @@ export default function ProjectsPanel() {
                         <b>{s.title || `镜头 ${s.idx + 1}`}</b>
                         <div className="meta">{c?.name || s.preset_id || '未选能力'}</div>
                       </div>
+                      <button className="ghost tiny" onClick={(e) => { e.stopPropagation(); void moveShot(s.id, -1) }}>↑</button>
+                      <button className="ghost tiny" onClick={(e) => { e.stopPropagation(); void moveShot(s.id, 1) }}>↓</button>
                     </div>
                   )
                 })}
@@ -409,7 +431,20 @@ export default function ProjectsPanel() {
         </section>
       </div>
 
-      {projectId && <RenderPanel projectId={projectId} shots={shots} />}
+      {projectId && (
+        <RenderPanel
+          projectId={projectId}
+          shots={shots}
+          onReorder={async (ids) => {
+            try {
+              const res = await api.reorderShots(projectId, ids)
+              setShots(res.items)
+            } catch (err) {
+              setError(err instanceof Error ? err.message : String(err))
+            }
+          }}
+        />
+      )}
     </div>
   )
 }

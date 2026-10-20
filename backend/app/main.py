@@ -707,6 +707,18 @@ async def shots(project_id: str) -> dict:
     return {"items": [_enrich_shot(s) for s in store.list_shots(project_id)]}
 
 
+class ShotReorder(BaseModel):
+    shot_ids: list[str] = []
+
+
+@app.post("/api/projects/{project_id}/shots/reorder")
+async def reorder_shots(project_id: str, body: ShotReorder) -> dict:
+    if not store.get_project(project_id):
+        raise HTTPException(status_code=404, detail="项目不存在")
+    items = store.reorder_shots(project_id, body.shot_ids)
+    return {"items": [_enrich_shot(s) for s in items]}
+
+
 @app.post("/api/shots")
 async def create_shot(body: ShotCreate) -> dict:
     if not store.get_project(body.project_id):

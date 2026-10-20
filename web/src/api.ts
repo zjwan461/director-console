@@ -120,6 +120,13 @@ export const api = {
 
   shots: (projectId: string) => request<{ items: Shot[] }>(`/api/projects/${projectId}/shots`),
   shot: (id: string) => request<Shot>(`/api/shots/${id}`),
+  reorderShots: (projectId: string, shotIds: string[]) =>
+    request<{ items: Shot[] }>(`/api/projects/${projectId}/shots/reorder`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ shot_ids: shotIds }),
+    }),
+
   createShot: (project_id: string, title: string, preset_id: string) =>
     request<Shot>('/api/shots', {
       method: 'POST',
