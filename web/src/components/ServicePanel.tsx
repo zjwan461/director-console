@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
-import { api, formatDuration, timeAgo } from '../api'
-import type { Job, ServiceStatus } from '../types'
+import { api, formatDuration } from '../api'
+import type { ServiceStatus } from '../types'
 import ModelCheckPanel from './ModelCheckPanel'
 
 interface Props {
@@ -156,11 +156,6 @@ export default function ServicePanel({ status, onRefresh }: Props) {
       )}
 
       <ModelCheckPanel />
-
-      <div className="panel">
-        <h2>最近的失败任务</h2>
-        <FailureList />
-      </div>
     </div>
   )
 }
@@ -335,32 +330,6 @@ function ConnectionSettings({ status, onSaved }: { status: ServiceStatus | null;
         {error && <div className="notice err">{error}</div>}
         {saved && <div className="notice">{saved}</div>}
       </div>
-    </div>
-  )
-}
-
-function FailureList() {
-  const [jobs, setJobs] = useState<Job[]>([])
-  useEffect(() => {
-    const load = () => {
-      api.jobs(30).then((res) => setJobs(res.items.filter((j) => j.status === 'failed'))).catch(() => undefined)
-    }
-    load()
-    const timer = setInterval(load, 5000)
-    return () => clearInterval(timer)
-  }, [])
-
-  if (!jobs.length) return <div className="empty">没有失败任务，一切正常。</div>
-  return (
-    <div className="job-list">
-      {jobs.slice(0, 5).map((job) => (
-        <div className="job" key={job.id}>
-          <div className="body">
-            <div className="title"><b>{job.preset_id}</b><span className="badge err">失败</span><span className="msg">{timeAgo(job.created_at)}</span></div>
-            <div className="err">{job.error || job.message || '未知错误'}</div>
-          </div>
-        </div>
-      ))}
     </div>
   )
 }
