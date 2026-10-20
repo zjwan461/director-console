@@ -250,17 +250,58 @@ ffmpeg:
 
 ## 节点包（director-node-pack.zip）
 
-zip 内路径**必须是 `/` 分隔**。Windows 自带 `Compress-Archive` 会写成反斜杠，
-Linux 的 `unzip` 会直接失败（`appears to use backslashes as path separators`）。
+zip 不进 git（224 MB，且 Gitee 单文件限 100 MB）。分发方式：
 
-重新打包用任意一种：
-
-```bash
-python -c "import zipfile,pathlib,shutil; ..."   # 或
-7z a -tzip director-node-pack.zip .\custom_nodes
+```
+GitHub Release 附件  →  content/node-pack.json 记录 URL + sha256
 ```
 
-`install.py` 内部已做规范化，Dockerfile 里的 `unzip` 则没有——所以镜像构建必须用正斜杠的包。
+### 清单
+
+`content/node-pack.json`：
+
+```json
+{
+  "version": "2026.10.20",
+  "bytes": 235051308,
+  "sha256": "4d8d…",
+  "urls": [
+    "https://github.com/<owner>/<repo>/releases/download/nodes-2026.10.20/director-node-pack.zip",
+    "https://ghfast.top/https://github.com/<owner>/<repo>/releases/download/nodes-2026.10.20/director-node-pack.zip"
+  ],
+  "packs": { "seedvr2_videoupscaler": {"nodes": ["SeedVR2VideoUpscaler"]} }
+}
+```
+
+`urls` 可多条，`install.py` 按顺序尝试，**下完校验 sha256**，不匹配自动换下一个。
+
+### 安装
+
+```bash
+python install.py --nodes auto            # 本地有 zip 就用，没有就按清单下载
+python install.py --nodes local           # 只用本地 zip（内网）
+python install.py --nodes download        # 强制下载
+python install.py --from-comfy /root/ComfyUI   # 从已有环境复制 26 个目录（完全离线）
+```
+
+### 发布新版本
+
+```bash
+python tools/pack_nodes.py --comfy D:/workspaces/minimax/ComfyUI
+# → 生成 director-node-pack.zip，自动更新 manifest 的 sha256/bytes/version
+# → 上传到 GitHub Release（tag 如 nodes-2026.10.20）
+# → 把下载地址填进 content/node-pack.json 的 urls
+# → 提交 manifest
+```
+
+### 打包注意
+
+zip 内路径必须是 `/`。Windows 的 `Compress-Archive` 会写反斜杠，Linux 的 `unzip` 会直接失败；
+`tools/pack_nodes.py` 用 `zipfile` 写入，天然是正斜杠。
+
+### 内网
+
+没有外网时用 `--from-comfy`，直接从现成的 ComfyUI 复制节点目录，不下载任何东西。
 
 ## 一键安装（install.py）
 

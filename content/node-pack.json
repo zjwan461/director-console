@@ -1,0 +1,180 @@
+{
+ "name": "director-node-pack",
+ "version": "2026.10.20",
+ "file": "director-node-pack.zip",
+ "bytes": 235051308,
+ "sha256": "4d8dbbb81fdbc426309f37425c7d23eab713d2dbff938e7ec5b9188c20274d26",
+ "urls": [],
+ "packs": {
+  "ComfyUI-Custom-Scripts": {
+   "nodes": [
+    "ShowText|pysssss"
+   ]
+  },
+  "ComfyUI-Easy-Media": {
+   "nodes": [
+    "ImageResizeKJv2",
+    "MiniMaxH3MemoryEfficientSageAttentionPatch"
+   ]
+  },
+  "ComfyUI-Easy-Use": {
+   "nodes": [
+    "easy clearCacheAll",
+    "easy float"
+   ]
+  },
+  "ComfyUI-KJNodes": {
+   "nodes": [
+    "INTConstant",
+    "ImageResizeKJv2",
+    "MiniMaxChunkFeedForward",
+    "MiniMaxH3MemoryEfficientSageAttentionPatch",
+    "MiniMaxLowVRAMAttention",
+    "ModelPreviewOverrideKJ"
+   ]
+  },
+  "ComfyUI-LogicUtils": {
+   "nodes": [
+    "ResizeShortestToNode"
+   ]
+  },
+  "ComfyUI-MAINodes": {
+   "nodes": [
+    "MiniMaxChunkFeedForward",
+    "MiniMaxH3MemoryEfficientSageAttentionPatch"
+   ]
+  },
+  "ComfyUI-MiniMaxH3_LatentUpscaler": {
+   "nodes": [
+    "MiniMaxH3VAEDecodeFast"
+   ]
+  },
+  "ComfyUI-PT_H3ConcatAVLatent": {
+   "nodes": [
+    "PT_H3ConcatAVLatent"
+   ]
+  },
+  "ComfyUI-VideoHelperSuite": {
+   "nodes": [
+    "VHS_LoadAudioUpload",
+    "VHS_VideoCombine"
+   ]
+  },
+  "ComfyUI-WujiToolbox": {
+   "nodes": [
+    "SeedVR2LoadDiTModel",
+    "SeedVR2LoadVAEModel",
+    "SeedVR2VideoUpscaler"
+   ]
+  },
+  "ComfyUI-YCNodes-MiniMax-H3": {
+   "nodes": [
+    "H3SigmaRefiner"
+   ]
+  },
+  "ComfyUI_Comfyroll_CustomNodes": {
+   "nodes": [
+    "CR Prompt Text",
+    "CR Text"
+   ]
+  },
+  "Comfyui_Minimax_h3_latent_Upscaler": {
+   "nodes": [
+    "MinimaxH3LatentUpscaler3D"
+   ]
+  },
+  "MiniMax_H3_Semantic_Bridge": {
+   "nodes": [
+    "SenseNovaH3DistilledBridge"
+   ]
+  },
+  "comfyUI-zealman": {
+   "nodes": [
+    "ZealmanH3LoadImageToRefImages",
+    "ZealmanH3ModelLoader",
+    "ZealmanH3PickReferenceMedia",
+    "ZealmanLLM_Generate",
+    "ZealmanLLM_ModelLoader"
+   ]
+  },
+  "comfyui-SelfLift": {
+   "nodes": [
+    "SelfLiftH3Sampler"
+   ]
+  },
+  "comfyui-WhiteJade-Image": {
+   "nodes": [
+    "WJILatentPreset"
+   ]
+  },
+  "comfyui-deno-custom-nodes": {
+   "nodes": [
+    "DenoAudioAnalysisFinalize",
+    "DenoAudioTranscript",
+    "DenoMiniMaxH3ReferenceToVideo",
+    "DenoPromptText"
+   ]
+  },
+  "comfyui-minimax-h3-audio-T8": {
+   "nodes": [
+    "MiniMaxChunkFeedForward",
+    "MiniMaxH3AVDecodeT8",
+    "MiniMaxH3AudioConditioningT8",
+    "MiniMaxH3DualClockSamplerT8",
+    "MiniMaxH3LearnedLatentUpscaleT8Advanced",
+    "MiniMaxH3LearnedTwoPassParityPlanT8Advanced",
+    "MiniMaxH3MemoryEfficientSageAttentionPatch",
+    "MiniMaxH3TwoPassDetailMixerT8Advanced",
+    "MiniMaxH3TwoPassLatentReconcileT8Advanced",
+    "MiniMaxLowVRAMAttention",
+    "VHS_VideoCombine"
+   ]
+  },
+  "comfyui-minimax-h3-prompt-enhancer-T8": {
+   "nodes": [
+    "CR Prompt Text"
+   ]
+  },
+  "comfyui-vrgamedevgirl": {
+   "nodes": [
+    "ImageResizeKJv2",
+    "MiniMaxChunkFeedForward",
+    "MiniMaxH3AVDecodeT8",
+    "MiniMaxH3MemoryEfficientSageAttentionPatch",
+    "VHS_VideoCombine"
+   ]
+  },
+  "comfyui_memory_cleanup": {
+   "nodes": [
+    "RAMCleanup",
+    "VRAMCleanup"
+   ]
+  },
+  "comfyui_segment_queue": {
+   "nodes": [
+    "VHS_LoadAudioUpload",
+    "VHS_VideoCombine"
+   ]
+  },
+  "nanfeng_prompt_nodes_v10": {
+   "nodes": [
+    "MiniMaxH3MemoryEfficientSageAttentionPatch",
+    "ModelPreviewOverrideKJ"
+   ]
+  },
+  "nanfeng_prompt_nodes_v15": {
+   "nodes": [
+    "MiniMaxH3MemoryEfficientSageAttentionPatch",
+    "ModelPreviewOverrideKJ"
+   ]
+  },
+  "seedvr2_videoupscaler": {
+   "nodes": [
+    "SeedVR2LoadDiTModel",
+    "SeedVR2LoadVAEModel",
+    "SeedVR2VideoUpscaler"
+   ]
+  }
+ },
+ "note": "zip 不进 git；用 tools/pack_nodes.py 生成后上传 GitHub Release，再把 URL 填到 urls"
+}

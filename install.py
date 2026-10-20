@@ -246,40 +246,116 @@ def step_comfy_deps(inst: Installer) -> None:
               "numpy<2", "scipy<1.14"])
 
 
-def step_comfy_nodes(inst: Installer) -> None:
-    pack = inst.args.node_pack
-    if not pack.exists():
-        raise RuntimeError(f"找不到节点包 {pack}（用 --node-pack 指定）")
+def _sha256(path: Path) -> str:
+    import hashlib
+
+    h = hashlib.sha256()
+    with path.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _download_pack(inst: Installer, urls: list[str], sha: str) -> Path:
+    dst = ROOT / "logs" / "director-node-pack.zip"
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    for url in urls:
+        inst.log(f"  下载节点包：{url}")
+        try:
+            _download(url, dst, inst.args.proxy)
+        except Exception as exc:
+            inst.log(f"  [warn] 失败：{exc}")
+            continue
+        actual = _sha256(dst)
+        if sha and actual != sha:
+            inst.log(f"  [warn] sha256 不匹配（{actual[:12]} != {sha[:12]}），换下一个地址")
+            dst.unlink(missing_ok=True)
+            continue
+        inst.log(f"  校验通过（{dst.stat().st_size / 1024 / 1024:.0f} MB）")
+        return dst
+    raise RuntimeError("节点包下载失败：请检查 content/node-pack.json 的 urls")
+
+
+def _copy_from_comfy(inst: Installer, source: Path, pack_names: list[str]) -> int:
+    src_dir = source / "custom_nodes"
+    if not src_dir.exists():
+        raise RuntimeError(f"{src_dir} 不存在")
     target = inst.comfy_dir / "custom_nodes"
     target.mkdir(parents=True, exist_ok=True)
+    copied = 0
+    for name in pack_names:
+        src = src_dir / name
+        if src.is_dir():
+            shutil.copytree(src, target / name, dirs_exist_ok=True)
+            copied += 1
+        else:
+            inst.log(f"  [warn] 缺少 {name}")
+    return copied
+
+
+def step_comfy_nodes(inst: Installer) -> None:
+    manifest_path = ROOT / "content" / "node-pack.json"
+    manifest = {}
+    if manifest_path.exists():
+        try:
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except Exception:
+            manifest = {}
+
+    target = inst.comfy_dir / "custom_nodes"
+    target.mkdir(parents=True, exist_ok=True)
+
+    # 1) 直接从已有 ComfyUI 复制（内网/离线最省事）
+    if inst.args.from_comfy:
+        names = list((manifest.get("packs") or {}).keys())
+        if not names:
+            raise RuntimeError("content/node-pack.json 里没有 packs 列表")
+        copied = _copy_from_comfy(inst, inst.args.from_comfy, names)
+        inst.log(f"  从 {inst.args.from_comfy} 复制了 {copied} 个节点包")
+        return
+
+    # 2) 本地 zip 优先
+    pack = inst.args.node_pack
+    if inst.args.node_source in ("auto", "local") and pack.exists():
+        inst.log(f"  使用本地节点包：{pack}")
+    elif inst.args.node_source == "local":
+        raise RuntimeError(f"--nodes local 但找不到 {pack}")
+    else:
+        urls = [u for u in (manifest.get("urls") or []) if u]
+        if not urls:
+            raise RuntimeError(
+                "没有可用的节点包地址：请把 zip 传到 GitHub Release，"
+                "并把下载地址填进 content/node-pack.json 的 urls"
+            )
+        pack = _download_pack(inst, urls, manifest.get("sha256", ""))
+        inst.args.node_pack = pack
+
     if inst.args.dry_run:
         inst.log(f"  将解压 {pack} -> {target}")
         return
+
     tmp = ROOT / "logs" / "_nodepack"
     if tmp.exists():
         shutil.rmtree(tmp)
     with zipfile.ZipFile(pack) as zf:
         for info in zf.infolist():
-            # Windows 的 Compress-Archive 会用反斜杠做分隔符，解压前统一成 /
             name = info.filename.replace("\\", "/").lstrip("/")
             if name.endswith("/") or not name:
                 continue
-            target = tmp / name
-            target.parent.mkdir(parents=True, exist_ok=True)
-            with zf.open(info) as fh, target.open("wb") as out:
+            dest = tmp / name
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            with zf.open(info) as fh, dest.open("wb") as out:
                 shutil.copyfileobj(fh, out)
+
     src = tmp / "custom_nodes"
+    skip = {"ComfyUI-FeiHou-Toolbox"}
     count = 0
-    skip = {"ComfyUI-FeiHou-Toolbox"}  # 上游 video_combine_v2.py 为 0 字节，导入必失败
     for item in sorted(src.iterdir()):
         if item.is_dir() and item.name not in skip:
             shutil.copytree(item, target / item.name, dirs_exist_ok=True)
             count += 1
     shutil.rmtree(tmp, ignore_errors=True)
     inst.log(f"  复制 {count} 个节点包")
-
-
-OPENCV_PIN = "opencv-contrib-python-headless==4.10.0.84"
 
 
 def step_node_deps(inst: Installer) -> None:
@@ -609,7 +685,12 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--torch-version", default="2.11.0", help="留空则装该通道最新版")
     p.add_argument("--torchvision-version", default="0.26.0", help="留空则装该通道最新版")
     p.add_argument("--models-dir", default="", help="模型目录（建议 /root/autodl-tmp/models）")
-    p.add_argument("--node-pack", type=Path, default=None)
+    p.add_argument("--node-pack", type=Path, default=None, help="本地 zip 路径")
+    p.add_argument("--node-source", "--nodes", dest="node_source", default="auto",
+                   choices=["auto", "local", "download"],
+                   help="auto=本地优先，没有就按清单下载；local=只用本地；download=强制下载")
+    p.add_argument("--from-comfy", type=Path, default=None,
+                   help="从已有 ComfyUI 目录复制节点包（内网/离线推荐）")
     p.add_argument("--proxy", default="", help="安装期代理，如 http://127.0.0.1:1081")
     p.add_argument("--skip-comfy", action="store_true")
     p.add_argument("--comfy-only", action="store_true")
