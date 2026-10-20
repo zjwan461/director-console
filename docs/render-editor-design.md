@@ -228,6 +228,34 @@ tts:
 
 ---
 
+## 8.1 实现状态（2026-10-20）
+
+| 阶段 | 状态 | 提交 |
+|---|---|---|
+| M1 逐镜裁剪 / BGM / 字幕 / 响度 / 分阶段进度 | ✅ 已完成 | `3357057` 后端、`7ceba32` 前端 |
+| M1 成片工作台 UI | ✅ 已完成 | `7ceba32` |
+| M2 预览草稿 / 转场 / 时间轴接口 | ⏳ 待做 | — |
+| M3 旁白（上传音频 + 混音 + 闪避） | ⏳ 待做 | — |
+| M4 TTS（GPT-SoVITS） | 📝 计划 | 见第 10 节 |
+
+M1 的实际接口：
+
+```http
+POST /api/projects/{pid}/renders
+{ "shot_ids": [...],
+  "options": { "width":..., "height":..., "fps":...,
+               "bgm": {...}, "subtitles": {...}, "loudness": {...} },
+  "shot_edits": [{"shot_id":..., "in_point":..., "out_point":..., "subtitle":...}] }
+
+GET /api/renders/{id}/subtitles
+GET /api/ffmpeg/status      # 含 capabilities
+```
+
+实际踩到并修掉的两个坑（写在这里避免重复踩）：
+
+1. SRT 时间轴必须是 `00:00:00,000 --> 00:00:01,800` **一行**，拆两行 libass 会报 “Unable to open”；
+2. SRT 用 `utf-8-sig`（带 BOM），否则中文在 Windows 上编码探测失败。
+
 ## 9. 已确认的决策（2026-10-20）
 
 | 议题 | 决定 |

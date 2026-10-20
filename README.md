@@ -55,6 +55,7 @@ python tools/stub_comfy.py --port 8199 --token secret123
 - [x] M2 项目与分镜：项目 → 镜头表 → 镜间资产复用（末帧接首帧）
 - [x] M2.5 云端 ComfyUI：页面填地址/令牌，测试连接 + 持久化
 - [x] M3 成片：镜头勾选排序、逐段标准化、拼接、抽封面（需要本机有 ffmpeg）
+- [x] M4 剪辑 M1：逐镜裁剪、BGM 混音、字幕烧录、响度标准化
 - [ ] M4 真实环境联调：local / ssh 模式接上 GPU 机
 
 ## 提示词助手（可选）
@@ -183,33 +184,58 @@ GET  /api/shots/{shot_id}              # 带 values / last_frame_url
 
 ![从镜头打开创作台](docs/preview-from-shot.png)
 
-## 成片导出（M3）
+## 成片（剪辑工作台）
 
-「项目」页底部就是成片面板：
+「项目」页底部就是成片工作台，分三块：**镜头与字幕 / 成片设置 / 历史成片**。
 
-1. 勾选要合成的镜头（默认全选），用 ↑ ↓ 调整顺序；
-2. 选分辨率（横屏/竖屏 720p、1080p）与帧率（24/30）；
-3. 点「导出成片」，后台会逐段标准化 → 拼接 → 抽封面，完成后可预览/下载/删除。
+### 逐镜编辑
 
-实现方式：
+- 勾选要导出的镜头（默认全选），顺序由项目镜头列表决定；
+- 每个镜头可填 **入点 / 出点**（秒，留空表示从头/到尾）；
+- **字幕**留空则自动用镜头标题，导出时按镜长生成时间轴。
 
-- 每段先统一成相同分辨率、帧率、采样率（等比缩放 + 补边，不拉伸），再走 concat demuxer，避免音画不同步；
-- 没有音轨的片段自动补一段等长静音，保证每个输入都有音频；
-- 产物落在 `data/renders/<id>/final.mp4`，封面 `cover.jpg`，通过 `/media/files/` 访问；
-- 任务表 `renders` 由 Alembic `0004_renders` 管理，服务重启会把中断的导出标为失败。
+### 全局设置
 
-**ffmpeg 是硬依赖**：
+| 项 | 说明 |
+|---|---|
+| 画布 | 480p / 720p / 1080p，24 / 30 fps |
+| 背景音乐 | 从素材库选音频，可调音量（dB）、淡入、淡出、循环铺满 |
+| 字幕 | 烧录开关、字号、底部边距；ffmpeg 不支持时自动降级为 `.srt` 旁挂 |
+| 音频 | 响度标准化到 -16 LUFS |
+
+### 后台流水线
+
+```
+逐镜处理（裁剪/缩放/补边/帧率/音量）
+  → 拼接（concat demuxer）
+  → 混入 BGM（atrim + afade + amix，循环铺满）
+  → 烧录字幕（libass，相对路径 + cwd）
+  → 响度标准化（loudnorm）
+  → 抽封面 + 写 subtitles.srt
+```
+
+进度分阶段写入 `renders.message/progress`，页面实时刷新。
+
+### 产物与接口
+
+- 成片 `data/renders/<id>/final.mp4`，封面 `cover.jpg`，字幕 `subtitles.srt`
+- `GET /api/renders/{id}/subtitles` 下载 SRT
+- 逐镜参数存 `render_shots` 表（Alembic `0005_render_shots`），属于“这一次成片”，不回写镜头
+- `GET /api/ffmpeg/status` 返回 `capabilities`（subtitles / xfade / libx264），前端据此提示降级
+
+### ffmpeg
+
+`install.py` 优先下载 **full 版**（BtbN GPL，含 libass/xfade/libx264），下载失败回退
+`imageio-ffmpeg`；两者都会做能力自检。手动安装时也可以直接配：
 
 ```yaml
 ffmpeg:
-  path: ""        # 留空自动找 PATH；也可以写 D:/tools/ffmpeg/bin/ffmpeg.exe
+  path: ""        # 留空依次找 config → PATH → tools/ffmpeg → imageio-ffmpeg
   crf: "20"
   preset: "medium"
 ```
 
-没装时页面会显示「缺少 ffmpeg」，导出接口返回 400 并给出提示，不会产生半成品。
-
-![成片导出](docs/preview-render.png)
+![成片工作台](docs/render-workspace.png)
 
 ## 项目 / 分镜怎么用
 
