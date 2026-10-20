@@ -1,7 +1,9 @@
 # =============================================================================
 #  ComfyUI 云端镜像 —— MiniMax H3 + 导演台 custom_nodes
 #  基线: nvcr.io/nvidia/pytorch:24.09-py3 (Python 3.10.12)
-#  目标: ComfyUI v0.39.0 + torch 2.12.1+cu130 + 27 个导演台节点包
+#  目标: ComfyUI v0.39.0 + torch 2.11.0+cu130 + 26 个导演台节点包
+#  torch 2.11 是当前 cu130 上「torch / torchvision / torchaudio」三者都能对上的最高版本
+#  （torchaudio 目前只出到 2.11.0，装 2.12.1 会因依赖 torch==2.11 而回退）
 #
 #  构建上下文必须包含 director-node-pack.zip
 #  （zip 内路径必须用 / 分隔；Windows 的 Compress-Archive 会写反斜杠，Linux unzip 会失败）
@@ -42,8 +44,8 @@ ENV PIP_CONFIG_FILE=/dev/null \
 # 可复现参数
 # -----------------------------------------------------------------------------
 ARG COMFYUI_REF=v0.39.0
-ARG TORCH_VERSION=2.12.1
-ARG TORCHVISION_VERSION=0.27.1
+ARG TORCH_VERSION=2.11.0
+ARG TORCHVISION_VERSION=0.26.0
 ARG CUDA_CHANNEL=cu130
 ARG IMAGE_TAG=dev
 
@@ -80,7 +82,7 @@ RUN pip uninstall -y torch torchvision torchaudio xformers flash-attn || true \
       torchvision==${TORCHVISION_VERSION} \
       torchaudio==${TORCH_VERSION} \
       --index-url https://download.pytorch.org/whl/${CUDA_CHANNEL} \
- && python -c "import torch; print('torch', torch.__version__, '| cuda', torch.version.cuda)"
+ && python -c "import torch, torchvision, torchaudio; print('torch', torch.__version__, '| cuda', torch.version.cuda, '| tv', torchvision.__version__, '| ta', torchaudio.__version__)"
 
 # -----------------------------------------------------------------------------
 # ComfyUI（显式 pin 版本）

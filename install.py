@@ -506,8 +506,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--port", type=int, default=6006, help="面板端口（AutoDL 用 6006）")
     p.add_argument("--torch", default="cu130",
                    help="torch 的 CUDA 通道：cu130（默认，支持 50 系）/ cu128 / cpu")
-    p.add_argument("--torch-version", default="2.12.1", help="留空则装该通道最新版")
-    p.add_argument("--torchvision-version", default="0.27.1", help="留空则装该通道最新版")
+    p.add_argument("--torch-version", default="2.11.0", help="留空则装该通道最新版")
+    p.add_argument("--torchvision-version", default="0.26.0", help="留空则装该通道最新版")
     p.add_argument("--models-dir", default="", help="模型目录（建议 /root/autodl-tmp/models）")
     p.add_argument("--node-pack", type=Path, default=None)
     p.add_argument("--proxy", default="", help="安装期代理，如 http://127.0.0.1:1081")
