@@ -20,11 +20,11 @@ if not exist "web\dist\index.html" (
 )
 
 echo.
-echo Director Console: http://127.0.0.1:6200
+echo Director Console: http://127.0.0.1:6006
 echo Close this window to stop the service.
 echo.
 cd backend
-"%PYTHON%" -m uvicorn app.main:app --host 127.0.0.1 --port 6200
+"%PYTHON%" -m uvicorn app.main:app --host 127.0.0.1 --port 6006
 goto :eof
 
 :err

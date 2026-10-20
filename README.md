@@ -150,7 +150,7 @@ ffmpeg:
 ```bash
 cd backend
 python -m pip install -r requirements.txt
-python -m uvicorn app.main:app --host 127.0.0.1 --port 6200
+python -m uvicorn app.main:app --host 127.0.0.1 --port 6006
 ```
 
 Windows 也可以直接双击根目录的 `start.bat`；Linux 用 `bash start.sh`。
@@ -165,8 +165,8 @@ Windows 也可以直接双击根目录的 `start.bat`；Linux 用 `bash start.sh
 ```bash
 cd web
 npm install
-npm run dev      # 开发模式，http://127.0.0.1:5273（已代理 /api 到 6200）
-npm run build    # 生产模式，构建后由后端在 6200 直接托管
+npm run dev      # 开发模式，http://127.0.0.1:5273（已代理 /api 到 6006）
+npm run build    # 生产模式，构建后由后端在 6006 直接托管
 ```
 
 ### 3. 配置 ComfyUI

@@ -1,6 +1,6 @@
 app:
   host: 127.0.0.1
-  port: 6200
+  port: 6006
 
 # ComfyUI 连接方式：local（本机启动，默认）| ssh（远程机）| external（已有服务）| mock（无显卡跑通链路）
 comfy:

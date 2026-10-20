@@ -6,8 +6,8 @@ export default defineConfig({
   server: {
     port: 5273,
     proxy: {
-      '/api': 'http://127.0.0.1:6200',
-      '/media': 'http://127.0.0.1:6200',
+      '/api': 'http://127.0.0.1:6006',
+      '/media': 'http://127.0.0.1:6006',
     },
   },
   build: { outDir: 'dist', sourcemap: false },

@@ -15,5 +15,5 @@ if [ ! -f web/dist/index.html ]; then
 fi
 
 echo
-echo "导演台启动中: http://127.0.0.1:6200"
-exec "$PYTHON" -m uvicorn app.main:app --host 127.0.0.1 --port 6200 --app-dir backend
+echo "导演台启动中: http://127.0.0.1:6006"
+exec "$PYTHON" -m uvicorn app.main:app --host 127.0.0.1 --port 6006 --app-dir backend

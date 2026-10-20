@@ -13,7 +13,7 @@ CONFIG_PATH = ROOT / "config.yaml"
 LOCAL_CONFIG_PATH = ROOT / "config.local.yaml"
 
 DEFAULTS: dict[str, Any] = {
-    "app": {"host": "127.0.0.1", "port": 6200},
+    "app": {"host": "127.0.0.1", "port": 6006},
     "comfy": {
         "mode": "local",  # local | ssh | external | mock
         "base_url": "http://127.0.0.1:8188",

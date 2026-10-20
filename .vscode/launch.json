@@ -16,7 +16,7 @@
         "--host",
         "127.0.0.1",
         "--port",
-        "6200"
+        "6006"
       ],
       "cwd": "${workspaceFolder}/backend",
       "env": {
@@ -37,7 +37,7 @@
         "--host",
         "127.0.0.1",
         "--port",
-        "6200"
+        "6006"
       ],
       "cwd": "${workspaceFolder}/backend",
       "env": {
@@ -61,7 +61,7 @@
     },
     {
       "name": "后端：附加到已运行进程（debugpy :5678）",
-      // 先用：python -m debugpy --listen 5678 -m uvicorn app.main:app --port 6200
+      // 先用：python -m debugpy --listen 5678 -m uvicorn app.main:app --port 6006
       "type": "debugpy",
       "request": "attach",
       "connect": {
