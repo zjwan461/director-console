@@ -1,9 +1,9 @@
 {
  "name": "director-node-pack",
- "version": "2026.10.20",
+ "version": "2026-10-20",
  "file": "director-node-pack.zip",
- "bytes": 235051308,
- "sha256": "4d8dbbb81fdbc426309f37425c7d23eab713d2dbff938e7ec5b9188c20274d26",
+ "bytes": 234873971,
+ "sha256": "d5cc76385b04c2b198f0c2518d5a44546d16a78c943a4de7b3d8c937b1cf606d",
  "urls": [],
  "packs": {
   "ComfyUI-Custom-Scripts": {
