@@ -137,6 +137,12 @@ export default function ModelCheckPanel() {
                               {m.category} · {m.node}
                               {m.url ? ' · 链接来自工作流' : ''}
                             </span>
+                            {!m.exists && m.reason === 'node' && (
+                              <span className="badge warn" style={{ marginLeft: 8 }}>节点未装</span>
+                            )}
+                            {!m.exists && m.reason === 'folder' && (
+                              <span className="badge warn" style={{ marginLeft: 8 }}>目录未注册</span>
+                            )}
                           </div>
                           {editFile === m.file ? (
                             <div className="row" style={{ marginTop: 6 }}>
@@ -159,7 +165,19 @@ export default function ModelCheckPanel() {
                             </button>
                           )}
 
-                          {!m.exists && (
+                          {!m.exists && m.reason === 'node' && (
+                            <div className="notice" style={{ marginTop: 6 }}>
+                              节点 <code>{m.class_type || m.node}</code> 没装，它注册的模型目录也不存在，
+                              所以文件即使已经下载也读不到。先安装对应的 custom_nodes（见 <code>NODES.md</code>）。
+                            </div>
+                          )}
+                          {!m.exists && m.reason === 'folder' && (
+                            <div className="notice" style={{ marginTop: 6 }}>
+                              目录 <code>models/{m.category}</code> 没被 ComfyUI 注册，文件放在这里也不会出现在可选列表里。
+                            </div>
+                          )}
+
+                          {!m.exists && m.reason !== 'node' && (
                             <>
                               <pre className="logs" style={{ marginTop: 6 }}>{m.command}</pre>
                               <div className="row" style={{ marginTop: 4 }}>

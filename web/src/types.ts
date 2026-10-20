@@ -189,6 +189,8 @@ export interface ModelRef {
   url?: string
   source?: string
   search?: { huggingface?: string; modelscope?: string; civitai?: string }
+  reason?: string
+  class_type?: string
 }
 
 export interface ModelCheckCard {

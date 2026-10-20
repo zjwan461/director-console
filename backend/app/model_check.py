@@ -99,6 +99,22 @@ def _command(category: str, filename: str, url: str = "") -> str:
 
 
 _INFO_CACHE: dict[str, tuple[float, dict]] = {}
+_FOLDER_CACHE: dict[str, tuple[float, set[str]]] = {}
+
+
+async def _registered_folders() -> set[str]:
+    """ComfyUI 已注册的模型目录（自定义节点会在 import 时注册自己的目录）。"""
+    url = settings.base_url
+    now = time.time()
+    hit = _FOLDER_CACHE.get(url)
+    if hit and now - hit[0] < 60:
+        return hit[1]
+    try:
+        folders = {str(f.get("name")) for f in await make_client().model_folders() if isinstance(f, dict)}
+    except Exception:
+        folders = set()
+    _FOLDER_CACHE[url] = (now, folders)
+    return folders
 
 
 async def _object_info() -> dict:
@@ -142,6 +158,9 @@ async def check_models(card_id: str | None = None, source: str = "live") -> dict
         full, base = _available(object_info)
         comfy = {"base_url": settings.base_url, "source": "live"}
 
+    node_classes = set(object_info) if source != "snapshot" else set()
+    folders = await _registered_folders() if source != "snapshot" else set()
+
     results = []
     for card in cards:
         workflow = load_workflow(card["workflow"])
@@ -151,9 +170,24 @@ async def check_models(card_id: str | None = None, source: str = "live") -> dict
             exists = _norm(name) in full or _norm(Path(name).name) in base
             entry = sources.get(_norm(name)) or {}
             link = str(entry.get("url") or "")
+            # collect_required 里的 node 存的就是 class_type
+            class_type = str(item.get("node") or "")
+            if exists:
+                reason = ""
+            elif source == "snapshot":
+                reason = "missing"
+            elif class_type and node_classes and class_type not in node_classes:
+                # 节点没装：它注册的模型目录也不会存在，文件就算下好了也看不到
+                reason = "node"
+            elif folders and item["category"] not in folders:
+                reason = "folder"
+            else:
+                reason = "missing"
             models.append({
                 **item,
                 "exists": exists,
+                "class_type": class_type,
+                "reason": reason,
                 "command": "" if exists else _command(item["category"], name, link),
                 "url": link,
                 "source": "workflow" if link else "none",
