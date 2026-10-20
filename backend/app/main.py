@@ -519,6 +519,26 @@ async def asset_create_shot(asset_id: str, body: AssetShotCreate) -> dict:
     shot = store.create_shot(project["id"], title, preset_id)
     store.update_shot(shot["id"], values=values)
 
+    # 还原为镜头时补一条「已成功」的任务记录，把源资产挂上去：
+    # 这样「本镜历史」「成片导出」都能找到这条视频，而不是空镜头
+    if body.mode == "restore":
+        placeholder = store.create_job(preset_id, values, project_id=project["id"], shot_id=shot["id"])
+        store.update_job(
+            placeholder["id"],
+            status="succeeded",
+            progress=1.0,
+            message="来自资产",
+            outputs=[{
+                "kind": asset["kind"],
+                "name": asset["path"].rsplit("/", 1)[-1],
+                "url": f"/media/files/{asset['path']}",
+                "asset_id": asset["id"],
+                "size": asset.get("size", 0),
+            }],
+            started_at=time.time(),
+            finished_at=time.time(),
+        )
+
     # 图片直接当末帧；视频抽一帧当末帧，方便下一镜接首帧
     if asset["kind"] == "image":
         store.update_shot(shot["id"], last_frame=asset["id"], cover=f"/media/files/{asset['path']}")
