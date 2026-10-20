@@ -59,6 +59,11 @@ export default function RenderPanel({ projectId, shots }: Props) {
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
   }
 
+  const display = useMemo(
+    () => [...ordered, ...shots.filter((s) => !selected.includes(s.id))],
+    [ordered, shots, selected],
+  )
+
   const move = (id: string, dir: -1 | 1) => {
     setSelected((prev) => {
       const idx = prev.indexOf(id)
@@ -116,7 +121,7 @@ export default function RenderPanel({ projectId, shots }: Props) {
       <div className="field">
         <label><span>镜头顺序（勾选 + 上下调整）</span><span className="meta">已选 {ordered.length} / {shots.length}</span></label>
         <div className="list">
-          {shots.map((shot) => {
+          {display.map((shot) => {
             const isSelected = selected.includes(shot.id)
             const pos = selected.indexOf(shot.id) + 1
             return (

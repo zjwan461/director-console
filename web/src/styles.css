@@ -358,3 +358,7 @@ button { white-space: nowrap; }
   background: rgba(18, 20, 28, .94);
   backdrop-filter: blur(10px);
 }
+
+@media (max-width: 900px) {
+  .sticky-bar { left: 16px; right: 16px; }
+}
