@@ -94,7 +94,9 @@ ai:
 命令用 curl，支持断点续传和限速：
 
 ```bash
-curl -L -C - --limit-rate 50m "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_video_vae_fp16.safetensors" -o "models/vae/minimax_h3_video_vae_fp16.safetensors"
+curl -L -C - --limit-rate 50m --create-dirs \
+  "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_video_vae_fp16.safetensors" \
+  -o "models/vae/minimax_h3_video_vae_fp16.safetensors"
 ```
 
 配置：

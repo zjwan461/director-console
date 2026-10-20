@@ -95,7 +95,9 @@ def _command(category: str, filename: str, url: str = "") -> str:
     limit = str(settings.get("models.limit_rate", "50m") or "")
     rate = f" --limit-rate {limit}" if limit else ""
     target = f"{root}/models/{category}/{filename}" if root else f"models/{category}/{filename}"
-    return f'curl -L -C -{rate} "{url}" -o "{target}"'
+    # --create-dirs：工作流里的相对路径可能带子目录（minimax/、Zimage/），
+    # 目标目录不存在时 curl 会直接失败
+    return f'curl -L -C -{rate} --create-dirs "{url}" -o "{target}"'
 
 
 _INFO_CACHE: dict[str, tuple[float, dict]] = {}
