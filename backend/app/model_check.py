@@ -88,11 +88,14 @@ def _available(object_info: dict) -> tuple[set[str], set[str]]:
 
 
 def _command(category: str, filename: str, url: str = "") -> str:
-    root = str(settings.get("models.comfy_root", "ComfyUI") or "ComfyUI").rstrip("/")
+    root = str(settings.get("models.comfy_root", "") or "").rstrip("/")
     if not url:
         base = str(settings.get("models.download_base", "") or "").rstrip("/")
         url = f"{base}/{quote(category)}/{quote(filename)}" if base else "<下载地址>"
-    return f'wget -c "{url}" -O "{root}/models/{category}/{filename}"'
+    limit = str(settings.get("models.limit_rate", "50m") or "")
+    rate = f" --limit-rate {limit}" if limit else ""
+    target = f"{root}/models/{category}/{filename}" if root else f"models/{category}/{filename}"
+    return f'curl -L -C -{rate} "{url}" -o "{target}"'
 
 
 _INFO_CACHE: dict[str, tuple[float, dict]] = {}

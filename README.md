@@ -91,16 +91,20 @@ ai:
 - 调 ComfyUI `/object_info` 拿实际可用模型清单，按“相对路径或文件名”比对；
 - 缺失的列出文件名、所在目录类别、可复制的下载命令，以及 HuggingFace 搜索链接。
 
-命令模板来自配置：
+命令用 curl，支持断点续传和限速：
+
+```bash
+curl -L -C - --limit-rate 50m "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_video_vae_fp16.safetensors" -o "models/vae/minimax_h3_video_vae_fp16.safetensors"
+```
+
+配置：
 
 ```yaml
 models:
-  comfy_root: "ComfyUI"          # 下载命令里的目标根目录
-  download_base: ""              # 例如 https://hf-mirror.com/your/repo/resolve/main
+  comfy_root: ""                 # 留空 -> models/<category>/<file>；填 ComfyUI 则为 ComfyUI/models/...
+  limit_rate: "50m"              # 传给 curl --limit-rate，留空不限速
+  download_base: ""              # 没有已知 URL 时的拼接基地址
 ```
-
-`download_base` 为空时命令里是 `"<下载地址>"` 占位；填了就拼成
-`<base>/<category>/<filename>`。
 
 > `mock` 模式没有真实模型清单，检查会直接提示“请配置真实 ComfyUI 地址”。
 

@@ -49,8 +49,10 @@ ai:
   proxy: ""
 
 models:
-  # 下载命令里的 ComfyUI 根目录，以及可选的模型下载基地址
-  comfy_root: "ComfyUI"
+  # 下载命令里的 ComfyUI 根目录：留空则产出 models/<category>/<file>
+  comfy_root: ""
+  # curl --limit-rate，留空不限速
+  limit_rate: "50m"
   download_base: ""
 
 ui:

@@ -14,8 +14,24 @@ def _norm(name: str) -> str:
 
 
 def load_sources() -> dict:
-    """合并：随仓库发版的 content 映射 + 运行时从 ComfyUI 同步的 data 映射。"""
+    """合并三层：随包 manifest（最低） < content 映射 < 运行时 data 映射。"""
     merged: dict = {}
+
+    manifest_path = Path(settings.paths["content"]) / "model-manifest.json"
+    if manifest_path.exists():
+        try:
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            for row in manifest.get("models") or []:
+                if isinstance(row, dict) and row.get("url"):
+                    merged[_norm(row["file"])] = {
+                        "name": row["file"],
+                        "url": row["url"],
+                        "directory": row.get("category", ""),
+                        "hash": "",
+                    }
+        except Exception:
+            pass
+
     bundled = Path(settings.paths["content"]) / "model-sources.json"
     for path in (bundled, SOURCES_PATH):
         if not path.exists():
