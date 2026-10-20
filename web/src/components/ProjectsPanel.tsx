@@ -293,10 +293,12 @@ export default function ProjectsPanel() {
                   <b>{p.name}</b>
                   <div className="meta">{p.shots ?? 0} 个镜头 · {timeAgo(p.created_at)}</div>
                 </div>
-                <button
-                  className="ghost tiny"
-                  onClick={(e) => { e.stopPropagation(); void removeProject(p.id) }}
-                >删</button>
+                <div className="list-actions">
+                  <button
+                    className="ghost tiny"
+                    onClick={(e) => { e.stopPropagation(); void removeProject(p.id) }}
+                  >删</button>
+                </div>
               </div>
             ))}
             {!projects.length && <div className="empty">还没有项目，先新建一个。</div>}
@@ -329,12 +331,14 @@ export default function ProjectsPanel() {
                       {s.last_frame_url
                         ? <img className="mini" src={s.last_frame_url} alt="末帧" />
                         : <div className="mini placeholder">无</div>}
-                      <div style={{ minWidth: 0 }}>
+                      <div style={{ minWidth: 0, flex: 1 }}>
                         <b>{s.title || `镜头 ${s.idx + 1}`}</b>
                         <div className="meta">{c?.name || s.preset_id || '未选能力'}</div>
                       </div>
-                      <button className="ghost tiny" onClick={(e) => { e.stopPropagation(); void moveShot(s.id, -1) }}>↑</button>
-                      <button className="ghost tiny" onClick={(e) => { e.stopPropagation(); void moveShot(s.id, 1) }}>↓</button>
+                      <div className="list-actions">
+                        <button className="ghost tiny" onClick={(e) => { e.stopPropagation(); void moveShot(s.id, -1) }}>↑</button>
+                        <button className="ghost tiny" onClick={(e) => { e.stopPropagation(); void moveShot(s.id, 1) }}>↓</button>
+                      </div>
                     </div>
                   )
                 })}

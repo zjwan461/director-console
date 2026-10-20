@@ -391,3 +391,5 @@ button { white-space: nowrap; }
 .asset-preview img, .asset-preview video { max-width: 100%; max-height: 300px; border-radius: 6px; }
 
 .asset-play { position: absolute; font-size: 22px; color: rgba(255,255,255,.82); text-shadow: 0 2px 10px rgba(0,0,0,.6); pointer-events: none; }
+
+.list-actions { margin-left: auto; display: flex; gap: 4px; align-items: center; flex: 0 0 auto; }
