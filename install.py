@@ -288,12 +288,18 @@ def step_node_deps(inst: Installer) -> None:
     # opencv-python / opencv-python-headless 混装会导致
     #   cv2.dnn 没有 DictValue → import cv2 直接崩
     # 统一成只保留一个 contrib-headless（同时带 dnn_superres 等 contrib 模块）
-    inst.log("  统一 cv2（卸载混装的 opencv 包）")
+    inst.log("  统一 cv2（卸载混装的 opencv 包并清掉残留目录）")
     inst.run([py, "-m", "pip", "uninstall", "-y",
               "opencv-python", "opencv-python-headless",
               "opencv-contrib-python", "opencv-contrib-python-headless"], quiet=True)
+    inst.run([py, "-c",
+              "import pathlib,shutil,site;"
+              "[shutil.rmtree(p, ignore_errors=True) for base in site.getsitepackages() "
+              "for p in pathlib.Path(base).glob('cv2*') if p.exists()]"])
     inst.run([py, "-m", "pip", "install", "--force-reinstall", "--no-deps", OPENCV_PIN])
-    inst.run([py, "-c", "import cv2; print('  cv2', cv2.__version__, 'dnn', hasattr(cv2.dnn, 'DictValue'))"])
+    inst.run([py, "-c",
+              "import cv2; print('  cv2', cv2.__version__, cv2.__file__, "
+              "'dnn', hasattr(cv2.dnn, 'DictValue')); assert hasattr(cv2.dnn, 'DictValue')"])
 
 
 def step_ffmpeg(inst: Installer) -> None:

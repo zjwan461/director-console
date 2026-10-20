@@ -1,0 +1,202 @@
+# =============================================================================
+#  ComfyUI 云端镜像 —— MiniMax H3 + 导演台 custom_nodes
+#  基线: nvcr.io/nvidia/pytorch:24.09-py3 (Python 3.10.12)
+#  目标: ComfyUI v0.39.0 + torch 2.12.1+cu130 + 27 个导演台节点包
+#
+#  构建上下文必须包含 director-node-pack.zip
+#  （zip 内路径必须用 / 分隔；Windows 的 Compress-Archive 会写反斜杠，Linux unzip 会失败）
+#
+#  构建:
+#    docker build -t comfyui-h3:cu130 \
+#      --build-arg HTTP_PROXY=http://10.159.86.251:8080 \
+#      --build-arg HTTPS_PROXY=http://10.159.86.251:8080 \
+#      -f Dockerfile .
+# =============================================================================
+
+FROM nvcr.io/nvidia/pytorch:24.09-py3
+
+# -----------------------------------------------------------------------------
+# 构建期代理（结尾清空）
+# -----------------------------------------------------------------------------
+ARG HTTP_PROXY
+ARG HTTPS_PROXY
+ARG NO_PROXY
+ENV http_proxy=${HTTP_PROXY} \
+    https_proxy=${HTTPS_PROXY} \
+    no_proxy=${NO_PROXY}
+
+# -----------------------------------------------------------------------------
+# 关掉 NGC 镜像自带的 pip 源
+#   nvcr.io/nvidia/pytorch 里 /etc/pip.conf（或 PIP_EXTRA_INDEX_URL）指向
+#   https://pypi.ngc.nvidia.com，会在每次 pip install 时被查询，内网/代理下经常超时。
+#   PIP_CONFIG_FILE=/dev/null 让 pip 忽略所有配置文件，
+#   再用 PIP_INDEX_URL 显式指定官方源（换清华源改这一行即可）。
+#   注意：torch 那一步用 --index-url 单独指定，不受影响。
+# -----------------------------------------------------------------------------
+ENV PIP_CONFIG_FILE=/dev/null \
+    PIP_INDEX_URL=https://pypi.org/simple \
+    PIP_EXTRA_INDEX_URL= \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# -----------------------------------------------------------------------------
+# 可复现参数
+# -----------------------------------------------------------------------------
+ARG COMFYUI_REF=v0.39.0
+ARG TORCH_VERSION=2.12.1
+ARG TORCHVISION_VERSION=0.27.1
+ARG CUDA_CHANNEL=cu130
+ARG IMAGE_TAG=dev
+
+LABEL org.opencontainers.image.title="comfyui-gai" \
+      org.opencontainers.image.description="ComfyUI with native MiniMax H3 support + director console nodes" \
+      org.opencontainers.image.version="${IMAGE_TAG}" \
+      comfyui.ref="${COMFYUI_REF}" \
+      torch.version="${TORCH_VERSION}+${CUDA_CHANNEL}"
+
+WORKDIR /comfyui
+
+# -----------------------------------------------------------------------------
+# 系统依赖
+#   unzip 用于解压导演台节点包
+# -----------------------------------------------------------------------------
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends git wget unzip ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+
+# -----------------------------------------------------------------------------
+# PyTorch
+#   - ComfyUI v0.39.0 要求 torch >= 2.8 才启用 DynamicVRAM
+#   - cu130：支持 RTX 50 系（sm_120），comfy-kitchen 的 CUDA 后端可用
+#     （cu126 会让它退回 eager，且跑不了 50 系）
+#   - 卸掉基座自带 flash_attn：它是针对 torch 2.5 编译的坏扩展，
+#     会以 undefined symbol 拖垮 kornia（ComfyUI 自身走 SDPA，不需要它）
+# -----------------------------------------------------------------------------
+RUN pip uninstall -y torch torchvision torchaudio xformers flash-attn || true \
+ && rm -rf /usr/local/lib/python3.10/dist-packages/flash_attn \
+           /usr/local/lib/python3.10/dist-packages/flash_attn_2_cuda*.so \
+           /usr/local/lib/python3.10/dist-packages/flash_attn*.dist-info \
+ && pip install --no-cache-dir \
+      torch==${TORCH_VERSION} \
+      torchvision==${TORCHVISION_VERSION} \
+      --index-url https://download.pytorch.org/whl/${CUDA_CHANNEL} \
+ && python -c "import torch; print('torch', torch.__version__, '| cuda', torch.version.cuda)"
+
+# -----------------------------------------------------------------------------
+# ComfyUI（显式 pin 版本）
+# -----------------------------------------------------------------------------
+RUN git clone --depth 1 --branch ${COMFYUI_REF} \
+      https://github.com/comfyanonymous/ComfyUI.git . \
+ && git log -1 --format='%H%n%cd%n%s' > /comfyui/BUILD_INFO.txt
+
+RUN test -f /comfyui/comfy_extras/nodes_minimax_h3.py \
+      || { echo "FATAL: nodes_minimax_h3.py 缺失，ComfyUI ${COMFYUI_REF} 不含 MiniMax H3 支持"; exit 1; }
+
+# -----------------------------------------------------------------------------
+# ComfyUI Python 依赖
+#   numpy / scipy 钉版本：scipy 1.18 会强拉 numpy 2，打崩基座 cv2 的 ABI
+# -----------------------------------------------------------------------------
+RUN pip install --no-cache-dir -r requirements.txt "numpy<2" "scipy<1.14" \
+ && pip install --no-cache-dir kornia==0.7.2 \
+ && pip install --no-cache-dir "pydantic~=2.0"
+
+# -----------------------------------------------------------------------------
+# 导演台 custom_nodes（27 个包，覆盖 12 张能力卡所需的 42 个节点类）
+# -----------------------------------------------------------------------------
+COPY director-node-pack.zip /tmp/director-node-pack.zip
+RUN mkdir -p /tmp/nodepack \
+ && unzip -q -o /tmp/director-node-pack.zip -d /tmp/nodepack \
+ && cp -r /tmp/nodepack/custom_nodes/* /comfyui/custom_nodes/ \
+ && rm -rf /tmp/nodepack /tmp/director-node-pack.zip \
+ && echo "custom_nodes: $(ls /comfyui/custom_nodes | wc -l) packs"
+
+# -----------------------------------------------------------------------------
+# 节点包依赖
+#   不装 torch / torchvision / numpy（上面已钉）
+#   不装 opencv-python-headless：ComfyUI requirements 已装 opencv-python，
+#   混装会让 cv2.dnn 丢符号（见下一段统一处理）
+#   编译重的（llama-cpp-python / demucs / voxcpm / whisper / clip_interrogator）
+#   默认不装，NODE-CHECK 报缺再补
+# -----------------------------------------------------------------------------
+RUN printf '%s\n' \
+      "psutil" "color-matcher" "mss" \
+      "imageio" "imageio-ffmpeg" "diffusers" "accelerate" "sentencepiece" \
+      "spandrel" "matplotlib" "peft" "lark" "kornia" "av" "transformers" \
+      "huggingface_hub" "safetensors" "einops" "omegaconf" "gguf" \
+      "onnxruntime" "Cython" "librosa" "google-generativeai" \
+      > /tmp/nodes-requirements.txt \
+ && pip install --no-cache-dir -r /tmp/nodes-requirements.txt "numpy<2" "scipy<1.14" \
+ && rm -f /tmp/nodes-requirements.txt
+
+# -----------------------------------------------------------------------------
+# 统一 cv2
+#   症状：AttributeError: module 'cv2.dnn' has no attribute 'DictValue'
+#   原因：基座里 cv2 被多个包反复覆盖，.so 与 typing/*.py 版本不匹配；
+#         pip uninstall 只删它自己 RECORD 里的文件，残留的 cv2/ 会成为“混血”。
+#   对策：先 uninstall，再把所有 cv2 目录整个删掉，最后只装一个版本。
+# -----------------------------------------------------------------------------
+RUN pip uninstall -y opencv-python opencv-python-headless \
+      opencv-contrib-python opencv-contrib-python-headless || true \
+ && find /usr/local/lib/python3.10/dist-packages /usr/lib/python3/dist-packages \
+      -maxdepth 1 \( -name 'cv2' -o -name 'cv2-*.dist-info' -o -name 'opencv*' \) \
+      -exec rm -rf {} + 2>/dev/null || true \
+ && pip install --no-cache-dir --no-deps --force-reinstall \
+      "opencv-contrib-python-headless==4.10.0.84" \
+ && python -c "import cv2; print('cv2', cv2.__version__, '|', cv2.__file__, '| dnn.DictValue', hasattr(cv2.dnn, 'DictValue')); assert hasattr(cv2.dnn, 'DictValue')"
+
+# -----------------------------------------------------------------------------
+# 依赖自检：构建期把踩过的坑全部断言掉
+# -----------------------------------------------------------------------------
+RUN set -e; \
+    python -c "import numpy, scipy; print('numpy', numpy.__version__, '| scipy', scipy.__version__)"; \
+    python -c "import cv2, numpy; print('cv2', cv2.__version__, 'vs numpy', numpy.__version__); assert hasattr(cv2.dnn, 'DictValue')"; \
+    python -c "import kornia; print('kornia', kornia.__version__)"; \
+    python -c "import comfy_aimdo.control; print('comfy_aimdo OK')"; \
+    python -c "import comfy_kitchen; print('comfy_kitchen OK')"; \
+    if python -c "import flash_attn" 2>/dev/null; then \
+        echo "FATAL: flash_attn 仍可被导入，会以 undefined symbol 拖垮 kornia"; exit 1; \
+    fi; \
+    echo "依赖自检全部通过"
+
+# -----------------------------------------------------------------------------
+# 节点注册自检：打印 ComfyUI 注册表里缺哪些类
+#   非致命（|| true），看日志 NODE-CHECK 段；缺了再补对应依赖
+# -----------------------------------------------------------------------------
+RUN cd /comfyui && python - <<'PY' 2>&1 | tee /tmp/node-check.log || true
+import sys
+sys.path.insert(0, "/comfyui")
+try:
+    import nodes
+    mapping = nodes.NODE_CLASS_MAPPINGS
+except Exception as exc:
+    print("NODE-CHECK import failed:", type(exc).__name__, exc)
+    raise SystemExit(0)
+
+need = [
+    "CR Text", "CR Prompt Text", "INTConstant",
+    "VHS_VideoCombine", "VHS_LoadAudioUpload",
+    "VRAMCleanup", "RAMCleanup",
+    "H3SigmaRefiner", "MiniMaxLowVRAMAttention", "MiniMaxChunkFeedForward",
+    "ModelPreviewOverrideKJ", "ImageResizeKJv2",
+    "MiniMaxH3DualClockSamplerT8", "MiniMaxH3AVDecodeT8",
+    "ZealmanH3ModelLoader", "ZealmanLLM_Generate",
+    "SeedVR2VideoUpscaler", "SelfLiftH3Sampler",
+    "ShowText|pysssss", "PT_H3ConcatAVLatent",
+]
+missing = [n for n in need if n not in mapping]
+print("NODE-CHECK total registered:", len(mapping))
+print("NODE-CHECK missing:", missing)
+PY
+
+# -----------------------------------------------------------------------------
+# 目录预建（--base-directory /comfyui 决定 models/output/input/user 的根）
+# -----------------------------------------------------------------------------
+RUN mkdir -p /comfyui/models /comfyui/output /comfyui/input /comfyui/user/__manager
+
+# 清理构建期代理
+ENV http_proxy= https_proxy= no_proxy=
+
+EXPOSE 8188
+
+ENV PYTHONWARNINGS="ignore::UserWarning:pydantic._internal._fields"
+
+CMD ["python", "main.py", "--base-directory", "/comfyui", "--listen", "0.0.0.0"]
