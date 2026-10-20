@@ -181,7 +181,7 @@ async def service_restart() -> dict:
         await launcher.stop()
     except LaunchError:
         pass
-    time.sleep(1)
+    await asyncio.sleep(1)
     try:
         return await launcher.start()
     except LaunchError as exc:

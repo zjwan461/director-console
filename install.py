@@ -23,6 +23,7 @@ import argparse
 import json
 import os
 import platform
+import re
 import shutil
 import subprocess
 import sys
@@ -38,16 +39,39 @@ LOG_PATH = ROOT / "logs" / "install.log"
 HOST = sys.platform.startswith("win")
 VENV_PY = Path("Scripts/python.exe") if HOST else Path("bin/python")
 
-COMFY_LIGHT_DEPS = [
-    "psutil", "color-matcher", "mss",
-    "imageio", "imageio-ffmpeg", "diffusers", "accelerate", "sentencepiece",
-    "spandrel", "matplotlib", "peft", "lark", "kornia", "av", "transformers",
-    "huggingface_hub", "safetensors", "einops", "omegaconf", "gguf",
-    "onnxruntime", "Cython", "librosa", "google-generativeai",
-    "rotary_embedding_torch",
-]
+# 节点依赖不再手写清单：每个包自己带 requirements*.txt / pyproject.toml，按清单装。
+# 下面几组是「装了会出事 / 太大 / 要编译」的例外，按名字拦。
 
-COMFY_HEAVY_DEPS = ["demucs", "openai-whisper", "voxcpm", "clip_interrogator", "mtcnn-runtime"]
+# 必须和 cv2 一起统一安装的构建（见 _unify_opencv）
+OPENCV_PIN = "opencv-contrib-python-headless>=4.12,<5"
+
+# 基座包：节点依赖不许改它们的版本，否则 ComfyUI / torch 就坏了
+PROTECTED_PACKAGES = {
+    "torch", "torchvision", "torchaudio", "numpy", "scipy",
+    "transformers", "tokenizers", "huggingface-hub", "safetensors", "pillow",
+    "aiohttp", "yarl", "pydantic", "pydantic-settings", "alembic", "sqlalchemy",
+    "comfyui-frontend-package", "comfyui-workflow-templates",
+    "comfyui-embedded-docs", "comfy-kitchen", "comfy-aimdo", "blake3", "simpleeval",
+}
+
+# 要编译 / 平台没有轮子 / 纯可选加速：默认跳过，--with-build 才装
+SKIP_UNLESS_BUILD = {
+    "llama-cpp-python", "xformers", "bitsandbytes",
+    "flash-attn", "flash-attn-2", "sageattention", "sageattn3", "fp4attn-cuda",
+    "nvvfx", "pynvvideocodec", "triton", "insightface", "mediapipe",
+}
+
+# 体积大 / 带模型 / 容易拖崩环境：默认跳过，--with-heavy 才装
+HEAVY_PACKAGES = {
+    "demucs", "openai-whisper", "voxcpm", "clip-interrogator",
+    "stable-ts", "modelscope", "torchcodec",
+}
+
+# cv2 由 _unify_opencv 统一装一个构建；节点清单里的 opencv* 全部忽略（混装必崩）
+OPENCV_PACKAGES = {
+    "opencv-python", "opencv-python-headless",
+    "opencv-contrib-python", "opencv-contrib-python-headless",
+}
 
 KEY_NODES = [
     "CR Text", "CR Prompt Text", "INTConstant", "VHS_VideoCombine",
@@ -104,7 +128,18 @@ class Installer:
             return
         full_env = os.environ.copy()
         if self.args.proxy:
-            full_env.update({"HTTP_PROXY": self.args.proxy, "HTTPS_PROXY": self.args.proxy})
+            # pip 和 curl 都认这两组；PIP_PROXY 让 pip 明确走代理（少一条警告）
+            full_env.update({
+                "HTTP_PROXY": self.args.proxy, "HTTPS_PROXY": self.args.proxy,
+                "http_proxy": self.args.proxy, "https_proxy": self.args.proxy,
+                "PIP_PROXY": self.args.proxy,
+            })
+        mirror = getattr(self.args, "pip_mirror", "") or ""
+        if mirror:
+            # 国内源：所有 pip 子进程都走这个索引（命令行显式 --index-url 的步骤不受影响）
+            full_env["PIP_INDEX_URL"] = mirror
+            if mirror.startswith("http://"):
+                full_env["PIP_TRUSTED_HOST"] = mirror.split("//", 1)[1].split("/", 1)[0]
         if env:
             full_env.update(env)
         proc = subprocess.run(
@@ -132,7 +167,7 @@ class Installer:
     COMFY_STEPS = {"comfy_clone", "comfy_venv", "comfy_torch", "comfy_deps",
                    "comfy_nodes", "node_deps", "models"}
 
-    def step(self, sid: str, title: str, fn) -> None:
+    def step(self, sid: str, title: str, fn, payload=None) -> None:
         if self.args.skip_comfy and sid in self.COMFY_STEPS:
             self.log(f"[skip] {title}")
             return
@@ -141,12 +176,17 @@ class Installer:
             if sid in {"panel_venv", "panel_deps", "db"}:
                 self.log(f"[skip] {title}")
                 return
+        # payload 用来记「这次装的是哪份清单」：节点包增删后能自动重跑
+        fingerprint = payload() if payload else None
         if self.done(sid):
-            self.log(f"[ok]   {title}（已完成，跳过）")
-            return
+            if fingerprint and self.state.get(sid, {}).get("fingerprint") != fingerprint:
+                self.log(f"[..]   {title}（依赖清单有变化，重跑）")
+            else:
+                self.log(f"[ok]   {title}（已完成，跳过）")
+                return
         self.log(f"[..]   {title}")
         fn()
-        self.mark(sid)
+        self.mark(sid, {"fingerprint": fingerprint} if fingerprint else None)
         self.log(f"[done] {title}")
 
 
@@ -242,8 +282,10 @@ def step_comfy_torch(inst: Installer) -> None:
 
 def step_comfy_deps(inst: Installer) -> None:
     py = inst.python_of(inst.comfy_venv)
-    inst.run([py, "-m", "pip", "install", "-r", str(inst.comfy_dir / "requirements.txt"),
-              "numpy<2", "scipy<1.14"])
+    # 不钉 numpy<2 / scipy<1.14：
+    #  1) Python 3.13 根本没有 numpy<2 的轮子，钉了就装不上；
+    #  2) 打崩 cv2 的是「多个 opencv 构建混装」，不是 numpy 版本 —— 那个在 _unify_opencv 里统一。
+    inst.run([py, "-m", "pip", "install", "-r", str(inst.comfy_dir / "requirements.txt")])
 
 
 def _sha256(path: Path) -> str:
@@ -340,14 +382,18 @@ def step_comfy_nodes(inst: Installer) -> None:
     with zipfile.ZipFile(pack) as zf:
         for info in zf.infolist():
             name = info.filename.replace("\\", "/").lstrip("/")
-            if name.endswith("/") or not name:
+            if name.endswith("/") or not name or name.startswith("__MACOSX/"):
                 continue
+            if name.startswith("../") or "/../" in name:
+                raise RuntimeError(f"节点包里有越界路径：{info.filename}")
             dest = tmp / name
             dest.parent.mkdir(parents=True, exist_ok=True)
             with zf.open(info) as fh, dest.open("wb") as out:
                 shutil.copyfileobj(fh, out)
 
     src = tmp / "custom_nodes"
+    if not src.is_dir():
+        raise RuntimeError(f"节点包结构不对：{pack} 里没有 custom_nodes/ 目录")
     skip = {"ComfyUI-FeiHou-Toolbox"}
     count = 0
     for item in sorted(src.iterdir()):
@@ -358,16 +404,192 @@ def step_comfy_nodes(inst: Installer) -> None:
     inst.log(f"  复制 {count} 个节点包")
 
 
-def step_node_deps(inst: Installer) -> None:
-    py = inst.python_of(inst.comfy_venv)
-    deps = list(COMFY_LIGHT_DEPS)
-    if inst.args.with_heavy:
-        deps += COMFY_HEAVY_DEPS
-    inst.run([py, "-m", "pip", "install", *deps, "numpy<2", "scipy<1.14"])
+# --------------------------------------------------------------------------- #
+# 节点依赖：按每个包自己的清单装，且不许动基座
+# --------------------------------------------------------------------------- #
+def _norm_name(name: str) -> str:
+    return re.sub(r"[-_.]+", "-", (name or "").strip().lower())
 
-    # opencv-python / opencv-python-headless 混装会导致
-    #   cv2.dnn 没有 DictValue → import cv2 直接崩
-    # 统一成只保留一个 contrib-headless（同时带 dnn_superres 等 contrib 模块）
+
+def _req_name(line: str) -> str:
+    """从 requirement 行里取出包名；git+/URL/参数行返回空串。"""
+    text = (line or "").strip()
+    if not text or text.startswith(("#", "-")):
+        return ""
+    if "://" in text or text.startswith("git+"):
+        return ""
+    match = re.match(r"[A-Za-z0-9][A-Za-z0-9._\-]*", text)
+    return match.group(0) if match else ""
+
+
+def _read_requirements(path: Path, seen: set[Path] | None = None) -> list[str]:
+    """读 requirements.txt，展开 -r 引用，丢掉索引类参数。"""
+    seen = seen if seen is not None else set()
+    if path in seen or not path.exists():
+        return []
+    seen.add(path)
+    out: list[str] = []
+    text = path.read_text(encoding="utf-8-sig", errors="replace")
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith(("-r ", "--requirement")):
+            parts = line.split(None, 1)
+            if len(parts) == 2:
+                out += _read_requirements(path.parent / parts[1].strip(), seen)
+            continue
+        if line.startswith(("-i ", "--index-url", "--extra-index-url", "-f ", "--find-links",
+                            "--trusted-host", "--no-binary", "--only-binary", "--no-deps",
+                            "--pre", "--upgrade")):
+            continue
+        out.append(line)
+    return out
+
+
+def _pyproject_dependencies(path: Path) -> list[str]:
+    """pyproject 的 [project].dependencies；Python 3.10 没 tomllib 时用正则兜底。"""
+    text = path.read_text(encoding="utf-8-sig", errors="replace")
+    try:
+        import tomllib
+
+        data = tomllib.loads(text)
+        deps = (data.get("project") or {}).get("dependencies") or []
+        return [str(item) for item in deps]
+    except Exception:
+        pass
+    match = re.search(r"^\s*dependencies\s*=\s*\[(.*?)\]", text, re.S | re.M)
+    if not match:
+        return []
+    pairs = re.findall(r"'([^']+)'|\"([^\"]+)\"", match.group(1))
+    return [a or b for a, b in pairs]
+
+
+def collect_pack_requirements(comfy_dir: Path) -> dict[str, list[str]]:
+    """每个 custom_node 包声明的依赖：requirements*.txt（跳过 dev）+ pyproject。"""
+    packs: dict[str, list[str]] = {}
+    root = comfy_dir / "custom_nodes"
+    if not root.is_dir():
+        return packs
+    for node in sorted(root.iterdir()):
+        if not node.is_dir() or node.name.startswith((".", "__")):
+            continue
+        lines: list[str] = []
+        for req in sorted(node.glob("requirements*.txt")):
+            if "dev" in req.name.lower():
+                continue
+            lines += _read_requirements(req)
+        pyproject = node / "pyproject.toml"
+        if pyproject.exists():
+            lines += _pyproject_dependencies(pyproject)
+        unique: list[str] = []
+        seen: set[str] = set()
+        for line in lines:
+            key = _norm_name(_req_name(line)) or line
+            if key in seen:
+                continue
+            seen.add(key)
+            unique.append(line)
+        if unique:
+            packs[node.name] = unique
+    return packs
+
+
+def _deps_fingerprint(packs: dict[str, list[str]]) -> str:
+    import hashlib
+
+    raw = json.dumps({k: v for k, v in sorted(packs.items())}, ensure_ascii=False)
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
+
+
+def _freeze_versions(py: str) -> dict[str, str]:
+    proc = subprocess.run([py, "-m", "pip", "freeze", "--all"],
+                          capture_output=True, text=True, errors="replace")
+    versions: dict[str, str] = {}
+    for line in (proc.stdout or "").splitlines():
+        if "==" not in line or line.startswith(("#", "-")):
+            continue
+        name, version = line.split("==", 1)
+        versions[_norm_name(name)] = version.strip()
+    return versions
+
+
+def _write_constraints(py: str) -> Path | None:
+    """把基座包的当前版本钉成约束，节点依赖只能迁就它。"""
+    versions = _freeze_versions(py)
+    lines = [f"{name}=={versions[name]}" for name in sorted(versions) if name in PROTECTED_PACKAGES]
+    if not lines:
+        return None
+    path = ROOT / "logs" / "node-deps-constraints.txt"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return path
+
+
+def _pip(inst: Installer, py: str, *args) -> tuple[bool, str]:
+    try:
+        inst.run([py, "-m", "pip", *args])
+        return True, ""
+    except RuntimeError as exc:
+        return False, str(exc)
+
+
+def _error_line(err: str) -> str:
+    """从 pip 的整段输出里挑一行真正的原因（冲突对、ERROR、最后一行）。"""
+    lines = [ln.strip() for ln in str(err or "").splitlines() if ln.strip()]
+    for index, line in enumerate(lines):
+        if line.startswith("The conflict is caused by"):
+            for candidate in lines[index + 1:index + 4]:
+                if "constraint" in candidate.lower() or "user requested" in candidate.lower():
+                    return candidate[:200]
+            if index + 1 < len(lines):
+                return lines[index + 1][:200]
+    for line in reversed(lines):
+        low = line.lower()
+        if line.startswith(("ERROR", "error:")) or "conflict" in low or "no matching distribution" in low:
+            return line[:200]
+    return lines[-1][:200] if lines else "未知错误"
+
+
+def _install_requirements(inst: Installer, py: str, reqs: list[str],
+                          constraints: Path | None, label: str) -> tuple[list[str], list[str]]:
+    """先整包装一遍；失败再逐个装，返回（装失败的, 因基座冲突跳过的）。"""
+    failed: list[str] = []
+    skipped: list[str] = []
+    if not reqs:
+        return failed, skipped
+
+    tmp = ROOT / "logs" / "_node_reqs.txt"
+    tmp.parent.mkdir(parents=True, exist_ok=True)
+    tmp.write_text("\n".join(reqs) + "\n", encoding="utf-8")
+    common = ["install", "-r", str(tmp), "--upgrade-strategy", "only-if-needed"]
+    if constraints:
+        common += ["-c", str(constraints)]
+    ok, err = _pip(inst, py, *common)
+    tmp.unlink(missing_ok=True)
+    if ok:
+        return failed, skipped
+
+    inst.log(f"  [warn] {label} 整包安装失败，改成逐个装：{_error_line(err)}")
+    for req in reqs:
+        args = ["install", req, "--upgrade-strategy", "only-if-needed"]
+        if constraints:
+            args += ["-c", str(constraints)]
+        ok, err = _pip(inst, py, *args)
+        if ok:
+            continue
+        reason = _error_line(err)
+        if _norm_name(_req_name(req)) in PROTECTED_PACKAGES:
+            skipped.append(req)
+            inst.log(f"  [skip] {req}：要改基座版本，跳过（{reason}）")
+        else:
+            failed.append(req)
+            inst.log(f"  [warn] {req} 装不上：{reason}")
+    return failed, skipped
+
+
+def _unify_opencv(inst: Installer, py: str) -> None:
+    """只留一个 cv2：混装会让 cv2.dnn 丢符号（DictValue / dnn_superres）。"""
     inst.log("  统一 cv2（卸载混装的 opencv 包并清掉残留目录）")
     inst.run([py, "-m", "pip", "uninstall", "-y",
               "opencv-python", "opencv-python-headless",
@@ -379,7 +601,82 @@ def step_node_deps(inst: Installer) -> None:
     inst.run([py, "-m", "pip", "install", "--force-reinstall", "--no-deps", OPENCV_PIN])
     inst.run([py, "-c",
               "import cv2; print('  cv2', cv2.__version__, cv2.__file__, "
-              "'dnn', hasattr(cv2.dnn, 'DictValue')); assert hasattr(cv2.dnn, 'DictValue')"])
+              "'| dnn.DictValue', hasattr(cv2.dnn, 'DictValue')); "
+              "assert hasattr(cv2.dnn, 'DictValue'), 'cv2 与 numpy 不匹配：换个 opencv 版本再试'"])
+
+
+def _write_node_deps_report(inst: Installer, packs: dict[str, list[str]],
+                            failed: dict[str, list[str]], heavy: dict[str, list[str]],
+                            build: dict[str, list[str]]) -> None:
+    path = ROOT / "logs" / "node-deps-report.txt"
+    lines = [f"节点依赖报告 @ {time.strftime('%Y-%m-%d %H:%M:%S')}", f"ComfyUI: {inst.comfy_dir}", ""]
+    lines.append(f"有依赖清单的节点包：{len(packs)}")
+    for name, reqs in packs.items():
+        lines.append(f"  {name}: {len(reqs)} 项")
+    lines.append("")
+    for title, table in (("装失败", failed),
+                         ("默认跳过（--with-heavy 才装）", heavy),
+                         ("默认跳过（--with-build 才装）", build)):
+        lines.append(f"== {title} ==")
+        if not table:
+            lines.append("  （无）")
+        for name, items in table.items():
+            lines.append(f"  {name}: {', '.join(items)}")
+        lines.append("")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(lines), encoding="utf-8")
+
+    if failed:
+        inst.log(f"  [warn] {sum(len(v) for v in failed.values())} 个依赖没装上，见 {path}")
+    if heavy or build:
+        inst.log("  这些默认没装（用到再说）："
+                 + ", ".join(sorted({i for v in list(heavy.values()) + list(build.values()) for i in v})))
+    inst.log(f"  报告：{path}")
+
+
+def step_node_deps(inst: Installer) -> None:
+    py = inst.python_of(inst.comfy_venv)
+    packs = collect_pack_requirements(inst.comfy_dir)
+    if not packs:
+        inst.log("  custom_nodes 里没有依赖清单，跳过")
+        return
+
+    constraints = None
+    if not inst.args.dry_run:
+        constraints = _write_constraints(py)
+        if constraints:
+            inst.log(f"  基座约束：{constraints.name}（节点依赖不许改 torch/numpy/transformers 等版本）")
+        if "torch" not in _freeze_versions(py):
+            # 节点清单里只要出现 torch，pip 会从 PyPI 拉一个 CPU 版，把 CUDA 版顶掉
+            inst.log("  [warn] 这个 venv 还没有 torch，节点依赖可能会装成 CPU 版；"
+                     "先跑「PyTorch」那一步再装节点依赖")
+
+    failed: dict[str, list[str]] = {}
+    heavy: dict[str, list[str]] = {}
+    build: dict[str, list[str]] = {}
+
+    for name, reqs in packs.items():
+        keep: list[str] = []
+        for req in reqs:
+            key = _norm_name(_req_name(req))
+            if key in OPENCV_PACKAGES:
+                continue  # cv2 最后统一装一个构建，见 _unify_opencv
+            if key in SKIP_UNLESS_BUILD and not inst.args.with_build:
+                build.setdefault(name, []).append(req)
+                continue
+            if key in HEAVY_PACKAGES and not inst.args.with_heavy:
+                heavy.setdefault(name, []).append(req)
+                continue
+            keep.append(req)
+        if not keep:
+            continue
+        inst.log(f"  {name}（{len(keep)} 项）")
+        bad, skipped = _install_requirements(inst, py, keep, constraints, name)
+        if bad or skipped:
+            failed[name] = bad + skipped
+
+    _unify_opencv(inst, py)
+    _write_node_deps_report(inst, packs, failed, heavy, build)
 
 
 FULL_FFMPEG = {
@@ -425,7 +722,7 @@ def _download(url: str, dst: Path, proxy: str) -> None:
     raise RuntimeError("；".join(errors))
 
 
-def _extract(archive: pathlib.Path, dest: pathlib.Path) -> None:
+def _extract(archive: Path, dest: Path) -> None:
     dest.mkdir(parents=True, exist_ok=True)
     if archive.suffix == ".zip":
         with zipfile.ZipFile(archive) as zf:
@@ -437,7 +734,7 @@ def _extract(archive: pathlib.Path, dest: pathlib.Path) -> None:
             tf.extractall(dest)
 
 
-def _verify_ffmpeg(binary: pathlib.Path) -> tuple[bool, str]:
+def _verify_ffmpeg(binary: Path) -> tuple[bool, str]:
     try:
         filters = subprocess.run([str(binary), "-hide_banner", "-filters"],
                                  capture_output=True, text=True, timeout=60).stdout
@@ -468,7 +765,7 @@ def step_ffmpeg(inst: Installer) -> None:
     if source in ("auto", "system"):
         found = shutil.which("ffmpeg")
         if found:
-            ok, note = _verify_ffmpeg(pathlib.Path(found))
+            ok, note = _verify_ffmpeg(Path(found))
             inst.log(f"  系统 ffmpeg：{found}（{note}）")
             if ok or source == "system":
                 inst.state["ffmpeg_path"] = found
@@ -630,6 +927,38 @@ def step_scripts(inst: Installer) -> None:
     inst.log(f"  {sh.name}")
 
 
+def _check_node_imports(inst: Installer) -> None:
+    """跑 ComfyUI 自己的导入自检：哪些 custom_nodes 起不来，一眼看到。"""
+    main_py = inst.comfy_dir / "main.py"
+    cpy = inst.python_of(inst.comfy_venv)
+    if not main_py.exists() or not Path(cpy).exists():
+        return
+    inst.log("  custom_nodes 导入自检（几十秒，不加载模型）…")
+    out = ""
+    for extra in (["--quick-test-for-ci", "--cpu"], ["--quick-test-for-ci"], []):
+        try:
+            proc = subprocess.run([cpy, "main.py", *extra], cwd=str(inst.comfy_dir),
+                                  capture_output=True, text=True, errors="replace", timeout=900)
+        except subprocess.TimeoutExpired:
+            inst.log("  [warn] 导入自检超时，跳过")
+            return
+        out = (proc.stdout or "") + (proc.stderr or "")
+        if "unrecognized arguments" in out and extra:
+            continue
+        break
+
+    log_file = ROOT / "logs" / "comfy-import-check.log"
+    log_file.write_text(out, encoding="utf-8")
+    failed = [line.strip() for line in out.splitlines() if "IMPORT FAILED" in line]
+    if not failed:
+        inst.log("  全部 custom_nodes 导入正常")
+    else:
+        inst.log(f"  [warn] {len(failed)} 个节点包导入失败（缺依赖，先看 logs/node-deps-report.txt）：")
+        for line in failed:
+            inst.log("    " + line.replace(str(inst.comfy_dir), ".").replace("\\", "/"))
+    inst.log(f"  完整输出：{log_file}")
+
+
 def step_selfcheck(inst: Installer) -> None:
     if inst.args.dry_run:
         inst.log("  dry-run，跳过自检")
@@ -641,7 +970,13 @@ def step_selfcheck(inst: Installer) -> None:
     if not inst.args.skip_comfy:
         cpy = inst.python_of(inst.comfy_venv)
         inst.log("  ComfyUI 依赖：")
-        inst.run([cpy, "-c", "import torch; print('  torch', torch.__version__, 'cuda', torch.cuda.is_available())"])
+        inst.run([cpy, "-c",
+                  "import torch, numpy, cv2; print('  torch', torch.__version__, "
+                  "'| cuda', torch.cuda.is_available(), '| numpy', numpy.__version__, "
+                  "'| cv2', cv2.__version__); "
+                  "assert hasattr(cv2.dnn, 'DictValue'), 'cv2 混装/ABI 不匹配'"])
+        if not inst.args.skip_node_check:
+            _check_node_imports(inst)
 
     inst.log("  ffmpeg：")
     ff = inst.state.get("ffmpeg_path") or shutil.which("ffmpeg")
@@ -691,14 +1026,22 @@ def parse_args() -> argparse.Namespace:
                    help="auto=本地优先，没有就按清单下载；local=只用本地；download=强制下载")
     p.add_argument("--from-comfy", type=Path, default=None,
                    help="从已有 ComfyUI 目录复制节点包（内网/离线推荐）")
-    p.add_argument("--proxy", default="", help="安装期代理，如 http://127.0.0.1:1081")
+    p.add_argument("--proxy", default="", help="安装期代理，如 http://127.0.0.1:1081（pip 和下载都会走）")
+    p.add_argument("--pip-mirror", default="",
+                   help="pip 索引（国内加速），如 https://pypi.tuna.tsinghua.edu.cn/simple；"
+                        "留空用官方源")
     p.add_argument("--skip-comfy", action="store_true")
     p.add_argument("--comfy-only", action="store_true")
     p.add_argument("--skip-ffmpeg", action="store_true", help="不安装 ffmpeg")
     p.add_argument("--ffmpeg-source", default="auto", choices=["auto", "full", "system", "imageio"],
                    help="auto=系统优先→下载 full→imageio 兜底")
     p.add_argument("--ffmpeg-url", default="", help="自定义 full 版下载地址（zip/tar.xz）")
-    p.add_argument("--with-heavy", action="store_true", help="额外安装 demucs / whisper / llama 等重依赖")
+    p.add_argument("--with-heavy", action="store_true",
+                   help="额外安装 demucs / whisper / voxcpm / clip-interrogator / modelscope 等重依赖")
+    p.add_argument("--with-build", action="store_true",
+                   help="额外安装需要编译的（llama-cpp-python / xformers / bitsandbytes / insightface 等）")
+    p.add_argument("--skip-node-check", action="store_true",
+                   help="跳过自定义节点导入自检（默认会在装完后跑一次）")
     p.add_argument("--force", action="store_true", help="忽略状态文件，全部重跑")
     p.add_argument("--force-config", action="store_true", help="覆盖 config.local.yaml / 启动脚本")
     p.add_argument("--dry-run", action="store_true")
@@ -713,6 +1056,7 @@ def find_pack(explicit: Path | None) -> Path:
         ROOT.parent / "director-node-pack.zip",
         ROOT / "tools" / "director-node-pack.zip",
         ROOT / "docs" / "director-node-pack.zip",
+        ROOT / "logs" / "director-node-pack.zip",   # 上次下载留下的，直接复用
     ]
     for path in candidates:
         if path.exists():
@@ -748,9 +1092,15 @@ def main() -> int:
         ("selfcheck", "自检", step_selfcheck),
     ]
 
+    # 节点依赖用「当前 custom_nodes 的清单指纹」判断要不要重跑：
+    # 新增/删掉节点包后，即使状态文件里记过 node_deps，也会自动重装。
+    deps_payload = None
+    if not args.skip_comfy:
+        deps_payload = lambda: _deps_fingerprint(collect_pack_requirements(args.comfy_dir))
+
     for sid, title, fn in steps:
         try:
-            inst.step(sid, title, lambda f=fn: f(inst))
+            inst.step(sid, title, lambda f=fn: f(inst), deps_payload if sid == "node_deps" else None)
         except Exception as exc:
             inst.log(f"\n[FAIL] {title}: {exc}")
             inst.log(f"日志：{LOG_PATH}")

@@ -4,7 +4,9 @@
  "file": "director-node-pack.zip",
  "bytes": 234873971,
  "sha256": "d5cc76385b04c2b198f0c2518d5a44546d16a78c943a4de7b3d8c937b1cf606d",
- "urls": [],
+ "urls": [
+  "https://github.com/zjwan461/director-console/releases/download/director-node-pack/director-node-pack.zip"
+ ],
  "packs": {
   "ComfyUI-Custom-Scripts": {
    "nodes": [

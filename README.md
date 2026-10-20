@@ -326,14 +326,32 @@ python install.py \
   --comfy-dir /root/ComfyUI \
   --models-dir /root/autodl-tmp/models \
   --torch cu130 \
-  --proxy http://127.0.0.1:1081
+  --proxy http://127.0.0.1:1081 \
+  --pip-mirror https://pypi.tuna.tsinghua.edu.cn/simple
 ```
 
 - 面板与 ComfyUI **各自一个 venv**，面板不装 torch；
-- ComfyUI 固定 `v0.39.0`，`custom_nodes` 来自 `director-node-pack.zip`；
+- ComfyUI 固定 `v0.39.0`，`custom_nodes` 来自 `director-node-pack.zip`
+  （地址已填在 `content/node-pack.json`，没有本地 zip 就直接下 GitHub Release）；
 - 每步成功写入 `.install-state.json`，可重复执行；`--force` 全部重跑；
 - `--skip-comfy` 只装面板，`--comfy-only` 只装 ComfyUI；
-- 模型目录支持软链接（AutoDL 系统盘小，放 `/root/autodl-tmp`）。
+- 模型目录支持软链接（AutoDL 系统盘小，放 `/root/autodl-tmp`）；
+- `--proxy` 同时给 pip 和文件下载用；`--pip-mirror` 给所有 pip 步骤换源。
+
+### 节点依赖是怎么装的
+
+每个节点包自己带的 `requirements*.txt` / `pyproject.toml` 就是清单，**按包分别装**，不再有一份手写列表：
+
+- 装之前先用 `pip freeze` 把基座包（torch / numpy / scipy / transformers / pillow / huggingface-hub …）
+  钉成 `logs/node-deps-constraints.txt`，节点清单想降级它们会被 pip 挡下来，记成「跳过」而不是装坏；
+- 整包安装失败会退化成逐个装，一个包的问题不会让整个安装中断；
+- 重依赖默认不装：`--with-heavy` 装 demucs / whisper / voxcpm / clip-interrogator / modelscope，
+  `--with-build` 装要编译的 llama-cpp-python / xformers / bitsandbytes / insightface；
+- 最后统一 cv2（只留 `opencv-contrib-python-headless` 一个构建，并断言 `cv2.dnn.DictValue` 存在），
+  避免多个 opencv 包混装导致的 `AttributeError`；
+- 装完跑一次 ComfyUI 自己的导入自检（`main.py --quick-test-for-ci --cpu`），
+  哪些节点包起不来会直接列出来；`--skip-node-check` 可跳过；
+- 详情写 `logs/node-deps-report.txt`，导入自检的完整输出写 `logs/comfy-import-check.log`。
 
 装完执行 `./start-all.sh`（Windows 为 `start-all.bat`），面板在 6006。
 
@@ -394,6 +412,14 @@ comfy:
     python: D:/ComfyUI_windows_portable/python_embeded/python.exe
     args: ["main.py", "--listen", "127.0.0.1", "--port", "8188"]
 ```
+
+### 「关闭」关的是哪个进程
+
+- 面板启动 ComfyUI 时会把 pid 记到 `data/comfy-process.json`，后端重启（含 `--reload`）后还能认领回来；
+- 如果这个 ComfyUI 不是面板启动的（桌面版、命令行、旧面板开的），点「关闭」会按 `comfy.local_url`
+  的端口找到监听进程，确认进程名像 python / ComfyUI 才会结束它，并在提示里说明；
+- 进程已经不在了就明确回「ComfyUI 已经没有在运行」，不会再出现「点了没反应」；
+- 关掉之后 `data/comfy-process.json` 自动清理，pid 被系统复用时也不会认错进程。
 
 ## 现在能做什么
 

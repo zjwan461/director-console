@@ -95,6 +95,7 @@ export interface ServiceStatus {
   running: boolean
   managed_pid?: number | null
   managed_uptime?: number
+  managed_adopted?: boolean
   workdir?: string
   advanced_panel?: string
   comfy_web?: string

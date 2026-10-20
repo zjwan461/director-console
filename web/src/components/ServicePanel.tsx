@@ -29,7 +29,11 @@ export default function ServicePanel({ status, onRefresh }: Props) {
     setMessage('')
     try {
       const res = await fn()
-      setMessage(res.message || '完成')
+      if (res && res.ok === false) {
+        setError(res.message || '操作没有成功')
+      } else {
+        setMessage(res.message || '完成')
+      }
       onRefresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
@@ -60,6 +64,7 @@ export default function ServicePanel({ status, onRefresh }: Props) {
   const vram = device?.vram_total
     ? `${(device.vram_total / 1024 ** 3).toFixed(1)} GB（空闲 ${((device.vram_free || 0) / 1024 ** 3).toFixed(1)} GB）`
     : '—'
+  const localHost = (local?.url || '').replace(/^https?:\/\//, '')
 
   return (
     <div>
@@ -88,9 +93,11 @@ export default function ServicePanel({ status, onRefresh }: Props) {
           <dt>托管进程</dt>
           <dd>
             {status?.managed_pid
-              ? `PID ${status.managed_pid} · 已运行 ${formatDuration(status.managed_uptime)}`
+              ? `PID ${status.managed_pid} · 已运行 ${formatDuration(status.managed_uptime)}${status.managed_adopted ? ' · 接管自已有进程' : ''}`
               : status?.managed
-                ? '由本面板托管（当前未运行）'
+                ? (local?.running
+                  ? '外部启动（面板没有它的进程号，点「关闭」会按端口结束）'
+                  : '由本面板托管（当前未运行）')
                 : '外部托管（面板不启动进程）'}
           </dd>
           {status?.workdir && (<><dt>工作目录</dt><dd>{status.workdir}</dd></>)}
@@ -138,6 +145,12 @@ export default function ServicePanel({ status, onRefresh }: Props) {
           )}
         </div>
 
+        {status?.managed && local?.running && !status?.managed_pid && (
+          <div className="notice" style={{ marginTop: 12 }}>
+            这个 ComfyUI 不是面板启动的（可能是桌面版、命令行或旧面板开的）。
+            点「关闭」时面板会按端口 {localHost} 找到监听进程并结束它。
+          </div>
+        )}
         {!status?.managed && status?.mode === 'external' && (
           <div className="notice" style={{ marginTop: 12 }}>
             云端 / 外部模式：面板不启动也不关闭对方的进程，只负责提交任务和取结果。

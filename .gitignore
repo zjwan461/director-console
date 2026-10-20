@@ -17,6 +17,7 @@ data/uploads/*
 data/outputs/*
 data/thumbs/*
 data/comfy.log
+data/comfy-process.json
 data/model-*.json
 data/model-sources.json
 data/*.log
