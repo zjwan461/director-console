@@ -56,6 +56,41 @@ class Handler(BaseHTTPRequestHandler):
                     "vram_free": 21 * 1024 ** 3,
                 }],
             })
+        if parsed.path == "/userdata":
+            if not self._authorized():
+                return
+            return self._json([{"path": "workflows/demo.json", "name": "demo.json", "type": "file"}])
+        if parsed.path.startswith("/userdata/"):
+            if not self._authorized():
+                return
+            workflow = {
+                "nodes": [
+                    {
+                        "type": "UNETLoader",
+                        "properties": {
+                            "models": [
+                                {
+                                    "name": "minimax/minimax_h3_ref2va_pruned_int8_convrot.safetensors",
+                                    "url": "https://huggingface.co/Comfy-Org/MiniMax-H3_ComfyUI/resolve/main/split_files/diffusion_models/minimax_h3_ref2va_pruned_int8_convrot.safetensors",
+                                    "directory": "diffusion_models",
+                                },
+                                {
+                                    "name": "minimax_h3_audio_vae_fp32.safetensors",
+                                    "url": "https://huggingface.co/Comfy-Org/MiniMax-H3_ComfyUI/resolve/main/split_files/vae/minimax_h3_audio_vae_fp32.safetensors",
+                                    "directory": "vae",
+                                }
+                            ]
+                        },
+                    }
+                ]
+            }
+            body = json.dumps(workflow).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
         if parsed.path == "/object_info":
             if not self._authorized():
                 return

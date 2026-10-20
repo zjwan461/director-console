@@ -55,11 +55,19 @@ class ComfyClient:
     async def object_info(self) -> dict:
         return (await self._request("GET", "/object_info")).json()
 
-    async def model_folders(self) -> list[str]:
-        return (await self._request("GET", "/models")).json()
+    async def model_folders(self) -> list:
+        return (await self._request("GET", "/experiment/models")).json()
 
-    async def model_files(self, folder: str) -> list[str]:
-        return (await self._request("GET", f"/models/{folder}")).json()
+    async def model_files(self, folder: str) -> list:
+        return (await self._request("GET", f"/experiment/models/{folder}")).json()
+
+    async def userdata_list(self, dir_name: str = "workflows") -> list:
+        resp = await self._request("GET", "/userdata", params={"dir": dir_name, "recurse": "true"})
+        return resp.json()
+
+    async def userdata_get(self, name: str) -> str:
+        resp = await self._request("GET", f"/userdata/{name}")
+        return resp.text
 
     async def health(self) -> dict:
         started = time.perf_counter()

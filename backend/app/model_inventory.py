@@ -19,19 +19,27 @@ async def fetch_inventory() -> dict:
     source = ""
 
     try:
-        names = await client.model_folders()
-        for name in names:
-            if not isinstance(name, str):
+        folders_raw = await client.model_folders()
+        for item in folders_raw:
+            folder = item.get("name") if isinstance(item, dict) else str(item)
+            if not folder or folder in {"configs", "custom_nodes"}:
                 continue
             try:
-                files = await client.model_files(name)
+                entries = await client.model_files(folder)
             except Exception:
                 continue
-            cleaned = sorted({_norm(f) for f in files if isinstance(f, str)})
+            cleaned: set[str] = set()
+            for entry in entries:
+                if isinstance(entry, str):
+                    cleaned.add(_norm(entry))
+                elif isinstance(entry, dict):
+                    path = entry.get("path") or entry.get("name")
+                    if path:
+                        cleaned.add(_norm(str(path)))
             if cleaned:
-                folders[name] = cleaned
+                folders[folder] = sorted(cleaned)
         if folders:
-            source = "models"
+            source = "experiment"
     except Exception:
         folders = {}
 

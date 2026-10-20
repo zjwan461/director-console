@@ -106,6 +106,26 @@ models:
 
 ![模型检查](docs/preview-model-check.png)
 
+### 真实下载链接来自 UI 工作流
+
+ComfyUI 面板的「缺失模型 → 下载」按钮，读的是 **UI 工作流 JSON 里节点的
+`properties.models`**（`name` / `url` / `directory` / `hash`），并且只对
+`civitai.com`、`huggingface.co` 白名单地址展示下载按钮。API 格式工作流没有
+`properties`，所以只有 UI workflow 才带仓库信息。
+
+导演台的做法：
+
+1. 连上装有这些工作流的 ComfyUI，点 **「从 ComfyUI 同步模型链接」**：
+   后端会从 `/userdata?dir=workflows` 拉取所有 UI 工作流，解析 `properties.models`，
+   存到 `data/model-sources.json`（文件名 → 下载地址 / 目录）；
+2. 之后再跑模型检查，缺失模型如果命中映射，会直接给出**真实地址**的下载命令，
+   并在条目上标「链接来自工作流」；
+3. 也可以手动导入：`POST /api/models/sources/import`，body 传单个 UI workflow、
+   数组或 `{workflows:[...]}`。
+
+注意：ComfyUI 自身的模型清单接口是 `/experiment/models`（旧代码曾误写为 `/models`），
+现已修正。
+
 ### 模型清单快照
 
 内网机没有模型、云端机有全量模型时，用快照对比最方便：

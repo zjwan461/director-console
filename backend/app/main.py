@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 import httpx
-from fastapi import FastAPI, File, Form, HTTPException, Query, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -28,6 +28,7 @@ from .presets import default_values, get_card, load_cards, public_card, validate
 from .prompt_stream import router as prompt_stream_router
 from .model_check import check_models
 from .model_inventory import fetch_inventory, load_snapshot, save_snapshot
+from .model_sources import load_sources, merge_sources
 
 ROOT = Path(settings.paths["root"])
 DATA = Path(settings.paths["data"])
@@ -235,6 +236,55 @@ async def models_inventory_snapshot_get() -> dict:
     if not snapshot:
         raise HTTPException(status_code=404, detail="还没有保存过模型清单快照")
     return snapshot
+
+
+@app.get("/api/models/sources")
+async def models_sources() -> dict:
+    sources = load_sources()
+    items = list(sources.values())
+    return {"count": len(items), "items": items[:20]}
+
+
+@app.post("/api/models/sources/import")
+async def models_sources_import(request: Request) -> dict:
+    try:
+        data = await request.json()
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="请求体不是合法 JSON") from exc
+    if isinstance(data, list):
+        workflows = data
+    elif isinstance(data, dict) and isinstance(data.get("workflows"), list):
+        workflows = data["workflows"]
+    elif isinstance(data, dict) and "nodes" in data:
+        workflows = [data]
+    else:
+        raise HTTPException(status_code=400, detail="请传 UI workflow JSON、数组或 {workflows:[...]}")
+    stats = merge_sources([w for w in workflows if isinstance(w, dict)])
+    return {"ok": True, **stats}
+
+
+@app.post("/api/models/sources/sync")
+async def models_sources_sync() -> dict:
+    client = make_client()
+    try:
+        entries = await client.userdata_list("workflows")
+    except ComfyError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+    workflows = []
+    used = 0
+    for entry in entries:
+        name = entry.get("path") if isinstance(entry, dict) else entry
+        if not isinstance(name, str) or not name.lower().endswith(".json"):
+            continue
+        try:
+            raw = await client.userdata_get(name)
+            workflows.append(json.loads(raw))
+            used += 1
+        except Exception:
+            continue
+    stats = merge_sources(workflows)
+    return {"ok": True, "files": used, **stats}
 
 
 @app.get("/api/models/check")

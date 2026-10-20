@@ -127,6 +127,8 @@ export const api = {
     if (cardId) params.set('card_id', cardId)
     return request<ModelCheckResult>(`/api/models/check?${params.toString()}`)
   },
+  syncModelSources: () =>
+    request<{ ok: boolean; files: number; before: number; after: number; updated: number }>('/api/models/sources/sync', { method: 'POST' }),
   modelsInventory: () => request<ModelInventory>('/api/models/inventory'),
   saveInventorySnapshot: () => request<{ ok: boolean; inventory: ModelInventory }>('/api/models/inventory/snapshot', { method: 'POST' }),
   inventorySnapshot: () => request<ModelInventory>('/api/models/inventory/snapshot'),

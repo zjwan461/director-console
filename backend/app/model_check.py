@@ -87,10 +87,11 @@ def _available(object_info: dict) -> tuple[set[str], set[str]]:
     return full, base
 
 
-def _command(category: str, filename: str) -> str:
+def _command(category: str, filename: str, url: str = "") -> str:
     root = str(settings.get("models.comfy_root", "ComfyUI") or "ComfyUI").rstrip("/")
-    base = str(settings.get("models.download_base", "") or "").rstrip("/")
-    url = f"{base}/{quote(category)}/{quote(filename)}" if base else "<下载地址>"
+    if not url:
+        base = str(settings.get("models.download_base", "") or "").rstrip("/")
+        url = f"{base}/{quote(category)}/{quote(filename)}" if base else "<下载地址>"
     return f'wget -c "{url}" -O "{root}/models/{category}/{filename}"'
 
 
@@ -115,6 +116,10 @@ async def check_models(card_id: str | None = None, source: str = "live") -> dict
     ]
     if card_id and not cards:
         raise ValueError("能力卡不存在或缺少工作流文件")
+
+    from .model_sources import load_sources
+
+    sources = load_sources()
 
     if source == "snapshot":
         from .model_inventory import load_snapshot
@@ -141,10 +146,14 @@ async def check_models(card_id: str | None = None, source: str = "live") -> dict
         for item in sorted(collect_required(workflow), key=lambda x: x["file"].lower()):
             name = item["file"]
             exists = _norm(name) in full or _norm(Path(name).name) in base
+            entry = sources.get(_norm(name)) or {}
+            link = str(entry.get("url") or "")
             models.append({
                 **item,
                 "exists": exists,
-                "command": "" if exists else _command(item["category"], name),
+                "command": "" if exists else _command(item["category"], name, link),
+                "url": link,
+                "source": "workflow" if link else "none",
                 "search_url": "https://huggingface.co/models?search=" + quote(Path(name).stem),
             })
         missing = [m for m in models if not m["exists"]]

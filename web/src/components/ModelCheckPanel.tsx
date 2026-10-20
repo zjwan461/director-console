@@ -13,6 +13,7 @@ export default function ModelCheckPanel() {
   const [snapshot, setSnapshot] = useState<ModelInventory | null>(null)
   const [saving, setSaving] = useState(false)
   const [note, setNote] = useState('')
+  const [syncing, setSyncing] = useState(false)
 
   useEffect(() => {
     api.inventorySnapshot().then(setSnapshot).catch(() => undefined)
@@ -31,6 +32,19 @@ export default function ModelCheckPanel() {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
       setLoading(false)
+    }
+  }
+
+  const syncSources = async () => {
+    setSyncing(true)
+    setError('')
+    try {
+      const res = await api.syncModelSources()
+      setNote(`已从 ComfyUI 工作流同步 ${res.updated} 条模型链接（共 ${res.after} 条）`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setSyncing(false)
     }
   }
 
@@ -80,6 +94,9 @@ export default function ModelCheckPanel() {
           <option value="live">对比当前连接的 ComfyUI</option>
           <option value="snapshot">对比已保存的云端快照</option>
         </select>
+        <button disabled={syncing} onClick={() => void syncSources()}>
+          {syncing ? <><span className="spin" /> 同步中</> : '从 ComfyUI 同步模型链接'}
+        </button>
         <button disabled={saving} onClick={() => void saveSnapshot()}>
           {saving ? <><span className="spin" /> 保存中</> : '保存当前清单为快照'}
         </button>
@@ -139,6 +156,7 @@ export default function ModelCheckPanel() {
                             {m.file}
                             <span className="meta" style={{ marginLeft: 8, color: 'var(--muted)', fontSize: 11 }}>
                               {m.category} · {m.node}
+                              {m.url ? ' · 链接来自工作流' : ''}
                             </span>
                           </div>
                           {!m.exists && (

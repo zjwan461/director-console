@@ -185,6 +185,8 @@ export interface ModelRef {
   exists: boolean
   command: string
   search_url: string
+  url?: string
+  source?: string
 }
 
 export interface ModelCheckCard {
