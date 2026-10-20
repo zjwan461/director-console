@@ -283,6 +283,55 @@ def step_node_deps(inst: Installer) -> None:
     inst.run([py, "-m", "pip", "install", *deps, "numpy<2", "scipy<1.14"])
 
 
+def step_ffmpeg(inst: Installer) -> None:
+    """确保 ffmpeg 可用：PATH > 系统包管理 > imageio-ffmpeg 静态二进制。"""
+    if inst.args.skip_ffmpeg:
+        inst.log("  --skip-ffmpeg，跳过")
+        return
+    if inst.args.dry_run:
+        inst.log("  dry-run：将检测 PATH，缺失则装 imageio-ffmpeg 静态二进制")
+        return
+
+    found = shutil.which("ffmpeg")
+    if found:
+        inst.state["ffmpeg_path"] = found
+        inst.log(f"  已在 PATH：{found}")
+        return
+
+    if not HOST and inst.args.install_system_ffmpeg:
+        for cmd in (["apt-get", "install", "-y", "ffmpeg"],
+                    ["sudo", "apt-get", "install", "-y", "ffmpeg"]):
+            if not shutil.which(cmd[0]):
+                continue
+            try:
+                inst.run(cmd, quiet=True)
+                found = shutil.which("ffmpeg")
+                if found:
+                    inst.state["ffmpeg_path"] = found
+                    inst.log(f"  系统安装完成：{found}")
+                    return
+            except RuntimeError as exc:
+                inst.log(f"  {cmd[0]} 安装失败，继续尝试静态包：{exc}")
+
+    # 兜底：用 imageio-ffmpeg 自带的静态二进制
+    py = inst.python_of(inst.panel_venv)
+    inst.run([py, "-m", "pip", "install", "imageio-ffmpeg", "-q"])
+    tools = ROOT / "tools"
+    tools.mkdir(parents=True, exist_ok=True)
+    code = "import imageio_ffmpeg;print(imageio_ffmpeg.get_ffmpeg_exe())"
+    proc = subprocess.run([py, "-c", code], capture_output=True, text=True)
+    if proc.returncode != 0 or not proc.stdout.strip():
+        inst.log("  [warn] imageio-ffmpeg 不可用，成片导出将无法使用")
+        return
+    src = Path(proc.stdout.strip())
+    dst = tools / ("ffmpeg.exe" if HOST else "ffmpeg")
+    if not inst.args.dry_run:
+        shutil.copy2(src, dst)
+        dst.chmod(0o755)
+    inst.state["ffmpeg_path"] = str(dst)
+    inst.log(f"  使用静态二进制：{dst}")
+
+
 def step_config(inst: Installer) -> None:
     conf = ROOT / "config.local.yaml"
     comfy_py = inst.python_of(inst.comfy_venv)
@@ -298,6 +347,9 @@ def step_config(inst: Installer) -> None:
             f"    python: {comfy_py}",
             f'    args: ["main.py", "--listen", "127.0.0.1", "--port", "{inst.args.comfy_port}"]',
         ]
+    ff = inst.state.get("ffmpeg_path") or ""
+    if ff:
+        lines += ["ffmpeg:", f'  path: {ff}']
     lines += ["app:", "  host: 0.0.0.0", f"  port: {inst.args.port}"]
     block = "\n".join(lines) + "\n"
 
@@ -394,8 +446,16 @@ def step_selfcheck(inst: Installer) -> None:
         inst.run([cpy, "-c", "import torch; print('  torch', torch.__version__, 'cuda', torch.cuda.is_available())"])
 
     inst.log("  ffmpeg：")
-    ff = shutil.which("ffmpeg")
-    inst.log(f"  {'ok ' + ff if ff else '未找到（成片导出不可用，可 apt install ffmpeg）'}")
+    ff = inst.state.get("ffmpeg_path") or shutil.which("ffmpeg")
+    if ff:
+        try:
+            ver = subprocess.run([ff, "-version"], capture_output=True, text=True, timeout=10)
+            first = (ver.stdout or "").splitlines()[0] if ver.stdout else ff
+            inst.log(f"  {first}")
+        except Exception:
+            inst.log(f"  {ff}")
+    else:
+        inst.log("  未找到（成片导出不可用）")
 
     inst.log("  模型清单：")
     manifest = ROOT / "content" / "model-manifest.json"
@@ -431,6 +491,9 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--proxy", default="", help="安装期代理，如 http://127.0.0.1:1081")
     p.add_argument("--skip-comfy", action="store_true")
     p.add_argument("--comfy-only", action="store_true")
+    p.add_argument("--skip-ffmpeg", action="store_true", help="不安装 ffmpeg")
+    p.add_argument("--install-system-ffmpeg", action="store_true",
+                   help="Linux 上尝试 apt-get 安装 ffmpeg（默认用 imageio-ffmpeg 静态包）")
     p.add_argument("--with-heavy", action="store_true", help="额外安装 demucs / whisper / llama 等重依赖")
     p.add_argument("--force", action="store_true", help="忽略状态文件，全部重跑")
     p.add_argument("--force-config", action="store_true", help="覆盖 config.local.yaml / 启动脚本")
@@ -474,6 +537,7 @@ def main() -> int:
         ("comfy_deps", "ComfyUI 依赖", step_comfy_deps),
         ("comfy_nodes", "custom_nodes", step_comfy_nodes),
         ("node_deps", "节点依赖", step_node_deps),
+        ("ffmpeg", "FFmpeg", step_ffmpeg),
         ("config", "写配置", step_config),
         ("models", "模型目录", step_models),
         ("scripts", "启动脚本", step_scripts),
