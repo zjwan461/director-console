@@ -60,7 +60,7 @@ WORKDIR /comfyui
 #   unzip 用于解压导演台节点包
 # -----------------------------------------------------------------------------
 RUN apt-get update \
- && apt-get install -y --no-install-recommends git wget unzip ca-certificates \
+ && apt-get install -y --no-install-recommends git wget unzip ca-certificates fonts-dejavu-core \
  && rm -rf /var/lib/apt/lists/*
 
 # -----------------------------------------------------------------------------
@@ -78,6 +78,7 @@ RUN pip uninstall -y torch torchvision torchaudio xformers flash-attn || true \
  && pip install --no-cache-dir \
       torch==${TORCH_VERSION} \
       torchvision==${TORCHVISION_VERSION} \
+      torchaudio==${TORCH_VERSION} \
       --index-url https://download.pytorch.org/whl/${CUDA_CHANNEL} \
  && python -c "import torch; print('torch', torch.__version__, '| cuda', torch.version.cuda)"
 
@@ -106,6 +107,7 @@ COPY director-node-pack.zip /tmp/director-node-pack.zip
 RUN mkdir -p /tmp/nodepack \
  && unzip -q -o /tmp/director-node-pack.zip -d /tmp/nodepack \
  && cp -r /tmp/nodepack/custom_nodes/* /comfyui/custom_nodes/ \
+ && rm -rf /comfyui/custom_nodes/ComfyUI-FeiHou-Toolbox \
  && rm -rf /tmp/nodepack /tmp/director-node-pack.zip \
  && echo "custom_nodes: $(ls /comfyui/custom_nodes | wc -l) packs"
 
@@ -123,6 +125,7 @@ RUN printf '%s\n' \
       "spandrel" "matplotlib" "peft" "lark" "kornia" "av" "transformers" \
       "huggingface_hub" "safetensors" "einops" "omegaconf" "gguf" \
       "onnxruntime" "Cython" "librosa" "google-generativeai" \
+      "rotary_embedding_torch" \
       > /tmp/nodes-requirements.txt \
  && pip install --no-cache-dir -r /tmp/nodes-requirements.txt "numpy<2" "scipy<1.14" \
  && rm -f /tmp/nodes-requirements.txt

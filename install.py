@@ -43,6 +43,7 @@ COMFY_LIGHT_DEPS = [
     "spandrel", "matplotlib", "peft", "lark", "kornia", "av", "transformers",
     "huggingface_hub", "safetensors", "einops", "omegaconf", "gguf",
     "onnxruntime", "Cython", "librosa", "google-generativeai",
+    "rotary_embedding_torch",
 ]
 
 COMFY_HEAVY_DEPS = ["demucs", "openai-whisper", "voxcpm", "clip_interrogator", "mtcnn-runtime"]
@@ -227,6 +228,7 @@ def step_comfy_torch(inst: Installer) -> None:
         pinned.append(f"torchvision=={inst.args.torchvision_version}")
     else:
         pinned.append("torchvision")
+    pinned.append(f"torchaudio=={inst.args.torch_version}" if inst.args.torch_version else "torchaudio")
 
     try:
         inst.run([py, "-m", "pip", "install", *pinned, "--index-url", index])
@@ -234,7 +236,7 @@ def step_comfy_torch(inst: Installer) -> None:
         if not (inst.args.torch_version or inst.args.torchvision_version):
             raise
         inst.log(f"  [warn] 钉版本安装失败，回退到该通道最新版：{exc}")
-        inst.run([py, "-m", "pip", "install", "torch", "torchvision", "--index-url", index])
+        inst.run([py, "-m", "pip", "install", "torch", "torchvision", "torchaudio", "--index-url", index])
 
 
 def step_comfy_deps(inst: Installer) -> None:
@@ -267,8 +269,9 @@ def step_comfy_nodes(inst: Installer) -> None:
                 shutil.copyfileobj(fh, out)
     src = tmp / "custom_nodes"
     count = 0
+    skip = {"ComfyUI-FeiHou-Toolbox"}  # 上游 video_combine_v2.py 为 0 字节，导入必失败
     for item in sorted(src.iterdir()):
-        if item.is_dir():
+        if item.is_dir() and item.name not in skip:
             shutil.copytree(item, target / item.name, dirs_exist_ok=True)
             count += 1
     shutil.rmtree(tmp, ignore_errors=True)
