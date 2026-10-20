@@ -7,7 +7,7 @@
     python install.py --comfy-only         # 只装 ComfyUI
     python install.py --dry-run            # 只打印将执行的命令
     python install.py --models-dir /root/autodl-tmp/models
-    python install.py --proxy http://127.0.0.1:1081 --torch cu126
+    python install.py --proxy http://127.0.0.1:1081 --torch cu130
 
 设计要点：
 - 只用标准库，Windows / Linux 都能跑；
@@ -211,9 +211,30 @@ def step_comfy_venv(inst: Installer) -> None:
 
 def step_comfy_torch(inst: Installer) -> None:
     py = inst.python_of(inst.comfy_venv)
-    index = f"https://download.pytorch.org/whl/{inst.args.torch}"
+    channel = inst.args.torch
+    index = f"https://download.pytorch.org/whl/{channel}"
     inst.run([py, "-m", "pip", "install", "-U", "pip", "-q"])
-    inst.run([py, "-m", "pip", "install", "torch", "torchvision", "--index-url", index])
+
+    if channel in {"cu118", "cu121", "cu124", "cu126"}:
+        inst.log("  [warn] 该通道不支持 RTX 50 系（sm_120），新卡请用 cu128/cu130")
+
+    pinned = []
+    if inst.args.torch_version:
+        pinned.append(f"torch=={inst.args.torch_version}")
+    else:
+        pinned.append("torch")
+    if inst.args.torchvision_version:
+        pinned.append(f"torchvision=={inst.args.torchvision_version}")
+    else:
+        pinned.append("torchvision")
+
+    try:
+        inst.run([py, "-m", "pip", "install", *pinned, "--index-url", index])
+    except RuntimeError as exc:
+        if not (inst.args.torch_version or inst.args.torchvision_version):
+            raise
+        inst.log(f"  [warn] 钉版本安装失败，回退到该通道最新版：{exc}")
+        inst.run([py, "-m", "pip", "install", "torch", "torchvision", "--index-url", index])
 
 
 def step_comfy_deps(inst: Installer) -> None:
@@ -393,7 +414,10 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--comfy-ref", default="v0.39.0")
     p.add_argument("--comfy-port", type=int, default=8188)
     p.add_argument("--port", type=int, default=6006, help="面板端口（AutoDL 用 6006）")
-    p.add_argument("--torch", default="cu126", help="torch 的 CUDA 通道，如 cu126 / cu128 / cpu")
+    p.add_argument("--torch", default="cu130",
+                   help="torch 的 CUDA 通道：cu130（默认，支持 50 系）/ cu128 / cpu")
+    p.add_argument("--torch-version", default="2.12.1", help="留空则装该通道最新版")
+    p.add_argument("--torchvision-version", default="0.27.1", help="留空则装该通道最新版")
     p.add_argument("--models-dir", default="", help="模型目录（建议 /root/autodl-tmp/models）")
     p.add_argument("--node-pack", type=Path, default=None)
     p.add_argument("--proxy", default="", help="安装期代理，如 http://127.0.0.1:1081")

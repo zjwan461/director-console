@@ -229,7 +229,7 @@ python install.py --dry-run                       # 先看会做什么
 python install.py \
   --comfy-dir /root/ComfyUI \
   --models-dir /root/autodl-tmp/models \
-  --torch cu126 \
+  --torch cu130 \
   --proxy http://127.0.0.1:1081
 ```
 
