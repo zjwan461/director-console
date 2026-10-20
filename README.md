@@ -138,8 +138,8 @@ PUT /api/models/sources   # {name, url, directory}  url 传空字符串表示删
 运行时会**合并** `content/model-sources.json` 与 `data/model-sources.json`（后者是
 面板里同步得到的，优先级更高）。所以新部署不需要再连靶机。
 
-> 当前 36 个依赖里 28 个已解析到公开地址（均已 HEAD 校验 200）；
-> 剩余 8 个是私有/社区改名权重，检查面板里会标为未解析，可按需手工补进
+> 当前 36 个依赖已全部解析到公开地址（均已 Range 请求校验 206/200）；
+> 个别上游文件名与工作流不一致时，下载命令会用 `-o` 落到工作流期望的文件名；
 > `content/model-sources.json`。
 
 ### 真实下载链接来自 UI 工作流

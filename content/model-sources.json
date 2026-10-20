@@ -598,5 +598,12 @@
   "url": "https://huggingface.co/RunningHubAI/rh-kook-zimage-lora-2049614067429593090/resolve/main/Kook_Zimage_%E5%A6%82%E6%A2%A6%E4%BC%BC%E5%B9%BB.safetensors",
   "directory": "loras",
   "hash": "8c5917953fdaa1fcc43b62ed5b8404cab7d7f2324f9faa9e5c0cc6997b451d79"
+ },
+ "minimax/minimaxh3真实电影质感v0.1.safetensors": {
+  "name": "MinimaxH3真实电影质感V0.1.safetensors",
+  "url": "https://huggingface.co/kirk86413/cinema-h3/resolve/main/Minimax%20H3%E7%9C%9F%E5%AE%9E%E7%94%B5%E5%BD%B1%E8%B4%A8%E6%84%9FV0.1%EF%BC%88%E8%A7%A3%E5%86%B3%E5%BC%A0%E9%87%8F%E6%8A%A5%E9%94%99%EF%BC%89.safetensors",
+  "directory": "loras",
+  "hash": "",
+  "note": "上游文件名带（解决张量报错）后缀，下载后按 -o 指定为原文件名"
  }
 }

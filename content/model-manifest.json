@@ -1,7 +1,7 @@
 {
  "generated_from": "https://u648450-7917a00c08ae.westd.seetacloud.com:8443",
  "total": 36,
- "with_url": 35,
+ "with_url": 36,
  "models": [
   {
    "file": "ae.safetensors",
@@ -156,10 +156,11 @@
   {
    "file": "minimax/MinimaxH3真实电影质感V0.1.safetensors",
    "category": "loras",
-   "url": "",
+   "url": "https://huggingface.co/kirk86413/cinema-h3/resolve/main/Minimax%20H3%E7%9C%9F%E5%AE%9E%E7%94%B5%E5%BD%B1%E8%B4%A8%E6%84%9FV0.1%EF%BC%88%E8%A7%A3%E5%86%B3%E5%BC%A0%E9%87%8F%E6%8A%A5%E9%94%99%EF%BC%89.safetensors",
    "cards": [
     "h3.u24"
-   ]
+   ],
+   "source": "hf-community"
   },
   {
    "file": "minimax/Motion_Repair.safetensors",
