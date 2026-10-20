@@ -27,6 +27,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 import urllib.request
 import zipfile
@@ -140,25 +141,43 @@ class Installer:
             full_env["PIP_INDEX_URL"] = mirror
             if mirror.startswith("http://"):
                 full_env["PIP_TRUSTED_HOST"] = mirror.split("//", 1)[1].split("/", 1)[0]
+        # 无人值守：不让 pip 弹任何交互（凭据、确认），网络卡住时也早点失败
+        full_env.setdefault("PIP_NO_INPUT", "1")
+        full_env.setdefault("PIP_DISABLE_PIP_VERSION_CHECK", "1")
+        full_env.setdefault("PIP_PROGRESS_BAR", "off")
+        full_env.setdefault("PIP_TIMEOUT", "30")
+        full_env.setdefault("PIP_RETRIES", "2")
         if env:
             full_env.update(env)
-        proc = subprocess.run(
+
+        # 边跑边把输出写进日志（以前是跑完才写，pip 一慢就看起来像卡死）
+        proc = subprocess.Popen(
             [str(c) for c in cmd],
             cwd=str(cwd) if cwd else None,
             env=full_env,
+            stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
             errors="replace",
+            bufsize=1,
         )
+        tail: list[str] = []
         with LOG_PATH.open("a", encoding="utf-8") as fh:
-            fh.write(proc.stdout or "")
-        if proc.returncode != 0:
-            tail = "\n".join((proc.stdout or "").splitlines()[-25:])
-            raise RuntimeError(f"命令失败（{proc.returncode}）：{pretty}\n{tail}")
-        if not quiet and proc.stdout.strip():
-            tail = "\n".join(proc.stdout.splitlines()[-6:])
-            self.log(tail)
+            assert proc.stdout is not None
+            for line in proc.stdout:
+                fh.write(line)
+                fh.flush()
+                text = line.rstrip()
+                if not text:
+                    continue
+                tail.append(text)
+                del tail[:-40]
+                if not quiet:
+                    print(line, end="", flush=True)
+        code = proc.wait()
+        if code != 0:
+            raise RuntimeError(f"命令失败（{code}）：{pretty}\n" + "\n".join(tail[-25:]))
 
     def python_of(self, venv: Path) -> str:
         return str(venv / VENV_PY)
@@ -199,6 +218,30 @@ def step_check(inst: Installer) -> None:
         raise RuntimeError("需要 Python >= 3.10")
     if not inst.args.skip_comfy and not shutil.which("git"):
         raise RuntimeError("未找到 git，请先安装（apt-get install git）")
+
+    # 临时目录自检：Windows 上如果项目目录（或里面的 python.exe）被打了「低完整性」标签，
+    # 从这里起的 venv 进程就写不了系统临时目录，Python 会退化成拿当前目录当 temp，
+    # 于是 pip 把 pip-install-* / tmp* 丢进项目里、并且看起来像卡死。提前查出来。
+    try:
+        tmpdir = Path(tempfile.gettempdir()).resolve()
+    except Exception as exc:
+        raise RuntimeError(f"找不到可写的临时目录：{exc}") from exc
+    if str(tmpdir).lower() == str(ROOT).lower() or str(tmpdir).lower().startswith(str(ROOT).lower() + os.sep):
+        raise RuntimeError(
+            f"临时目录被解析成了项目目录（{tmpdir}）。pip 会把临时文件写进项目并卡住。\n"
+            "  处理：确认 TEMP/TMP 指向一个可写目录；Windows 上还要确认项目目录没有低完整性标签"
+        )
+    probe = tmpdir / f".dc-tmp-probe-{os.getpid()}"
+    try:
+        probe.write_text("ok", encoding="utf-8")
+        probe.unlink()
+    except OSError as exc:
+        raise RuntimeError(
+            f"临时目录不可写：{tmpdir}（{exc}）。pip 会卡住。\n"
+            "  Windows 常见原因：项目目录被打了「低完整性」标签，里面的 python.exe 继承后写不了系统 temp\n"
+            "  处理：icacls \"<项目目录>\" /setintegritylevel (OI)(CI)M /T，然后删掉 .venv 重建"
+        ) from exc
+    inst.log(f"  临时目录: {tmpdir}")
     free = shutil.disk_usage(ROOT).free / 1024**3
     inst.log(f"  磁盘可用: {free:.1f} GB")
     if free < 15 and not inst.args.skip_comfy:
@@ -282,10 +325,20 @@ def step_comfy_torch(inst: Installer) -> None:
 
 def step_comfy_deps(inst: Installer) -> None:
     py = inst.python_of(inst.comfy_venv)
+    req = str(inst.comfy_dir / "requirements.txt")
     # 不钉 numpy<2 / scipy<1.14：
     #  1) Python 3.13 根本没有 numpy<2 的轮子，钉了就装不上；
     #  2) 打崩 cv2 的是「多个 opencv 构建混装」，不是 numpy 版本 —— 那个在 _unify_opencv 里统一。
-    inst.run([py, "-m", "pip", "install", "-r", str(inst.comfy_dir / "requirements.txt")])
+    try:
+        inst.run([py, "-m", "pip", "install", "-r", req])
+    except RuntimeError:
+        # 国内镜像经常缺 ComfyUI 新发的包（例如 comfyui-workflow-templates-media-assets-*），
+        # 缺就用官方源再解析一次
+        if not (getattr(inst.args, "pip_mirror", "") or "").strip():
+            raise
+        inst.log("  [warn] 镜像里缺包，改走官方 PyPI 再试一次")
+        inst.run([py, "-m", "pip", "install", "-r", req,
+                  "--index-url", "https://pypi.org/simple"])
 
 
 def _sha256(path: Path) -> str:
@@ -571,11 +624,23 @@ def _install_requirements(inst: Installer, py: str, reqs: list[str],
         return failed, skipped
 
     inst.log(f"  [warn] {label} 整包安装失败，改成逐个装：{_error_line(err)}")
+    mirror = (getattr(inst.args, "pip_mirror", "") or "").strip()
     for req in reqs:
         args = ["install", req, "--upgrade-strategy", "only-if-needed"]
         if constraints:
             args += ["-c", str(constraints)]
         ok, err = _pip(inst, py, *args)
+        if not ok and mirror:
+            # 镜像缺这个包（国内源同步滞后很常见）：换官方源再试一次
+            retry = ["install", req, "--upgrade-strategy", "only-if-needed",
+                     "--index-url", "https://pypi.org/simple"]
+            if constraints:
+                retry += ["-c", str(constraints)]
+            ok2, err2 = _pip(inst, py, *retry)
+            if ok2:
+                inst.log(f"  [info] {req}：镜像里没有，已从官方 PyPI 装上")
+                continue
+            err = err2
         if ok:
             continue
         reason = _error_line(err)
