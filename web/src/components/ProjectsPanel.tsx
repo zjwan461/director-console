@@ -290,7 +290,7 @@ export default function ProjectsPanel() {
                 onClick={() => { setProjectId(p.id); setShotId('') }}
               >
                 <div>
-                  <b>{p.name}</b>
+                  <b title={p.name}>{p.name}</b>
                   <div className="meta">{p.shots ?? 0} 个镜头 · {timeAgo(p.created_at)}</div>
                 </div>
                 <div className="list-actions">
@@ -332,7 +332,7 @@ export default function ProjectsPanel() {
                         ? <img className="mini" src={s.last_frame_url} alt="末帧" />
                         : <div className="mini placeholder">无</div>}
                       <div style={{ minWidth: 0, flex: 1 }}>
-                        <b>{s.title || `镜头 ${s.idx + 1}`}</b>
+                        <b title={s.title || `镜头 ${s.idx + 1}`}>{s.title || `镜头 ${s.idx + 1}`}</b>
                         <div className="meta">{c?.name || s.preset_id || '未选能力'}</div>
                       </div>
                       <div className="list-actions">
