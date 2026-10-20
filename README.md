@@ -220,6 +220,27 @@ ffmpeg:
 > 末帧抽取依赖 **ffmpeg**。没装时不会报错，会写入一张「末帧占位」图并在按钮上标「（占位）」，
 > 装上 ffmpeg 后自动变成真实末帧。
 
+## 一键安装（install.py）
+
+把裸机变成「面板 + ComfyUI」可用环境：
+
+```bash
+python install.py --dry-run                       # 先看会做什么
+python install.py \
+  --comfy-dir /root/ComfyUI \
+  --models-dir /root/autodl-tmp/models \
+  --torch cu126 \
+  --proxy http://127.0.0.1:1081
+```
+
+- 面板与 ComfyUI **各自一个 venv**，面板不装 torch；
+- ComfyUI 固定 `v0.39.0`，`custom_nodes` 来自 `director-node-pack.zip`；
+- 每步成功写入 `.install-state.json`，可重复执行；`--force` 全部重跑；
+- `--skip-comfy` 只装面板，`--comfy-only` 只装 ComfyUI；
+- 模型目录支持软链接（AutoDL 系统盘小，放 `/root/autodl-tmp`）。
+
+装完执行 `./start-all.sh`（Windows 为 `start-all.bat`），面板在 6006。
+
 ## 快速开始
 
 ### 1. 后端

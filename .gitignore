@@ -42,3 +42,5 @@ Thumbs.db
 web/*.tsbuildinfo
 # 本地私有配置（api_key 等），不要提交
 config.local.yaml
+.install-state.json
+logs/
