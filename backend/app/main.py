@@ -854,11 +854,12 @@ def _enrich_render(render: dict) -> dict:
 class RenderCreate(BaseModel):
     shot_ids: list[str] = []
     options: dict[str, Any] = {}
+    shot_edits: list[dict[str, Any]] = []
 
 
 @app.get("/api/ffmpeg/status")
 async def ffmpeg_status() -> dict:
-    return ffmpeg.status()
+    return {**ffmpeg.status(), "capabilities": ffmpeg.capabilities()}
 
 
 @app.post("/api/projects/{project_id}/renders")
@@ -875,14 +876,32 @@ async def create_render(project_id: str, body: RenderCreate) -> dict:
         "height": int(body.options.get("height") or 720),
         "fps": int(body.options.get("fps") or 24),
         "cover_at": float(body.options.get("cover_at") or 1.0),
+        "bgm": body.options.get("bgm") or {},
+        "subtitles": body.options.get("subtitles") or {},
+        "loudness": body.options.get("loudness") or {},
     }
     if options["width"] < 64 or options["height"] < 64:
         raise HTTPException(status_code=400, detail="分辨率太小")
     if not ffmpeg.status()["available"]:
         raise HTTPException(status_code=400, detail=ffmpeg.status()["hint"])
     render = store.create_render(project_id, shot_ids, options)
+    if body.shot_edits:
+        allowed = set(shot_ids)
+        store.save_render_shots(render["id"], [e for e in body.shot_edits if e.get("shot_id") in allowed])
     await render_runner.enqueue(render["id"])
     return _enrich_render(render)
+
+
+@app.get("/api/renders/{render_id}/subtitles")
+async def render_subtitles(render_id: str):
+    render = store.get_render(render_id)
+    if not render:
+        raise HTTPException(status_code=404, detail="成片不存在")
+    path = DATA / "renders" / render_id / "subtitles.srt"
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="这次导出没有生成字幕")
+    return FileResponse(path, media_type="text/plain; charset=utf-8",
+                        filename=f"{render_id}.srt")
 
 
 @app.get("/api/projects/{project_id}/renders")

@@ -158,6 +158,34 @@ def delete_shot(sid: str) -> None:
         conn.execute("DELETE FROM shots WHERE id=?", (sid,))
 
 
+# ---------------- render_shots ----------------
+def save_render_shots(render_id: str, edits: list[dict]) -> None:
+    with _lock, connect() as conn:
+        conn.execute("DELETE FROM render_shots WHERE render_id=?", (render_id,))
+        for idx, item in enumerate(edits):
+            conn.execute(
+                "INSERT INTO render_shots(render_id,shot_id,idx,in_point,out_point,speed,"
+                "volume_db,muted,voice_asset,subtitle) VALUES(?,?,?,?,?,?,?,?,?,?)",
+                (
+                    render_id, item.get("shot_id"), idx,
+                    float(item.get("in_point") or 0),
+                    item.get("out_point"),
+                    float(item.get("speed") or 1),
+                    float(item.get("volume_db") or 0),
+                    1 if item.get("muted") else 0,
+                    str(item.get("voice_asset") or ""),
+                    str(item.get("subtitle") or ""),
+                ),
+            )
+
+
+def list_render_shots(render_id: str) -> list[dict]:
+    with _lock, connect() as conn:
+        return _rows(conn.execute(
+            "SELECT * FROM render_shots WHERE render_id=? ORDER BY idx", (render_id,)
+        ))
+
+
 # ---------------- assets ----------------
 def add_asset(kind: str, path: str, comfy_name: str = "", size: int = 0, width: int = 0, height: int = 0, meta: dict | None = None) -> dict:
     aid = new_id("ast")

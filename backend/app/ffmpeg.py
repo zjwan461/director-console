@@ -77,9 +77,10 @@ def status() -> dict:
     }
 
 
-async def _run(cmd: list[str], timeout: float = 1800) -> tuple[int, str]:
+async def _run(cmd: list[str], timeout: float = 1800, cwd: Path | None = None) -> tuple[int, str]:
     proc = await asyncio.create_subprocess_exec(
         *cmd,
+        cwd=str(cwd) if cwd else None,
         stdout=asyncio.subprocess.DEVNULL,
         stderr=asyncio.subprocess.PIPE,
     )
@@ -224,3 +225,162 @@ async def extract_cover(video: Path, out: Path, at: float = 1.0) -> None:
 def _tail(text: str, lines: int = 6) -> str:
     rows = [r for r in (text or "").strip().splitlines() if r.strip()]
     return "\n".join(rows[-lines:]) or "未知错误"
+
+def capabilities() -> dict:
+    """探测 ffmpeg 是否支持字幕烧录 / 转场 / x264。"""
+    import subprocess as sp
+
+    ff = ffmpeg_path()
+    if not ff:
+        return {"available": False}
+    try:
+        filters = sp.run([ff, "-hide_banner", "-filters"], capture_output=True, text=True, timeout=30).stdout
+        encoders = sp.run([ff, "-hide_banner", "-encoders"], capture_output=True, text=True, timeout=30).stdout
+    except Exception:
+        return {"available": True, "subtitles": False, "xfade": False, "libx264": False}
+    return {
+        "available": True,
+        "subtitles": " subtitles " in filters,
+        "xfade": " xfade " in filters,
+        "libx264": "libx264" in encoders,
+        "ffprobe": bool(ffprobe_path()),
+    }
+
+
+async def process_clip(
+    src: Path,
+    dst: Path,
+    width: int,
+    height: int,
+    fps: int,
+    in_point: float = 0.0,
+    out_point: float | None = None,
+    volume_db: float = 0.0,
+    muted: bool = False,
+) -> None:
+    """单镜处理：裁剪 + 缩放/补边 + 帧率 + 音量。"""
+    ff = ffmpeg_path()
+    if not ff:
+        raise FFmpegMissing("未检测到 ffmpeg")
+    with_audio = await has_audio(src)
+    vf = (
+        f"scale={width}:{height}:force_original_aspect_ratio=decrease,"
+        f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps={fps}"
+    )
+    cmd = [ff, "-y", "-loglevel", "error", "-ss", f"{max(in_point, 0):.3f}", "-i", str(src)]
+    if out_point is not None and out_point > in_point:
+        cmd += ["-t", f"{out_point - in_point:.3f}"]
+
+    if with_audio and not muted:
+        af = f"volume={volume_db}dB,aresample=48000"
+        cmd += ["-map", "0:v:0", "-map", "0:a:0", "-vf", vf, "-af", af]
+    else:
+        cmd += ["-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=48000",
+                "-map", "0:v:0", "-map", "1:a:0", "-vf", vf, "-shortest"]
+
+    cmd += [
+        "-c:v", "libx264", "-crf", _cfg("crf", "20"), "-preset", "veryfast",
+        "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k",
+        "-ar", "48000", "-ac", "2", "-movflags", "+faststart", str(dst),
+    ]
+    code, err = await _run(cmd)
+    if code != 0:
+        raise RuntimeError(f"单镜处理失败：{_tail(err)}")
+
+
+async def mix_bgm(
+    video: Path,
+    bgm: Path,
+    out: Path,
+    volume_db: float = -12,
+    fade_in: float = 0.0,
+    fade_out: float = 0.0,
+    loop: bool = True,
+) -> None:
+    ff = ffmpeg_path()
+    if not ff:
+        raise FFmpegMissing("未检测到 ffmpeg")
+    total = max(await duration_of(video), 1.0)
+    fade_out = min(fade_out, max(total - fade_in, 0))
+    bg_chain = f"volume={volume_db}dB,aresample=48000,atrim=0:{total:.3f}"
+    if fade_in > 0:
+        bg_chain += f",afade=t=in:st=0:d={fade_in:.3f}"
+    if fade_out > 0:
+        bg_chain += f",afade=t=out:st={max(total - fade_out, 0):.3f}:d={fade_out:.3f}"
+    loop_args = ["-stream_loop", "-1"] if loop else []
+    cmd = [
+        ff, "-y", "-loglevel", "error", "-i", str(video), *loop_args, "-i", str(bgm),
+        "-filter_complex",
+        f"[1:a]{bg_chain}[bg];[0:a][bg]amix=inputs=2:duration=first:normalize=0[a]",
+        "-map", "0:v:0", "-map", "[a]",
+        "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2",
+        "-movflags", "+faststart", str(out),
+    ]
+    code, err = await _run(cmd)
+    if code != 0:
+        raise RuntimeError(f"混音失败：{_tail(err)}")
+
+
+def write_srt(timeline: list[dict], path: Path) -> None:
+    def fmt(sec: float) -> str:
+        ms = int(round(sec * 1000))
+        h, ms = divmod(ms, 3600_000)
+        m, ms = divmod(ms, 60_000)
+        s, ms = divmod(ms, 1000)
+        return f"{h:02d}:{m:02d}:{s:02d},{ms:03d}"
+
+    blocks = []
+    for i, item in enumerate(timeline, start=1):
+        text = (item.get("subtitle") or "").strip()
+        if not text:
+            continue
+        # 时间轴必须写成 “start --> end” 一行；拆成两行 libass 直接判定文件无效
+        blocks.append(f"{i}\n{fmt(item['start'])} --> {fmt(item['end'])}\n{text}\n")
+    # libass 靠 BOM 判断 UTF-8，没有 BOM 的中文字幕会直接“打不开”
+    path.write_text("\n".join(blocks), encoding="utf-8-sig")
+
+
+async def burn_subtitles(
+    video: Path,
+    srt: Path,
+    out: Path,
+    font: str = "",
+    size: int = 42,
+    color: str = "#FFFFFF",
+    outline: int = 2,
+    margin_v: int = 48,
+) -> None:
+    ff = ffmpeg_path()
+    if not ff:
+        raise FFmpegMissing("未检测到 ffmpeg")
+    style = [f"FontSize={int(size)}", f"Outline={int(outline)}", f"MarginV={int(margin_v)}"]
+    if font:
+        style.insert(0, f"FontName={font}")
+    if color.startswith("#") and len(color) == 7:
+        b, g, r = color[1:3], color[3:5], color[5:7]
+        style.append(f"PrimaryColour=&H00{b}{g}{r}")
+    # 相对路径 + cwd 最稳：Windows 上 libass 打开带盘符的绝对路径会失败
+    filt = f"subtitles={srt.name}:force_style='{','.join(style)}'"
+    cmd = [
+        ff, "-y", "-loglevel", "error", "-i", str(video),
+        "-vf", filt, "-c:v", "libx264", "-crf", _cfg("crf", "20"), "-preset", "veryfast",
+        "-c:a", "copy", "-movflags", "+faststart", str(out),
+    ]
+    code, err = await _run(cmd, cwd=srt.parent)
+    if code != 0:
+        raise RuntimeError(f"字幕烧录失败：{_tail(err)}")
+
+
+async def loudnorm(video: Path, out: Path, target: float = -16.0) -> None:
+    ff = ffmpeg_path()
+    if not ff:
+        raise FFmpegMissing("未检测到 ffmpeg")
+    cmd = [
+        ff, "-y", "-loglevel", "error", "-i", str(video),
+        "-af", f"loudnorm=I={target}:TP=-1.5:LRA=11",
+        "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-ar", "48000",
+        "-movflags", "+faststart", str(out),
+    ]
+    code, err = await _run(cmd)
+    if code != 0:
+        raise RuntimeError(f"响度标准化失败：{_tail(err)}")

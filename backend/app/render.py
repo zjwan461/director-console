@@ -78,6 +78,9 @@ class RenderRunner:
         height = int(options.get("height") or 720)
         fps = int(options.get("fps") or 24)
         cover_at = float(options.get("cover_at") or 1.0)
+        bgm_opt = options.get("bgm") or {}
+        sub_opt = options.get("subtitles") or {}
+        loud_opt = options.get("loudness") or {}
 
         store.update_render(render_id, status="preparing", message="检查素材", progress=0.02,
                             started_at=time.time())
@@ -92,34 +95,96 @@ class RenderRunner:
         if missing:
             raise RuntimeError("这些镜头还没有可用的视频产物：" + "、".join(missing))
 
-        if not ffmpeg.status()["available"]:
-            raise RuntimeError(
-                "未检测到 ffmpeg，无法合成。安装后加入 PATH，或在 config.yaml 设置 ffmpeg.path"
-            )
+        caps = ffmpeg.capabilities()
+        if not caps.get("available"):
+            raise RuntimeError("未检测到 ffmpeg，无法合成。安装后加入 PATH，或在 config.yaml 设置 ffmpeg.path")
 
+        edits = {row["shot_id"]: row for row in store.list_render_shots(render_id)}
         work = RENDERS / render_id
         work.mkdir(parents=True, exist_ok=True)
         final = work / "final.mp4"
         cover = work / "cover.jpg"
 
-        clips: list[Path] = []
         total = len(ordered)
-        store.update_render(render_id, status="rendering", message=f"0/{total} 段标准化", progress=0.05)
+        clips: list[Path] = []
+        timeline: list[dict] = []
+        cursor = 0.0
 
         for idx, shot in enumerate(ordered, start=1):
             src = self._video_path_for_shot(shot["id"])
             assert src is not None
+            edit = edits.get(shot["id"]) or {}
             dst = work / f"clip_{idx:03d}.mp4"
             store.update_render(
                 render_id,
-                message=f"{idx-1}/{total} 段标准化：{shot['title'] or shot['id']}",
-                progress=0.05 + 0.85 * (idx - 1) / total,
+                message=f"{idx-1}/{total} 段处理：{shot['title'] or shot['id']}",
+                progress=0.05 + 0.55 * (idx - 1) / total,
             )
-            await ffmpeg.normalize_clip(src, dst, width, height, fps)
+            await ffmpeg.process_clip(
+                src, dst, width, height, fps,
+                in_point=float(edit.get("in_point") or 0),
+                out_point=float(edit["out_point"]) if edit.get("out_point") else None,
+                volume_db=float(edit.get("volume_db") or 0),
+                muted=bool(edit.get("muted")),
+            )
+            dur = await ffmpeg.duration_of(dst)
+            text = str(edit.get("subtitle") or "").strip() or (shot.get("title") or "")
+            timeline.append({
+                "shot_id": shot["id"], "title": shot.get("title") or "",
+                "start": cursor, "end": cursor + dur, "duration": dur, "subtitle": text,
+            })
+            cursor += dur
             clips.append(dst)
 
-        store.update_render(render_id, message="拼接中", progress=0.92)
-        await ffmpeg.concat_clips(clips, final, work)
+        store.update_render(render_id, message="拼接中", progress=0.62)
+        joined = work / "joined.mp4"
+        await ffmpeg.concat_clips(clips, joined, work)
+        current = joined
+
+        if bgm_opt.get("asset_id"):
+            bgm_asset = store.get_asset(str(bgm_opt["asset_id"]))
+            bgm_path = DATA / bgm_asset["path"] if bgm_asset else None
+            if bgm_path and bgm_path.exists():
+                store.update_render(render_id, message="混入 BGM", progress=0.7)
+                mixed = work / "mixed.mp4"
+                await ffmpeg.mix_bgm(
+                    current, bgm_path, mixed,
+                    volume_db=float(bgm_opt.get("volume_db") or -12),
+                    fade_in=float(bgm_opt.get("fade_in") or 0),
+                    fade_out=float(bgm_opt.get("fade_out") or 0),
+                    loop=bool(bgm_opt.get("loop", True)),
+                )
+                current = mixed
+
+        srt_path = work / "subtitles.srt"
+        if timeline:
+            ffmpeg.write_srt(timeline, srt_path)
+
+        if sub_opt.get("enabled", True) and caps.get("subtitles") and srt_path.exists():
+            store.update_render(render_id, message="烧录字幕", progress=0.8)
+            subbed = work / "subbed.mp4"
+            style = sub_opt.get("style") or {}
+            await ffmpeg.burn_subtitles(
+                current, srt_path, subbed,
+                font=str(style.get("font") or ""),
+                size=int(style.get("size") or 42),
+                color=str(style.get("color") or "#FFFFFF"),
+                outline=int(style.get("outline") or 2),
+                margin_v=int(style.get("margin_v") or 48),
+            )
+            current = subbed
+
+        if loud_opt.get("enabled", True):
+            store.update_render(render_id, message="响度标准化", progress=0.9)
+            normalized = work / "normalized.mp4"
+            try:
+                await ffmpeg.loudnorm(current, normalized, float(loud_opt.get("target_lufs") or -16))
+                current = normalized
+            except Exception:
+                pass  # 响度失败不阻断导出
+
+        if current != final:
+            current.replace(final)
 
         try:
             await ffmpeg.extract_cover(final, cover, cover_at)
