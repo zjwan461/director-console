@@ -252,11 +252,19 @@ def step_comfy_nodes(inst: Installer) -> None:
     if inst.args.dry_run:
         inst.log(f"  将解压 {pack} -> {target}")
         return
+    tmp = ROOT / "logs" / "_nodepack"
+    if tmp.exists():
+        shutil.rmtree(tmp)
     with zipfile.ZipFile(pack) as zf:
-        tmp = ROOT / "logs" / "_nodepack"
-        if tmp.exists():
-            shutil.rmtree(tmp)
-        zf.extractall(tmp)
+        for info in zf.infolist():
+            # Windows 的 Compress-Archive 会用反斜杠做分隔符，解压前统一成 /
+            name = info.filename.replace("\\", "/").lstrip("/")
+            if name.endswith("/") or not name:
+                continue
+            target = tmp / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            with zf.open(info) as fh, target.open("wb") as out:
+                shutil.copyfileobj(fh, out)
     src = tmp / "custom_nodes"
     count = 0
     for item in sorted(src.iterdir()):

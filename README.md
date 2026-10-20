@@ -220,6 +220,20 @@ ffmpeg:
 > 末帧抽取依赖 **ffmpeg**。没装时不会报错，会写入一张「末帧占位」图并在按钮上标「（占位）」，
 > 装上 ffmpeg 后自动变成真实末帧。
 
+## 节点包（director-node-pack.zip）
+
+zip 内路径**必须是 `/` 分隔**。Windows 自带 `Compress-Archive` 会写成反斜杠，
+Linux 的 `unzip` 会直接失败（`appears to use backslashes as path separators`）。
+
+重新打包用任意一种：
+
+```bash
+python -c "import zipfile,pathlib,shutil; ..."   # 或
+7z a -tzip director-node-pack.zip .\custom_nodes
+```
+
+`install.py` 内部已做规范化，Dockerfile 里的 `unzip` 则没有——所以镜像构建必须用正斜杠的包。
+
 ## 一键安装（install.py）
 
 把裸机变成「面板 + ComfyUI」可用环境：
