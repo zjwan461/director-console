@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { api } from '../api'
-import type { ModelCheckResult, ModelInventory } from '../types'
+import type { ModelCheckResult } from '../types'
 
 export default function ModelCheckPanel() {
   const [result, setResult] = useState<ModelCheckResult | null>(null)
@@ -9,22 +9,15 @@ export default function ModelCheckPanel() {
   const [onlyMissing, setOnlyMissing] = useState(true)
   const [open, setOpen] = useState('')
   const [copied, setCopied] = useState('')
-  const [source, setSource] = useState<'live' | 'snapshot'>('live')
-  const [snapshot, setSnapshot] = useState<ModelInventory | null>(null)
-  const [saving, setSaving] = useState(false)
   const [note, setNote] = useState('')
   const [syncing, setSyncing] = useState(false)
-
-  useEffect(() => {
-    api.inventorySnapshot().then(setSnapshot).catch(() => undefined)
-  }, [])
 
   const run = async () => {
     setLoading(true)
     setError('')
     setCopied('')
     try {
-      const res = await api.modelsCheck(undefined, source)
+      const res = await api.modelsCheck()
       setResult(res)
       const first = res.cards.find((c) => c.missing_count > 0)
       setOpen(first ? first.id : '')
@@ -45,22 +38,6 @@ export default function ModelCheckPanel() {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
       setSyncing(false)
-    }
-  }
-
-  const saveSnapshot = async () => {
-    setSaving(true)
-    setNote('')
-    setError('')
-    try {
-      const res = await api.saveInventorySnapshot()
-      setSnapshot(res.inventory)
-      setSource('snapshot')
-      setNote(`已保存快照：${res.inventory.file_count} 个模型文件 · ${res.inventory.base_url}`)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
-    } finally {
-      setSaving(false)
     }
   }
 
@@ -90,21 +67,10 @@ export default function ModelCheckPanel() {
       </p>
 
       <div className="row" style={{ marginBottom: 10 }}>
-        <select value={source} onChange={(e) => setSource(e.target.value as 'live' | 'snapshot')} style={{ maxWidth: 220 }}>
-          <option value="live">对比当前连接的 ComfyUI</option>
-          <option value="snapshot">对比已保存的云端快照</option>
-        </select>
+        <span style={{ fontSize: 12, color: 'var(--muted)' }}>对比来源：当前连接的 ComfyUI</span>
         <button disabled={syncing} onClick={() => void syncSources()}>
           {syncing ? <><span className="spin" /> 同步中</> : '从 ComfyUI 同步模型链接'}
         </button>
-        <button disabled={saving} onClick={() => void saveSnapshot()}>
-          {saving ? <><span className="spin" /> 保存中</> : '保存当前清单为快照'}
-        </button>
-        {snapshot && (
-          <span style={{ fontSize: 12, color: 'var(--muted)' }}>
-            快照：{snapshot.file_count} 个文件 · {new Date(snapshot.fetched_at * 1000).toLocaleString()} · {snapshot.base_url}
-          </span>
-        )}
       </div>
 
       {note && <div className="notice" style={{ marginBottom: 10 }}>{note}</div>}

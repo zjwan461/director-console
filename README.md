@@ -126,29 +126,6 @@ ComfyUI 面板的「缺失模型 → 下载」按钮，读的是 **UI 工作流 
 注意：ComfyUI 自身的模型清单接口是 `/experiment/models`（旧代码曾误写为 `/models`），
 现已修正。
 
-### 模型清单快照
-
-内网机没有模型、云端机有全量模型时，用快照对比最方便：
-
-1. 在能连到云端 ComfyUI 时点 **「保存当前清单为快照」**，会把完整模型清单写到
-   `data/model-inventory.json`（含来源地址、时间、文件数、按目录分组）；
-2. 切到内网机后，数据源选 **「对比已保存的云端快照」**，就能直接算出本地缺哪些模型；
-3. 数据源选「对比当前连接的 ComfyUI」则永远看实时清单。
-
-接口：
-
-```bash
-GET  /api/models/inventory              # 实时拉取清单（不保存）
-POST /api/models/inventory/snapshot     # 拉取并保存快照
-GET  /api/models/inventory/snapshot     # 读取已保存快照
-GET  /api/models/check?source=live|snapshot
-```
-
-清单优先走 ComfyUI 的 `/models` + `/models/{folder}`；老版本没有这两个接口时，
-自动退化为从 `/object_info` 的选项列表里收集。
-
-> 快照只记录**文件名**，不含仓库地址——ComfyUI 本身不提供模型来源信息。
-
 ## 创作台 ↔ 项目
 
 两边现在互通了：
