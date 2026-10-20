@@ -796,7 +796,10 @@ if WEB_DIST.exists():
             return FileResponse(candidate)
         index = WEB_DIST / "index.html"
         if index.exists():
-            return FileResponse(index)
+            return FileResponse(
+                index,
+                headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+            )
         raise HTTPException(status_code=404, detail="前端尚未构建")
 else:
     @app.get("/")
