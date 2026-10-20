@@ -251,37 +251,41 @@ def build_bindings(card: dict, values: dict, media: dict[str, str]) -> dict[str,
 
 
 def _enum_options(object_info: dict, class_type: str, field: str) -> list[str]:
+    """兼容两种 object_info 枚举格式：
+    旧 [["a","b"], {...}] / 新 ["COMBO", {"options": ["a","b"]}]
+    """
     info = object_info.get(class_type)
     if not isinstance(info, dict):
         return []
     inputs = info.get("input") or {}
     for section in ("required", "optional"):
         spec = (inputs.get(section) or {}).get(field)
-        if isinstance(spec, list) and spec and isinstance(spec[0], list):
+        if not isinstance(spec, list) or not spec:
+            continue
+        if isinstance(spec[0], list):
             return [str(x) for x in spec[0]]
+        if isinstance(spec[0], str) and len(spec) > 1 and isinstance(spec[1], dict):
+            options = spec[1].get("options")
+            if isinstance(options, list):
+                return [str(x) for x in options]
     return []
 
 
 MODEL_EXTS = (".safetensors", ".ckpt", ".pt", ".pth", ".bin", ".gguf", ".sft")
 
-
-def _enum_options(object_info: dict, class_type: str, field: str) -> list[str]:
-    info = object_info.get(class_type)
-    if not isinstance(info, dict):
-        return []
-    inputs = info.get("input") or {}
-    for section in ("required", "optional"):
-        spec = (inputs.get(section) or {}).get(field)
-        if isinstance(spec, list) and spec and isinstance(spec[0], list):
-            return [str(x) for x in spec[0]]
-    return []
+# 枚举值也可能因节点包版本不同而对不上（例如 RES4LYF 的 res_2s_ode）
+# 这里给出安全的降级候选，按优先级取第一个本机存在的
+ENUM_FALLBACKS = {
+    "sampler_name": ["res_multistep", "euler", "dpmpp_2m", "ddim"],
+    "scheduler": ["normal", "simple", "karras"],
+}
 
 
 def adapt_workflow_models(workflow: dict, object_info: dict) -> tuple[dict, list[dict]]:
-    """模型路径自适应。
+    """提交前按本机 object_info 校正工作流里的枚举值。
 
-    同一个模型在不同机器上可能放在不同层级（`minimax/x.safetensors` vs 根目录 `x.safetensors`），
-    提交前按当前 ComfyUI 的 object_info 校正：值不在可选列表时，用文件名找唯一匹配替换。
+    1. 模型文件：路径层级不同（minimax/x vs x）时按文件名找唯一匹配；
+    2. sampler / scheduler：节点包版本差异导致名字不存在时降级到安全候选。
     """
     if not object_info:
         return workflow, []
@@ -295,16 +299,30 @@ def adapt_workflow_models(workflow: dict, object_info: dict) -> tuple[dict, list
         if not class_type or not isinstance(inputs, dict):
             continue
         for field, value in list(inputs.items()):
-            if not isinstance(value, str) or not value.lower().endswith(MODEL_EXTS):
+            if not isinstance(value, str):
+                continue
+            is_model = value.lower().endswith(MODEL_EXTS)
+            if not is_model and field not in ENUM_FALLBACKS:
                 continue
             options = _enum_options(object_info, class_type, field)
             if not options or value in options:
                 continue
-            base = value.rsplit("/", 1)[-1]
-            matches = [o for o in options if o.rsplit("/", 1)[-1] == base]
-            if len(matches) == 1:
-                inputs[field] = matches[0]
-                changes.append({"good": value, "actual": matches[0], "node": class_type, "field": field})
+
+            if is_model:
+                base = value.rsplit("/", 1)[-1]
+                matches = [o for o in options if o.rsplit("/", 1)[-1] == base]
+                if len(matches) == 1:
+                    inputs[field] = matches[0]
+                    changes.append({"good": value, "actual": matches[0],
+                                    "node": class_type, "field": field})
+                continue
+
+            for candidate in ENUM_FALLBACKS[field]:
+                if candidate in options:
+                    inputs[field] = candidate
+                    changes.append({"good": value, "actual": candidate,
+                                    "node": class_type, "field": field})
+                    break
     return workflow, changes
 
 

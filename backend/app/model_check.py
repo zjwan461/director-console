@@ -193,6 +193,9 @@ async def check_models(card_id: str | None = None, source: str = "live") -> dict
 
     sources = load_sources()
 
+    inv_full: set[str] = set()
+    inv_base: set[str] = set()
+
     if source == "snapshot":
         from .model_inventory import load_snapshot
 
@@ -227,7 +230,14 @@ async def check_models(card_id: str | None = None, source: str = "live") -> dict
         models = []
         for item in sorted(collect_required(workflow), key=lambda x: x["file"].lower()):
             name = item["file"]
-            exists = _norm(name) in full or _norm(Path(name).name) in base
+            key_full = _norm(name)
+            key_base = _norm(Path(name).name)
+            # 目录已注册时以「目录里真实存在的文件」为准：
+            # SeedVR2 这类节点的枚举是“可下载清单”，文件没下也会出现在 options 里
+            if source != "snapshot" and folders and item["category"] in folders:
+                exists = key_full in inv_full or key_base in inv_base
+            else:
+                exists = key_full in full or key_base in base
             entry = sources.get(_norm(name)) or {}
             link = str(entry.get("url") or "")
             # collect_required 里的 node 存的就是 class_type
