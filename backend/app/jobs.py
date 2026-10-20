@@ -240,16 +240,27 @@ class JobRunner:
                         "node": node_id,
                         "size": len(blob),
                     }
-                    # 图片产物自动进素材库，方便后续图生视频直接选
-                    if kind == "image":
+                    # 图片/视频/音频产物都进素材库，方便资产面板与项目复用
+                    if kind in {"image", "video", "audio"}:
                         data_rel = target.relative_to(Path(settings.paths["data"])).as_posix()
+                        width, height = _image_size(target) if kind == "image" else (0, 0)
                         asset = store.add_asset(
-                            "image", data_rel, size=len(blob),
+                            kind, data_rel, size=len(blob), width=width, height=height,
                             meta={"from_job": job_id, "node": node_id},
                         )
                         item["asset_id"] = asset["id"]
                     results.append(item)
         return results
+
+
+def _image_size(path: Path) -> tuple[int, int]:
+    try:
+        from PIL import Image
+
+        with Image.open(path) as im:
+            return im.size
+    except Exception:
+        return 0, 0
 
 
 def _kind_of(filename: str) -> str:

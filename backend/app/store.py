@@ -162,11 +162,33 @@ def get_asset(aid: str) -> dict | None:
         return _row(conn.execute("SELECT * FROM assets WHERE id=?", (aid,)).fetchone())
 
 
-def list_assets(kind: str | None = None, limit: int = 100) -> list[dict]:
+def list_assets(kind: str | None = None, limit: int = 100, offset: int = 0, q: str = "") -> list[dict]:
+    items, _ = search_assets(kind, q, limit, offset)
+    return items
+
+
+def search_assets(kind: str | None = None, q: str = "", limit: int = 60, offset: int = 0) -> tuple[list[dict], int]:
+    where = []
+    params: list = []
+    if kind:
+        where.append("kind=?")
+        params.append(kind)
+    if q:
+        where.append("path LIKE ?")
+        params.append(f"%{q}%")
+    clause = (" WHERE " + " AND ".join(where)) if where else ""
     with _lock, connect() as conn:
-        if kind:
-            return _rows(conn.execute("SELECT * FROM assets WHERE kind=? ORDER BY created_at DESC LIMIT ?", (kind, limit)))
-        return _rows(conn.execute("SELECT * FROM assets ORDER BY created_at DESC LIMIT ?", (limit,)))
+        total = conn.execute(f"SELECT COUNT(*) FROM assets{clause}", params).fetchone()[0]
+        rows = conn.execute(
+            f"SELECT * FROM assets{clause} ORDER BY created_at DESC LIMIT ? OFFSET ?",
+            (*params, limit, offset),
+        )
+        return _rows(rows), int(total)
+
+
+def find_asset_by_path(path: str) -> dict | None:
+    with _lock, connect() as conn:
+        return _row(conn.execute("SELECT * FROM assets WHERE path=?", (path,)).fetchone())
 
 
 # ---------------- jobs ----------------

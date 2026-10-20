@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { api, timeAgo } from '../api'
 import type { Asset, Job, Preset, Project, Shot } from '../types'
 import PresetFields, { makeDefaults } from './PresetForm'
@@ -24,6 +24,12 @@ export default function ProjectsPanel() {
 
   const setAssets = (updater: (prev: Record<string, Asset>) => Record<string, Asset>) =>
     setAssetsState((prev) => updater(prev))
+
+  const initial = useMemo(() => {
+    const params = new URLSearchParams(window.location.search)
+    return { project: params.get('project') || '', shot: params.get('shot') || '' }
+  }, [])
+  const bootShotRef = useRef(false)
 
   const shot = useMemo(() => shots.find((s) => s.id === shotId) || null, [shots, shotId])
   const card = useMemo(() => cards.find((c) => c.id === shot?.preset_id) || null, [cards, shot])
@@ -62,7 +68,10 @@ export default function ProjectsPanel() {
     try {
       const res = await api.projects()
       setProjects(res.items)
-      if (!projectId && res.items.length) setProjectId(res.items[0].id)
+      const wanted = initial.project && res.items.some((p) => p.id === initial.project)
+        ? initial.project
+        : ''
+      if (!projectId && res.items.length) setProjectId(wanted || res.items[0].id)
     } catch (err) {
       setError(String(err))
     }
@@ -72,7 +81,12 @@ export default function ProjectsPanel() {
     try {
       const res = await api.shots(pid)
       setShots(res.items)
-      const next = keepId && res.items.some((s) => s.id === keepId) ? keepId : res.items[0]?.id || ''
+      let next = keepId && res.items.some((s) => s.id === keepId) ? keepId : res.items[0]?.id || ''
+      if (!bootShotRef.current && initial.shot && pid === initial.project
+          && res.items.some((s) => s.id === initial.shot)) {
+        next = initial.shot
+      }
+      bootShotRef.current = true
       if (next !== shotId) selectShot(res.items.find((s) => s.id === next) || null)
     } catch (err) {
       setError(String(err))

@@ -86,7 +86,9 @@ export default function PresetFields({ card, values, onChange, assets, setAssets
     setPickerKey(key)
     setPickerLoading(true)
     try {
-      const res = await api.assets('image', 24)
+      const field = card.fields.find((f) => f.key === key)
+      const kind = field?.type === 'audio' ? 'audio' : field?.type === 'video' ? 'video' : 'image'
+      const res = await api.assets({ kind, limit: 24 })
       setPickerAssets(res.items)
     } catch {
       setPickerAssets([])

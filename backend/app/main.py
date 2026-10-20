@@ -366,11 +366,85 @@ async def asset_detail(asset_id: str) -> dict:
 
 
 @app.get("/api/assets")
-async def assets(kind: str | None = None, limit: int = 100) -> dict:
-    items = store.list_assets(kind, limit)
+async def assets(
+    kind: str | None = None,
+    q: str = "",
+    limit: int = Query(60, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+) -> dict:
+    items, total = store.search_assets(kind, q, limit, offset)
     for item in items:
         item["url"] = f"/media/files/{item['path']}"
-    return {"items": items}
+    return {"items": items, "total": total, "limit": limit, "offset": offset}
+
+
+@app.get("/api/assets/{asset_id}/usage")
+async def asset_usage(asset_id: str) -> dict:
+    asset = store.get_asset(asset_id)
+    if not asset:
+        raise HTTPException(status_code=404, detail="素材不存在")
+    shots = []
+    for project in store.list_projects():
+        for shot in store.list_shots(project["id"]):
+            values = shot.get("values") or {}
+            fields = [k for k, v in values.items() if v == asset_id]
+            if fields:
+                shots.append({
+                    "project_id": project["id"],
+                    "project_name": project["name"],
+                    "shot_id": shot["id"],
+                    "shot_title": shot.get("title") or f"镜头 {shot.get('idx', 0) + 1}",
+                    "fields": fields,
+                })
+    jobs = []
+    recent_jobs, _, _ = store.list_jobs(200)
+    asset_path = asset.get("path") or ""
+    for job in recent_jobs:
+        hit = False
+        for o in job.get("outputs") or []:
+            if not isinstance(o, dict):
+                continue
+            if o.get("asset_id") == asset_id:
+                hit = True
+                break
+            url = o.get("url") or ""
+            if url.startswith("/media/outputs/") and "outputs/" + url.removeprefix("/media/outputs/") == asset_path:
+                hit = True
+                break
+        if hit:
+            jobs.append({
+                "id": job["id"],
+                "preset_id": job["preset_id"],
+                "status": job["status"],
+                "created_at": job["created_at"],
+            })
+    asset["url"] = f"/media/files/{asset['path']}"
+    return {"asset": asset, "shots": shots, "jobs": jobs}
+
+
+@app.post("/api/assets/backfill")
+async def assets_backfill() -> dict:
+    """把历史任务产物补登记为素材（旧版本只登记图片）。"""
+    created = 0
+    recent_jobs, _, _ = store.list_jobs(500)
+    for job in recent_jobs:
+        for out in job.get("outputs") or []:
+            if not isinstance(out, dict):
+                continue
+            url = out.get("url") or ""
+            kind = out.get("kind")
+            if kind not in {"image", "video", "audio"} or not url.startswith("/media/outputs/"):
+                continue
+            rel = "outputs/" + url.removeprefix("/media/outputs/")
+            if store.find_asset_by_path(rel):
+                continue
+            path = DATA / rel
+            size = out.get("size") or (path.stat().st_size if path.exists() else 0)
+            width, height = _image_size(path) if kind == "image" else (0, 0)
+            store.add_asset(kind, rel, size=size, width=width, height=height,
+                            meta={"from_job": job["id"], "node": out.get("node")})
+            created += 1
+    return {"ok": True, "created": created}
 
 
 @app.delete("/api/assets/{asset_id}")

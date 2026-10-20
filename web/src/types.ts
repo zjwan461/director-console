@@ -128,6 +128,7 @@ export interface Asset {
   width?: number
   height?: number
   size?: number
+  created_at?: number
 }
 
 export interface PromptMode {
@@ -210,4 +211,25 @@ export interface ModelInventory {
   file_count: number
   folders: Record<string, string[]>
   files: string[]
+}
+
+export interface AssetUsageShot {
+  project_id: string
+  project_name: string
+  shot_id: string
+  shot_title: string
+  fields: string[]
+}
+
+export interface AssetUsageJob {
+  id: string
+  preset_id: string
+  status: string
+  created_at: number
+}
+
+export interface AssetUsage {
+  asset: Asset
+  shots: AssetUsageShot[]
+  jobs: AssetUsageJob[]
 }

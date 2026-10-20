@@ -1,4 +1,4 @@
-import type { Asset, ComfySettings, Job, JobsPage, ModelCheckResult, ModelInventory, Preset, Project, PromptMode, Render, ServiceStatus, Shot } from './types'
+import type { Asset, AssetUsage, ComfySettings, Job, JobsPage, ModelCheckResult, ModelInventory, Preset, Project, PromptMode, Render, ServiceStatus, Shot } from './types'
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const resp = await fetch(url, init)
@@ -56,8 +56,16 @@ export const api = {
     return request<Asset>('/api/assets/upload', { method: 'POST', body: form })
   },
 
-  assets: (kind?: string, limit = 24) =>
-    request<{ items: Asset[] }>(`/api/assets?limit=${limit}${kind ? `&kind=${kind}` : ''}`),
+  assets: (params: { kind?: string; q?: string; limit?: number; offset?: number } = {}) => {
+    const qs = new URLSearchParams()
+    if (params.kind) qs.set('kind', params.kind)
+    if (params.q) qs.set('q', params.q)
+    qs.set('limit', String(params.limit ?? 60))
+    qs.set('offset', String(params.offset ?? 0))
+    return request<{ items: Asset[]; total: number; limit: number; offset: number }>(`/api/assets?${qs.toString()}`)
+  },
+  assetUsage: (id: string) => request<AssetUsage>(`/api/assets/${id}/usage`),
+  deleteAsset: (id: string) => request<{ ok: boolean }>(`/api/assets/${id}`, { method: 'DELETE' }),
 
   createJob: (preset_id: string, inputs: Record<string, unknown>) =>
     request<Job>('/api/jobs', {
