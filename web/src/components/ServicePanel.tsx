@@ -186,6 +186,14 @@ function ConnectionSettings({ status, onSaved }: { status: ServiceStatus | null;
   const [saved, setSaved] = useState('')
 
   useEffect(() => {
+    // 独立拉一次设置，避免状态轮询还没回来时表单先渲染成默认值
+    api.comfySettings().then((s) => {
+      setMode(s.mode)
+      setUrl(s.base_url === 'mock://' ? '' : s.base_url)
+    }).catch(() => undefined)
+  }, [])
+
+  useEffect(() => {
     if (!stored) return
     setMode(stored.mode)
     setUrl(stored.base_url === 'mock://' ? '' : stored.base_url)

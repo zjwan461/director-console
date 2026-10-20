@@ -53,7 +53,10 @@ async def _refresh_settings(request, call_next):
     """config.yaml 改动（比如填了 ai.api_key）无需重启即可生效。"""
     if settings.refresh_if_changed():
         runtime.apply_runtime_settings()
-    return await call_next(request)
+    response = await call_next(request)
+    if request.url.path.startswith("/api/"):
+        response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 store.init_db()
