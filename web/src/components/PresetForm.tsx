@@ -2,6 +2,23 @@ import { Fragment, useEffect, useRef, useState } from 'react'
 import { api, formatBytes, rewriteStream } from '../api'
 import type { Asset, Preset, PresetField, PromptMode } from '../types'
 
+
+const ASPECT_RATIO: Record<string, [number, number]> = {
+  '16:9': [16, 9], '9:16': [9, 16], '1:1': [1, 1],
+  '4:3': [4, 3], '3:4': [3, 4], '21:9': [21, 9],
+  '3:2': [3, 2], '2:3': [2, 3],
+}
+
+/** 与后端 presets.size_from 保持一致：按 32 对齐 */
+export function pixelSize(aspect: string, megapixels: number): [number, number] {
+  const [aw, ah] = ASPECT_RATIO[aspect] || [16, 9]
+  const total = Math.max(0.05, megapixels) * 1_000_000
+  const w = Math.sqrt((total * aw) / ah)
+  const h = (w * ah) / aw
+  const align = (v: number) => Math.max(32, Math.round(v / 32) * 32)
+  return [align(w), align(h)]
+}
+
 export function makeDefaults(card: Preset): Record<string, unknown> {
   const values: Record<string, unknown> = {}
   for (const field of card.fields) {
@@ -387,13 +404,15 @@ function FieldRenderer({ field, value, asset, onChange, onUpload, onAssist, onPi
         : [0.2, 0.4, 0.7, 1.0, 1.5]
     ).map((mp) => ({ mp, label: mpLabel(mp) }))
     const current = Number(size.megapixels ?? 0.4)
+    const currentAspect = size.aspect || '16:9'
+    const [cw, ch] = pixelSize(currentAspect, current)
     // 工作流默认值可能不在预设里（比如 1.2 / 0.9），补一条“自定义”避免选择框回落到第一项
     const options = MP_OPTIONS.some((o) => Math.abs(o.mp - current) < 1e-6)
       ? MP_OPTIONS
       : [...MP_OPTIONS, { mp: current, label: '自定义' }].sort((a, b) => a.mp - b.mp)
     return (
       <div className="field">
-        <label><span>{field.label}</span><span className="meta">{size.aspect} · {current} MP</span></label>
+        <label><span>{field.label}</span><span className="meta">{currentAspect} · {current} MP · {cw}×{ch}</span></label>
         <div className="chips">
           {presets.map((preset) => (
             <button
@@ -412,12 +431,18 @@ function FieldRenderer({ field, value, asset, onChange, onUpload, onAssist, onPi
             value={String(current)}
             onChange={(e) => onChange({ ...size, megapixels: Number(e.target.value) })}
           >
-            {options.map((opt) => (
-              <option key={opt.mp} value={String(opt.mp)}>
-                {opt.mp.toFixed(1)} MP · {opt.label}
-              </option>
-            ))}
+            {options.map((opt) => {
+              const [w, h] = pixelSize(currentAspect, opt.mp)
+              return (
+                <option key={opt.mp} value={String(opt.mp)}>
+                  {opt.mp.toFixed(1)} MP · {opt.label} · {w}×{h}
+                </option>
+              )
+            })}
           </select>
+        </div>
+        <div className="meta" style={{ marginTop: 6, fontSize: 12 }}>
+          实际输出约 {cw} × {ch} 像素（{currentAspect}，按 32 对齐）
         </div>
       </div>
     )
