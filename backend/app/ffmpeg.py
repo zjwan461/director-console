@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 import os
 import shutil
 from pathlib import Path
@@ -92,17 +93,37 @@ async def _probe_json(path: Path, args: list[str]) -> dict:
     return {}
 
 
+async def _ffmpeg_stderr(path: Path) -> str:
+    """没有 ffprobe 时的兜底：用 ffmpeg -i 的 stderr 解析媒体信息。"""
+    ff = ffmpeg_path()
+    if not ff:
+        return ""
+    _, text = await _run([ff, "-hide_banner", "-i", str(path)], timeout=60)
+    return text
+
+
 async def has_audio(path: Path) -> bool:
-    data = await _probe_json(path, ["-select_streams", "a", "-show_entries", "stream=index"])
-    return bool(data.get("streams"))
+    if ffprobe_path():
+        data = await _probe_json(path, ["-select_streams", "a", "-show_entries", "stream=index"])
+        return bool(data.get("streams"))
+    return "Audio:" in await _ffmpeg_stderr(path)
+
+
+_DURATION_RE = re.compile(r"Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)")
 
 
 async def duration_of(path: Path) -> float:
-    data = await _probe_json(path, ["-show_entries", "format=duration"])
-    try:
-        return float(data["format"]["duration"])
-    except (KeyError, TypeError, ValueError):
-        return 0.0
+    if ffprobe_path():
+        data = await _probe_json(path, ["-show_entries", "format=duration"])
+        try:
+            return float(data["format"]["duration"])
+        except (KeyError, TypeError, ValueError):
+            pass
+    match = _DURATION_RE.search(await _ffmpeg_stderr(path))
+    if match:
+        hours, minutes, seconds = match.groups()
+        return int(hours) * 3600 + int(minutes) * 60 + float(seconds)
+    return 0.0
 
 
 async def normalize_clip(
