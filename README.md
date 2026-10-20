@@ -106,6 +106,20 @@ models:
 
 ![模型检查](docs/preview-model-check.png)
 
+### 随包模型清单
+
+从靶机（全量 ComfyUI）同步后，导出两份随仓库发版的文件：
+
+- `content/model-sources.json`：文件名 → 下载地址（含目录），部署时直接可用；
+- `content/model-manifest.json`：能力卡依赖的 36 个模型，带 url / 分类 / 引用卡片。
+
+运行时会**合并** `content/model-sources.json` 与 `data/model-sources.json`（后者是
+面板里同步得到的，优先级更高）。所以新部署不需要再连靶机。
+
+> 当前 36 个依赖里 28 个已解析到公开地址（均已 HEAD 校验 200）；
+> 剩余 8 个是私有/社区改名权重，检查面板里会标为未解析，可按需手工补进
+> `content/model-sources.json`。
+
 ### 真实下载链接来自 UI 工作流
 
 ComfyUI 面板的「缺失模型 → 下载」按钮，读的是 **UI 工作流 JSON 里节点的

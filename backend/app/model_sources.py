@@ -14,12 +14,17 @@ def _norm(name: str) -> str:
 
 
 def load_sources() -> dict:
-    if not SOURCES_PATH.exists():
-        return {}
-    try:
-        return json.loads(SOURCES_PATH.read_text(encoding="utf-8"))
-    except Exception:
-        return {}
+    """合并：随仓库发版的 content 映射 + 运行时从 ComfyUI 同步的 data 映射。"""
+    merged: dict = {}
+    bundled = Path(settings.paths["content"]) / "model-sources.json"
+    for path in (bundled, SOURCES_PATH):
+        if not path.exists():
+            continue
+        try:
+            merged.update(json.loads(path.read_text(encoding="utf-8")))
+        except Exception:
+            continue
+    return merged
 
 
 def save_sources(data: dict) -> None:

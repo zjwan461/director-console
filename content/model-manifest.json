@@ -1,0 +1,343 @@
+{
+ "generated_from": "https://u648450-7917a00c08ae.westd.seetacloud.com:8443",
+ "total": 36,
+ "with_url": 28,
+ "models": [
+  {
+   "file": "ae.safetensors",
+   "category": "vae",
+   "url": "https://huggingface.co/Comfy-Org/z_image_turbo/resolve/main/split_files/vae/ae.safetensors",
+   "cards": [
+    "image.c16"
+   ]
+  },
+  {
+   "file": "ema_vae_fp16.safetensors",
+   "category": "seedvr2",
+   "url": "https://huggingface.co/Comfy-Org/SeedVR2/resolve/main/vae/ema_vae_fp16.safetensors",
+   "cards": [
+    "image.c16"
+   ],
+   "source_repo": "Comfy-Org/SeedVR2"
+  },
+  {
+   "file": "gemma4_e4b_it_fp8_scaled.safetensors",
+   "category": "text_encoders",
+   "url": "https://huggingface.co/Comfy-Org/gemma-4/resolve/main/text_encoders/gemma4_e4b_it_fp8_scaled.safetensors",
+   "cards": [
+    "h3.lipsync"
+   ]
+  },
+  {
+   "file": "h3_upscaler_lms_v0.1.safetensors",
+   "category": "upscale_models",
+   "url": "",
+   "cards": [
+    "h3.u22"
+   ]
+  },
+  {
+   "file": "minimax/H3_Combat_V2.safetensors",
+   "category": "loras",
+   "url": "https://huggingface.co/JOKER141/MiniMax-H3-Combat-Base-V2/resolve/main/H3_Combat_V2.safetensors",
+   "cards": [
+    "h3.u24"
+   ],
+   "source_repo": "JOKER141/MiniMax-H3-Combat-Base-V2"
+  },
+  {
+   "file": "minimax/Minimax-h3_Singularity_ref2va_Pruned_v1.3_int8.safetensors",
+   "category": "diffusion_models",
+   "url": "",
+   "cards": [
+    "h3.u30"
+   ]
+  },
+  {
+   "file": "minimax/Minimax-h3_Singularity_ref2va_v1.3_int8.safetensors",
+   "category": "diffusion_models",
+   "url": "",
+   "cards": [
+    "h3.r2v9"
+   ]
+  },
+  {
+   "file": "minimax/minimax_h3_fl2v_turbo_4step_v1.0_768p_comfyui_bf16.safetensors",
+   "category": "loras",
+   "url": "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/loras/minimax_h3_fl2v_turbo_4step_v1.0_768p_comfyui_bf16.safetensors",
+   "cards": [
+    "h3.lipsync"
+   ]
+  },
+  {
+   "file": "minimax/minimax_h3_fl2v_turbo_4step_v1.2_768p_comfyui_bf16.safetensors",
+   "category": "loras",
+   "url": "https://huggingface.co/RunningHubAI/rh-minimax-h3-fl2v-turbo-4step-v1.2-768p-comfyui-bf16.safetensors-lora/resolve/main/minimax_h3_fl2v_turbo_4step_v1.2_768p_comfyui_bf16.safetensors",
+   "cards": [
+    "h3.u24"
+   ],
+   "source_repo": "RunningHubAI/rh-minimax-h3-fl2v-turbo-4step-v1.2-768p-comfyui-bf16.safetensors-lora"
+  },
+  {
+   "file": "minimax/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors",
+   "category": "loras",
+   "url": "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/loras/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors",
+   "cards": [
+    "h3.t2v",
+    "h3.u09"
+   ]
+  },
+  {
+   "file": "minimax/minimax_h3_fl2va_pruned_int8_convrot.safetensors",
+   "category": "diffusion_models",
+   "url": "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/diffusion_models/minimax_h3_fl2va_pruned_int8_convrot.safetensors",
+   "cards": [
+    "h3.t2v",
+    "h3.i2v",
+    "h3.flf2v"
+   ]
+  },
+  {
+   "file": "minimax/minimax_h3_hybrid_fl2va_ref2va_b25-49-int8.safetensors",
+   "category": "diffusion_models",
+   "url": "",
+   "cards": [
+    "h3.u24",
+    "h3.u22"
+   ]
+  },
+  {
+   "file": "minimax/minimax_h3_ref2va_int8_convrot.safetensors",
+   "category": "diffusion_models",
+   "url": "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/diffusion_models/minimax_h3_ref2va_int8_convrot.safetensors",
+   "cards": [
+    "h3.r2v",
+    "h3.u09"
+   ]
+  },
+  {
+   "file": "minimax/minimax_h3_ref2va_pruned_int8_convrot.safetensors",
+   "category": "diffusion_models",
+   "url": "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/diffusion_models/minimax_h3_ref2va_pruned_int8_convrot.safetensors",
+   "cards": [
+    "h3.lipsync"
+   ]
+  },
+  {
+   "file": "minimax/minimax_h3_ref2va_pruned_w4a8_mixed.safetensors",
+   "category": "diffusion_models",
+   "url": "https://huggingface.co/Kijai/MiniMax-H3-experimental/resolve/main/minimax_h3_ref2va_pruned_w4a8_mixed.safetensors",
+   "cards": [
+    "h3.u09"
+   ]
+  },
+  {
+   "file": "minimax/minimax_h3_turbo_4step_10ErosMax_test4_pruned_curveproj1025_exp_v001-T8.safetensors",
+   "category": "loras",
+   "url": "https://huggingface.co/RunningHubAI/rh-minimax-h3-turbo-4step-10erosmax-test4-pruned-curveproj1025-exp-v001-t8-lora/resolve/main/minimax_h3_turbo_4step_10ErosMax_test4_pruned_curveproj1025_exp_v001-T8.safetensors",
+   "cards": [
+    "h3.u24"
+   ],
+   "source_repo": "RunningHubAI/rh-minimax-h3-turbo-4step-10erosmax-test4-pruned-curveproj1025-exp-v001-t8-lora"
+  },
+  {
+   "file": "minimax/minimax_h3_turbo_v4_step600_ema_DasiwaREF2VAHybridV1_0_curveproj1025_compat_v001.safetensors",
+   "category": "loras",
+   "url": "https://huggingface.co/t8star/minimax_h3_turbo_v4_step600_ema_DasiwaREF2VAHybridV1_0_curveproj1025_compat_v001/resolve/main/minimax_h3_turbo_v4_step600_ema_DasiwaREF2VAHybridV1_0_curveproj1025_compat_v001.safetensors",
+   "cards": [
+    "h3.u24"
+   ],
+   "source_repo": "t8star/minimax_h3_turbo_v4_step600_ema_DasiwaREF2VAHybridV1_0_curveproj1025_compat_v001"
+  },
+  {
+   "file": "minimax/MinimaxH3真实电影质感V0.1.safetensors",
+   "category": "loras",
+   "url": "",
+   "cards": [
+    "h3.u24"
+   ]
+  },
+  {
+   "file": "minimax/Motion_Repair.safetensors",
+   "category": "loras",
+   "url": "https://huggingface.co/JOKER141/MiniMax-H3-General-Motion-Continuity-Repair/resolve/main/Motion_Repair.safetensors",
+   "cards": [
+    "h3.u24"
+   ],
+   "source_repo": "JOKER141/MiniMax-H3-General-Motion-Continuity-Repair"
+  },
+  {
+   "file": "minimax_h3_audio_vae_fp32.safetensors",
+   "category": "vae",
+   "url": "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_audio_vae_fp32.safetensors",
+   "cards": [
+    "h3.t2v",
+    "h3.i2v",
+    "h3.flf2v",
+    "h3.r2v",
+    "h3.r2v9",
+    "h3.u09",
+    "h3.u24",
+    "h3.u30",
+    "h3.u22",
+    "h3.lipsync"
+   ]
+  },
+  {
+   "file": "minimax_h3_latent_upscaler_3d_bf16.safetensors",
+   "category": "latent_upscale_models",
+   "url": "https://huggingface.co/Konteni2/Minimax_h3_latent_Upscaler/resolve/main/minimax_h3_latent_upscaler_3d_bf16.safetensors",
+   "cards": [
+    "h3.u30"
+   ]
+  },
+  {
+   "file": "minimax_h3_latent_upscaler_3d_fp16.safetensors",
+   "category": "latent_upscale_models",
+   "url": "https://huggingface.co/Asirus/Minimax-H3-Latent-Upscaler-BF16-MAXQUALITY/resolve/main/minimax_h3_latent_upscaler_3d_fp16.safetensors",
+   "cards": [
+    "h3.u24"
+   ]
+  },
+  {
+   "file": "minimax_h3_video_vae_fp16.safetensors",
+   "category": "vae",
+   "url": "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_video_vae_fp16.safetensors",
+   "cards": [
+    "h3.t2v",
+    "h3.i2v",
+    "h3.flf2v",
+    "h3.r2v",
+    "h3.u24",
+    "h3.lipsync"
+   ]
+  },
+  {
+   "file": "minimax_h3_video_vae_int8_convrot.safetensors",
+   "category": "vae",
+   "url": "https://huggingface.co/Kijai/MiniMax-H3-experimental/resolve/main/minimax_h3_video_vae_int8_convrot.safetensors",
+   "cards": [
+    "h3.r2v9",
+    "h3.u09",
+    "h3.u30",
+    "h3.u22"
+   ]
+  },
+  {
+   "file": "Qwen3.8-27B-Q4_K_M.gguf",
+   "category": "LLM",
+   "url": "https://huggingface.co/unsloth/Qwen3.8-27B-GGUF/resolve/main/Qwen3.8-27B-UD-Q4_K_M.gguf",
+   "cards": [
+    "h3.prompt",
+    "h3.lipsync"
+   ]
+  },
+  {
+   "file": "Qwen3.8-mmproj-BF16.gguf",
+   "category": "LLM",
+   "url": "https://huggingface.co/unsloth/Qwen3.8-27B-GGUF/resolve/main/mmproj-BF16.gguf",
+   "cards": [
+    "h3.prompt",
+    "h3.lipsync"
+   ]
+  },
+  {
+   "file": "qwen3vl_32b_minimax_h3_int8_convrot.safetensors",
+   "category": "text_encoders",
+   "url": "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/text_encoders/qwen3vl_32b_minimax_h3_int8_convrot.safetensors",
+   "cards": [
+    "h3.r2v",
+    "h3.r2v9",
+    "h3.u09",
+    "h3.u30",
+    "h3.lipsync"
+   ]
+  },
+  {
+   "file": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+   "category": "text_encoders",
+   "url": "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/text_encoders/qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+   "cards": [
+    "h3.t2v",
+    "h3.i2v",
+    "h3.flf2v",
+    "h3.u24",
+    "h3.u22"
+   ]
+  },
+  {
+   "file": "qwen_3_4b.safetensors",
+   "category": "text_encoders",
+   "url": "https://huggingface.co/Comfy-Org/flux2-klein-4B/resolve/main/split_files/text_encoders/qwen_3_4b.safetensors",
+   "cards": [
+    "image.c16"
+   ]
+  },
+  {
+   "file": "seedvr2_ema_3b_fp8_e4m3fn.safetensors",
+   "category": "seedvr2",
+   "url": "https://huggingface.co/numz/SeedVR2_comfyUI/resolve/main/seedvr2_ema_3b_fp8_e4m3fn.safetensors",
+   "cards": [
+    "image.c16"
+   ],
+   "source_repo": "numz/SeedVR2_comfyUI"
+  },
+  {
+   "file": "t8_compat/MiniMaxH3_SemanticBridge_v1_T8_Compat.safetensors",
+   "category": "loras",
+   "url": "",
+   "cards": [
+    "h3.r2v9",
+    "h3.u30"
+   ]
+  },
+  {
+   "file": "taeh3.safetensors",
+   "category": "vae",
+   "url": "https://huggingface.co/OzzyGT/taeh3/resolve/main/taeh3.safetensors",
+   "cards": [
+    "h3.i2v",
+    "h3.flf2v",
+    "h3.r2v9",
+    "h3.u09",
+    "h3.u24",
+    "h3.u30",
+    "h3.u22",
+    "h3.lipsync"
+   ],
+   "source_repo": "OzzyGT/taeh3"
+  },
+  {
+   "file": "Zimage/Kook_Zimage_如梦似幻.safetensors",
+   "category": "loras",
+   "url": "",
+   "cards": [
+    "image.c16"
+   ]
+  },
+  {
+   "file": "Zimage/Kook_Zimage_瑶光.safetensors",
+   "category": "loras",
+   "url": "https://huggingface.co/RunningHubAI/rh-kook-zimage-lora/resolve/main/Kook_Zimage_瑶光.safetensors",
+   "cards": [
+    "image.c16"
+   ]
+  },
+  {
+   "file": "Zimage/Z-Image-Fun-Lora-Distill-8-Steps-2603-ComfyUI.safetensors",
+   "category": "loras",
+   "url": "",
+   "cards": [
+    "image.c16"
+   ]
+  },
+  {
+   "file": "Zimage/z_image_bf16.safetensors",
+   "category": "diffusion_models",
+   "url": "https://huggingface.co/Comfy-Org/z_image/resolve/main/split_files/diffusion_models/z_image_bf16.safetensors",
+   "cards": [
+    "image.c16"
+   ]
+  }
+ ]
+}
