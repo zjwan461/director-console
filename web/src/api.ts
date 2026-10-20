@@ -1,4 +1,4 @@
-import type { Asset, ComfySettings, Job, JobsPage, ModelCheckResult, Preset, Project, PromptMode, Render, ServiceStatus, Shot } from './types'
+import type { Asset, ComfySettings, Job, JobsPage, ModelCheckResult, ModelInventory, Preset, Project, PromptMode, Render, ServiceStatus, Shot } from './types'
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const resp = await fetch(url, init)
@@ -122,8 +122,14 @@ export const api = {
     }),
   takes: (id: string) => request<{ items: Job[] }>(`/api/shots/${id}/takes`),
 
-  modelsCheck: (cardId?: string) =>
-    request<ModelCheckResult>(`/api/models/check${cardId ? `?card_id=${cardId}` : ''}`),
+  modelsCheck: (cardId?: string, source: 'live' | 'snapshot' = 'live') => {
+    const params = new URLSearchParams({ source })
+    if (cardId) params.set('card_id', cardId)
+    return request<ModelCheckResult>(`/api/models/check?${params.toString()}`)
+  },
+  modelsInventory: () => request<ModelInventory>('/api/models/inventory'),
+  saveInventorySnapshot: () => request<{ ok: boolean; inventory: ModelInventory }>('/api/models/inventory/snapshot', { method: 'POST' }),
+  inventorySnapshot: () => request<ModelInventory>('/api/models/inventory/snapshot'),
 
   ffmpegStatus: () => request<{ available: boolean; ffmpeg: string; ffprobe: string; hint: string }>('/api/ffmpeg/status'),
   createRender: (projectId: string, shot_ids: string[], options: { width: number; height: number; fps: number }) =>

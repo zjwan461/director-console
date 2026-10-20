@@ -27,6 +27,7 @@ from .launcher import LaunchError, get_launcher
 from .presets import default_values, get_card, load_cards, public_card, validate
 from .prompt_stream import router as prompt_stream_router
 from .model_check import check_models
+from .model_inventory import fetch_inventory, load_snapshot, save_snapshot
 
 ROOT = Path(settings.paths["root"])
 DATA = Path(settings.paths["data"])
@@ -210,10 +211,36 @@ async def presets() -> dict:
     return {"items": cards, "count": len(cards)}
 
 
-@app.get("/api/models/check")
-async def models_check(card_id: str | None = None) -> dict:
+@app.get("/api/models/inventory")
+async def models_inventory() -> dict:
     try:
-        return await check_models(card_id)
+        return await fetch_inventory()
+    except ComfyError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+
+@app.post("/api/models/inventory/snapshot")
+async def models_inventory_snapshot() -> dict:
+    try:
+        inventory = await fetch_inventory()
+    except ComfyError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    save_snapshot(inventory)
+    return {"ok": True, "inventory": inventory}
+
+
+@app.get("/api/models/inventory/snapshot")
+async def models_inventory_snapshot_get() -> dict:
+    snapshot = load_snapshot()
+    if not snapshot:
+        raise HTTPException(status_code=404, detail="还没有保存过模型清单快照")
+    return snapshot
+
+
+@app.get("/api/models/check")
+async def models_check(card_id: str | None = None, source: str = "live") -> dict:
+    try:
+        return await check_models(card_id, source)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except ComfyError as exc:

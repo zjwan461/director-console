@@ -200,3 +200,12 @@ export interface ModelCheckResult {
   summary: { cards: number; models: number; missing: number }
   comfy: { base_url: string }
 }
+
+export interface ModelInventory {
+  base_url: string
+  fetched_at: number
+  source: string
+  file_count: number
+  folders: Record<string, string[]>
+  files: string[]
+}

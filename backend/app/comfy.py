@@ -55,6 +55,12 @@ class ComfyClient:
     async def object_info(self) -> dict:
         return (await self._request("GET", "/object_info")).json()
 
+    async def model_folders(self) -> list[str]:
+        return (await self._request("GET", "/models")).json()
+
+    async def model_files(self, folder: str) -> list[str]:
+        return (await self._request("GET", f"/models/{folder}")).json()
+
     async def health(self) -> dict:
         started = time.perf_counter()
         try:

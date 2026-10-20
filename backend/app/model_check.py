@@ -108,7 +108,7 @@ async def _object_info() -> dict:
     return data
 
 
-async def check_models(card_id: str | None = None) -> dict:
+async def check_models(card_id: str | None = None, source: str = "live") -> dict:
     cards = [
         c for c in load_cards()
         if c.get("_workflow_exists") and (card_id is None or c.get("id") == card_id)
@@ -116,8 +116,23 @@ async def check_models(card_id: str | None = None) -> dict:
     if card_id and not cards:
         raise ValueError("能力卡不存在或缺少工作流文件")
 
-    object_info = await _object_info()
-    full, base = _available(object_info)
+    if source == "snapshot":
+        from .model_inventory import load_snapshot
+
+        snapshot = load_snapshot()
+        if not snapshot:
+            raise ValueError("还没有保存过模型清单快照，请先连接云端 ComfyUI 保存一份")
+        full = {_norm(f) for f in snapshot.get("files") or []}
+        base = {_norm(Path(f).name) for f in full}
+        comfy = {
+            "base_url": snapshot.get("base_url", ""),
+            "source": "snapshot",
+            "fetched_at": snapshot.get("fetched_at"),
+        }
+    else:
+        object_info = await _object_info()
+        full, base = _available(object_info)
+        comfy = {"base_url": settings.base_url, "source": "live"}
 
     results = []
     for card in cards:
@@ -148,5 +163,5 @@ async def check_models(card_id: str | None = None) -> dict:
             "models": sum(c["total"] for c in results),
             "missing": sum(c["missing_count"] for c in results),
         },
-        "comfy": {"base_url": settings.base_url},
+        "comfy": comfy,
     }
