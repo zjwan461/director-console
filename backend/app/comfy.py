@@ -9,6 +9,7 @@ import time
 import uuid
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -66,7 +67,8 @@ class ComfyClient:
         return resp.json()
 
     async def userdata_get(self, name: str) -> str:
-        resp = await self._request("GET", f"/userdata/{name}")
+        path = name if name.startswith("workflows/") else f"workflows/{name}"
+        resp = await self._request("GET", "/userdata/" + quote(path, safe=""))
         return resp.text
 
     async def health(self) -> dict:

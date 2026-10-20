@@ -17,6 +17,8 @@ data/uploads/*
 data/outputs/*
 data/thumbs/*
 data/comfy.log
+data/model-*.json
+data/model-sources.json
 data/*.log
 !data/uploads/.gitkeep
 !data/outputs/.gitkeep

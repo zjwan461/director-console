@@ -1,6 +1,7 @@
 """导演台后端入口：FastAPI + 静态前端 + ComfyUI 代理/调度。"""
 from __future__ import annotations
 
+import asyncio
 import json
 import mimetypes
 import os
@@ -274,18 +275,23 @@ async def models_sources_sync() -> dict:
     except ComfyError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
-    workflows = []
-    used = 0
+    names = []
     for entry in entries:
         name = entry.get("path") if isinstance(entry, dict) else entry
-        if not isinstance(name, str) or not name.lower().endswith(".json"):
-            continue
-        try:
-            raw = await client.userdata_get(name)
-            workflows.append(json.loads(raw))
-            used += 1
-        except Exception:
-            continue
+        if isinstance(name, str) and name.lower().endswith(".json"):
+            names.append(name)
+
+    sem = asyncio.Semaphore(8)
+
+    async def fetch(name: str):
+        async with sem:
+            try:
+                return json.loads(await client.userdata_get(name))
+            except Exception:
+                return None
+
+    workflows = [w for w in await asyncio.gather(*[fetch(n) for n in names]) if isinstance(w, dict)]
+    used = len(workflows)
     stats = merge_sources(workflows)
     return {"ok": True, "files": used, **stats}
 
