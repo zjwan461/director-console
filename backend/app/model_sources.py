@@ -80,3 +80,23 @@ def merge_sources(workflows: list[dict]) -> dict:
                 added += 1
     save_sources(sources)
     return {"before": before, "after": len(sources), "updated": added}
+
+def _load_data() -> dict:
+    if not SOURCES_PATH.exists():
+        return {}
+    try:
+        return json.loads(SOURCES_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def upsert_source(name: str, url: str, directory: str = "") -> dict:
+    """写入手工映射（data 层，不覆盖随包 content 映射）。url 为空表示删除。"""
+    data = _load_data()
+    key = _norm(name)
+    if url:
+        data[key] = {"name": name, "url": url, "directory": directory, "hash": ""}
+    else:
+        data.pop(key, None)
+    save_sources(data)
+    return {"count": len(data)}

@@ -106,6 +106,18 @@ models:
 
 ![模型检查](docs/preview-model-check.png)
 
+### 手工补链接
+
+检查结果里每个模型都有「填写链接 / 编辑链接」：粘贴 HF 或任意 HTTP 直链保存后，
+会立即重算下载命令，并写入 `data/model-sources.json`（不覆盖随包的
+`content/model-sources.json`，下次同步也不会丢）。
+
+接口：
+
+```bash
+PUT /api/models/sources   # {name, url, directory}  url 传空字符串表示删除这条手工映射
+```
+
 ### 随包模型清单
 
 从靶机（全量 ComfyUI）同步后，导出两份随仓库发版的文件：

@@ -11,6 +11,8 @@ export default function ModelCheckPanel() {
   const [copied, setCopied] = useState('')
   const [note, setNote] = useState('')
   const [syncing, setSyncing] = useState(false)
+  const [editFile, setEditFile] = useState('')
+  const [editUrl, setEditUrl] = useState('')
 
   const run = async () => {
     setLoading(true)
@@ -38,6 +40,17 @@ export default function ModelCheckPanel() {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
       setSyncing(false)
+    }
+  }
+
+  const saveSource = async (name: string, directory: string) => {
+    try {
+      await api.saveModelSource(name, editUrl.trim(), directory)
+      setEditFile('')
+      setEditUrl('')
+      await run()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
     }
   }
 
@@ -125,6 +138,27 @@ export default function ModelCheckPanel() {
                               {m.url ? ' · 链接来自工作流' : ''}
                             </span>
                           </div>
+                          {editFile === m.file ? (
+                            <div className="row" style={{ marginTop: 6 }}>
+                              <input
+                                className="grow"
+                                placeholder="https://huggingface.co/.../resolve/main/xxx.safetensors"
+                                value={editUrl}
+                                onChange={(e) => setEditUrl(e.target.value)}
+                              />
+                              <button className="primary" onClick={() => void saveSource(m.file, m.category)}>保存</button>
+                              <button className="ghost" onClick={() => { setEditFile(''); setEditUrl('') }}>取消</button>
+                            </div>
+                          ) : (
+                            <button
+                              className="ghost tiny"
+                              style={{ marginTop: 4 }}
+                              onClick={() => { setEditFile(m.file); setEditUrl(m.url || '') }}
+                            >
+                              {m.url ? '编辑链接' : '填写链接'}
+                            </button>
+                          )}
+
                           {!m.exists && (
                             <>
                               <pre className="logs" style={{ marginTop: 6 }}>{m.command}</pre>

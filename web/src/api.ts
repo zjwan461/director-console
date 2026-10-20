@@ -127,6 +127,12 @@ export const api = {
     if (cardId) params.set('card_id', cardId)
     return request<ModelCheckResult>(`/api/models/check?${params.toString()}`)
   },
+  saveModelSource: (name: string, url: string, directory = '') =>
+    request<{ ok: boolean; count: number }>('/api/models/sources', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, url, directory }),
+    }),
   syncModelSources: () =>
     request<{ ok: boolean; files: number; before: number; after: number; updated: number }>('/api/models/sources/sync', { method: 'POST' }),
   modelsInventory: () => request<ModelInventory>('/api/models/inventory'),

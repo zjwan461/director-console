@@ -29,7 +29,7 @@ from .presets import default_values, get_card, load_cards, public_card, validate
 from .prompt_stream import router as prompt_stream_router
 from .model_check import check_models
 from .model_inventory import fetch_inventory, load_snapshot, save_snapshot
-from .model_sources import load_sources, merge_sources
+from .model_sources import load_sources, merge_sources, upsert_source
 
 ROOT = Path(settings.paths["root"])
 DATA = Path(settings.paths["data"])
@@ -247,6 +247,20 @@ async def models_sources() -> dict:
     sources = load_sources()
     items = list(sources.values())
     return {"count": len(items), "items": items[:20]}
+
+
+class SourceEdit(BaseModel):
+    name: str
+    url: str = ""
+    directory: str = ""
+
+
+@app.put("/api/models/sources")
+async def models_sources_put(body: SourceEdit) -> dict:
+    if body.url and not body.url.startswith(("http://", "https://")):
+        raise HTTPException(status_code=400, detail="链接需要以 http:// 或 https:// 开头")
+    stats = upsert_source(body.name.strip(), body.url.strip(), body.directory)
+    return {"ok": True, **stats}
 
 
 @app.post("/api/models/sources/import")
