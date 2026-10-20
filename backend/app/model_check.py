@@ -70,6 +70,58 @@ def collect_required(workflow: dict) -> list[dict]:
     return list(found.values())
 
 
+_INV_CACHE: dict[tuple[str, str], tuple[float, set[str]]] = {}
+
+
+async def _folder_files(category: str) -> set[str]:
+    """列某个已注册目录下的文件（带 60s 缓存）。
+
+    有些自定义节点（如 SeedVR2）把文件名当自由字符串，object_info 里没有枚举，
+    只看 object_info 会误判“缺失”，所以按目录补一层。
+    """
+    url = settings.base_url
+    key = (url, category)
+    now = time.time()
+    hit = _INV_CACHE.get(key)
+    if hit and now - hit[0] < 60:
+        return hit[1]
+    names: set[str] = set()
+    try:
+        for item in await make_client().model_files(category):
+            names.add(str(item.get("name") if isinstance(item, dict) else item))
+    except Exception:
+        names = set()
+    _INV_CACHE[key] = (now, names)
+    return names
+
+
+async def _inventory_files(categories: set[str]) -> tuple[set[str], set[str]]:
+    full: set[str] = set()
+    base: set[str] = set()
+    for category in sorted(categories):
+        for name in await _folder_files(category):
+            full.add(_norm(f"{category}/{name}"))
+            base.add(_norm(Path(name).name))
+    return full, base
+
+
+def _spec_options(spec) -> list[str]:
+    """兼容两种 object_info 枚举格式：
+
+    旧: [["a.safetensors", "b.safetensors"], {...}]
+    新: ["COMBO", {"options": ["a.safetensors", ...]}]
+    """
+    if not isinstance(spec, list) or not spec:
+        return []
+    if isinstance(spec[0], list):
+        return [str(x) for x in spec[0]]
+    if isinstance(spec[0], str) and len(spec) > 1 and isinstance(spec[1], dict):
+        options = spec[1].get("options")
+        if isinstance(options, list):
+            return [str(x) for x in options]
+    return []
+
+
 def _available(object_info: dict) -> tuple[set[str], set[str]]:
     full: set[str] = set()
     base: set[str] = set()
@@ -79,11 +131,10 @@ def _available(object_info: dict) -> tuple[set[str], set[str]]:
         inputs = info.get("input") or {}
         for section in ("required", "optional"):
             for spec in (inputs.get(section) or {}).values():
-                if isinstance(spec, list) and spec and isinstance(spec[0], list):
-                    for value in spec[0]:
-                        if isinstance(value, str) and value.lower().endswith(MODEL_EXTS):
-                            full.add(_norm(value))
-                            base.add(_norm(Path(value).name))
+                for value in _spec_options(spec):
+                    if value.lower().endswith(MODEL_EXTS):
+                        full.add(_norm(value))
+                        base.add(_norm(Path(value).name))
     return full, base
 
 
@@ -158,6 +209,13 @@ async def check_models(card_id: str | None = None, source: str = "live") -> dict
     else:
         object_info = await _object_info()
         full, base = _available(object_info)
+        categories: set[str] = set()
+        for card in cards:
+            for item in collect_required(load_workflow(card["workflow"])):
+                categories.add(str(item.get("category") or ""))
+        inv_full, inv_base = await _inventory_files({c for c in categories if c})
+        full |= inv_full
+        base |= inv_base
         comfy = {"base_url": settings.base_url, "source": "live"}
 
     node_classes = set(object_info) if source != "snapshot" else set()
