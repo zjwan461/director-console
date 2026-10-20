@@ -592,5 +592,11 @@
   "url": "https://huggingface.co/alibaba-pai/Z-Image-Fun-Lora-Distill/resolve/main/Z-Image-Fun-Lora-Distill-8-Steps-2603-ComfyUI.safetensors",
   "directory": "loras",
   "hash": ""
+ },
+ "kook_zimage_如梦似幻.safetensors": {
+  "name": "Kook_Zimage_如梦似幻.safetensors",
+  "url": "https://huggingface.co/RunningHubAI/rh-kook-zimage-lora-2049614067429593090/resolve/main/Kook_Zimage_%E5%A6%82%E6%A2%A6%E4%BC%BC%E5%B9%BB.safetensors",
+  "directory": "loras",
+  "hash": "8c5917953fdaa1fcc43b62ed5b8404cab7d7f2324f9faa9e5c0cc6997b451d79"
  }
 }

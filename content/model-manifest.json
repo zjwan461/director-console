@@ -1,7 +1,7 @@
 {
  "generated_from": "https://u648450-7917a00c08ae.westd.seetacloud.com:8443",
  "total": 36,
- "with_url": 34,
+ "with_url": 35,
  "models": [
   {
    "file": "ae.safetensors",
@@ -315,10 +315,11 @@
   {
    "file": "Zimage/Kook_Zimage_如梦似幻.safetensors",
    "category": "loras",
-   "url": "",
+   "url": "https://huggingface.co/RunningHubAI/rh-kook-zimage-lora-2049614067429593090/resolve/main/Kook_Zimage_%E5%A6%82%E6%A2%A6%E4%BC%BC%E5%B9%BB.safetensors",
    "cards": [
     "image.c16"
-   ]
+   ],
+   "source": "civarchive"
   },
   {
    "file": "Zimage/Kook_Zimage_瑶光.safetensors",
