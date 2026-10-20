@@ -436,18 +436,7 @@ export default function ProjectsPanel() {
       </div>
 
       {projectId && (
-        <RenderPanel
-          projectId={projectId}
-          shots={shots}
-          onReorder={async (ids) => {
-            try {
-              const res = await api.reorderShots(projectId, ids)
-              setShots(res.items)
-            } catch (err) {
-              setError(err instanceof Error ? err.message : String(err))
-            }
-          }}
-        />
+        <RenderPanel projectId={projectId} shots={shots} />
       )}
     </div>
   )

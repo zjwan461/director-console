@@ -165,12 +165,17 @@ export const api = {
   saveInventorySnapshot: () => request<{ ok: boolean; inventory: ModelInventory }>('/api/models/inventory/snapshot', { method: 'POST' }),
   inventorySnapshot: () => request<ModelInventory>('/api/models/inventory/snapshot'),
 
-  ffmpegStatus: () => request<{ available: boolean; ffmpeg: string; ffprobe: string; hint: string }>('/api/ffmpeg/status'),
-  createRender: (projectId: string, shot_ids: string[], options: { width: number; height: number; fps: number }) =>
+  ffmpegStatus: () => request<{ available: boolean; ffmpeg: string; ffprobe: string; hint: string; capabilities?: { subtitles?: boolean; xfade?: boolean } }>('/api/ffmpeg/status'),
+  createRender: (
+    projectId: string,
+    shot_ids: string[],
+    options: Record<string, unknown>,
+    shot_edits: Array<Record<string, unknown>> = [],
+  ) =>
     request<Render>(`/api/projects/${projectId}/renders`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ shot_ids, options }),
+      body: JSON.stringify({ shot_ids, options, shot_edits }),
     }),
   renders: (projectId: string) => request<{ items: Render[] }>(`/api/projects/${projectId}/renders`),
   render: (id: string) => request<Render>(`/api/renders/${id}`),
