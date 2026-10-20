@@ -378,6 +378,37 @@ async def assets(
     return {"items": items, "total": total, "limit": limit, "offset": offset}
 
 
+@app.get("/api/assets/{asset_id}/poster")
+async def asset_poster(asset_id: str):
+    """视频首帧封面：首次访问时用 ffmpeg 抽帧并缓存。"""
+    asset = store.get_asset(asset_id)
+    if not asset:
+        raise HTTPException(status_code=404, detail="素材不存在")
+    if asset["kind"] != "video":
+        raise HTTPException(status_code=404, detail="只有视频有封面")
+
+    cached = DATA / "thumbs" / f"poster_{asset_id}.jpg"
+    if not cached.exists():
+        src = DATA / asset["path"]
+        if not src.exists():
+            raise HTTPException(status_code=404, detail="源文件不存在")
+        cached.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            from .ffmpeg import extract_cover
+
+            await extract_cover(src, cached, at=0.3)
+        except Exception:
+            if not cached.exists():
+                raise HTTPException(status_code=404, detail="封面生成失败")
+    if not cached.exists():
+        raise HTTPException(status_code=404, detail="封面生成失败")
+    return FileResponse(
+        cached,
+        media_type="image/jpeg",
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
+
+
 @app.get("/api/assets/{asset_id}/usage")
 async def asset_usage(asset_id: str) -> dict:
     asset = store.get_asset(asset_id)

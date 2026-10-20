@@ -27,11 +27,28 @@ def _cfg(key: str, default: str) -> str:
     return str(settings.get(f"ffmpeg.{key}", default) or default)
 
 
+def _imageio_ffmpeg() -> str | None:
+    """imageio-ffmpeg 自带的静态二进制（install.py 的兜底来源）。"""
+    try:
+        import imageio_ffmpeg
+
+        exe = imageio_ffmpeg.get_ffmpeg_exe()
+        return exe if Path(exe).exists() else None
+    except Exception:
+        return None
+
+
 def ffmpeg_path() -> str | None:
     configured = _cfg("path", "")
     if configured and Path(configured).exists():
         return configured
-    return shutil.which("ffmpeg")
+    found = shutil.which("ffmpeg")
+    if found:
+        return found
+    bundled = Path(settings.paths["root"]) / "tools" / ("ffmpeg.exe" if os.name == "nt" else "ffmpeg")
+    if bundled.exists():
+        return str(bundled)
+    return _imageio_ffmpeg()
 
 
 def ffprobe_path() -> str | None:

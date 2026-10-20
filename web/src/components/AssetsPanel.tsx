@@ -161,7 +161,13 @@ export default function AssetsPanel({ onOpenProject }: { onOpenProject: (project
                 {asset.kind === 'image' && <img src={asset.url} alt={asset.path} loading="lazy" />}
                 {asset.kind === 'video' && (
                   <>
-                    <video src={asset.url} preload="none" muted />
+                    <img
+                      className="asset-poster"
+                      src={`/api/assets/${asset.id}/poster`}
+                      alt={asset.path}
+                      loading="lazy"
+                      onError={(e) => { e.currentTarget.style.display = 'none' }}
+                    />
                     <span className="asset-play">▶</span>
                   </>
                 )}
