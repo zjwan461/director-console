@@ -65,6 +65,17 @@ export const api = {
     return request<{ items: Asset[]; total: number; limit: number; offset: number }>(`/api/assets?${qs.toString()}`)
   },
   assetUsage: (id: string) => request<AssetUsage>(`/api/assets/${id}/usage`),
+  createShotFromAsset: (
+    assetId: string,
+    payload: { project_id: string; title?: string; mode: 'restore' | 'first_frame' | 'audio'; preset_id?: string },
+  ) =>
+    request<Shot>(`/api/assets/${assetId}/create-shot`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }),
+  cleanupTestAssets: () => request<{ ok: boolean; removed: number }>('/api/assets/cleanup-test', { method: 'POST' }),
+
   deleteAsset: (id: string) => request<{ ok: boolean }>(`/api/assets/${id}`, { method: 'DELETE' }),
 
   createJob: (preset_id: string, inputs: Record<string, unknown>) =>

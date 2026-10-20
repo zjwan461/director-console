@@ -422,6 +422,113 @@ async def asset_usage(asset_id: str) -> dict:
     return {"asset": asset, "shots": shots, "jobs": jobs}
 
 
+class AssetShotCreate(BaseModel):
+    project_id: str
+    title: str = ""
+    mode: str = "restore"          # restore | first_frame | audio
+    preset_id: str = ""
+
+
+def _source_job_for_asset(asset: dict) -> dict | None:
+    jobs, _, _ = store.list_jobs(500)
+    target = asset.get("path") or ""
+    for job in jobs:
+        if job.get("status") != "succeeded":
+            continue
+        for out in job.get("outputs") or []:
+            if not isinstance(out, dict):
+                continue
+            if out.get("asset_id") == asset["id"]:
+                return job
+            url = out.get("url") or ""
+            if url.startswith("/media/outputs/") and "outputs/" + url.removeprefix("/media/outputs/") == target:
+                return job
+    return None
+
+
+@app.post("/api/assets/{asset_id}/create-shot")
+async def asset_create_shot(asset_id: str, body: AssetShotCreate) -> dict:
+    asset = store.get_asset(asset_id)
+    if not asset:
+        raise HTTPException(status_code=404, detail="素材不存在")
+    project = store.get_project(body.project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="项目不存在")
+
+    preset_id = ""
+    values: dict[str, Any] = {}
+    title = body.title.strip()
+
+    if body.mode == "restore":
+        job = _source_job_for_asset(asset)
+        if not job:
+            raise HTTPException(status_code=400, detail="这个素材没有可追溯的生成任务，请改用「用作首帧/参考」")
+        preset_id = job["preset_id"]
+        values = dict(job.get("inputs") or {})
+        title = title or f"还原 · {asset['path'].rsplit('/', 1)[-1]}"
+    elif body.mode == "first_frame":
+        preset_id = body.preset_id or "h3.i2v"
+        card = get_card(preset_id)
+        if not card:
+            raise HTTPException(status_code=400, detail="能力卡不存在")
+        values = default_values(card)
+        values["first_frame"] = asset["id"]
+        title = title or "图片首帧镜头"
+    elif body.mode == "audio":
+        preset_id = body.preset_id or "h3.r2v9"
+        card = get_card(preset_id)
+        if not card:
+            raise HTTPException(status_code=400, detail="能力卡不存在")
+        values = default_values(card)
+        values["audio_1"] = asset["id"]
+        title = title or "音频参考镜头"
+    else:
+        raise HTTPException(status_code=400, detail="未知模式")
+
+    shot = store.create_shot(project["id"], title, preset_id)
+    store.update_shot(shot["id"], values=values)
+
+    # 图片直接当末帧；视频抽一帧当末帧，方便下一镜接首帧
+    if asset["kind"] == "image":
+        store.update_shot(shot["id"], last_frame=asset["id"], cover=f"/media/files/{asset['path']}")
+    elif asset["kind"] == "video":
+        src = DATA / asset["path"]
+        if src.exists():
+            from .frames import extract_last_frame
+
+            thumbs = DATA / "thumbs"
+            thumbs.mkdir(parents=True, exist_ok=True)
+            out = thumbs / f"asset_{asset['id']}_last.png"
+            ok, note = extract_last_frame(src, out)
+            if out.exists():
+                rel = out.relative_to(DATA).as_posix()
+                frame = store.add_asset("image", rel, size=out.stat().st_size,
+                                        meta={"from_asset": asset["id"], "note": note})
+                store.update_shot(shot["id"], last_frame=frame["id"])
+        store.update_shot(shot["id"], cover=f"/media/files/{asset['path']}")
+
+    return _enrich_shot(store.get_shot(shot["id"]) or shot)
+
+
+@app.post("/api/assets/cleanup-test")
+async def assets_cleanup_test() -> dict:
+    """清理早期 mock/stub 测试产物（极小文件）。"""
+    assets = store.list_assets(None, 2000)
+    removed = 0
+    for asset in assets:
+        name = asset["path"].rsplit("/", 1)[-1].lower()
+        if not (name.startswith(("mock_output", "stub_output", "stub_image")) or asset.get("size", 0) <= 64):
+            continue
+        try:
+            (DATA / asset["path"]).unlink(missing_ok=True)
+        except Exception:
+            pass
+        with store.connect() as conn:
+            conn.execute("DELETE FROM assets WHERE id=?", (asset["id"],))
+        removed += 1
+    return {"ok": True, "removed": removed}
+
+
 @app.post("/api/assets/backfill")
 async def assets_backfill() -> dict:
     """把历史任务产物补登记为素材（旧版本只登记图片）。"""

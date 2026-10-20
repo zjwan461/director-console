@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api, formatBytes, timeAgo } from '../api'
-import type { Asset, AssetUsage } from '../types'
+import type { Asset, AssetUsage, Project, Shot } from '../types'
 
 const KIND_LABEL: Record<string, string> = { image: '图片', video: '视频', audio: '音频' }
 
@@ -14,6 +14,12 @@ export default function AssetsPanel({ onOpenProject }: { onOpenProject: (project
   const [error, setError] = useState('')
   const [selected, setSelected] = useState<Asset | null>(null)
   const [usage, setUsage] = useState<AssetUsage | null>(null)
+  const [projects, setProjects] = useState<Project[]>([])
+  const [targetProject, setTargetProject] = useState('')
+  const [shotTitle, setShotTitle] = useState('')
+  const [creating, setCreating] = useState(false)
+  const [notice, setNotice] = useState('')
+  const [createdShot, setCreatedShot] = useState<Shot | null>(null)
 
   const PAGE = 60
 
@@ -33,6 +39,55 @@ export default function AssetsPanel({ onOpenProject }: { onOpenProject: (project
   }, [kind, q])
 
   useEffect(() => { void load(0, false) }, [load])
+
+  useEffect(() => {
+    const assetId = new URLSearchParams(window.location.search).get('asset')
+    if (!assetId) return
+    api.asset(assetId).then((asset) => { void open(asset) }).catch(() => undefined)
+  }, [])
+
+  useEffect(() => {
+    api.projects().then((res) => {
+      setProjects(res.items)
+      if (res.items.length) setTargetProject(res.items[0].id)
+    }).catch(() => undefined)
+  }, [])
+
+  useEffect(() => {
+    setNotice('')
+    setCreatedShot(null)
+    setShotTitle('')
+  }, [selected?.id])
+
+  const createShot = async (mode: 'restore' | 'first_frame' | 'audio') => {
+    if (!selected || !targetProject) return
+    setCreating(true)
+    setNotice('')
+    try {
+      const shot = await api.createShotFromAsset(selected.id, {
+        project_id: targetProject,
+        title: shotTitle,
+        mode,
+      })
+      setCreatedShot(shot)
+      setNotice(`已创建镜头「${shot.title}」，参数与素材已带过去`)
+    } catch (err) {
+      setNotice(err instanceof Error ? err.message : String(err))
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  const cleanup = async () => {
+    if (!window.confirm('清理早期的 mock/stub 测试产物？只会删除极小文件和 mock_/stub_ 开头的文件。')) return
+    try {
+      const res = await api.cleanupTestAssets()
+      setNotice(`已清理 ${res.removed} 个测试产物`)
+      await load(0, false)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    }
+  }
 
   const open = async (asset: Asset) => {
     setSelected(asset)
@@ -65,7 +120,10 @@ export default function AssetsPanel({ onOpenProject }: { onOpenProject: (project
           <h1>资产</h1>
           <p>所有生成结果与上传素材都在这里；点开可以看它被哪些镜头用过。</p>
         </div>
-        <button className="ghost" onClick={() => void load(0, false)}>刷新</button>
+        <div className="row">
+          <button className="ghost" onClick={() => void cleanup()}>清理测试产物</button>
+          <button className="ghost" onClick={() => void load(0, false)}>刷新</button>
+        </div>
       </div>
 
       <div className="row" style={{ marginBottom: 12 }}>
@@ -142,6 +200,40 @@ export default function AssetsPanel({ onOpenProject }: { onOpenProject: (project
             <div className="row-actions">
               <a href={selected.url} download><button>下载</button></a>
               <button className="danger" onClick={() => void remove(selected)}>删除</button>
+            </div>
+
+            <h2 style={{ marginTop: 18 }}>加入项目</h2>
+            {notice && <div className="notice" style={{ marginBottom: 8 }}>{notice}</div>}
+            <div className="row" style={{ marginBottom: 8 }}>
+              <select value={targetProject} onChange={(e) => setTargetProject(e.target.value)}>
+                {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+              <input
+                className="grow"
+                placeholder="镜头标题（可留空）"
+                value={shotTitle}
+                onChange={(e) => setShotTitle(e.target.value)}
+              />
+            </div>
+            <div className="row">
+              <button className="primary" disabled={creating || !targetProject} onClick={() => void createShot('restore')}>
+                {creating ? '创建中…' : '还原为镜头'}
+              </button>
+              {selected.kind === 'image' && (
+                <button disabled={creating || !targetProject} onClick={() => void createShot('first_frame')}>
+                  用作首帧
+                </button>
+              )}
+              {selected.kind === 'audio' && (
+                <button disabled={creating || !targetProject} onClick={() => void createShot('audio')}>
+                  用作参考音频
+                </button>
+              )}
+              {createdShot && (
+                <button className="ghost" onClick={() => onOpenProject(createdShot.project_id, createdShot.id)}>
+                  去该镜头
+                </button>
+              )}
             </div>
 
             <h2 style={{ marginTop: 18 }}>被这些镜头使用（{usage?.shots.length ?? 0}）</h2>
