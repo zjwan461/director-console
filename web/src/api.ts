@@ -260,9 +260,9 @@ export function formatPrompt(raw: string): string {
   const keys = [...PROMPT_ORDER.filter((k) => k in obj), ...Object.keys(obj).filter((k) => !PROMPT_ORDER.includes(k))]
   return keys.map((key) => {
     const value = obj[key]
-    const body = Array.isArray(value) ? value.map(String).filter(Boolean).join('\\n') : typeof value === 'string' ? value : JSON.stringify(value)
-    return key + ":\\n" + body
-  }).join('\\n\\n')
+    const body = Array.isArray(value) ? value.map(String).filter(Boolean).join('\n') : typeof value === 'string' ? value : JSON.stringify(value)
+    return key + ":\n" + body
+  }).join('\n\n')
 }
 
 export interface StreamHandlers {

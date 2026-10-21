@@ -290,7 +290,7 @@ export default function PresetFields({ card, values, onChange, assets, setAssets
                     {streamText || '正在生成…'}
                   </pre>
                 )}
-                {assistDone && <div className="notice">已填入下方描述框，可以继续修改。</div>}
+                {assistDone && <div className="notice">已填入提示词框，可以继续修改。</div>}
                 {assistError && <div className="notice err">{assistError}</div>}
                 <div className="row">
                   <button

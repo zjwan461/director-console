@@ -38,7 +38,7 @@ def _skill_prompts() -> dict:
 
 def _error(message: str) -> str:
     body = json.dumps({"message": message}, ensure_ascii=False)
-    return "event: error\\ndata: " + body + "\\n\\n"
+    return "event: error\ndata: " + body + "\n\n"
 
 
 @router.post("/api/prompt/rewrite/stream")
@@ -56,7 +56,7 @@ async def rewrite_stream(body: RewriteRequest):
 
     base = str(settings.get("ai.base_url", "")).rstrip("/")
     model = settings.get("ai.model", "")
-    text = body.brief + (("\\n\\n补充要求：" + body.extra) if body.extra else "")
+    text = body.brief + (("\n\n补充要求：" + body.extra) if body.extra else "")
     payload = {
         "model": model,
         "messages": [
