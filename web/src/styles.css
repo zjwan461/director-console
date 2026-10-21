@@ -453,3 +453,17 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
   overflow-y: auto;
   padding-right: 6px;
 }
+
+
+/* 全局气泡提示 */
+.toast-wrap { position: fixed; top: 16px; right: 20px; z-index: 200; display: flex; flex-direction: column; gap: 8px; }
+.toast { min-width: 240px; max-width: 340px; display: flex; align-items: center; gap: 8px;
+         padding: 9px 12px; border-radius: 10px; background: #171a24; border: 1px solid var(--line);
+         box-shadow: 0 8px 24px rgba(0,0,0,.4); font-size: 12px; cursor: pointer; transition: transform .15s; }
+.toast:hover { transform: translateX(-2px); }
+.toast b { font-size: 12px; white-space: nowrap; }
+.toast span { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.toast.ok { border-color: #2b6b48; }
+.toast.ok b { color: #4ade80; }
+.toast.err { border-color: #7a2b2b; }
+.toast.err b { color: #f87171; }

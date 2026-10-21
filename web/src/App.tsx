@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { api } from './api'
 import type { Job, ServiceStatus } from './types'
 import ServicePanel from './components/ServicePanel'
@@ -18,10 +18,22 @@ function initialTab(): Tab {
   return (TAB_KEYS as string[]).includes(fromUrl || '') ? (fromUrl as Tab) : 'studio'
 }
 
+interface Toast {
+  id: string
+  kind: 'ok' | 'err'
+  title: string
+  text: string
+  tab?: Tab
+}
+
+const TERMINAL = new Set(['succeeded', 'failed'])
+
 export default function App() {
   const [tab, setTabState] = useState<Tab>(initialTab)
   const [status, setStatus] = useState<ServiceStatus | null>(null)
   const [jobsRefresh, setJobsRefresh] = useState(0)
+  const [toasts, setToasts] = useState<Toast[]>([])
+  const known = useRef<Map<string, string> | null>(null)
 
   const setTab = (next: Tab) => {
     setTabState(next)
@@ -40,6 +52,62 @@ export default function App() {
     const timer = setInterval(refreshStatus, 5000)
     return () => clearInterval(timer)
   }, [refreshStatus])
+
+  const pushToast = useCallback((toast: Omit<Toast, 'id'>) => {
+    const id = Math.random().toString(36).slice(2)
+    setToasts((prev) => [...prev.slice(-3), { ...toast, id }])
+    window.setTimeout(() => setToasts((prev) => prev.filter((x) => x.id !== id)), 8000)
+  }, [])
+
+  // 全局轮询：任务 / 成片 从“进行中”变成“成功/失败”时右上角弹提示
+  useEffect(() => {
+    let stopped = false
+    const tick = async () => {
+      try {
+        const [jobRes, renderRes] = await Promise.all([
+          api.jobs(20).catch(() => ({ items: [] as Job[] })),
+          api.allRenders(20).catch(() => ({ items: [] as never[] })),
+        ])
+        const current = new Map<string, string>()
+        for (const job of jobRes.items) current.set('job:' + job.id, job.status)
+        for (const render of renderRes.items) current.set('render:' + render.id, render.status)
+
+        if (known.current) {
+          for (const [key, state] of current) {
+            const prev = known.current.get(key)
+            if (prev === state) continue
+            // prev 为空 = 这 4 秒里新出现的记录（可能直接就是失败），也要提示
+            if (!TERMINAL.has(state) || (prev && TERMINAL.has(prev))) continue
+            const name = key.slice(key.indexOf(':') + 1)
+            if (key.startsWith('job:')) {
+              const job = jobRes.items.find((j) => j.id === name)
+              pushToast({
+                kind: state === 'succeeded' ? 'ok' : 'err',
+                title: state === 'succeeded' ? '生成完成' : '生成失败',
+                text: `${job?.preset_id || '任务'} · ${name.slice(0, 12)}`,
+                tab: 'jobs',
+              })
+            } else {
+              const render = renderRes.items.find((r) => r.id === name)
+              pushToast({
+                kind: state === 'succeeded' ? 'ok' : 'err',
+                title: state === 'succeeded' ? '成片导出完成' : '成片导出失败',
+                text: `${render?.project_name || render?.project_id || ''} · ${name.slice(0, 12)}`,
+                tab: 'renders',
+              })
+            }
+          }
+        }
+        known.current = current
+        if (!stopped) setJobsRefresh((v) => v + 0)
+      } catch {
+        // 网络抖动忽略
+      }
+    }
+    void tick()
+    const timer = window.setInterval(tick, 4000)
+    return () => { stopped = true; window.clearInterval(timer) }
+  }, [pushToast])
 
   const onJobCreated = (_job: Job) => {
     setJobsRefresh((v) => v + 1)
@@ -74,6 +142,20 @@ export default function App() {
           <span>v0.1 · H3 专版</span>
         </div>
       </aside>
+
+      <div className="toast-wrap">
+        {toasts.map((toast) => (
+          <div key={toast.id} className={`toast ${toast.kind}`}
+               onClick={() => { if (toast.tab) setTab(toast.tab) }}>
+            <b>{toast.title}</b>
+            <span>{toast.text}</span>
+            <button className="ghost tiny"
+                    onClick={(e) => { e.stopPropagation(); setToasts((prev) => prev.filter((x) => x.id !== toast.id)) }}>
+              ×
+            </button>
+          </div>
+        ))}
+      </div>
 
       <main className="main">
         {tab === 'studio' && (
