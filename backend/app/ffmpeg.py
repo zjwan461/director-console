@@ -474,6 +474,19 @@ async def make_title_card(
         raise RuntimeError("生成片头/片尾失败：" + err[-600:])
 
 
+async def to_asr_wav(src: Path, out: Path) -> None:
+    """抽出音轨并转成 16k 单声道 wav，供语音转写使用。"""
+    ff = ffmpeg_path()
+    if not ff:
+        raise FFmpegMissing("未检测到 ffmpeg")
+    code, err = await _run([
+        ff, "-y", "-loglevel", "error", "-i", str(src),
+        "-vn", "-ac", "1", "-ar", "16000", "-c:a", "pcm_s16le", str(out),
+    ])
+    if code != 0:
+        raise RuntimeError("提取音轨失败：" + err[-400:])
+
+
 async def speech_ratio(path: Path, noise_db: int = -35) -> float:
     """估算音频里“有声”的占比（0~1），用来判断镜头里有没有口播/人声。"""
     ff = ffmpeg_path()

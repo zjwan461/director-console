@@ -275,6 +275,15 @@ GET /api/ffmpeg/status      # 含 capabilities
 - 片头片尾：整片级 `options.title/tail`，支持纯色或图片背景 + 居中文字，默认 0.3s 淡入淡出；
 - 片头片尾作为独立片段拼接在正片前后，字幕时间轴自动偏移片头时长。
 
+### 字幕来源（2026-10-21）
+
+- 有旁白：字幕直接跟随旁白（超阅读速度才压缩）；
+- 无旁白：`silencedetect` 估算有声占比 → 有声音才调 ASR；
+- ASR：阿里云 `qwen-audio-3.0-asr-flash`，走
+  `/api/v1/services/aigc/multimodal-generation/generation`，音频以 data URI 传入，
+  视频先用 ffmpeg 转 16k 单声道 wav；
+- 有声音但 ASR 返回 400（通常是没有可识别人声，只有音乐/环境音）→ 按「无口播」跳过。
+
 ## 9. 已确认的决策（2026-10-20）
 
 | 议题 | 决定 |

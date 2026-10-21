@@ -1282,7 +1282,12 @@ async def ai_script_one(body: ScriptRequest) -> dict:
         try:
             text = await asr.transcribe(found[1])
         except Exception as exc:
-            raise HTTPException(status_code=400, detail=str(exc))
+            message = str(exc)
+            if " 400" in message:
+                # 有声音但模型没听出人声（多半是音乐/环境音）
+                return {"skip": "silent", "reason": "检测到声音但没有识别到人声，按设置不加字幕",
+                        "text": "", "chars": 0, "budget": budget, "duration": round(duration, 2)}
+            raise HTTPException(status_code=400, detail=message)
         text = ai_script.clean(text)
         if len(text) > budget:
             text = text[:budget].rstrip("，。！？、,.!? ")
