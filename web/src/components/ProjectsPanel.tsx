@@ -223,6 +223,17 @@ export default function ProjectsPanel({ onEdit }: { onEdit?: (projectId: string)
     }
   }
 
+  const removeTake = async (jobId: string) => {
+    if (!window.confirm('删除这条生成记录？已生成的视频文件会留在资产库，可单独清理。')) return
+    try {
+      await api.deleteJob(jobId)
+      await loadTakes(shotId)
+      await loadShots(projectId, shotId)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    }
+  }
+
   const chooseTake = async (jobId: string) => {
     if (!shotId) return
     try {
@@ -470,6 +481,10 @@ export default function ProjectsPanel({ onEdit }: { onEdit?: (projectId: string)
                               {statusText(take.status)}
                             </span>
                             <span className="msg">{timeAgo(take.created_at)}</span>
+                            <button className="ghost tiny" disabled={['queued', 'running'].includes(take.status)}
+                                    onClick={() => void removeTake(take.id)}>
+                              删除
+                            </button>
                             {take.status === 'succeeded' && (
                               shot?.active_job === take.id
                                 ? <span className="badge ok">已选用</span>

@@ -858,6 +858,20 @@ async def activate_take(shot_id: str, body: ActivateTake) -> dict:
     return _enrich_shot(store.get_shot(shot_id) or shot)
 
 
+@app.delete("/api/jobs/{job_id}")
+async def delete_job(job_id: str) -> dict:
+    job = store.get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="任务不存在")
+    if job.get("status") in {"queued", "running"}:
+        raise HTTPException(status_code=400, detail="任务还在进行，请先取消")
+    keep = str((store.get_shot(job.get("shot_id") or "") or {}).get("active_job") or "")
+    store.delete_job(job_id)
+    if keep == job_id and job.get("shot_id"):
+        store.update_shot(job["shot_id"], active_job="")
+    return {"ok": True}
+
+
 @app.get("/api/shots/{shot_id}/takes")
 async def shot_takes(shot_id: str, limit: int = 12) -> dict:
     return {"items": store.list_jobs_by_shot(shot_id, limit)}

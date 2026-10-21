@@ -134,6 +134,11 @@ def update_shot(sid: str, **fields: Any) -> None:
         conn.execute(f"UPDATE shots SET {sets} WHERE id=?", (*allowed.values(), sid))
 
 
+def delete_job(job_id: str) -> None:
+    with _lock, connect() as conn:
+        conn.execute("DELETE FROM jobs WHERE id=?", (job_id,))
+
+
 def list_jobs_by_shot(shot_id: str, limit: int = 20) -> list[dict]:
     with _lock, connect() as conn:
         return _rows(conn.execute(

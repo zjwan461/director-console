@@ -177,6 +177,7 @@ export const api = {
       body: JSON.stringify({ values }),
     }),
   takes: (id: string) => request<{ items: Job[] }>(`/api/shots/${id}/takes`),
+  deleteJob: (jobId: string) => request<{ ok: boolean }>(`/api/jobs/${jobId}`, { method: 'DELETE' }),
   activateTake: (shotId: string, jobId: string) =>
     request<Shot>(`/api/shots/${shotId}/activate-take`, {
       method: 'POST',
