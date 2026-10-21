@@ -1261,9 +1261,16 @@ async def ai_script_one(body: ScriptRequest) -> dict:
 
     budget = ai_script.char_budget(kind, duration)
 
-    # 字幕优先跟随旁白（旁白已经写好时，不再让模型另写一套）
+    # 字幕优先跟随旁白，但要先确认旁白确实对应这个画面
     if kind == "subtitle" and body.narration.strip():
-        return ai_script.fit_narration(body.narration, budget)
+        description = ai_script.shot_description(shot)
+        matched = await ai_script.narration_matches(body.narration, description)
+        if matched:
+            return ai_script.fit_narration(body.narration, budget)
+        result = await ai_script.generate(kind, shot, project, neighbors, duration, body.style or {})
+        result["narration_mismatch"] = True
+        result["reason"] = "旁白和画面描述不一致，已按画面描述生成字幕，建议重新写旁白"
+        return result
 
     # 没有旁白：先看镜头里有没有人声/口播
     if kind == "subtitle" and found and found[1].exists():

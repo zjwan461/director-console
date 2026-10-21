@@ -52,6 +52,39 @@ def shot_description(shot: dict) -> str:
     return ""
 
 
+async def narration_matches(narration: str, description: str) -> bool:
+    """让模型判断旁白和画面描述是否在说同一件事（跨语言）。"""
+    api_key = str(settings.get("ai.api_key", "") or "")
+    base = str(settings.get("ai.base_url", "")).rstrip("/")
+    model = str(settings.get("ai.model", "") or "")
+    proxy = str(settings.get("ai.proxy", "") or "").strip()
+    if not (api_key and base and description):
+        return True
+    kwargs: dict = {"timeout": httpx.Timeout(connect=10, read=60, write=20, pool=20), "trust_env": False}
+    if proxy:
+        kwargs["proxy"] = proxy
+    prompt = (
+        "判断下面两段内容是否在描述同一个画面/场景。"
+        "只回答「是」或「否」，不要解释。\n\n"
+        f"画面描述：{description[:1200]}\n\n旁白：{narration}"
+    )
+    try:
+        async with httpx.AsyncClient(**kwargs) as client:
+            resp = await client.post(
+                base + "/chat/completions",
+                headers={"Authorization": "Bearer " + api_key},
+                json={"model": model,
+                      "messages": [{"role": "user", "content": prompt}],
+                      "temperature": 0, "stream": False},
+            )
+        if resp.status_code >= 400:
+            return True
+        text = resp.json()["choices"][0]["message"]["content"].strip()
+        return not text.startswith("否")
+    except Exception:
+        return True
+
+
 def fit_narration(narration: str, budget: int) -> dict:
     """字幕跟随旁白：不超预算就原样用，超了才压缩。"""
     text = clean(narration)

@@ -369,7 +369,9 @@ export default function EditPanel({
             } else {
               patchEdit(shot.id, { subtitle: r.text })
               done += 1
-              notes.push(`字幕 ${r.chars}/${r.budget} 字${r.followed_narration ? '（跟随旁白）' : r.transcribed ? '（口播转写）' : r.compressed ? '（已压缩）' : r.over ? '（超预算）' : ''}`)
+              notes.push(r.narration_mismatch
+                ? `字幕按画面重写（旁白与画面不符）`
+                : `字幕 ${r.chars}/${r.budget} 字${r.followed_narration ? '（跟随旁白）' : r.transcribed ? '（口播转写）' : r.compressed ? '（已压缩）' : r.over ? '（超预算）' : ''}`)
             }
           } catch (err) {
             failed += 1
@@ -415,9 +417,12 @@ export default function EditPanel({
         return
       }
       patchEdit(shotId, kind === 'subtitle' ? { subtitle: r.text } : { narration: r.text })
+      if (r.narration_mismatch) {
+        notify('err', '旁白与画面不一致', r.reason || '已按画面描述生成字幕，建议重写旁白')
+      }
       const extra = r.followed_narration ? '（跟随旁白）' : r.transcribed ? '（口播转写）'
         : r.compressed ? `（从 ${r.original_chars} 字压缩）` : r.over ? '（仍超预算，建议手改）' : ''
-      notify(r.over ? 'err' : 'ok', kind === 'subtitle' ? '字幕已生成' : '旁白已生成',
+      notify(r.over || r.narration_mismatch ? 'err' : 'ok', kind === 'subtitle' ? '字幕已生成' : '旁白已生成',
              `${r.chars}/${r.budget} 字${extra}`)
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
