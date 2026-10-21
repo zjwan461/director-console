@@ -53,3 +53,4 @@ tools/ffmpeg.exe
 tools/ffprobe
 tools/ffprobe.exe
 director-node-pack*.zip
+start-all.bat
