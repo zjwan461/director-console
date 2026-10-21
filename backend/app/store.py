@@ -208,6 +208,11 @@ def get_asset(aid: str) -> dict | None:
         return _row(conn.execute("SELECT * FROM assets WHERE id=?", (aid,)).fetchone())
 
 
+def get_asset_by_path(path: str) -> dict | None:
+    with _lock, connect() as conn:
+        return _row(conn.execute("SELECT * FROM assets WHERE path=? LIMIT 1", (path,)).fetchone())
+
+
 def list_assets(kind: str | None = None, limit: int = 100, offset: int = 0, q: str = "") -> list[dict]:
     items, _ = search_assets(kind, q, limit, offset)
     return items

@@ -1177,8 +1177,9 @@ async def ai_tts(body: TTSRequest) -> dict:
         raise HTTPException(status_code=400, detail=str(exc))
     path = Path(result["path"])
     rel = path.relative_to(DATA).as_posix()
-    asset = store.add_asset("audio", rel, size=path.stat().st_size,
-                            meta={"origin": "tts", "text": body.text[:120]})
+    asset = store.get_asset_by_path(rel) or store.add_asset(
+        "audio", rel, size=path.stat().st_size,
+        meta={"origin": "tts", "text": body.text[:120]})
     slot = 0.0
     if body.shot_id:
         shot = store.get_shot(body.shot_id)

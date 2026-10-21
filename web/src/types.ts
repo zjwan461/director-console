@@ -126,6 +126,7 @@ export interface Asset {
   kind: string
   path: string
   url: string
+  meta?: Record<string, unknown>
   width?: number
   height?: number
   size?: number

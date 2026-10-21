@@ -242,13 +242,42 @@ export default function EditPanel({
   const editOf = (id: string): Edit => edits[id] || { in_point: '', out_point: '', subtitle: '', narration: '', voice_asset: '', fit: '' }
   const patchEdit = (id: string, patch: Partial<Edit>) =>
     setEdits((prev) => ({ ...prev, [id]: { ...editOf(id), ...patch } }))
+  const voiceAudio = useRef<HTMLAudioElement | null>(null)
+  const [playingVoice, setPlayingVoice] = useState('')
+
+  const playVoice = async (shotId: string) => {
+    const id = editOf(shotId).voice_asset
+    if (!id) { notify('err', '没有可试听的配音'); return }
+    if (playingVoice === shotId) {
+      voiceAudio.current?.pause()
+      setPlayingVoice('')
+      return
+    }
+    let found = audios.find((a) => a.id === id)
+    if (!found) {
+      try {
+        found = await api.asset(id)
+        setAudios((prev) => [found as Asset, ...prev])
+      } catch {
+        notify('err', '配音文件已被删除'); return
+      }
+    }
+    const url = found.url || `/media/files/${found.path}`
+    voiceAudio.current?.pause()
+    const audio = new Audio(url)
+    voiceAudio.current = audio
+    audio.onended = () => setPlayingVoice('')
+    audio.onerror = () => { setPlayingVoice(''); notify('err', '试听失败', '音频文件无法播放') }
+    setPlayingVoice(shotId)
+    void audio.play().catch(() => { setPlayingVoice(''); notify('err', '试听失败') })
+  }
+
   const uploadVoice = async (files: FileList | null) => {
     if (!files || !files.length || !uploadFor) return
     try {
       const asset = await api.upload(files[0], 'audio')
       patchEdit(uploadFor, { voice_asset: asset.id })
-      const res = await api.assets({ kind: 'audio', limit: 50 })
-      setAudios(res.items)
+      await refreshAudios(asset.id)
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
@@ -259,6 +288,30 @@ export default function EditPanel({
 
   const toggle = (id: string) =>
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
+
+  const refreshAudios = async (extraId?: string) => {
+    try {
+      const res = await api.assets({ kind: 'audio', limit: 100 })
+      let items = res.items
+      if (extraId && !items.some((a) => a.id === extraId)) {
+        try {
+          const one = await api.asset(extraId)
+          items = [one, ...items]
+        } catch { /* 已删除 */ }
+      }
+      setAudios(items)
+    } catch { /* ignore */ }
+  }
+
+  const audioLabel = (a: Asset) => {
+    const meta = (a.meta || {}) as Record<string, unknown>
+    const name = String(meta.origin_name || '').trim()
+    if (meta.origin === 'tts') {
+      const text = String(meta.text || '').trim().slice(0, 10)
+      return `配音${text ? ` · ${text}…` : ''}`
+    }
+    return name || a.path.split('/').pop() || a.id
+  }
 
   const notify = (kind: 'ok' | 'err', title: string, text = '') => {
     window.dispatchEvent(new CustomEvent('dsh-toast', { detail: { kind, title, text } }))
@@ -311,6 +364,7 @@ export default function EditPanel({
               try {
                 const audio = await api.aiTts({ text: r.text, shot_id: shot.id })
                 patchEdit(shot.id, { voice_asset: audio.asset_id })
+                await refreshAudios(audio.asset_id)
                 notes.push(audio.too_long
                   ? `配音 ${audio.duration}s 超镜头 ${audio.slot}s`
                   : `配音 ${audio.duration}s${audio.tempo > 1 ? `（${audio.tempo.toFixed(2)}x）` : ''}`)
@@ -359,6 +413,7 @@ export default function EditPanel({
     try {
       const audio = await api.aiTts({ text, shot_id: shotId })
       patchEdit(shotId, { voice_asset: audio.asset_id })
+      await refreshAudios(audio.asset_id)
       if (audio.too_long) {
         notify('err', '配音超出镜头时长',
                `配音 ${audio.duration}s / 镜头 ${audio.slot}s，请缩短旁白或换更长的镜头`)
@@ -650,9 +705,9 @@ export default function EditPanel({
                           <div className="voice-pick">
                             <select className="grow" value={edit.voice_asset}
                                     onChange={(e) => patchEdit(shot.id, { voice_asset: e.target.value })}>
-                              <option value="">无旁白</option>
+                              <option value="">无旁白音频</option>
                               {audios.map((a) => (
-                                <option key={a.id} value={a.id}>{a.path.split('/').pop()}</option>
+                                <option key={a.id} value={a.id}>{audioLabel(a)}</option>
                               ))}
                             </select>
                             <button className="ghost tiny"
@@ -660,7 +715,17 @@ export default function EditPanel({
                               上传
                             </button>
                             <button className="ghost tiny" onClick={() => void aiOne(shot.id, 'narration')}>AI 写</button>
-                            <button className="ghost tiny" onClick={() => void ttsOne(shot.id)}>配音</button>
+                            <button className="ghost tiny" disabled={!edit.narration.trim()}
+                                    title={edit.narration.trim() ? '合成配音' : '先写旁白文案'}
+                                    onClick={() => void ttsOne(shot.id)}>
+                              配音
+                            </button>
+                            <button className="ghost tiny" disabled={!edit.voice_asset}
+                                    onClick={() => void playVoice(shot.id)}>
+                              {playingVoice === shot.id ? '停止' : '试听'}
+                            </button>
+                            {edit.narration.trim() && !edit.voice_asset && <span className="badge warn">未配音</span>}
+                            {!edit.narration.trim() && edit.voice_asset && <span className="badge">仅音频</span>}
                           </div>
                         </label>
                         <label>
@@ -763,6 +828,7 @@ export default function EditPanel({
             <input type="checkbox" checked={titleOn} onChange={(e) => setTitleOn(e.target.checked)} />
             片头
           </label>
+          {titleOn && !titleText.trim() && <div className="meta" style={{ color: 'var(--warn, #facc15)' }}>填写文字后才会生成片头</div>}
           {titleOn && (
             <div className="row" style={{ flexWrap: 'wrap', gap: 6 }}>
               <input className="grow" placeholder="片头文字，如：雪夜"
@@ -789,6 +855,7 @@ export default function EditPanel({
             <input type="checkbox" checked={tailOn} onChange={(e) => setTailOn(e.target.checked)} />
             片尾
           </label>
+          {tailOn && !tailText.trim() && <div className="meta" style={{ color: 'var(--warn, #facc15)' }}>填写文字后才会生成片尾</div>}
           {tailOn && (
             <div className="row" style={{ flexWrap: 'wrap', gap: 6 }}>
               <input className="grow" placeholder="片尾文字，如：第一集 · 完"

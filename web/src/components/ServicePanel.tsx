@@ -456,9 +456,6 @@ function AISettingsPanel() {
         <button className="ghost" disabled={busy === 'reset'} onClick={() => void reset()}>恢复默认</button>
       </div>
       {note && <div className="notice" style={{ marginTop: 8 }}>{note}</div>}
-      {audioUrl && (
-        <audio className="tts-audio" src={audioUrl} controls autoPlay />
-      )}
     </div>
   )
 }
