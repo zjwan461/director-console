@@ -63,11 +63,6 @@ async def narration_matches(narration: str, description: str) -> bool:
     api_key = str(settings.get("ai.api_key", "") or "")
     base = str(settings.get("ai.base_url", "")).rstrip("/")
     model = str(settings.get("ai.model", "") or "")
-    if images:
-        vision_model = str(settings.get("ai.vision_model", "") or "").strip()
-        if not vision_model:
-            raise ValueError("要带视频截图给 AI，需要先在提示词助手配置「多模态模型」")
-        model = vision_model
     proxy = str(settings.get("ai.proxy", "") or "").strip()
     if not (api_key and base and description):
         return True
