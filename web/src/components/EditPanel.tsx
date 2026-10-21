@@ -66,7 +66,7 @@ export default function EditPanel({
   const [activeShot, setActiveShot] = useState('')
   const [uploadFor, setUploadFor] = useState('')
   const [picker, setPicker] = useState<'' | 'title' | 'tail'>('')
-  const [aiOpen, setAiOpen] = useState(false)
+  const [aiOpen, setAiOpen] = useState(() => new URLSearchParams(window.location.search).has('ai'))
   const [aiKind, setAiKind] = useState<'both' | 'subtitle' | 'narration'>('both')
   const [aiTone, setAiTone] = useState('documentary')
   const [aiPerson, setAiPerson] = useState('third')
@@ -680,6 +680,7 @@ export default function EditPanel({
               <b>AI 剪辑</b>
               <button className="ghost tiny" onClick={() => setAiOpen(false)}>关闭</button>
             </div>
+            <div className="ai-modal-body">
             <div className="meta">按每个镜头的「有旁白 / 有口播」设置分别生成。</div>
             <div className="field"><label><span>生成内容</span></label>
               <select value={aiKind} onChange={(e) => setAiKind(e.target.value as typeof aiKind)}>
@@ -775,6 +776,7 @@ export default function EditPanel({
               </div>
             )}
             {aiMessage && <div className="notice">{aiMessage}</div>}
+            </div>
             <div className="row-actions">
               <button className="primary" disabled={aiRunning || !ordered.length} onClick={() => void runAI()}>
                 {aiRunning ? '生成中…' : `开始（${ordered.length} 镜）`}

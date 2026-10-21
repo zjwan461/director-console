@@ -549,3 +549,9 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
 
 .mode-toggles { display: flex; gap: 12px; align-items: center; }
 .mode-toggles .check { margin: 0; }
+
+
+/* AI 剪辑弹层：内容滚动，按钮固定 */
+.picker { overflow: hidden; }
+.ai-modal-body { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; padding-right: 4px; min-height: 0; }
+.picker .row-actions { flex: 0 0 auto; padding-top: 8px; border-top: 1px solid var(--line); }
