@@ -1336,7 +1336,7 @@ async def tts_voices(model: str | None = None) -> dict:
 @app.post("/api/settings/tts/test")
 async def test_tts(body: TTSSettings | None = None) -> dict:
     try:
-        result = await tts_module.synthesize("测试一二。", body.voice if body else None)
+        result = await tts_module.synthesize("测试一二。", body.voice if body else None, use_cache=False)
         rel = Path(result["path"]).relative_to(DATA).as_posix()
         return {"ok": True, "duration": result["duration"], "cached": result.get("cached", False),
                 "url": f"/media/files/{rel}"}

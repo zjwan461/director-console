@@ -45,6 +45,15 @@ def _cfg(key: str):
     return settings.get(f"tts.{key}", DEFAULT_FALLBACK.get(key, ""))
 
 
+def _host(base: str) -> str:
+    """剥掉 /compatible-mode/v1、/api/v1 等路径，只保留主机名。"""
+    base = (base or "").rstrip("/")
+    for suffix in ("/compatible-mode/v1", "/api/v1"):
+        if base.endswith(suffix):
+            return base[: -len(suffix)]
+    return base
+
+
 def config() -> dict:
     return {
         "provider": str(_cfg("provider") or "aliyun-bailian"),
@@ -77,9 +86,9 @@ def tempo_for(voice_dur: float, slot: float, pad: float = 0.3) -> float:
     return round(min(max(voice_dur / target, 1.0), 1.3), 3)
 
 
-async def synthesize(text: str, voice: str | None = None) -> dict:
+async def synthesize(text: str, voice: str | None = None, use_cache: bool = True) -> dict:
     cfg = config()
-    base = cfg["base_url"].rstrip("/")
+    base = _host(cfg["base_url"])
     key = str(_cfg("api_key") or "")
     if not base:
         raise ValueError("还没有配置 TTS Base URL")
@@ -96,7 +105,7 @@ async def synthesize(text: str, voice: str | None = None) -> dict:
 
     digest = hashlib.sha1(f"{model}|{voice}|{fmt}|{rate}|{text}".encode()).hexdigest()[:20]
     out = Path(settings.paths["uploads"]) / "tts" / f"{digest}.{fmt}"
-    if out.exists() and out.stat().st_size > 0:
+    if use_cache and out.exists() and out.stat().st_size > 0:
         dur = await ffmpeg.duration_of(out)
         return {"path": str(out), "duration": round(dur, 3), "cached": True}
 
@@ -112,7 +121,11 @@ async def synthesize(text: str, voice: str | None = None) -> dict:
         if resp.status_code >= 400:
             raw = resp.text[:400]
             hint = _explain(raw)
-            raise RuntimeError(f"TTS 返回 {resp.status_code}：{raw}" + (f"（{hint}）" if hint else ""))
+            raise RuntimeError(
+                f"TTS 返回 {resp.status_code}：{raw}"
+                + (f"（{hint}）" if hint else "")
+                + f" [POST {url}]"
+            )
         body = resp.json()
         audio_url = ((body.get("output") or {}).get("audio") or {}).get("url")
         if not audio_url:
