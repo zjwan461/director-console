@@ -234,3 +234,44 @@ async def _compress(make_client, base: str, api_key: str, model: str,
         return clean(body["choices"][0]["message"]["content"])
     except Exception:
         return text
+
+
+async def title_for(project: dict, shots: list[dict], kind: str = "title") -> str:
+    prompts = _prompts()
+    system = prompts.get("titleGen")
+    if not system:
+        raise ValueError("缺少片名提示词模板（content/ai-prompts.json）")
+    api_key = str(settings.get("ai.api_key", "") or "")
+    base = str(settings.get("ai.base_url", "")).rstrip("/")
+    model = str(settings.get("ai.model", "") or "")
+    proxy = str(settings.get("ai.proxy", "") or "").strip()
+    if not api_key:
+        raise ValueError("没有配置 ai.api_key")
+
+    payload = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": system},
+            {"role": "user", "content": json.dumps({
+                "kind": kind,
+                "project": project.get("name", ""),
+                "shots": [
+                    {"title": s.get("title", ""), "description": shot_description(s)[:80]}
+                    for s in shots[:8]
+                ],
+            }, ensure_ascii=False)},
+        ],
+        "temperature": 0.8,
+        "stream": False,
+    }
+    kwargs: dict = {"timeout": httpx.Timeout(connect=10, read=60, write=20, pool=20), "trust_env": False}
+    if proxy:
+        kwargs["proxy"] = proxy
+    async with httpx.AsyncClient(**kwargs) as client:
+        resp = await client.post(base + "/chat/completions",
+                                 headers={"Authorization": "Bearer " + api_key}, json=payload)
+    if resp.status_code >= 400:
+        raise RuntimeError(f"片名模型返回 {resp.status_code}：{resp.text[:200]}")
+    text = clean(resp.json()["choices"][0]["message"]["content"])
+    text = text.strip("《》\"'“”")
+    return text[:20]

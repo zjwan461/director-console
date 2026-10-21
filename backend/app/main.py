@@ -962,6 +962,73 @@ async def shot_frames(shot_id: str, count: int = 3) -> dict:
     return {"items": items}
 
 
+class TitleRequest(BaseModel):
+    project_id: str
+    kind: str = "title"
+
+
+@app.post("/api/ai/title")
+async def ai_title(body: TitleRequest) -> dict:
+    project = store.get_project(body.project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="项目不存在")
+    shots = store.list_shots(body.project_id)
+    kind = "tail" if body.kind == "tail" else "title"
+    try:
+        text = await ai_script.title_for(project, shots, kind)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return {"text": text, "kind": kind}
+
+
+@app.get("/api/projects/{project_id}/rhythm")
+async def project_rhythm(project_id: str) -> dict:
+    if not store.get_project(project_id):
+        raise HTTPException(status_code=404, detail="项目不存在")
+    raw = store.get_setting("edit_state." + project_id, "")
+    edits: dict[str, dict] = {}
+    if raw:
+        try:
+            for item in json.loads(raw).get("shot_edits", []):
+                edits[item.get("shot_id")] = item
+        except Exception:
+            pass
+    items: list[dict] = []
+    total = 0.0
+    for shot in store.list_shots(project_id):
+        found = _shot_video(shot)
+        duration = 0.0
+        if found and found[1].exists():
+            try:
+                duration = await ffmpeg.duration_of(found[1])
+            except Exception:
+                duration = 0.0
+        edit = edits.get(shot["id"], {})
+        start = float(edit.get("in_point") or 0)
+        end = float(edit["out_point"]) if edit.get("out_point") else duration
+        dur = max(0.0, min(end, duration) - start)
+        total += dur
+        level = "ok"
+        advice = ""
+        if not duration:
+            level = "warn"
+            advice = "还没有可用的视频产物"
+        elif dur < 1.5:
+            level = "warn"
+            advice = f"只有 {dur:.1f}s，容易一闪而过，建议至少 2s"
+        elif dur > 6:
+            level = "warn"
+            advice = f"{dur:.1f}s 偏长，叙事镜头建议裁到 4~5s"
+        items.append({"shot_id": shot["id"], "title": shot.get("title") or "",
+                      "duration": round(dur, 2), "level": level, "advice": advice})
+    if items and all(i["level"] == "ok" for i in items):
+        summary = f"共 {len(items)} 镜、{total:.1f}s，节奏没有明显问题"
+    else:
+        bad = sum(1 for i in items if i["level"] != "ok")
+        summary = f"共 {len(items)} 镜、{total:.1f}s，其中 {bad} 镜建议调整"
+    return {"items": items, "total": round(total, 2), "summary": summary}
+
+
 @app.get("/api/shots/{shot_id}/preview")
 async def shot_preview(shot_id: str) -> dict:
     shot = store.get_shot(shot_id)

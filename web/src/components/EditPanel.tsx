@@ -81,6 +81,9 @@ export default function EditPanel({
   const [contentMode, setContentMode] = useState<'narration' | 'lip' | 'silent'>('narration')
   const [aiBusy, setAiBusy] = useState('')
   const [aiFrames, setAiFrames] = useState(0)
+  const [titleBusy, setTitleBusy] = useState('')
+  const [rhythm, setRhythm] = useState<{ summary: string; items: Array<{ shot_id: string; title: string; duration: number; level: string; advice: string }> } | null>(null)
+  const [rhythmBusy, setRhythmBusy] = useState(false)
   const [aiFrameUrls, setAiFrameUrls] = useState<string[]>([])
   const [showPrompt, setShowPrompt] = useState(false)
   const voiceInput = useRef<HTMLInputElement | null>(null)
@@ -390,6 +393,33 @@ export default function EditPanel({
     }, null, 2)
   }
 
+  const aiTitle = async (kind: 'title' | 'tail') => {
+    setTitleBusy(kind)
+    try {
+      const r = await api.aiTitle(projectId, kind)
+      if (kind === 'title') setTitleText(r.text)
+      else setTailText(r.text)
+      notify('ok', kind === 'title' ? '片头文案已生成' : '片尾文案已生成', r.text)
+    } catch (err) {
+      notify('err', '生成失败', err instanceof Error ? err.message : String(err))
+    } finally {
+      setTitleBusy('')
+    }
+  }
+
+  const runRhythm = async () => {
+    setRhythmBusy(true)
+    try {
+      const r = await api.rhythm(projectId)
+      setRhythm({ summary: r.summary, items: r.items })
+      notify('ok', '节奏检查完成', r.summary)
+    } catch (err) {
+      notify('err', '节奏检查失败', err instanceof Error ? err.message : String(err))
+    } finally {
+      setRhythmBusy(false)
+    }
+  }
+
   const runAI = async () => {
     if (!ordered.length) return
     const snapshot = { ...edits }
@@ -627,7 +657,14 @@ export default function EditPanel({
             </select>
           </label>
           <button className="primary" onClick={() => setAiOpen(true)} disabled={aiRunning}>
-            {aiRunning ? <><span className="spin" /> 生成中</> : 'AI 生成'}
+            {aiRunning ? <><span className="spin" /> 生成中</> : 'AI 剪辑'}
+          </button>
+          <button disabled={previewBusy || !ordered.length} onClick={() => void startPreview()}>
+            {previewBusy || (previewJob && ['queued', 'preparing', 'rendering'].includes(previewJob.status))
+              ? <><span className="spin" /> 预览中</> : '预览（480p）'}
+          </button>
+          <button disabled={exportBusy || !ordered.length} onClick={() => void exportRender()}>
+            {exportBusy ? <><span className="spin" /> 提交中</> : '导出成片'}
           </button>
           {savedAt && <span className="meta">已自动保存 {savedAt}</span>}
         </div>
@@ -640,7 +677,7 @@ export default function EditPanel({
         <div className="picker-overlay" onClick={() => !aiRunning && setAiOpen(false)}>
           <div className="picker" style={{ width: 460 }} onClick={(e) => e.stopPropagation()}>
             <div className="picker-head">
-              <b>AI 生成</b>
+              <b>AI 剪辑</b>
               <button className="ghost tiny" onClick={() => setAiOpen(false)}>关闭</button>
             </div>
             <div className="meta">按每个镜头的「有旁白 / 有口播」设置分别生成。</div>
@@ -696,6 +733,23 @@ export default function EditPanel({
             {aiFrameUrls.length > 0 && (
               <div className="frame-strip">
                 {aiFrameUrls.map((url) => <img key={url} src={url} alt="截图" />)}
+              </div>
+            )}
+            <div className="row" style={{ alignItems: 'center' }}>
+              <button className="ghost tiny" disabled={rhythmBusy} onClick={() => void runRhythm()}>
+                {rhythmBusy ? <><span className="spin" /> 检查中</> : '节奏检查'}
+              </button>
+              {rhythm && <span className="meta">{rhythm.summary}</span>}
+            </div>
+            {rhythm && rhythm.items.some((i) => i.level !== 'ok') && (
+              <div className="ai-rows">
+                {rhythm.items.filter((i) => i.level !== 'ok').map((item) => (
+                  <div key={item.shot_id} className="ai-row error">
+                    <span className="ai-dot" />
+                    <b>{item.title || item.shot_id}</b>
+                    <span>{item.duration}s · {item.advice}</span>
+                  </div>
+                ))}
               </div>
             )}
             <button className="ghost tiny" onClick={() => setShowPrompt((v) => !v)}>
@@ -1039,6 +1093,9 @@ export default function EditPanel({
             <div className="row" style={{ flexWrap: 'wrap', gap: 6 }}>
               <input className="grow" placeholder="片头文字，如：雪夜"
                      value={titleText} onChange={(e) => setTitleText(e.target.value)} />
+              <button className="ghost tiny" disabled={titleBusy === 'title'} onClick={() => void aiTitle('title')}>
+                {titleBusy === 'title' ? <><span className="spin" /> 起名中</> : 'AI 起名'}
+              </button>
               <select value={titleDur} onChange={(e) => setTitleDur(Number(e.target.value))}>
                 <option value={1}>1s</option>
                 <option value={1.5}>1.5s</option>
@@ -1066,6 +1123,9 @@ export default function EditPanel({
             <div className="row" style={{ flexWrap: 'wrap', gap: 6 }}>
               <input className="grow" placeholder="片尾文字，如：第一集 · 完"
                      value={tailText} onChange={(e) => setTailText(e.target.value)} />
+              <button className="ghost tiny" disabled={titleBusy === 'tail'} onClick={() => void aiTitle('tail')}>
+                {titleBusy === 'tail' ? <><span className="spin" /> 生成中</> : 'AI 起名'}
+              </button>
               <select value={tailDur} onChange={(e) => setTailDur(Number(e.target.value))}>
                 <option value={1}>1s</option>
                 <option value={1.5}>1.5s</option>
@@ -1146,15 +1206,7 @@ export default function EditPanel({
             响度标准化（-16 LUFS）
           </label>
 
-          <div className="row-actions" style={{ marginTop: 12 }}>
-            <button className="primary" disabled={previewBusy || !ordered.length} onClick={() => void startPreview()}>
-              {previewBusy || (previewJob && ['queued', 'preparing', 'rendering'].includes(previewJob.status))
-                ? <><span className="spin" /> 预览生成中</> : '预览（480p）'}
-            </button>
-            <button disabled={exportBusy || !ordered.length} onClick={() => void exportRender()}>
-              {exportBusy ? <><span className="spin" /> 提交中</> : '导出成片'}
-            </button>
-          </div>
+
         </div>
       </div>
     </div>

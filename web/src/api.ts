@@ -95,6 +95,10 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     }),
+  ttsVoices: (model?: string) =>
+    request<{ model: string; items: Array<{ id: string; name: string }> }>(
+      `/api/tts/voices${model ? `?model=${encodeURIComponent(model)}` : ''}`,
+    ),
   ttsSettings: () =>
     request<{ base_url: string; model: string; voice: string; proxy: string; key_set: boolean; key_hint: string; overridden: boolean; voices: Array<{ id: string; name: string }> }>(
       '/api/settings/tts',
@@ -110,6 +114,16 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     }),
+  aiTitle: (projectId: string, kind: 'title' | 'tail') =>
+    request<{ text: string; kind: string }>('/api/ai/title', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ project_id: projectId, kind }),
+    }),
+  rhythm: (projectId: string) =>
+    request<{ items: Array<{ shot_id: string; title: string; duration: number; level: string; advice: string }>; total: number; summary: string }>(
+      `/api/projects/${projectId}/rhythm`,
+    ),
   shotFrames: (shotId: string, count: number) =>
     request<{ items: Array<{ url: string }> }>(`/api/shots/${shotId}/frames?count=${count}`),
   shotPreview: (shotId: string) =>
