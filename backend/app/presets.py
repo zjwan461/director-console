@@ -331,6 +331,50 @@ def adapt_workflow_models(workflow: dict, object_info: dict) -> tuple[dict, list
     return workflow, changes
 
 
+IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".webp", ".bmp", ".gif")
+
+
+def sanitize_load_images(workflow: dict, object_info: dict, fallbacks: list[str]) -> list[dict]:
+    """把 LoadImage 里“作者机器上才有”的默认图替换成本次上传的图。
+
+    ComfyUI 会校验 prompt 里的每个节点，即使它没连到输出；
+    工作流里遗留的参考槽位带着作者的原始文件名（如 zhcnsuggestion_xxx.png），
+    在别的机器上就报 custom_validation_failed: Invalid image file。
+    """
+    if not object_info:
+        return []
+    info = object_info.get("LoadImage")
+    if not isinstance(info, dict):
+        return []
+    spec = ((info.get("input") or {}).get("required") or {}).get("image")
+    if not isinstance(spec, list) or not spec:
+        return []
+    if isinstance(spec[0], list):
+        options = [str(x) for x in spec[0]]
+    elif len(spec) > 1 and isinstance(spec[1], dict):
+        options = [str(x) for x in (spec[1].get("options") or [])]
+    else:
+        return []
+    if not options:
+        return []
+
+    valid = [f for f in fallbacks if f in options]
+    if not valid:
+        return []
+
+    changes: list[dict] = []
+    for node in workflow.values():
+        if not isinstance(node, dict) or node.get("class_type") != "LoadImage":
+            continue
+        inputs = node.get("inputs") or {}
+        image = inputs.get("image")
+        if isinstance(image, str) and image not in options:
+            inputs["image"] = valid[0]
+            changes.append({"good": image, "actual": valid[0],
+                            "node": "LoadImage", "field": "image"})
+    return changes
+
+
 def apply_bindings(workflow: dict, binds: dict[str, Any]) -> dict:
     # API 格式 JSON 根上带 _api_config 等元数据，ComfyUI 会把它当成节点校验失败
     wf = {

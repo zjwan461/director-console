@@ -11,7 +11,8 @@ from typing import Any
 from . import store
 from .comfy import ComfyClient, ComfyError, make_client
 from .config import settings
-from .presets import adapt_workflow_models, apply_bindings, build_bindings, get_card, load_workflow
+from .presets import (adapt_workflow_models, apply_bindings, build_bindings, get_card,
+                      load_workflow, sanitize_load_images)
 
 OUTPUT_KEYS = ("images", "gifs", "videos", "audio", "files", "video")
 
@@ -109,6 +110,9 @@ class JobRunner:
         try:
             object_info = await client.object_info()
             workflow, changes = adapt_workflow_models(workflow, object_info)
+            image_fallbacks = [v for v in media.values()
+                               if isinstance(v, str) and v.lower().endswith((".png", ".jpg", ".jpeg", ".webp", ".bmp", ".gif"))]
+            changes += sanitize_load_images(workflow, object_info, image_fallbacks)
             if changes:
                 note = "；".join(f"{c['good']} -> {c['actual']}" for c in changes[:3])
                 store.update_job(job_id, message=f"已按本机模型路径调整：{note}")
