@@ -985,10 +985,13 @@ export default function EditPanel({
                                 恢复跟随
                               </button>
                             )}
-                            <button className="ghost tiny" disabled={aiBusy === `${shot.id}:subtitle`}
-                                    onClick={() => void aiOne(shot.id, 'subtitle')}>
-                              {aiBusy === `${shot.id}:subtitle` ? <><span className="spin" /> 生成中</> : 'AI 写'}
-                            </button>
+                            {!edit.narration_on && edit.lip_on && (
+                              <button className="ghost tiny" disabled={aiBusy === `${shot.id}:subtitle`}
+                                      title="检测人声并转写"
+                                      onClick={() => void aiOne(shot.id, 'subtitle')}>
+                                {aiBusy === `${shot.id}:subtitle` ? <><span className="spin" /> 转写中</> : '转写'}
+                              </button>
+                            )}
                           </div>
                         </label>
                       </div>
