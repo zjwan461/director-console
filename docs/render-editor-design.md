@@ -234,9 +234,16 @@ tts:
 |---|---|---|
 | M1 逐镜裁剪 / BGM / 字幕 / 响度 / 分阶段进度 | ✅ 已完成 | `3357057` 后端、`7ceba32` 前端 |
 | M1 成片工作台 UI | ✅ 已完成 | `7ceba32` |
-| M2 预览草稿 / 转场 / 时间轴接口 | ⏳ 待做 | — |
+| M2 预览草稿 / 转场 / 时间轴 | ✅ 已实现（除画布拖拽） | 本轮提交 |
 | M3 旁白（上传音频 + 混音 + 闪避） | ⏳ 待做 | — |
 | M4 TTS（GPT-SoVITS） | 📝 计划 | 见第 10 节 |
+
+M2 补充说明：
+
+- 预览：`options.preview=true` → 854 宽、跳过字幕与响度，`POST /api/projects/{pid}/renders` 后轮询
+- 转场：`options.transition={type:none|fade|dissolve, duration}`，走 xfade + acrossfade，时间轴按重叠扣减
+- 时间轴：`GET /api/renders/{id}/timeline`；剪辑页也本地计算每镜时长并画成条带
+- 镜头预览：`GET /api/shots/{id}/preview` 返回选中视频的 url 与时长，入出点用滑杆拖拽
 
 M1 的实际接口：
 

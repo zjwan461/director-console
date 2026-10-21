@@ -42,7 +42,14 @@ export default function EditPanel({
   const [savedAt, setSavedAt] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [activeShot, setActiveShot] = useState('')
+  const [shotPreview, setShotPreview] = useState<{ url: string; duration: number }>({ url: '', duration: 0 })
+  const [previewJob, setPreviewJob] = useState<{ id: string; status: string; message: string; url?: string } | null>(null)
+  const [timeline, setTimeline] = useState<Array<{ shot_id: string; title: string; duration: number; start: number; end: number }>>([])
+  const [transType, setTransType] = useState('none')
+  const [transDur, setTransDur] = useState(0.4)
   const saveTimer = useRef<number | null>(null)
+  const pollTimer = useRef<number | null>(null)
 
   useEffect(() => {
     api.projects().then((res) => {
@@ -75,6 +82,10 @@ export default function EditPanel({
         setSubSize(Number(style.size || 42))
         setSubMargin(Number(style.margin_v || 48))
         setLoudness(Boolean((opts.loudness as Record<string, unknown>)?.enabled ?? true))
+        const trans = (opts.transition || {}) as Record<string, unknown>
+        setTransType(String(trans.type || 'none'))
+        setTransDur(Number(trans.duration ?? 0.4))
+        setActiveShot(shotRes.items[0]?.id || '')
 
         const map: Record<string, Edit> = {}
         for (const item of state.shot_edits || []) {
@@ -101,6 +112,7 @@ export default function EditPanel({
       api.saveEditState(projectId, {
         options: {
           width: res.width, height: res.height, fps,
+          transition: { type: transType, duration: transDur },
           bgm: bgmId ? { asset_id: bgmId, volume_db: bgmVolume, fade_in: fadeIn, fade_out: fadeOut, loop: loopBgm } : {},
           subtitles: { enabled: subsEnabled, style: { size: subSize, margin_v: subMargin } },
           loudness: { enabled: loudness },
@@ -114,7 +126,41 @@ export default function EditPanel({
       }).then(() => setSavedAt(new Date().toLocaleTimeString())).catch(() => undefined)
     }, 800)
   }, [loaded, projectId, resKey, fps, bgmId, bgmVolume, fadeIn, fadeOut, loopBgm,
-      subsEnabled, subSize, subMargin, loudness, edits, selected, shots])
+      subsEnabled, subSize, subMargin, loudness, transType, transDur, edits, selected, shots])
+
+  useEffect(() => {
+    if (!activeShot) return
+    api.shotPreview(activeShot)
+      .then((res) => setShotPreview({ url: res.url, duration: res.duration }))
+      .catch(() => setShotPreview({ url: '', duration: 0 }))
+  }, [activeShot])
+
+  useEffect(() => () => {
+    if (pollTimer.current) window.clearTimeout(pollTimer.current)
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    if (!ordered.length) { setTimeline([]); return }
+    const overlap = transType === 'none' ? 0 : transDur
+    Promise.all(ordered.map((s) => api.shotPreview(s.id).catch(() => ({ duration: 0 })))).then((list) => {
+      if (cancelled) return
+      let cursor = 0
+      const items = ordered.map((s, i) => {
+        const edit = editOf(s.id)
+        const total = Number(list[i].duration) || 0
+        const startAt = Number(edit.in_point) || 0
+        const endAt = edit.out_point ? Math.min(Number(edit.out_point), total || Number(edit.out_point)) : total
+        const dur = Math.max(0, endAt - startAt)
+        if (i && overlap) cursor = Math.max(0, cursor - overlap)
+        const item = { shot_id: s.id, title: s.title || `镜头 ${i + 1}`, duration: dur, start: cursor, end: cursor + dur }
+        cursor += dur
+        return item
+      })
+      setTimeline(items)
+    })
+    return () => { cancelled = true }
+  }, [selected, shots, edits, transType, transDur])
 
   const ordered = useMemo(() => shots.filter((s) => selected.includes(s.id)), [shots, selected])
   const editOf = (id: string): Edit => edits[id] || { in_point: '', out_point: '', subtitle: '' }
@@ -122,6 +168,40 @@ export default function EditPanel({
     setEdits((prev) => ({ ...prev, [id]: { ...editOf(id), ...patch } }))
   const toggle = (id: string) =>
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
+
+  const startPreview = async () => {
+    if (!ordered.length) return
+    setBusy(true)
+    setError('')
+    setPreviewJob(null)
+    const res = RESOLUTIONS.find((r) => r.key === resKey) || RESOLUTIONS[1]
+    try {
+      const render = await api.createRender(projectId, ordered.map((s) => s.id), {
+        width: res.width, height: res.height, fps, preview: true,
+        transition: { type: transType, duration: transDur },
+      }, ordered.map((s) => ({
+        shot_id: s.id,
+        in_point: Number(editOf(s.id).in_point) || 0,
+        out_point: editOf(s.id).out_point ? Number(editOf(s.id).out_point) : undefined,
+        subtitle: editOf(s.id).subtitle || s.title || '',
+      })))
+      setPreviewJob({ id: render.id, status: render.status, message: render.message || '排队中' })
+      const poll = async (id: string) => {
+        const r = await api.render(id)
+        setPreviewJob({ id: r.id, status: r.status, message: r.message || '', url: r.output_url })
+        if (r.status === 'succeeded' || r.status === 'failed') {
+          if (r.status === 'failed') setError(r.error || '预览失败')
+          return
+        }
+        pollTimer.current = window.setTimeout(() => void poll(id), 2000)
+      }
+      void poll(render.id)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setBusy(false)
+    }
+  }
 
   const exportRender = async () => {
     if (!ordered.length) return
@@ -131,6 +211,7 @@ export default function EditPanel({
     try {
       await api.createRender(projectId, ordered.map((s) => s.id), {
         width: res.width, height: res.height, fps,
+        transition: { type: transType, duration: transDur },
         bgm: bgmId ? { asset_id: bgmId, volume_db: bgmVolume, fade_in: fadeIn, fade_out: fadeOut, loop: loopBgm } : {},
         subtitles: { enabled: subsEnabled, style: { size: subSize, margin_v: subMargin } },
         loudness: { enabled: loudness },
@@ -169,21 +250,41 @@ export default function EditPanel({
         <div className="panel">
           <h2>
             <span>镜头与字幕</span>
-            <span className="meta">已选 {ordered.length} / {shots.length}</span>
+            <span className="meta">
+              已选 {ordered.length} / {shots.length}
+              {timeline.length ? ` · 总时长 ${timeline[timeline.length - 1].end.toFixed(1)}s` : ''}
+            </span>
           </h2>
+
+          <div className="timeline">
+            {timeline.map((item) => (
+              <button key={item.shot_id}
+                      className={`timeline-seg ${activeShot === item.shot_id ? 'on' : ''}`}
+                      style={{ flexGrow: Math.max(item.duration, 0.4) }}
+                      title={`${item.title} · ${item.duration.toFixed(1)}s`}
+                      onClick={() => setActiveShot(item.shot_id)}>
+                <span>{item.title}</span>
+                <i>{item.duration.toFixed(1)}s</i>
+              </button>
+            ))}
+            {!timeline.length && <div className="empty">勾选镜头后这里显示时间轴</div>}
+          </div>
+
           <div className="list">
             {shots.map((shot) => {
               const on = selected.includes(shot.id)
               const edit = editOf(shot.id)
               return (
-                <div key={shot.id} className={`render-shot ${on ? 'on' : ''}`}>
+                <div key={shot.id} className={`render-shot ${on ? 'on' : ''} ${activeShot === shot.id ? 'active' : ''}`}
+                     onClick={() => setActiveShot(shot.id)}>
                   <div className="render-shot-head">
-                    <input type="checkbox" checked={on} onChange={() => toggle(shot.id)} />
+                    <input type="checkbox" checked={on} onChange={() => toggle(shot.id)}
+                           onClick={(e) => e.stopPropagation()} />
                     <b title={shot.title}>{shot.title || `镜头 ${shot.idx + 1}`}</b>
                     <span className="meta">{shot.last_frame_url ? '已出片' : '暂无产物'}</span>
                   </div>
                   {on && (
-                    <div className="render-shot-edit">
+                    <div className="render-shot-edit" onClick={(e) => e.stopPropagation()}>
                       <label>
                         入点
                         <input type="number" min={0} step={0.1} placeholder="0"
@@ -212,7 +313,36 @@ export default function EditPanel({
         </div>
 
         <div className="panel">
-          <h2>成片设置</h2>
+          <h2>
+            <span>预览</span>
+            <span className="meta">{activeShot ? (shots.find((s) => s.id === activeShot)?.title || '') : '选择镜头'}</span>
+          </h2>
+          {(previewJob?.status === 'succeeded' && previewJob.url) || shotPreview.url ? (
+            <video key={previewJob?.url || shotPreview.url} className="preview-video"
+                   src={previewJob?.status === 'succeeded' && previewJob.url ? previewJob.url : shotPreview.url} controls />
+          ) : (
+            <div className="preview-empty">这个镜头还没有可预览的视频</div>
+          )}
+          {previewJob && !['succeeded', 'failed'].includes(previewJob.status) && (
+            <div className="notice" style={{ marginTop: 8 }}>整片预览：{previewJob.message || previewJob.status}</div>
+          )}
+
+          <div className="trim">
+            <div className="trim-head">
+              <span>入点 {Math.min(Number(editOf(activeShot).in_point) || 0, shotPreview.duration || 0).toFixed(2)}s</span>
+              <span>出点 {(editOf(activeShot).out_point ? Math.min(Number(editOf(activeShot).out_point), shotPreview.duration || 0) : shotPreview.duration).toFixed(2)}s</span>
+            </div>
+            <input type="range" min={0} max={shotPreview.duration || 1} step={0.05}
+                   disabled={!shotPreview.duration || !activeShot}
+                   value={Math.min(Number(editOf(activeShot).in_point) || 0, shotPreview.duration || 0)}
+                   onChange={(e) => patchEdit(activeShot, { in_point: e.target.value })} />
+            <input type="range" min={0} max={shotPreview.duration || 1} step={0.05}
+                   disabled={!shotPreview.duration || !activeShot}
+                   value={editOf(activeShot).out_point ? Math.min(Number(editOf(activeShot).out_point), shotPreview.duration) : shotPreview.duration}
+                   onChange={(e) => patchEdit(activeShot, { out_point: e.target.value })} />
+          </div>
+
+          <h2 style={{ marginTop: 14 }}>成片设置</h2>
           <div className="row">
             <select value={resKey} onChange={(e) => setResKey(e.target.value)}>
               {RESOLUTIONS.map((r) => <option key={r.key} value={r.key}>{r.label}</option>)}
@@ -221,6 +351,24 @@ export default function EditPanel({
               <option value={24}>24 fps</option>
               <option value={30}>30 fps</option>
             </select>
+          </div>
+
+          <h3>转场</h3>
+          <div className="row">
+            <select className="grow" value={transType} onChange={(e) => setTransType(e.target.value)}>
+              <option value="none">不加转场（直接切）</option>
+              <option value="fade">淡入淡出</option>
+              <option value="dissolve">交叉溶解</option>
+            </select>
+            {transType !== 'none' && (
+              <select value={transDur} onChange={(e) => setTransDur(Number(e.target.value))}>
+                <option value={0.2}>0.2s</option>
+                <option value={0.3}>0.3s</option>
+                <option value={0.4}>0.4s</option>
+                <option value={0.5}>0.5s</option>
+                <option value={0.8}>0.8s</option>
+              </select>
+            )}
           </div>
 
           <h3>背景音乐</h3>
@@ -285,9 +433,10 @@ export default function EditPanel({
           </label>
 
           <div className="row-actions" style={{ marginTop: 12 }}>
-            <button className="primary" disabled={busy || !ordered.length} onClick={() => void exportRender()}>
-              {busy ? '提交中…' : '导出成片'}
+            <button className="primary" disabled={busy || !ordered.length} onClick={() => void startPreview()}>
+              {previewJob && ['queued', 'preparing', 'rendering'].includes(previewJob.status) ? '预览生成中…' : '预览（480p）'}
             </button>
+            <button disabled={busy || !ordered.length} onClick={() => void exportRender()}>导出成片</button>
           </div>
         </div>
       </div>

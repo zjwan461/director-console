@@ -73,6 +73,12 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     }),
+  shotPreview: (shotId: string) =>
+    request<{ url: string; duration: number; source: string }>(`/api/shots/${shotId}/preview`),
+  renderTimeline: (renderId: string) =>
+    request<{ items: Array<{ shot_id: string; title: string; duration: number; start: number; end: number }>; total: number }>(
+      `/api/renders/${renderId}/timeline`,
+    ),
   editState: (projectId: string) =>
     request<{ options: Record<string, unknown>; shot_edits: Array<Record<string, unknown>> }>(
       `/api/projects/${projectId}/edit-state`,

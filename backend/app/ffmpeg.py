@@ -247,6 +247,59 @@ def capabilities() -> dict:
     }
 
 
+async def concat_with_transition(
+    clips: list[Path],
+    out: Path,
+    workdir: Path,
+    kind: str = "fade",
+    duration: float = 0.4,
+) -> None:
+    """带转场的拼接：xfade（画面）+ acrossfade（声音）。"""
+    ff = ffmpeg_path()
+    if not ff:
+        raise FFmpegMissing("未检测到 ffmpeg")
+    if len(clips) < 2 or kind not in {"fade", "dissolve"} or duration <= 0:
+        await concat_clips(clips, out, workdir)
+        return
+
+    durations = [await duration_of(p) for p in clips]
+    d = min(duration, min(durations) / 2)
+    if d <= 0:
+        await concat_clips(clips, out, workdir)
+        return
+
+    args: list[str] = [ff, "-y", "-loglevel", "error"]
+    for clip in clips:
+        args += ["-i", str(clip)]
+
+    filters: list[str] = []
+    v_prev = "0:v"
+    a_prev = "0:a"
+    offset = durations[0] - d
+    for i in range(1, len(clips)):
+        v_out = f"v{i}"
+        a_out = f"a{i}"
+        filters.append(
+            f"[{v_prev}][{i}:v]xfade=transition={kind}:duration={d:.3f}:offset={offset:.3f}[{v_out}]"
+        )
+        filters.append(f"[{a_prev}][{i}:a]acrossfade=d={d:.3f}[{a_out}]")
+        v_prev, a_prev = v_out, a_out
+        if i < len(clips) - 1:
+            offset += durations[i] - d
+
+    args += [
+        "-filter_complex", ";".join(filters),
+        "-map", f"[{v_prev}]", "-map", f"[{a_prev}]",
+        "-c:v", "libx264", "-crf", "18", "-preset", "medium",
+        "-c:a", "aac", "-b:a", "192k",
+        "-movflags", "+faststart",
+        str(out),
+    ]
+    code, err = await _run(args)
+    if code != 0:
+        raise RuntimeError("转场拼接失败：" + err[-800:])
+
+
 async def process_clip(
     src: Path,
     dst: Path,

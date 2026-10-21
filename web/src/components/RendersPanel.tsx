@@ -82,7 +82,10 @@ export default function RendersPanel({ onOpenProject }: { onOpenProject: (projec
                   {STATUS_TEXT[r.status] || r.status}
                 </span>
                 <b>{r.project_name || r.project_id}</b>
-                <span className="meta">{r.shot_ids.length} 镜 · {timeAgo(r.created_at)}</span>
+                <span className="meta">
+                  {r.shot_ids.length} 镜 · {timeAgo(r.created_at)}
+                  {(r.options as Record<string, unknown>)?.preview ? ' · 预览草稿' : ''}
+                </span>
                 <div className="list-actions">
                   {r.status === 'succeeded' && r.output_url && (
                     <>

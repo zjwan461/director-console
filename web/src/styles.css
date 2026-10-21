@@ -467,3 +467,17 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
 .toast.ok b { color: #4ade80; }
 .toast.err { border-color: #7a2b2b; }
 .toast.err b { color: #f87171; }
+
+
+/* 时间轴与预览 */
+.timeline { display: flex; gap: 4px; margin: 8px 0 12px; min-height: 34px; }
+.timeline-seg { flex: 1 1 0; min-width: 32px; border: 1px solid var(--line); background: #12141c; color: var(--fg);
+  border-radius: 6px; padding: 4px 6px; font-size: 11px; text-align: left; overflow: hidden; cursor: pointer; }
+.timeline-seg span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.timeline-seg i { color: var(--muted); font-style: normal; font-size: 10px; }
+.timeline-seg.on { border-color: #7c6cf0; background: #1b1b33; }
+.preview-video { width: 100%; border-radius: 8px; background: #000; max-height: 300px; }
+.preview-empty { padding: 40px 12px; text-align: center; color: var(--muted); border: 1px dashed var(--line); border-radius: 8px; font-size: 12px; }
+.trim { margin-top: 10px; display: flex; flex-direction: column; gap: 4px; }
+.trim-head { display: flex; gap: 12px; font-size: 11px; color: var(--muted); }
+.render-shot.active { border-color: #7c6cf0; }

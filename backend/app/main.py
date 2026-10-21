@@ -872,6 +872,86 @@ async def delete_job(job_id: str) -> dict:
     return {"ok": True}
 
 
+def _shot_video(shot: dict) -> tuple[str, Path] | None:
+    jobs = store.list_jobs_by_shot(shot["id"], limit=20)
+    active = str(shot.get("active_job") or "")
+    if active:
+        jobs = [j for j in jobs if j["id"] == active] + [j for j in jobs if j["id"] != active]
+    for job in jobs:
+        if job.get("status") != "succeeded":
+            continue
+        for item in job.get("outputs") or []:
+            if isinstance(item, dict) and item.get("kind") == "video" and item.get("url"):
+                url = item["url"]
+                if url.startswith("/media/outputs/"):
+                    return url, DATA / "outputs" / url.removeprefix("/media/outputs/")
+                if url.startswith("/media/files/"):
+                    return url, DATA / url.removeprefix("/media/files/")
+    return None
+
+
+@app.get("/api/shots/{shot_id}/preview")
+async def shot_preview(shot_id: str) -> dict:
+    shot = store.get_shot(shot_id)
+    if not shot:
+        raise HTTPException(status_code=404, detail="镜头不存在")
+    found = _shot_video(shot)
+    if not found:
+        return {"url": "", "duration": 0, "source": ""}
+    url, path = found
+    duration = 0.0
+    if path.exists():
+        try:
+            duration = await ffmpeg.duration_of(path)
+        except Exception:
+            duration = 0.0
+    return {"url": url, "duration": round(duration, 3), "source": path.name}
+
+
+@app.get("/api/renders/{render_id}/timeline")
+async def render_timeline(render_id: str) -> dict:
+    render = store.get_render(render_id)
+    if not render:
+        raise HTTPException(status_code=404, detail="成片不存在")
+    shots = {s["id"]: s for s in store.list_shots(render["project_id"])}
+    edits = {row["shot_id"]: row for row in store.list_render_shots(render_id)}
+    trans = (render.get("options") or {}).get("transition") or {}
+    overlap = float(trans.get("duration") or 0) if str(trans.get("type") or "none") in {"fade", "dissolve"} else 0.0
+    items: list[dict] = []
+    cursor = 0.0
+    for index, sid in enumerate(render.get("shot_ids") or []):
+        shot = shots.get(sid)
+        if not shot:
+            continue
+        found = _shot_video(shot)
+        total = 0.0
+        if found and found[1].exists():
+            try:
+                total = await ffmpeg.duration_of(found[1])
+            except Exception:
+                total = 0.0
+        edit = edits.get(sid) or {}
+        start_at = float(edit.get("in_point") or 0)
+        end_at = float(edit["out_point"]) if edit.get("out_point") else total
+        if total:
+            end_at = min(end_at, total)
+        dur = max(0.0, end_at - start_at)
+        if index and overlap:
+            cursor = max(0.0, cursor - overlap)
+        items.append({
+            "shot_id": sid,
+            "title": shot.get("title") or "",
+            "duration": round(dur, 3),
+            "source_duration": round(total, 3),
+            "in_point": round(start_at, 3),
+            "out_point": round(end_at, 3) if total else None,
+            "start": round(cursor, 3),
+            "end": round(cursor + dur, 3),
+        })
+        cursor += dur
+    return {"items": items, "total": round(cursor, 3)}
+
+
 @app.get("/api/shots/{shot_id}/takes")
 async def shot_takes(shot_id: str, limit: int = 12) -> dict:
     return {"items": store.list_jobs_by_shot(shot_id, limit)}
@@ -965,6 +1045,10 @@ async def create_render(project_id: str, body: RenderCreate) -> dict:
         "subtitles": body.options.get("subtitles") or {},
         "loudness": body.options.get("loudness") or {},
     }
+    # 转场 / 预览等可选参数原样带上
+    for extra in ("transition", "preview"):
+        if extra in body.options:
+            options[extra] = body.options[extra]
     if options["width"] < 64 or options["height"] < 64:
         raise HTTPException(status_code=400, detail="分辨率太小")
     if not ffmpeg.status()["available"]:

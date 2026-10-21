@@ -86,6 +86,15 @@ class RenderRunner:
         bgm_opt = options.get("bgm") or {}
         sub_opt = options.get("subtitles") or {}
         loud_opt = options.get("loudness") or {}
+        preview = bool(options.get("preview"))
+        trans = options.get("transition") or {}
+        trans_kind = str(trans.get("type") or "none")
+        trans_dur = float(trans.get("duration") or 0.4)
+        if preview:
+            # 480p 快速草稿
+            ratio = (width / height) if height else 16 / 9
+            width = 854
+            height = max(2, int(round(854 / ratio)) // 2 * 2)
 
         store.update_render(render_id, status="preparing", message="检查素材", progress=0.02,
                             started_at=time.time())
@@ -143,7 +152,11 @@ class RenderRunner:
 
         store.update_render(render_id, message="拼接中", progress=0.62)
         joined = work / "joined.mp4"
-        await ffmpeg.concat_clips(clips, joined, work)
+        if trans_kind in {"fade", "dissolve"}:
+            store.update_render(render_id, message=f"拼接中（{trans_kind} {trans_dur}s）", progress=0.66)
+            await ffmpeg.concat_with_transition(clips, joined, work, trans_kind, trans_dur)
+        else:
+            await ffmpeg.concat_clips(clips, joined, work)
         current = joined
 
         if bgm_opt.get("asset_id"):
@@ -165,7 +178,7 @@ class RenderRunner:
         if timeline:
             ffmpeg.write_srt(timeline, srt_path)
 
-        if sub_opt.get("enabled", True) and caps.get("subtitles") and srt_path.exists():
+        if (not preview) and sub_opt.get("enabled", True) and caps.get("subtitles") and srt_path.exists():
             store.update_render(render_id, message="烧录字幕", progress=0.8)
             subbed = work / "subbed.mp4"
             style = sub_opt.get("style") or {}
@@ -179,7 +192,7 @@ class RenderRunner:
             )
             current = subbed
 
-        if loud_opt.get("enabled", True):
+        if (not preview) and loud_opt.get("enabled", True):
             store.update_render(render_id, message="响度标准化", progress=0.9)
             normalized = work / "normalized.mp4"
             try:
