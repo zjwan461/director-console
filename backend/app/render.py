@@ -289,7 +289,8 @@ class RenderRunner:
         if timeline:
             ffmpeg.write_srt(timeline, srt_path)
 
-        if sub_opt.get("enabled", True) and caps.get("subtitles") and srt_path.exists():
+        if (sub_opt.get("enabled", True) and caps.get("subtitles")
+                and srt_path.exists() and srt_path.stat().st_size > 20):
             store.update_render(render_id, message="烧录字幕", progress=0.8)
             subbed = work / "subbed.mp4"
             style = sub_opt.get("style") or {}

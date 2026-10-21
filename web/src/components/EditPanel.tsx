@@ -21,7 +21,7 @@ interface Edit {
   lip_on: boolean
   volume_db: string
   subtitle_lock: boolean
-  burned_subtitle: boolean
+  burned_mode: string
 }
 
 export default function EditPanel({
@@ -59,6 +59,7 @@ export default function EditPanel({
   const [subsEnabled, setSubsEnabled] = useState(true)
   const [subSize, setSubSize] = useState(42)
   const [subAutoFit, setSubAutoFit] = useState(true)
+  const [burnedDefault, setBurnedDefault] = useState(false)
   const [durations, setDurations] = useState<Record<string, number>>({})
   const [subMargin, setSubMargin] = useState(48)
   const [loudness, setLoudness] = useState(true)
@@ -136,6 +137,7 @@ export default function EditPanel({
         setSubSize(Number(style.size || 42))
         setSubMargin(Number(style.margin_v || 48))
         setSubAutoFit(Boolean(subs.autofit ?? true))
+        setBurnedDefault(Boolean(opts.burned_default))
         setLoudness(Boolean((opts.loudness as Record<string, unknown>)?.enabled ?? true))
         const title = (opts.title || {}) as Record<string, unknown>
         setTitleOn(Boolean(title.enabled))
@@ -173,7 +175,7 @@ export default function EditPanel({
               : String(item.mode || '') === 'lip',
             volume_db: String(item.volume_db ?? '0'),
             subtitle_lock: Boolean(item.subtitle_lock),
-            burned_subtitle: Boolean(item.burned_subtitle),
+            burned_mode: item.burned_subtitle === true ? 'on' : (String(item.burned_mode || 'inherit')),
           }
         }
         // 有旁白且没手动锁定时，字幕以旁白为准（修正历史遗留的不一致）
@@ -204,6 +206,7 @@ export default function EditPanel({
           tail: { enabled: tailOn, text: tailText, duration: tailDur, bg: tailBg, bg_asset: tailImage },
           bgm: bgmId ? { asset_id: bgmId, volume_db: bgmVolume, fade_in: fadeIn, fade_out: fadeOut, loop: loopBgm } : {},
           subtitles: { enabled: subsEnabled, autofit: subAutoFit, style: { size: subSize, margin_v: subMargin } },
+          burned_default: burnedDefault,
           loudness: { enabled: loudness },
         },
         shot_edits: ordered.map((s) => ({
@@ -220,12 +223,12 @@ export default function EditPanel({
           lip_on: editOf(s.id).lip_on,
           volume_db: Number(editOf(s.id).volume_db) || 0,
           subtitle_lock: editOf(s.id).subtitle_lock,
-          burned_subtitle: editOf(s.id).burned_subtitle,
+          burned_subtitle: isBurned(s.id),
         })),
       }).then(() => setSavedAt(new Date().toLocaleTimeString())).catch(() => undefined)
     }, 800)
   }, [loaded, projectId, resKey, fps, bgmId, bgmVolume, fadeIn, fadeOut, loopBgm,
-      subsEnabled, subSize, subMargin, subAutoFit, loudness, fitMode, contentMode, transType, transDur, titleOn, titleText, titleDur, titleBg, titleImage,
+      subsEnabled, subSize, subMargin, subAutoFit, burnedDefault, loudness, fitMode, contentMode, transType, transDur, titleOn, titleText, titleDur, titleBg, titleImage,
       tailOn, tailText, tailDur, tailBg, tailImage, edits, selected, shots])
 
   useEffect(() => {
@@ -293,6 +296,13 @@ export default function EditPanel({
   const modeLabel = (mode: string) =>
     mode === 'narration' ? '解说' : mode === 'lip' ? '口播' : '纯画面'
 
+  const isBurned = (shotId: string) => {
+    const mode = editOf(shotId).burned_mode
+    if (mode === 'on') return true
+    if (mode === 'off') return false
+    return burnedDefault
+  }
+
   const fitSubtitle = (text: string, shotId: string) => {
     if (!subAutoFit) return text
     const seconds = durations[shotId] || 0
@@ -347,7 +357,7 @@ export default function EditPanel({
   }, [durations, subAutoFit, loaded, shots])
 
   const ordered = useMemo(() => shots.filter((s) => selected.includes(s.id)), [shots, selected])
-  const editOf = (id: string): Edit => edits[id] || { in_point: '', out_point: '', subtitle: '', narration: '', voice_asset: '', fit: '', mode: '', tts_voice: '', narration_on: true, lip_on: false, volume_db: '0', subtitle_lock: false, burned_subtitle: false }
+  const editOf = (id: string): Edit => edits[id] || { in_point: '', out_point: '', subtitle: '', narration: '', voice_asset: '', fit: '', mode: '', tts_voice: '', narration_on: true, lip_on: false, volume_db: '0', subtitle_lock: false, burned_mode: 'inherit' }
   const patchEdit = (id: string, patch: Partial<Edit>) =>
     setEdits((prev) => ({ ...prev, [id]: { ...editOf(id), ...patch } }))
   const voiceAudio = useRef<HTMLAudioElement | null>(null)
@@ -516,7 +526,7 @@ export default function EditPanel({
         setRow(shot.id, title, 'running')
         const current = editOf(shot.id)
         const shotMode = modeOf(shot.id)
-        const wantSub = !editOf(shot.id).burned_subtitle && (editOf(shot.id).narration_on || editOf(shot.id).lip_on) && aiKind !== 'narration'
+        const wantSub = !isBurned(shot.id) && (editOf(shot.id).narration_on || editOf(shot.id).lip_on) && aiKind !== 'narration'
         const wantNarr = shotMode === 'narration' && (aiKind === 'both' || aiKind === 'narration')
         let narrationText = current.narration
         const needNarr = wantNarr && (aiMode === 'rewrite' || !current.narration)
@@ -607,7 +617,7 @@ export default function EditPanel({
         return
       }
       if (kind === 'subtitle') {
-        patchEdit(shotId, { subtitle: r.text, subtitle_lock: false, burned_subtitle: false })
+        patchEdit(shotId, { subtitle: r.text, subtitle_lock: false })
       } else {
         const cur = editOf(shotId)
         patchEdit(shotId, cur.subtitle_lock
@@ -673,6 +683,7 @@ export default function EditPanel({
         subtitle: editOf(s.id).subtitle || s.title || '',
         voice_asset: editOf(s.id).voice_asset || '',
         fit: editOf(s.id).fit || '',
+        burned_subtitle: isBurned(s.id),
       })))
       setPreviewJob({ id: render.id, status: render.status, message: render.message || '排队中' })
       const poll = async (id: string) => {
@@ -713,6 +724,7 @@ export default function EditPanel({
         subtitle: editOf(s.id).subtitle || s.title || '',
         voice_asset: editOf(s.id).voice_asset || '',
         fit: editOf(s.id).fit || '',
+        burned_subtitle: isBurned(s.id),
       })))
       onGoRenders()
     } catch (err) {
@@ -989,7 +1001,7 @@ export default function EditPanel({
                             <input className="grow" placeholder={shot.title || '这一镜的字幕'}
                                    value={edit.subtitle}
                                    onChange={(e) => patchEdit(shot.id, { subtitle: e.target.value })} />
-                            {edit.burned_subtitle && <span className="badge">视频自带字幕</span>}
+                            {isBurned(shot.id) && <span className="badge">视频自带字幕</span>}
                             {edit.narration_on && !edit.subtitle_lock && edit.narration.trim() && (
                               <span className="badge">
                                 {edit.subtitle !== edit.narration && subAutoFit ? '已按阅读速度压缩' : '跟随旁白'}
@@ -1001,7 +1013,7 @@ export default function EditPanel({
                             {edit.narration_on && edit.subtitle_lock && (
                               <button className="ghost tiny"
                                       title="重新让字幕和旁白保持一致"
-                                      onClick={() => patchEdit(shot.id, { subtitle: fitSubtitle(edit.narration, shot.id), subtitle_lock: false, burned_subtitle: false })}>
+                                      onClick={() => patchEdit(shot.id, { subtitle: fitSubtitle(edit.narration, shot.id), subtitle_lock: false, burned_mode: 'inherit' })}>
                                 恢复跟随
                               </button>
                             )}
@@ -1073,10 +1085,14 @@ export default function EditPanel({
                                    onChange={(e) => setLip(shot.id, e.target.checked)} />
                             有口播
                           </label>
-                          <label className="check" style={{ margin: 0 }}>
-                            <input type="checkbox" checked={edit.burned_subtitle}
-                                   onChange={(e) => patchEdit(shot.id, { burned_subtitle: e.target.checked })} />
-                            视频自带字幕
+                          <label style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                            自带字幕
+                            <select value={edit.burned_mode}
+                                    onChange={(e) => patchEdit(shot.id, { burned_mode: e.target.value })}>
+                              <option value="inherit">跟随全局</option>
+                              <option value="on">是</option>
+                              <option value="off">否</option>
+                            </select>
                           </label>
                         </div>
                         {edit.narration_on && (
@@ -1305,6 +1321,10 @@ export default function EditPanel({
           <label className="check">
             <input type="checkbox" checked={subAutoFit} onChange={(e) => setSubAutoFit(e.target.checked)} />
             旁白过长时自动压缩字幕（每秒 4.5 字）
+          </label>
+          <label className="check">
+            <input type="checkbox" checked={burnedDefault} onChange={(e) => setBurnedDefault(e.target.checked)} />
+            视频自带字幕（项目默认，镜头可单独覆盖）
           </label>
           {subsEnabled && (
             <div className="row">
