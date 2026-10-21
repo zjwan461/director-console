@@ -555,3 +555,6 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
 .picker { overflow: hidden; }
 .ai-modal-body { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; padding-right: 4px; min-height: 0; }
 .picker .row-actions { flex: 0 0 auto; padding-top: 8px; border-top: 1px solid var(--line); }
+
+.voice-pick .badge { white-space: nowrap; flex: 0 0 auto; }
+.voice-pick .ghost.tiny { white-space: nowrap; flex: 0 0 auto; }

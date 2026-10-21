@@ -20,6 +20,7 @@ interface Edit {
   narration_on: boolean
   lip_on: boolean
   volume_db: string
+  subtitle_lock: boolean
 }
 
 export default function EditPanel({
@@ -167,6 +168,13 @@ export default function EditPanel({
               ? Boolean(item.lip_on)
               : String(item.mode || '') === 'lip',
             volume_db: String(item.volume_db ?? '0'),
+            subtitle_lock: Boolean(item.subtitle_lock),
+          }
+        }
+        // 有旁白且没手动锁定时，字幕以旁白为准（修正历史遗留的不一致）
+        for (const entry of Object.values(map)) {
+          if (entry.narration_on && !entry.subtitle_lock && entry.narration.trim()) {
+            entry.subtitle = entry.narration
           }
         }
         setEdits(map)
@@ -206,6 +214,7 @@ export default function EditPanel({
           narration_on: editOf(s.id).narration_on,
           lip_on: editOf(s.id).lip_on,
           volume_db: Number(editOf(s.id).volume_db) || 0,
+          subtitle_lock: editOf(s.id).subtitle_lock,
         })),
       }).then(() => setSavedAt(new Date().toLocaleTimeString())).catch(() => undefined)
     }, 800)
@@ -272,7 +281,19 @@ export default function EditPanel({
   const modeLabel = (mode: string) =>
     mode === 'narration' ? '解说' : mode === 'lip' ? '口播' : '纯画面'
 
-  const setNarration = (shotId: string, on: boolean) => patchEdit(shotId, { narration_on: on })
+  const setNarration = (shotId: string, on: boolean) => {
+    const edit = editOf(shotId)
+    if (on && !edit.subtitle_lock && edit.narration.trim()) {
+      patchEdit(shotId, { narration_on: true, subtitle: edit.narration })
+    } else {
+      patchEdit(shotId, { narration_on: on })
+    }
+  }
+
+  const setNarrationText = (shotId: string, text: string) => {
+    const edit = editOf(shotId)
+    patchEdit(shotId, edit.subtitle_lock ? { narration: text } : { narration: text, subtitle: text })
+  }
   const setLip = (shotId: string, on: boolean) => patchEdit(shotId, { lip_on: on })
 
   const modeOf = (shotId: string): 'narration' | 'lip' | 'silent' => {
@@ -283,7 +304,7 @@ export default function EditPanel({
   }
 
   const ordered = useMemo(() => shots.filter((s) => selected.includes(s.id)), [shots, selected])
-  const editOf = (id: string): Edit => edits[id] || { in_point: '', out_point: '', subtitle: '', narration: '', voice_asset: '', fit: '', mode: '', tts_voice: '', narration_on: true, lip_on: false, volume_db: '0' }
+  const editOf = (id: string): Edit => edits[id] || { in_point: '', out_point: '', subtitle: '', narration: '', voice_asset: '', fit: '', mode: '', tts_voice: '', narration_on: true, lip_on: false, volume_db: '0', subtitle_lock: false }
   const patchEdit = (id: string, patch: Partial<Edit>) =>
     setEdits((prev) => ({ ...prev, [id]: { ...editOf(id), ...patch } }))
   const voiceAudio = useRef<HTMLAudioElement | null>(null)
@@ -533,7 +554,12 @@ export default function EditPanel({
         notify('ok', '跳过字幕', r.reason || '这个镜头没有明显人声')
         return
       }
-      patchEdit(shotId, kind === 'subtitle' ? { subtitle: r.text } : { narration: r.text })
+      if (kind === 'subtitle') {
+        patchEdit(shotId, { subtitle: r.text, subtitle_lock: false })
+      } else {
+        const cur = editOf(shotId)
+        patchEdit(shotId, cur.subtitle_lock ? { narration: r.text } : { narration: r.text, subtitle: r.text })
+      }
       if (r.narration_mismatch) {
         notify('err', '旁白与画面不一致', r.reason || '已按画面描述生成字幕，建议重写旁白')
       }
@@ -902,6 +928,16 @@ export default function EditPanel({
                             <input className="grow" placeholder={shot.title || '这一镜的字幕'}
                                    value={edit.subtitle}
                                    onChange={(e) => patchEdit(shot.id, { subtitle: e.target.value })} />
+                            {edit.narration_on && !edit.subtitle_lock && (
+                              <span className="badge">跟随旁白</span>
+                            )}
+                            {edit.narration_on && edit.subtitle_lock && (
+                              <button className="ghost tiny"
+                                      title="重新让字幕和旁白保持一致"
+                                      onClick={() => patchEdit(shot.id, { subtitle: edit.narration, subtitle_lock: false })}>
+                                恢复跟随
+                              </button>
+                            )}
                             <button className="ghost tiny" disabled={aiBusy === `${shot.id}:subtitle`}
                                     onClick={() => void aiOne(shot.id, 'subtitle')}>
                               {aiBusy === `${shot.id}:subtitle` ? <><span className="spin" /> 生成中</> : 'AI 写'}
@@ -992,7 +1028,7 @@ export default function EditPanel({
                             旁白文案
                             <input placeholder="旁白文本（配音用）"
                                    value={edit.narration}
-                                   onChange={(e) => patchEdit(shot.id, { narration: e.target.value })} />
+                                   onChange={(e) => setNarrationText(shot.id, e.target.value)} />
                           </label>
                         )}
                         <label>
