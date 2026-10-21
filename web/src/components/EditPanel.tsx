@@ -748,6 +748,12 @@ export default function EditPanel({
               {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </label>
+          <label className="inline-field">
+            <span>视频自带字幕</span>
+            <input type="checkbox" checked={burnedDefault}
+                   title="项目默认：勾上后所有镜头默认不再生成/烧录字幕"
+                   onChange={(e) => setBurnedDefault(e.target.checked)} />
+          </label>
           <button className="primary" onClick={() => setAiOpen(true)} disabled={aiRunning}>
             {aiRunning ? <><span className="spin" /> 生成中</> : 'AI 剪辑'}
           </button>
@@ -1322,10 +1328,7 @@ export default function EditPanel({
             <input type="checkbox" checked={subAutoFit} onChange={(e) => setSubAutoFit(e.target.checked)} />
             旁白过长时自动压缩字幕（每秒 4.5 字）
           </label>
-          <label className="check">
-            <input type="checkbox" checked={burnedDefault} onChange={(e) => setBurnedDefault(e.target.checked)} />
-            视频自带字幕（项目默认，镜头可单独覆盖）
-          </label>
+
           {subsEnabled && (
             <div className="row">
               <label className="slider grow">
