@@ -293,7 +293,7 @@ export default function EditPanel({
             const r = await api.aiScript({ shot_id: shot.id, kind: 'subtitle', style: stylePayload() })
             patchEdit(shot.id, { subtitle: r.text })
             done += 1
-            notes.push(`字幕 ${r.chars}/${r.budget} 字`)
+            notes.push(`字幕 ${r.chars}/${r.budget} 字${r.compressed ? '（已压缩）' : r.over ? '（超预算）' : ''}`)
           } catch (err) {
             failed += 1
             const msg = err instanceof Error ? err.message : String(err)
@@ -306,12 +306,14 @@ export default function EditPanel({
             const r = await api.aiScript({ shot_id: shot.id, kind: 'narration', style: stylePayload() })
             patchEdit(shot.id, { narration: r.text })
             done += 1
-            notes.push(`旁白 ${r.chars}/${r.budget} 字`)
+            notes.push(`旁白 ${r.chars}/${r.budget} 字${r.compressed ? '（已压缩）' : r.over ? '（超预算）' : ''}`)
             if (aiTtsOn && r.text) {
               try {
                 const audio = await api.aiTts({ text: r.text, shot_id: shot.id })
                 patchEdit(shot.id, { voice_asset: audio.asset_id })
-                notes.push(`配音 ${audio.duration}s`)
+                notes.push(audio.too_long
+                  ? `配音 ${audio.duration}s 超镜头 ${audio.slot}s`
+                  : `配音 ${audio.duration}s${audio.tempo > 1 ? `（${audio.tempo.toFixed(2)}x）` : ''}`)
               } catch (err) {
                 ttsFailed += 1
                 notes.push('配音失败：' + (err instanceof Error ? err.message : String(err)).slice(0, 50))
@@ -341,7 +343,9 @@ export default function EditPanel({
     try {
       const r = await api.aiScript({ shot_id: shotId, kind, style: stylePayload() })
       patchEdit(shotId, kind === 'subtitle' ? { subtitle: r.text } : { narration: r.text })
-      notify('ok', kind === 'subtitle' ? '字幕已生成' : '旁白已生成', `${r.chars}/${r.budget} 字`)
+      const extra = r.compressed ? `（从 ${r.original_chars} 字压缩）` : r.over ? '（仍超预算，建议手改）' : ''
+      notify(r.over ? 'err' : 'ok', kind === 'subtitle' ? '字幕已生成' : '旁白已生成',
+             `${r.chars}/${r.budget} 字${extra}`)
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       setError(msg)
@@ -355,7 +359,13 @@ export default function EditPanel({
     try {
       const audio = await api.aiTts({ text, shot_id: shotId })
       patchEdit(shotId, { voice_asset: audio.asset_id })
-      notify('ok', '配音完成', `${audio.duration}s`)
+      if (audio.too_long) {
+        notify('err', '配音超出镜头时长',
+               `配音 ${audio.duration}s / 镜头 ${audio.slot}s，请缩短旁白或换更长的镜头`)
+      } else {
+        const tempo = audio.tempo > 1.0 ? `，成片建议 ${audio.tempo.toFixed(2)}x` : ''
+        notify('ok', '配音完成', `${audio.duration}s${tempo}`)
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       setError(msg)

@@ -111,10 +111,58 @@ async def generate(kind: str, shot: dict, project: dict, neighbors: dict,
     except (KeyError, IndexError, TypeError):
         raise RuntimeError("文案模型返回格式异常")
     text = clean(text)
+    original_chars = len(text)
+    compressed = False
+    if len(text) > budget:
+        # 超预算：让模型自己压缩一次，避免直接截断丢语义
+        try:
+            text = await _compress(client_factory(kwargs), base, api_key, model, system,
+                                   text, budget, kind)
+            compressed = True
+        except Exception:
+            pass
+    if len(text) > budget:
+        text = text[:budget].rstrip("，。！？、,.!? ")
     return {
         "text": text,
         "chars": len(text),
         "budget": budget,
         "over": len(text) > budget,
+        "compressed": compressed,
+        "original_chars": original_chars,
         "duration": round(duration, 2),
     }
+
+
+def client_factory(kwargs: dict):
+    return lambda: httpx.AsyncClient(**kwargs)
+
+
+async def _compress(make_client, base: str, api_key: str, model: str,
+                    system: str, text: str, budget: int, kind: str) -> str:
+    instruction = (
+        f"上一次输出是：{text}\n"
+        f"它超过了 {budget} 字的预算。请压缩到 {budget} 字以内，保留原意和画面依据，"
+        f"仍只输出一行正文，不要解释。"
+    )
+    async with make_client() as client:
+        resp = await client.post(
+            base + "/chat/completions",
+            headers={"Authorization": "Bearer " + api_key},
+            json={
+                "model": model,
+                "messages": [
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": instruction},
+                ],
+                "temperature": 0.4,
+                "stream": False,
+            },
+        )
+    if resp.status_code >= 400:
+        return text
+    body = resp.json()
+    try:
+        return clean(body["choices"][0]["message"]["content"])
+    except Exception:
+        return text

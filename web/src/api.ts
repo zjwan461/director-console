@@ -74,13 +74,13 @@ export const api = {
       body: JSON.stringify(payload),
     }),
   aiScript: (payload: { shot_id: string; kind: 'subtitle' | 'narration'; mode?: string; style?: Record<string, string> }) =>
-    request<{ text: string; chars: number; budget: number; over: boolean; duration: number }>('/api/ai/script', {
+    request<{ text: string; chars: number; budget: number; over: boolean; compressed: boolean; original_chars: number; duration: number }>('/api/ai/script', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     }),
   aiTts: (payload: { text: string; shot_id?: string; voice?: string }) =>
-    request<{ asset_id: string; url: string; duration: number; cached: boolean }>('/api/ai/tts', {
+    request<{ asset_id: string; url: string; duration: number; cached: boolean; slot: number; tempo: number; too_long: boolean }>('/api/ai/tts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),

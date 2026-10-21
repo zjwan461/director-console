@@ -1176,11 +1176,24 @@ async def ai_tts(body: TTSRequest) -> dict:
     rel = path.relative_to(DATA).as_posix()
     asset = store.add_asset("audio", rel, size=path.stat().st_size,
                             meta={"origin": "tts", "text": body.text[:120]})
+    slot = 0.0
+    if body.shot_id:
+        shot = store.get_shot(body.shot_id)
+        found = _shot_video(shot) if shot else None
+        if found and found[1].exists():
+            try:
+                slot = await ffmpeg.duration_of(found[1])
+            except Exception:
+                slot = 0.0
+    tempo = tts_module.tempo_for(result["duration"], slot) if slot else 1.0
     return {
         "asset_id": asset["id"],
         "url": f"/media/files/{rel}",
         "duration": result["duration"],
         "cached": result.get("cached", False),
+        "slot": round(slot, 2),
+        "tempo": tempo,
+        "too_long": bool(slot and tempo >= 1.3),
     }
 
 
