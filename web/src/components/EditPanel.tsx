@@ -71,6 +71,8 @@ export default function EditPanel({
   const [aiUndo, setAiUndo] = useState<Record<string, Edit> | null>(null)
   const [aiProgress, setAiProgress] = useState({ done: 0, total: 0 })
   const [aiRows, setAiRows] = useState<Record<string, { title: string; status: string; note?: string }>>({})
+  const [contentMode, setContentMode] = useState<'narration' | 'lip' | 'silent'>('narration')
+  const [aiBusy, setAiBusy] = useState('')
   const [aiFrames, setAiFrames] = useState(0)
   const [aiFrameUrls, setAiFrameUrls] = useState<string[]>([])
   const [showPrompt, setShowPrompt] = useState(false)
@@ -106,6 +108,7 @@ export default function EditPanel({
         setResKey(RESOLUTIONS.find((r) => r.width === w)?.key || '720p')
         setFps(Number(opts.fps || 24))
         setFitMode(String(opts.fit || 'letterbox'))
+        setContentMode((String(opts.content_mode || 'narration') as typeof contentMode))
         const bgm = (opts.bgm || {}) as Record<string, unknown>
         setBgmId(String(bgm.asset_id || ''))
         setBgmVolume(Number(bgm.volume_db ?? -14))
@@ -182,7 +185,7 @@ export default function EditPanel({
       }).then(() => setSavedAt(new Date().toLocaleTimeString())).catch(() => undefined)
     }, 800)
   }, [loaded, projectId, resKey, fps, bgmId, bgmVolume, fadeIn, fadeOut, loopBgm,
-      subsEnabled, subSize, subMargin, loudness, fitMode, transType, transDur, titleOn, titleText, titleDur, titleBg, titleImage,
+      subsEnabled, subSize, subMargin, loudness, fitMode, contentMode, transType, transDur, titleOn, titleText, titleDur, titleBg, titleImage,
       tailOn, tailText, tailDur, tailBg, tailImage, edits, selected, shots])
 
   useEffect(() => {
@@ -360,6 +363,11 @@ export default function EditPanel({
     setAiMessage('')
     setAiRows({})
     setAiProgress({ done: 0, total: ordered.length })
+    if (contentMode === 'silent') {
+      notify('ok', '纯画面模式', '当前设置为纯画面，不生成字幕/旁白')
+      setAiRunning(false)
+      return
+    }
     let done = 0
     let failed = 0
     let ttsFailed = 0
@@ -368,8 +376,8 @@ export default function EditPanel({
         const title = shot.title || `镜头 ${shot.idx + 1}`
         setRow(shot.id, title, 'running')
         const current = editOf(shot.id)
-        const wantSub = aiKind === 'both' || aiKind === 'subtitle'
-        const wantNarr = aiKind === 'both' || aiKind === 'narration'
+        const wantSub = aiKind !== 'narration' || contentMode === 'narration'
+        const wantNarr = contentMode === 'narration' && (aiKind === 'both' || aiKind === 'narration')
         let narrationText = current.narration
         const needNarr = wantNarr && (aiMode === 'rewrite' || !current.narration)
         const notes: string[] = []
@@ -392,7 +400,7 @@ export default function EditPanel({
           try {
             const r = await api.aiScript({
               shot_id: shot.id, kind: 'subtitle', style: stylePayload(),
-              narration: narrationText, frames: aiFrames,
+              narration: contentMode === 'narration' ? narrationText : '', frames: aiFrames,
             })
             if (r.skip === 'silent') {
               notes.push('无口播，跳过字幕')
@@ -437,10 +445,15 @@ export default function EditPanel({
   }
 
   const aiOne = async (shotId: string, kind: 'subtitle' | 'narration') => {
+    const key = `${shotId}:${kind}`
+    setAiBusy(key)
     try {
+      const narration = kind === 'subtitle' && contentMode === 'narration'
+        ? editOf(shotId).narration
+        : undefined
       const r = await api.aiScript({
         shot_id: shotId, kind, style: stylePayload(), frames: aiFrames,
-        narration: kind === 'subtitle' ? editOf(shotId).narration : undefined,
+        narration,
       })
       if (r.skip === 'silent') {
         notify('ok', '跳过字幕', r.reason || '这个镜头没有明显人声')
@@ -458,10 +471,13 @@ export default function EditPanel({
       const msg = err instanceof Error ? err.message : String(err)
       setError(msg)
       notify('err', 'AI 生成失败', msg.slice(0, 120))
+    } finally {
+      setAiBusy('')
     }
   }
 
   const ttsOne = async (shotId: string) => {
+    setAiBusy(`${shotId}:tts`)
     const text = editOf(shotId).narration.trim()
     if (!text) { setError('先写旁白文案，再点配音'); return }
     try {
@@ -479,6 +495,8 @@ export default function EditPanel({
       const msg = err instanceof Error ? err.message : String(err)
       setError(msg)
       notify('err', '配音失败', msg.slice(0, 120))
+    } finally {
+      setAiBusy('')
     }
   }
 
@@ -561,7 +579,12 @@ export default function EditPanel({
           <select value={projectId} onChange={(e) => setProjectId(e.target.value)}>
             {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
-          <button className="primary" onClick={() => setAiOpen(true)}>AI 生成</button>
+          <span className="badge">
+            {contentMode === 'narration' ? '解说类' : contentMode === 'lip' ? '口播类' : '纯画面'}
+          </span>
+          <button className="primary" onClick={() => setAiOpen(true)} disabled={aiRunning}>
+            {aiRunning ? <><span className="spin" /> 生成中</> : 'AI 生成'}
+          </button>
           {savedAt && <span className="meta">已自动保存 {savedAt}</span>}
         </div>
       </div>
@@ -575,6 +598,13 @@ export default function EditPanel({
             <div className="picker-head">
               <b>AI 生成</b>
               <button className="ghost tiny" onClick={() => setAiOpen(false)}>关闭</button>
+            </div>
+            <div className="field"><label><span>视频类型</span></label>
+              <select value={contentMode} onChange={(e) => setContentMode(e.target.value as typeof contentMode)}>
+                <option value="narration">解说类：有旁白，字幕跟随旁白</option>
+                <option value="lip">口播类：无旁白，字幕来自语音转写</option>
+                <option value="silent">纯画面：不加字幕</option>
+              </select>
             </div>
             <div className="field"><label><span>生成内容</span></label>
               <select value={aiKind} onChange={(e) => setAiKind(e.target.value as typeof aiKind)}>
@@ -774,7 +804,10 @@ export default function EditPanel({
                             <input className="grow" placeholder={shot.title || '这一镜的字幕'}
                                    value={edit.subtitle}
                                    onChange={(e) => patchEdit(shot.id, { subtitle: e.target.value })} />
-                            <button className="ghost tiny" onClick={() => void aiOne(shot.id, 'subtitle')}>AI 写</button>
+                            <button className="ghost tiny" disabled={aiBusy === `${shot.id}:subtitle`}
+                                    onClick={() => void aiOne(shot.id, 'subtitle')}>
+                              {aiBusy === `${shot.id}:subtitle` ? <><span className="spin" /> 生成中</> : 'AI 写'}
+                            </button>
                           </div>
                         </label>
                       </div>
@@ -793,11 +826,14 @@ export default function EditPanel({
                                     onClick={() => { setUploadFor(shot.id); voiceInput.current?.click() }}>
                               上传
                             </button>
-                            <button className="ghost tiny" onClick={() => void aiOne(shot.id, 'narration')}>AI 写</button>
-                            <button className="ghost tiny" disabled={!edit.narration.trim()}
+                            <button className="ghost tiny" disabled={aiBusy === `${shot.id}:narration`}
+                                    onClick={() => void aiOne(shot.id, 'narration')}>
+                              {aiBusy === `${shot.id}:narration` ? <><span className="spin" /> 生成中</> : 'AI 写'}
+                            </button>
+                            <button className="ghost tiny" disabled={!edit.narration.trim() || aiBusy === `${shot.id}:tts`}
                                     title={edit.narration.trim() ? '合成配音' : '先写旁白文案'}
                                     onClick={() => void ttsOne(shot.id)}>
-                              配音
+                              {aiBusy === `${shot.id}:tts` ? <><span className="spin" /> 配音中</> : '配音'}
                             </button>
                             <button className="ghost tiny" disabled={!edit.voice_asset}
                                     onClick={() => void playVoice(shot.id)}>
@@ -1023,7 +1059,9 @@ export default function EditPanel({
             <button className="primary" disabled={busy || !ordered.length} onClick={() => void startPreview()}>
               {previewJob && ['queued', 'preparing', 'rendering'].includes(previewJob.status) ? '预览生成中…' : '预览（480p）'}
             </button>
-            <button disabled={busy || !ordered.length} onClick={() => void exportRender()}>导出成片</button>
+            <button disabled={busy || !ordered.length} onClick={() => void exportRender()}>
+              {busy ? <><span className="spin" /> 提交中</> : '导出成片'}
+            </button>
           </div>
         </div>
       </div>
