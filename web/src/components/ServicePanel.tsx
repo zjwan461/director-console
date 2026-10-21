@@ -467,6 +467,7 @@ function TTSPanel() {
   const [voice, setVoice] = useState('longanlufeng')
   const [apiKey, setApiKey] = useState('')
   const [keyHint, setKeyHint] = useState('')
+  const [proxy, setProxy] = useState('')
   const [voices, setVoices] = useState<Array<{ id: string; name: string }>>([])
   const [note, setNote] = useState('')
   const [busy, setBusy] = useState('')
@@ -476,12 +477,13 @@ function TTSPanel() {
       setBaseUrl(s.base_url)
       setModel(s.model)
       setVoice(s.voice)
+      setProxy(s.proxy || '')
       setKeyHint(s.key_hint)
       setVoices(s.voices || [])
     }).catch(() => undefined)
   }, [])
 
-  const payload = () => ({ base_url: baseUrl, model, voice, api_key: apiKey || undefined })
+  const payload = () => ({ base_url: baseUrl, model, voice, proxy, api_key: apiKey || undefined })
 
   const save = async () => {
     setBusy('save')
@@ -527,6 +529,11 @@ function TTSPanel() {
         <label><span>API Key{keyHint ? `（当前 ${keyHint}）` : ''}</span></label>
         <input type="password" value={apiKey} placeholder="留空表示不修改"
                onChange={(e) => setApiKey(e.target.value)} />
+      </div>
+      <div className="field">
+        <label><span>代理（可选，留空沿用提示词助手的代理）</span></label>
+        <input value={proxy} placeholder="http://127.0.0.1:1081"
+               onChange={(e) => setProxy(e.target.value)} />
       </div>
       <div className="row">
         <select value={model} onChange={(e) => setModel(e.target.value)}>

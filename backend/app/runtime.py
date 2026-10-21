@@ -19,6 +19,7 @@ TTS_MODEL_KEY = "tts.model"
 TTS_VOICE_KEY = "tts.voice"
 TTS_FORMAT_KEY = "tts.format"
 TTS_RATE_KEY = "tts.sample_rate"
+TTS_PROXY_KEY = "tts.proxy"
 
 VALID_MODES = {"local", "ssh", "external", "mock"}
 
@@ -47,7 +48,8 @@ def apply_runtime_settings() -> None:
     tts = settings.raw.setdefault("tts", {})
     for key, name in ((TTS_BASE_KEY, "base_url"), (TTS_KEY_KEY, "api_key"),
                       (TTS_MODEL_KEY, "model"), (TTS_VOICE_KEY, "voice"),
-                      (TTS_FORMAT_KEY, "format"), (TTS_RATE_KEY, "sample_rate")):
+                      (TTS_FORMAT_KEY, "format"), (TTS_RATE_KEY, "sample_rate"),
+                      (TTS_PROXY_KEY, "proxy")):
         if stored.get(key):
             tts[name] = stored[key]
 
@@ -151,7 +153,8 @@ def public_ai_settings() -> dict:
 
 
 def save_tts_settings(base_url: str, api_key: str | None, model: str,
-                      voice: str, fmt: str = "wav", sample_rate: int = 24000) -> dict:
+                      voice: str, fmt: str = "wav", sample_rate: int = 24000,
+                      proxy: str = "") -> dict:
     url = normalize_url(base_url)
     if not url:
         raise ValueError("请填写 TTS Base URL")
@@ -160,6 +163,7 @@ def save_tts_settings(base_url: str, api_key: str | None, model: str,
     store.set_setting(TTS_VOICE_KEY, (voice or "").strip())
     store.set_setting(TTS_FORMAT_KEY, (fmt or "wav").strip())
     store.set_setting(TTS_RATE_KEY, str(int(sample_rate or 24000)))
+    store.set_setting(TTS_PROXY_KEY, (proxy or "").strip())
     if api_key is not None:
         store.set_setting(TTS_KEY_KEY, api_key.strip())
     apply_runtime_settings()
@@ -169,7 +173,7 @@ def save_tts_settings(base_url: str, api_key: str | None, model: str,
 
 
 def reset_tts_settings() -> dict:
-    for key in (TTS_BASE_KEY, TTS_KEY_KEY, TTS_MODEL_KEY, TTS_VOICE_KEY, TTS_FORMAT_KEY, TTS_RATE_KEY):
+    for key in (TTS_BASE_KEY, TTS_KEY_KEY, TTS_MODEL_KEY, TTS_VOICE_KEY, TTS_FORMAT_KEY, TTS_RATE_KEY, TTS_PROXY_KEY):
         store.delete_setting(key)
     from importlib import reload
 

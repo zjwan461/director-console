@@ -14,6 +14,7 @@ DEFAULT_FALLBACK = {
     "provider": "aliyun-bailian",
     "base_url": "",
     "api_key": "",
+    "proxy": "",
     "model": "qwen-audio-3.0-tts-plus",
     "voice": "longanlufeng",
     "format": "wav",
@@ -50,6 +51,7 @@ def config() -> dict:
         "base_url": str(_cfg("base_url") or ""),
         "model": str(_cfg("model") or DEFAULT_FALLBACK["model"]),
         "voice": str(_cfg("voice") or DEFAULT_FALLBACK["voice"]),
+        "proxy": str(_cfg("proxy") or settings.get("ai.proxy", "") or ""),
         "format": str(_cfg("format") or "wav"),
         "sample_rate": int(_cfg("sample_rate") or 24000),
         "key_set": bool(str(_cfg("api_key") or "")),
@@ -101,7 +103,11 @@ async def synthesize(text: str, voice: str | None = None) -> dict:
     url = f"{base}/api/v1/services/audio/tts/SpeechSynthesizer"
     payload = {"model": model,
                "input": {"text": text, "voice": voice, "format": fmt, "sample_rate": rate}}
-    async with httpx.AsyncClient(timeout=120, trust_env=False) as client:
+    proxy = cfg["proxy"].strip()
+    kwargs: dict = {"timeout": 120, "trust_env": False}
+    if proxy:
+        kwargs["proxy"] = proxy
+    async with httpx.AsyncClient(**kwargs) as client:
         resp = await client.post(url, json=payload, headers={"Authorization": f"Bearer {key}"})
         if resp.status_code >= 400:
             raw = resp.text[:400]

@@ -1112,6 +1112,7 @@ class TTSSettings(BaseModel):
     voice: str = "longanlufeng"
     format: str = "wav"
     sample_rate: int = 24000
+    proxy: str = ""
 
 
 class TTSRequest(BaseModel):
@@ -1139,7 +1140,7 @@ async def get_tts_settings() -> dict:
 async def put_tts_settings(body: TTSSettings) -> dict:
     try:
         data = runtime.save_tts_settings(body.base_url, body.api_key, body.model,
-                                         body.voice, body.format, body.sample_rate)
+                                         body.voice, body.format, body.sample_rate, body.proxy)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
     data["voices"] = tts_module.VOICES.get(data["model"], [])
