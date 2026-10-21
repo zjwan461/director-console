@@ -103,6 +103,27 @@ export default function ProjectsPanel({ onEdit }: { onEdit?: (projectId: string)
     }
   }
 
+  // 深链进入或首次加载时，cards 可能比 shot 晚到，selectShot 那一次拿不到字段定义，
+  // 导致「素材」区域空白。这里在 card 就绪后把缺的素材预览补上。
+  useEffect(() => {
+    if (!shot || !card) return
+    let cancelled = false
+    void (async () => {
+      for (const field of card.fields) {
+        if (!MEDIA_TYPES.has(field.type)) continue
+        const id = values[field.key]
+        if (typeof id !== 'string' || !id || assets[field.key]) continue
+        try {
+          const asset = await api.asset(id)
+          if (!cancelled) setAssetsState((prev) => ({ ...prev, [field.key]: asset }))
+        } catch {
+          // 素材可能已被清理，忽略
+        }
+      }
+    })()
+    return () => { cancelled = true }
+  }, [shot?.id, card?.id, values])
+
   async function selectShot(next: Shot | null) {
     setShotId(next?.id || '')
     setAssetsState({})
