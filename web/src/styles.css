@@ -532,3 +532,15 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
 .inline-field { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
 .inline-field span { white-space: nowrap; }
 .inline-field select { min-width: 150px; }
+
+
+/* 镜头类型标识 */
+.mode-badge { font-size: 10px; padding: 1px 6px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+.mode-badge.narration { color: #93c5fd; border-color: #2f4a7a; background: #121a2a; }
+.mode-badge.lip { color: #86efac; border-color: #2f6b48; background: #12201a; }
+.mode-badge.silent { color: #9ca3af; border-color: #3f3f46; background: #17171b; }
+.mode-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+.mode-dot.narration { background: #60a5fa; }
+.mode-dot.lip { background: #4ade80; }
+.mode-dot.silent { background: #9ca3af; }
+.timeline-seg span { display: flex; align-items: center; }

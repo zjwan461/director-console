@@ -259,6 +259,9 @@ export default function EditPanel({
     }
   }
 
+  const modeLabel = (mode: string) =>
+    mode === 'narration' ? '解说' : mode === 'lip' ? '口播' : '纯画面'
+
   const modeOf = (shotId: string): 'narration' | 'lip' | 'silent' => {
     const value = editOf(shotId).mode
     return (value || contentMode) as 'narration' | 'lip' | 'silent'
@@ -784,8 +787,11 @@ export default function EditPanel({
                       style={{ flexGrow: Math.max(item.duration, 0.4) }}
                       title={`${item.title} · ${item.duration.toFixed(1)}s`}
                       onClick={() => setActiveShot(item.shot_id)}>
-                <span>{item.title}</span>
-                <i>{item.duration.toFixed(1)}s</i>
+                <span>
+                  <em className={`mode-dot ${modeOf(item.shot_id)}`} />
+                  {item.title}
+                </span>
+                <i>{modeLabel(modeOf(item.shot_id))} · {item.duration.toFixed(1)}s</i>
               </button>
             ))}
             {!timeline.length && <div className="empty">勾选镜头后这里显示时间轴</div>}
@@ -802,6 +808,7 @@ export default function EditPanel({
                     <input type="checkbox" checked={on} onChange={() => toggle(shot.id)}
                            onClick={(e) => e.stopPropagation()} />
                     <b title={shot.title}>{shot.title || `镜头 ${shot.idx + 1}`}</b>
+                    <span className={`mode-badge ${modeOf(shot.id)}`}>{modeLabel(modeOf(shot.id))}</span>
                     {(() => {
                       const d = dims[shot.id]
                       if (!d) return null
