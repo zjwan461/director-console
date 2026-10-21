@@ -1026,7 +1026,34 @@ async def project_rhythm(project_id: str) -> dict:
     else:
         bad = sum(1 for i in items if i["level"] != "ok")
         summary = f"共 {len(items)} 镜、{total:.1f}s，其中 {bad} 镜建议调整"
-    return {"items": items, "total": round(total, 2), "summary": summary}
+
+    # BGM 建议（规则版）
+    options = {}
+    if raw:
+        try:
+            options = json.loads(raw).get("options") or {}
+        except Exception:
+            options = {}
+    bgm = options.get("bgm") or {}
+    has_voice = any((edits.get(i["shot_id"], {}) or {}).get("voice_asset") for i in items)
+    audio_count = len(store.list_assets(kind="audio", limit=1))
+    bgm_tips: list[dict] = []
+    if not bgm.get("asset_id"):
+        if has_voice:
+            bgm_tips.append({"level": "warn", "text": "有旁白但还没配 BGM，建议加一条铺底音乐"})
+        elif audio_count == 0:
+            bgm_tips.append({"level": "info", "text": "素材库里还没有音频，先在资产页上传 BGM"})
+        else:
+            bgm_tips.append({"level": "info", "text": "当前没有 BGM，纯原声也可以"})
+    else:
+        if not bgm.get("duck", True):
+            bgm_tips.append({"level": "warn", "text": "BGM 未开启自动闪避，旁白可能被音乐盖住"})
+        if not bgm.get("loop", True) and total > 60:
+            bgm_tips.append({"level": "warn", "text": "成片超过 1 分钟但 BGM 不循环，可能中途没声"})
+        volume = float(bgm.get("volume_db") or -14)
+        if volume > -6:
+            bgm_tips.append({"level": "warn", "text": f"BGM 音量 {volume:.0f}dB 偏大，建议 -14 ~ -10dB"})
+    return {"items": items, "total": round(total, 2), "summary": summary, "bgm_tips": bgm_tips}
 
 
 @app.get("/api/shots/{shot_id}/preview")

@@ -121,7 +121,7 @@ export const api = {
       body: JSON.stringify({ project_id: projectId, kind }),
     }),
   rhythm: (projectId: string) =>
-    request<{ items: Array<{ shot_id: string; title: string; duration: number; level: string; advice: string }>; total: number; summary: string }>(
+    request<{ items: Array<{ shot_id: string; title: string; duration: number; level: string; advice: string }>; total: number; summary: string; bgm_tips: Array<{ level: string; text: string }> }>(
       `/api/projects/${projectId}/rhythm`,
     ),
   shotFrames: (shotId: string, count: number) =>

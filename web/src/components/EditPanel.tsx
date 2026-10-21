@@ -74,6 +74,7 @@ export default function EditPanel({
   const [aiOpen, setAiOpen] = useState(() => new URLSearchParams(window.location.search).has('ai'))
   const [aiKind, setAiKind] = useState<'both' | 'subtitle' | 'narration' | 'merge'>('both')
   const [mergeBurned, setMergeBurned] = useState(true)
+  const [aiTitles, setAiTitles] = useState(true)
   const [aiTone, setAiTone] = useState('documentary')
   const [aiPerson, setAiPerson] = useState('third')
   const [aiLang, setAiLang] = useState('zh')
@@ -88,7 +89,7 @@ export default function EditPanel({
   const [aiBusy, setAiBusy] = useState('')
   const [aiFrames, setAiFrames] = useState(0)
   const [titleBusy, setTitleBusy] = useState('')
-  const [rhythm, setRhythm] = useState<{ summary: string; items: Array<{ shot_id: string; title: string; duration: number; level: string; advice: string }> } | null>(null)
+  const [rhythm, setRhythm] = useState<{ summary: string; items: Array<{ shot_id: string; title: string; duration: number; level: string; advice: string }>; bgm_tips: Array<{ level: string; text: string }> } | null>(null)
   const [rhythmBusy, setRhythmBusy] = useState(false)
   const [aiFrameGroups, setAiFrameGroups] = useState<Array<{ shotId: string; title: string; urls: string[] }>>([])
   const [showPrompt, setShowPrompt] = useState(false)
@@ -495,7 +496,7 @@ export default function EditPanel({
     setRhythmBusy(true)
     try {
       const r = await api.rhythm(projectId)
-      setRhythm({ summary: r.summary, items: r.items })
+      setRhythm({ summary: r.summary, items: r.items, bgm_tips: r.bgm_tips || [] })
       notify('ok', '节奏检查完成', r.summary)
     } catch (err) {
       notify('err', '节奏检查失败', err instanceof Error ? err.message : String(err))
@@ -597,6 +598,13 @@ export default function EditPanel({
         const seconds = ((Date.now() - startedAt) / 1000).toFixed(1)
         setRow(shot.id, title, ok ? 'done' : 'error', `${notes.join(' · ')} · ${seconds}s`)
         setAiProgress({ done: index + 1, total: ordered.length })
+      }
+      if (aiTitles) {
+        try {
+          if (aiMode === 'rewrite' || !titleText.trim()) setTitleText((await api.aiTitle(projectId, 'title')).text)
+          if (aiMode === 'rewrite' || !tailText.trim()) setTailText((await api.aiTitle(projectId, 'tail')).text)
+          done += 1
+        } catch { failed += 1 }
       }
       const summary = `成功 ${done} 项${failed ? `，失败 ${failed} 项` : ''}${ttsFailed ? `，配音失败 ${ttsFailed} 项` : ''}`
       setAiMessage(summary)
@@ -836,6 +844,10 @@ export default function EditPanel({
                   同时配音
                 </label>
               )}
+              <label className="check" style={{ margin: 0 }}>
+                <input type="checkbox" checked={aiTitles} onChange={(e) => setAiTitles(e.target.checked)} />
+                同时生成片头/片尾文案（全片一键）
+              </label>
             </div>
             </>
             )}
@@ -874,6 +886,16 @@ export default function EditPanel({
               </button>
               {rhythm && <span className="meta">{rhythm.summary}</span>}
             </div>
+            {rhythm && rhythm.bgm_tips && rhythm.bgm_tips.length > 0 && (
+              <div className="ai-rows">
+                {rhythm.bgm_tips.map((tip, index) => (
+                  <div key={index} className={`ai-row ${tip.level === 'warn' ? 'error' : ''}`}>
+                    <span className="ai-dot" />
+                    <span>{tip.text}</span>
+                  </div>
+                ))}
+              </div>
+            )}
             {rhythm && rhythm.items.some((i) => i.level !== 'ok') && (
               <div className="ai-rows">
                 {rhythm.items.filter((i) => i.level !== 'ok').map((item) => (
