@@ -248,6 +248,17 @@ export default function EditPanel({
     return found ? (found.url || `/media/files/${found.path}`) : ''
   }
 
+  const changeMode = (next: 'narration' | 'lip' | 'silent') => {
+    setContentMode(next)
+    if (next === 'narration') return
+    const withNarration = shots.filter((s) => (editOf(s.id).mode || contentMode) === 'narration'
+      && (editOf(s.id).narration || '').trim())
+    if (withNarration.length) {
+      notify('ok', next === 'lip' ? '已切换为口播类' : '已切换为纯画面',
+             `${withNarration.length} 条旁白已保留，但当前类型下不参与生成`)
+    }
+  }
+
   const modeOf = (shotId: string): 'narration' | 'lip' | 'silent' => {
     const value = editOf(shotId).mode
     return (value || contentMode) as 'narration' | 'lip' | 'silent'
@@ -383,6 +394,7 @@ export default function EditPanel({
     try {
       for (const [index, shot] of ordered.entries()) {
         const title = shot.title || `镜头 ${shot.idx + 1}`
+        const startedAt = Date.now()
         setRow(shot.id, title, 'running')
         const current = editOf(shot.id)
         const shotMode = modeOf(shot.id)
@@ -443,7 +455,8 @@ export default function EditPanel({
         }
         if (!needSub && !needNarr) notes.push('已有内容，跳过')
         const ok = !notes.some((n) => n.includes('失败'))
-        setRow(shot.id, title, ok ? 'done' : 'error', notes.join(' · '))
+        const seconds = ((Date.now() - startedAt) / 1000).toFixed(1)
+        setRow(shot.id, title, ok ? 'done' : 'error', `${notes.join(' · ')} · ${seconds}s`)
         setAiProgress({ done: index + 1, total: ordered.length })
       }
       const summary = `成功 ${done} 项${failed ? `，失败 ${failed} 项` : ''}${ttsFailed ? `，配音失败 ${ttsFailed} 项` : ''}`
@@ -589,16 +602,21 @@ export default function EditPanel({
           <h1>剪辑</h1>
           <p>选镜头、剪首尾、写字幕、配 BGM；改动自动保存，下次回来接着改。</p>
         </div>
-        <div className="row">
-          <select value={projectId} onChange={(e) => setProjectId(e.target.value)}>
-            {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
-          <select value={contentMode} onChange={(e) => setContentMode(e.target.value as typeof contentMode)}
-                  title="整个项目的视频类型（可在镜头里单独覆盖）">
-            <option value="narration">解说类</option>
-            <option value="lip">口播类</option>
-            <option value="silent">纯画面</option>
-          </select>
+        <div className="head-controls">
+          <label className="inline-field">
+            <span>项目</span>
+            <select value={projectId} onChange={(e) => setProjectId(e.target.value)}>
+              {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+          </label>
+          <label className="inline-field">
+            <span>类型</span>
+            <select value={contentMode} onChange={(e) => changeMode(e.target.value as typeof contentMode)}>
+              <option value="narration">解说类（有旁白）</option>
+              <option value="lip">口播类（语音转写）</option>
+              <option value="silent">纯画面（不加字幕）</option>
+            </select>
+          </label>
           <button className="primary" onClick={() => setAiOpen(true)} disabled={aiRunning}>
             {aiRunning ? <><span className="spin" /> 生成中</> : 'AI 生成'}
           </button>
@@ -617,7 +635,7 @@ export default function EditPanel({
               <button className="ghost tiny" onClick={() => setAiOpen(false)}>关闭</button>
             </div>
             <div className="field"><label><span>视频类型</span></label>
-              <select value={contentMode} onChange={(e) => setContentMode(e.target.value as typeof contentMode)}>
+              <select value={contentMode} onChange={(e) => changeMode(e.target.value as typeof contentMode)}>
                 <option value="narration">解说类：有旁白，字幕跟随旁白</option>
                 <option value="lip">口播类：无旁白，字幕来自语音转写</option>
                 <option value="silent">纯画面：不加字幕</option>

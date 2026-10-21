@@ -81,6 +81,17 @@ export default function AssetsPanel({ onOpenProject }: { onOpenProject: (project
     }
   }
 
+  const cleanupDuplicates = async () => {
+    if (!window.confirm('清理重复素材？同一文件只保留最早的一条记录，文件本身不会删除。')) return
+    try {
+      const res = await api.cleanupDuplicateAssets()
+      setNotice(`已清理 ${res.removed} 条重复记录`)
+      await load(0, false)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    }
+  }
+
   const cleanup = async () => {
     if (!window.confirm('清理早期的 mock/stub 测试产物？只会删除极小文件和 mock_/stub_ 开头的文件。')) return
     try {
@@ -154,6 +165,7 @@ export default function AssetsPanel({ onOpenProject }: { onOpenProject: (project
           <button className="primary" disabled={uploading} onClick={() => fileInput.current?.click()}>
             {uploading ? '上传中…' : '上传素材'}
           </button>
+          <button className="ghost" onClick={() => void cleanupDuplicates()}>清理重复素材</button>
           <button className="ghost" onClick={() => void cleanup()}>清理测试产物</button>
           <button className="ghost" onClick={() => void load(0, false)}>刷新</button>
           <input

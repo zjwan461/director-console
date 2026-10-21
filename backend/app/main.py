@@ -376,6 +376,38 @@ async def upload_asset(file: UploadFile = File(...), kind: str = Form("image")) 
     return asset
 
 
+@app.post("/api/assets/cleanup-duplicates")
+async def cleanup_duplicate_assets() -> dict:
+    """同一文件被登记成多条 asset 时，保留最早一条。"""
+    mapping: dict[str, str] = {}
+    with store.connect() as conn:
+        rows = conn.execute(
+            "SELECT id, path, created_at FROM assets ORDER BY path, created_at, id"
+        ).fetchall()
+        keep_by_path: dict[str, str] = {}
+        for asset_id, path, _ in rows:
+            if path in keep_by_path:
+                mapping[asset_id] = keep_by_path[path]
+            else:
+                keep_by_path[path] = asset_id
+        for old_id, new_id in mapping.items():
+            conn.execute("UPDATE shots SET last_frame=? WHERE last_frame=?", (new_id, old_id))
+            conn.execute("UPDATE shots SET active_job=active_job WHERE 1=0")
+            conn.execute("UPDATE render_shots SET voice_asset=? WHERE voice_asset=?", (new_id, old_id))
+            conn.execute("DELETE FROM assets WHERE id=?", (old_id,))
+    # edit_state 里存的是 JSON 字符串，直接做 id 文本替换
+    if mapping:
+        with store.connect() as conn:
+            for row in conn.execute("SELECT key, value FROM settings WHERE key LIKE 'edit_state.%'").fetchall():
+                key, value = row[0], row[1]
+                changed = value
+                for old_id, new_id in mapping.items():
+                    changed = changed.replace(old_id, new_id)
+                if changed != value:
+                    conn.execute("UPDATE settings SET value=? WHERE key=?", (changed, key))
+    return {"ok": True, "removed": len(mapping), "repointed": len(mapping)}
+
+
 @app.get("/api/assets/{asset_id}")
 async def asset_detail(asset_id: str) -> dict:
     asset = store.get_asset(asset_id)

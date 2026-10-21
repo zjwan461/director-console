@@ -151,6 +151,7 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     }),
+  cleanupDuplicateAssets: () => request<{ ok: boolean; removed: number }>('/api/assets/cleanup-duplicates', { method: 'POST' }),
   cleanupTestAssets: () => request<{ ok: boolean; removed: number }>('/api/assets/cleanup-test', { method: 'POST' }),
 
   deleteAsset: (id: string) => request<{ ok: boolean }>(`/api/assets/${id}`, { method: 'DELETE' }),
