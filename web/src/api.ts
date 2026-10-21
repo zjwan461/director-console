@@ -177,6 +177,13 @@ export const api = {
       body: JSON.stringify({ values }),
     }),
   takes: (id: string) => request<{ items: Job[] }>(`/api/shots/${id}/takes`),
+  activateTake: (shotId: string, jobId: string) =>
+    request<Shot>(`/api/shots/${shotId}/activate-take`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ job_id: jobId }),
+    }),
+
 
   modelsCheck: (cardId?: string, source: 'live' | 'snapshot' = 'live') => {
     const params = new URLSearchParams({ source })

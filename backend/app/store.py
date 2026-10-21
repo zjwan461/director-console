@@ -123,7 +123,7 @@ def get_shot(sid: str) -> dict | None:
 def update_shot(sid: str, **fields: Any) -> None:
     allowed = {
         k: v for k, v in fields.items()
-        if k in {"title", "preset_id", "prompt", "cover", "idx", "last_frame"}
+        if k in {"title", "preset_id", "prompt", "cover", "idx", "last_frame", "active_job"}
     }
     if "values" in fields and fields["values"] is not None:
         allowed["values_json"] = json.dumps(fields["values"], ensure_ascii=False)

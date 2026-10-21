@@ -48,7 +48,12 @@ class RenderRunner:
                 self.queue.task_done()
 
     def _video_path_for_shot(self, shot_id: str) -> Path | None:
-        for job in store.list_jobs_by_shot(shot_id, limit=20):
+        shot = store.get_shot(shot_id) or {}
+        active = str(shot.get("active_job") or "")
+        jobs = store.list_jobs_by_shot(shot_id, limit=20)
+        if active:
+            jobs = [j for j in jobs if j.get("id") == active] + [j for j in jobs if j.get("id") != active]
+        for job in jobs:
             if job.get("status") != "succeeded":
                 continue
             for item in job.get("outputs") or []:

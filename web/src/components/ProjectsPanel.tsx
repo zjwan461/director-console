@@ -223,6 +223,17 @@ export default function ProjectsPanel({ onEdit }: { onEdit?: (projectId: string)
     }
   }
 
+  const chooseTake = async (jobId: string) => {
+    if (!shotId) return
+    try {
+      await api.activateTake(shotId, jobId)
+      await loadShots(projectId, shotId)
+      await loadTakes(shotId)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    }
+  }
+
   const runningTakes = takes.filter((j) => ['queued', 'running'].includes(j.status))
 
   const generate = async () => {
@@ -459,6 +470,15 @@ export default function ProjectsPanel({ onEdit }: { onEdit?: (projectId: string)
                               {statusText(take.status)}
                             </span>
                             <span className="msg">{timeAgo(take.created_at)}</span>
+                            {take.status === 'succeeded' && (
+                              shot?.active_job === take.id
+                                ? <span className="badge ok">已选用</span>
+                                : (
+                                  <button className="ghost tiny" onClick={() => void chooseTake(take.id)}>
+                                    选用
+                                  </button>
+                                )
+                            )}
                           </div>
                           {take.error && <div className="err">{take.error}</div>}
                           <OutputGrid job={take} />

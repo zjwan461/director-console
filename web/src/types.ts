@@ -149,6 +149,7 @@ export interface Project {
 }
 
 export interface Shot {
+  active_job?: string
   id: string
   project_id: string
   idx: number

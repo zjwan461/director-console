@@ -836,6 +836,28 @@ async def generate_shot(shot_id: str, body: ShotGenerate | None = None) -> dict:
     return job
 
 
+class ActivateTake(BaseModel):
+    job_id: str
+
+
+@app.post("/api/shots/{shot_id}/activate-take")
+async def activate_take(shot_id: str, body: ActivateTake) -> dict:
+    shot = store.get_shot(shot_id)
+    if not shot:
+        raise HTTPException(status_code=404, detail="镜头不存在")
+    job = store.get_job(body.job_id)
+    if not job or job.get("shot_id") != shot_id:
+        raise HTTPException(status_code=400, detail="这个任务不属于该镜头")
+    if job.get("status") != "succeeded":
+        raise HTTPException(status_code=400, detail="只能选用已完成的任务")
+    store.update_shot(shot_id, active_job=body.job_id)
+    for item in job.get("outputs") or []:
+        if isinstance(item, dict) and item.get("kind") == "image" and item.get("asset_id"):
+            store.update_shot(shot_id, last_frame=item["asset_id"])
+            break
+    return _enrich_shot(store.get_shot(shot_id) or shot)
+
+
 @app.get("/api/shots/{shot_id}/takes")
 async def shot_takes(shot_id: str, limit: int = 12) -> dict:
     return {"items": store.list_jobs_by_shot(shot_id, limit)}
