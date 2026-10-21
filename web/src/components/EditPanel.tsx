@@ -1019,7 +1019,11 @@ export default function EditPanel({
             <span>预览</span>
             <span className="meta">{activeShot ? (shots.find((s) => s.id === activeShot)?.title || '') : '选择镜头'}</span>
           </h2>
-          {(previewJob?.status === 'succeeded' && previewJob.url) || shotPreview.url ? (
+          {previewJob && ['queued', 'preparing', 'rendering'].includes(previewJob.status) ? (
+            <div className="preview-empty">
+              <span className="spin" /> 正在生成整片预览，完成后才能播放
+            </div>
+          ) : (previewJob?.status === 'succeeded' && previewJob.url) || shotPreview.url ? (
             <div className="canvas-box" style={{
               aspectRatio: `${(RESOLUTIONS.find((r) => r.key === resKey) || RESOLUTIONS[1]).width} / ${
                 (RESOLUTIONS.find((r) => r.key === resKey) || RESOLUTIONS[1]).height}`,

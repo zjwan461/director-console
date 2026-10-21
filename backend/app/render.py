@@ -290,6 +290,16 @@ class RenderRunner:
         if current != final:
             current.replace(final)
 
+        # 某些滤镜会输出 yuv444p，Windows 播放器不支持，兜底转回 420p
+        try:
+            fmt = await ffmpeg.pixel_format(final)
+            if fmt and fmt != "yuv420p":
+                fixed = work / "final_compat.mp4"
+                await ffmpeg.transcode_compat(final, fixed)
+                fixed.replace(final)
+        except Exception:
+            pass
+
         try:
             await ffmpeg.extract_cover(final, cover, cover_at)
         except Exception:

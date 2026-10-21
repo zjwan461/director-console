@@ -290,7 +290,7 @@ async def concat_with_transition(
     args += [
         "-filter_complex", ";".join(filters),
         "-map", f"[{v_prev}]", "-map", f"[{a_prev}]",
-        "-c:v", "libx264", "-crf", "18", "-preset", "medium",
+        "-c:v", "libx264", "-crf", "18", "-preset", "medium", "-pix_fmt", "yuv420p",
         "-c:a", "aac", "-b:a", "192k",
         "-movflags", "+faststart",
         str(out),
@@ -706,12 +706,43 @@ async def burn_subtitles(
     filt = f"subtitles={srt.name}:force_style='{','.join(style)}'"
     cmd = [
         ff, "-y", "-loglevel", "error", "-i", str(video),
-        "-vf", filt, "-c:v", "libx264", "-crf", _cfg("crf", "20"), "-preset", "veryfast",
+        "-vf", filt, "-c:v", "libx264", "-crf", _cfg("crf", "20"), "-preset", "veryfast", "-pix_fmt", "yuv420p",
         "-c:a", "copy", "-movflags", "+faststart", str(out),
     ]
     code, err = await _run(cmd, cwd=srt.parent)
     if code != 0:
         raise RuntimeError(f"字幕烧录失败：{_tail(err)}")
+
+
+async def pixel_format(path: Path) -> str:
+    probe = ffprobe_path()
+    if not probe or not path.exists():
+        return ""
+    proc = await asyncio.create_subprocess_exec(
+        probe, "-v", "error", "-select_streams", "v:0",
+        "-show_entries", "stream=pix_fmt", "-of", "json", str(path),
+        stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.DEVNULL,
+    )
+    out, _ = await proc.communicate()
+    try:
+        data = json.loads((out or b"{}").decode("utf-8", "replace"))
+        return str((data.get("streams") or [{}])[0].get("pix_fmt") or "")
+    except (json.JSONDecodeError, TypeError, ValueError):
+        return ""
+
+
+async def transcode_compat(src: Path, dst: Path) -> None:
+    """把非 yuv420p 的成片转成通用 H.264 420p，保证 Windows/手机能播。"""
+    ff = ffmpeg_path()
+    if not ff:
+        raise FFmpegMissing("未检测到 ffmpeg")
+    code, err = await _run([
+        ff, "-y", "-loglevel", "error", "-i", str(src),
+        "-c:v", "libx264", "-crf", "20", "-preset", "veryfast", "-pix_fmt", "yuv420p",
+        "-c:a", "copy", "-movflags", "+faststart", str(dst),
+    ])
+    if code != 0:
+        raise RuntimeError("兼容性转码失败：" + err[-400:])
 
 
 async def loudnorm(video: Path, out: Path, target: float = -16.0) -> None:
