@@ -56,6 +56,7 @@ export default function EditPanel({
   const [busy, setBusy] = useState(false)
   const [activeShot, setActiveShot] = useState('')
   const [uploadFor, setUploadFor] = useState('')
+  const [picker, setPicker] = useState<'' | 'title' | 'tail'>('')
   const voiceInput = useRef<HTMLInputElement | null>(null)
   const [shotPreview, setShotPreview] = useState<{ url: string; duration: number }>({ url: '', duration: 0 })
   const [previewJob, setPreviewJob] = useState<{ id: string; status: string; message: string; url?: string } | null>(null)
@@ -194,6 +195,21 @@ export default function EditPanel({
     return () => { cancelled = true }
   }, [selected, shots, edits, transType, transDur])
 
+  const uniqueImages = useMemo(() => {
+    const seen = new Set<string>()
+    return images.filter((a) => {
+      const key = a.path.split('/').pop() || a.id
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+  }, [images])
+
+  const imageUrl = (id: string) => {
+    const found = images.find((a) => a.id === id)
+    return found ? (found.url || `/media/files/${found.path}`) : ''
+  }
+
   const ordered = useMemo(() => shots.filter((s) => selected.includes(s.id)), [shots, selected])
   const editOf = (id: string): Edit => edits[id] || { in_point: '', out_point: '', subtitle: '', voice_asset: '' }
   const patchEdit = (id: string, patch: Partial<Edit>) =>
@@ -299,6 +315,33 @@ export default function EditPanel({
 
       <input ref={voiceInput} type="file" hidden accept="audio/*"
              onChange={(e) => void uploadVoice(e.target.files)} />
+
+      {picker && (
+        <div className="picker-overlay" onClick={() => setPicker('')}>
+          <div className="picker" onClick={(e) => e.stopPropagation()}>
+            <div className="picker-head">
+              <b>{picker === 'title' ? '选择片头背景' : '选择片尾背景'}</b>
+              <button className="ghost tiny" onClick={() => setPicker('')}>关闭</button>
+            </div>
+            <div className="picker-grid">
+              <button className="picker-item color-none"
+                      onClick={() => { picker === 'title' ? setTitleImage('') : setTailImage(''); setPicker('') }}>
+                纯色背景
+              </button>
+              {uniqueImages.map((a) => (
+                <button key={a.id} className="picker-item"
+                        onClick={() => {
+                          picker === 'title' ? setTitleImage(a.id) : setTailImage(a.id)
+                          setPicker('')
+                        }}>
+                  <img src={a.url || `/media/files/${a.path}`} alt={a.path} />
+                  <span>{a.path.split('/').pop()}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
       {error && <div className="notice err">{error}</div>}
 
       <div className="render-editor">
@@ -468,10 +511,15 @@ export default function EditPanel({
                 <option value={3}>3s</option>
               </select>
               <input type="color" value={titleBg} onChange={(e) => setTitleBg(e.target.value)} />
-              <select value={titleImage} onChange={(e) => setTitleImage(e.target.value)}>
-                <option value="">纯色背景</option>
-                {images.map((a) => <option key={a.id} value={a.id}>{a.path.split('/').pop()}</option>)}
-              </select>
+              <button className="ghost tiny" onClick={() => setPicker('title')}>
+                {titleImage ? '换图片' : '选图片'}
+              </button>
+              {titleImage && (
+                <>
+                  <img className="bg-thumb" src={imageUrl(titleImage)} alt="片头背景" />
+                  <button className="ghost tiny" onClick={() => setTitleImage('')}>清除</button>
+                </>
+              )}
             </div>
           )}
           <label className="check">
@@ -489,10 +537,15 @@ export default function EditPanel({
                 <option value={3}>3s</option>
               </select>
               <input type="color" value={tailBg} onChange={(e) => setTailBg(e.target.value)} />
-              <select value={tailImage} onChange={(e) => setTailImage(e.target.value)}>
-                <option value="">纯色背景</option>
-                {images.map((a) => <option key={a.id} value={a.id}>{a.path.split('/').pop()}</option>)}
-              </select>
+              <button className="ghost tiny" onClick={() => setPicker('tail')}>
+                {tailImage ? '换图片' : '选图片'}
+              </button>
+              {tailImage && (
+                <>
+                  <img className="bg-thumb" src={imageUrl(tailImage)} alt="片尾背景" />
+                  <button className="ghost tiny" onClick={() => setTailImage('')}>清除</button>
+                </>
+              )}
             </div>
           )}
 

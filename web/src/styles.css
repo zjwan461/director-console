@@ -486,3 +486,16 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
 .trim { margin-top: 10px; display: flex; flex-direction: column; gap: 4px; }
 .trim-head { display: flex; gap: 12px; font-size: 11px; color: var(--muted); }
 .render-shot.active { border-color: #7c6cf0; }
+
+
+/* 图片选择弹层 */
+.bg-thumb { width: 46px; height: 28px; object-fit: cover; border-radius: 4px; border: 1px solid var(--line); }
+.picker-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 300; display: flex; align-items: center; justify-content: center; }
+.picker { width: min(760px, 92vw); max-height: 78vh; background: #12141c; border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.picker-head { display: flex; align-items: center; justify-content: space-between; }
+.picker-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; overflow-y: auto; }
+.picker-item { background: #0f1118; border: 1px solid var(--line); border-radius: 8px; padding: 6px; color: var(--fg); cursor: pointer; display: flex; flex-direction: column; gap: 4px; }
+.picker-item img { width: 100%; height: 72px; object-fit: cover; border-radius: 5px; }
+.picker-item span { font-size: 10px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.picker-item:hover { border-color: #7c6cf0; }
+.picker-item.color-none { align-items: center; justify-content: center; height: 104px; font-size: 12px; }
