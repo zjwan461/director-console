@@ -197,11 +197,25 @@ class Installer:
             if sid in {"panel_venv", "panel_deps", "db"}:
                 self.log(f"[skip] {title}")
                 return
+        # 环境检查很便宜，而且决定 venv 放哪（低完整性标签），每次都跑
+        if sid == "check":
+            self.log(f"[..]   {title}")
+            fn()
+            self.mark(sid)
+            self.log(f"[done] {title}")
+            return
         # payload 用来记「这次装的是哪份清单」：节点包增删后能自动重跑
         fingerprint = payload() if payload else None
         if self.done(sid):
+            # venv 可能被用户手动删掉，但状态文件仍记着“已完成”——必须校验真实存在
+            missing_venv = (
+                (sid == "panel_venv" and not (self.panel_venv / VENV_PY).exists())
+                or (sid == "comfy_venv" and not (self.comfy_venv / VENV_PY).exists())
+            )
             if fingerprint and self.state.get(sid, {}).get("fingerprint") != fingerprint:
                 self.log(f"[..]   {title}（依赖清单有变化，重跑）")
+            elif missing_venv:
+                self.log(f"[..]   {title}（虚拟环境已不存在，重新创建）")
             else:
                 self.log(f"[ok]   {title}（已完成，跳过）")
                 return
@@ -298,6 +312,9 @@ def step_panel_venv(inst: Installer) -> None:
 
 
 def step_panel_deps(inst: Installer) -> None:
+    if not (inst.panel_venv / VENV_PY).exists():
+        inst.log("  venv 不存在，先创建")
+        step_panel_venv(inst)
     py = inst.python_of(inst.panel_venv)
     inst.run([py, "-m", "pip", "install", "-U", "pip", "-q"])
     inst.run([py, "-m", "pip", "install", "-r", str(ROOT / "backend" / "requirements.txt")])
@@ -358,6 +375,9 @@ def step_comfy_torch(inst: Installer) -> None:
 
 
 def step_comfy_deps(inst: Installer) -> None:
+    if not (inst.comfy_venv / VENV_PY).exists():
+        inst.log("  ComfyUI venv 不存在，先创建")
+        step_comfy_venv(inst)
     py = inst.python_of(inst.comfy_venv)
     req = str(inst.comfy_dir / "requirements.txt")
     # 不钉 numpy<2 / scipy<1.14：
