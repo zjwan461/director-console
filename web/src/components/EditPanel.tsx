@@ -72,7 +72,8 @@ export default function EditPanel({
   const [uploadFor, setUploadFor] = useState('')
   const [picker, setPicker] = useState<'' | 'title' | 'tail'>('')
   const [aiOpen, setAiOpen] = useState(() => new URLSearchParams(window.location.search).has('ai'))
-  const [aiKind, setAiKind] = useState<'both' | 'subtitle' | 'narration'>('both')
+  const [aiKind, setAiKind] = useState<'both' | 'subtitle' | 'narration' | 'merge'>('both')
+  const [mergeBurned, setMergeBurned] = useState(true)
   const [aiTone, setAiTone] = useState('documentary')
   const [aiPerson, setAiPerson] = useState('third')
   const [aiLang, setAiLang] = useState('zh')
@@ -509,6 +510,14 @@ export default function EditPanel({
     setAiUndo(snapshot)
     setAiRunning(true)
     setAiMessage('')
+    if (aiKind === 'merge') {
+      setBurnedDefault(mergeBurned)
+      await exportRender(mergeBurned)
+      setAiRunning(false)
+      setAiOpen(false)
+      notify('ok', '仅合并', mergeBurned ? '已提交导出（按视频自带字幕，不烧录）' : '已提交导出（不生成字幕/旁白）')
+      return
+    }
     setAiRows({})
     setAiProgress({ done: 0, total: ordered.length })
     if (contentMode === 'silent') {
@@ -703,7 +712,7 @@ export default function EditPanel({
     }
   }
 
-  const exportRender = async () => {
+  const exportRender = async (burnedOverride?: boolean) => {
     if (!ordered.length) return
     setExportBusy(true)
     setError('')
@@ -724,7 +733,7 @@ export default function EditPanel({
         subtitle: editOf(s.id).subtitle || s.title || '',
         voice_asset: editOf(s.id).voice_asset || '',
         fit: editOf(s.id).fit || '',
-        burned_subtitle: isBurned(s.id),
+        burned_subtitle: burnedOverride ?? isBurned(s.id),
       })))
       onGoRenders()
     } catch (err) {
@@ -785,8 +794,22 @@ export default function EditPanel({
                 <option value="both">字幕 + 旁白</option>
                 <option value="subtitle">只生成字幕</option>
                 <option value="narration">只生成旁白</option>
+                <option value="merge">仅合并（不生成文案，直接导出）</option>
               </select>
             </div>
+            {aiKind === 'merge' ? (
+              <>
+                <div className="meta">
+                  仅做裁剪、拼接、转场和音频混合，不生成字幕/旁白。
+                </div>
+                <label className="check">
+                  <input type="checkbox" checked={mergeBurned}
+                         onChange={(e) => setMergeBurned(e.target.checked)} />
+                  视频已自带字幕（不重复烧录）
+                </label>
+              </>
+            ) : (
+            <>
             <div className="row">
               <select value={aiTone} onChange={(e) => setAiTone(e.target.value)}>
                 <option value="documentary">纪实解说</option>
@@ -814,6 +837,9 @@ export default function EditPanel({
                 </label>
               )}
             </div>
+            </>
+            )}
+            {aiKind !== 'merge' && (
             <div className="row" style={{ alignItems: 'center' }}>
               <label className="check" style={{ margin: 0 }}>
                 <input type="checkbox" checked={aiFrames > 0}
@@ -829,7 +855,8 @@ export default function EditPanel({
                 </>
               )}
             </div>
-            {aiFrameGroups.length > 0 && (
+            )}
+            {aiKind !== 'merge' && aiFrameGroups.length > 0 && (
               <div className="frame-groups">
                 {aiFrameGroups.map((group) => (
                   <div key={group.shotId} className="frame-group">
@@ -884,7 +911,7 @@ export default function EditPanel({
             </div>
             <div className="row-actions">
               <button className="primary" disabled={aiRunning || !ordered.length} onClick={() => void runAI()}>
-                {aiRunning ? '生成中…' : `开始（${ordered.length} 镜）`}
+                {aiRunning ? '处理中…' : aiKind === 'merge' ? '合并导出' : `开始（${ordered.length} 镜）`}
               </button>
               {aiUndo && (
                 <button className="ghost" disabled={aiRunning}
