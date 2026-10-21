@@ -673,12 +673,15 @@ def write_srt(timeline: list[dict], path: Path) -> None:
         return f"{h:02d}:{m:02d}:{s:02d},{ms:03d}"
 
     blocks = []
-    for i, item in enumerate(timeline, start=1):
+    for item in timeline:
         text = (item.get("subtitle") or "").strip()
         if not text:
             continue
         # 时间轴必须写成 “start --> end” 一行；拆成两行 libass 直接判定文件无效
-        blocks.append(f"{i}\n{fmt(item['start'])} --> {fmt(item['end'])}\n{text}\n")
+        blocks.append(
+            f"{len(blocks) + 1}\n"
+            f"{fmt(item['start'])} --> {fmt(item['end'])}\n{text}\n"
+        )
     # libass 靠 BOM 判断 UTF-8，没有 BOM 的中文字幕会直接“打不开”
     path.write_text("\n".join(blocks), encoding="utf-8-sig")
 
