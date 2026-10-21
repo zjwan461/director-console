@@ -35,6 +35,23 @@ def clean(text: str) -> str:
     return re.sub(r"\s*\n+\s*", " ", text).strip()
 
 
+DESC_KEYS = ("prompt", "description", "画面描述", "desc", "text", "scene")
+
+
+def shot_description(shot: dict) -> str:
+    """镜头描述可能在 shot.prompt，也可能在 values 的某个字段里。"""
+    direct = str(shot.get("prompt") or "").strip()
+    if direct:
+        return direct
+    values = shot.get("values") or {}
+    if isinstance(values, dict):
+        for key in DESC_KEYS:
+            value = values.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+    return ""
+
+
 async def generate(kind: str, shot: dict, project: dict, neighbors: dict,
                    duration: float, style: dict) -> dict:
     prompts = _prompts()
@@ -49,6 +66,10 @@ async def generate(kind: str, shot: dict, project: dict, neighbors: dict,
     model = str(settings.get("ai.model", "") or "")
     proxy = str(settings.get("ai.proxy", "") or "").strip()
 
+    description = shot_description(shot)
+    if not description:
+        raise ValueError("这个镜头没有画面描述，AI 无法对照画面；请先在项目页填写「画面描述」")
+
     budget = char_budget(kind, duration)
     payload = {
         "model": model,
@@ -62,8 +83,9 @@ async def generate(kind: str, shot: dict, project: dict, neighbors: dict,
                 "project": {"name": project.get("name", "")},
                 "shot": {
                     "title": shot.get("title", ""),
-                    "description": shot.get("prompt", ""),
+                    "description": description,
                     "preset": shot.get("preset_id", ""),
+                    "duration_seconds": round(duration, 2),
                 },
                 "neighbors": neighbors,
             }, ensure_ascii=False)},

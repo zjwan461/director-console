@@ -69,6 +69,8 @@ export default function EditPanel({
   const [aiRunning, setAiRunning] = useState(false)
   const [aiMessage, setAiMessage] = useState('')
   const [aiUndo, setAiUndo] = useState<Record<string, Edit> | null>(null)
+  const [aiProgress, setAiProgress] = useState({ done: 0, total: 0 })
+  const [aiRows, setAiRows] = useState<Record<string, { title: string; status: string; note?: string }>>({})
   const voiceInput = useRef<HTMLInputElement | null>(null)
   const [shotPreview, setShotPreview] = useState<{ url: string; duration: number }>({ url: '', duration: 0 })
   const [previewJob, setPreviewJob] = useState<{ id: string; status: string; message: string; url?: string } | null>(null)
@@ -258,7 +260,14 @@ export default function EditPanel({
   const toggle = (id: string) =>
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
 
+  const notify = (kind: 'ok' | 'err', title: string, text = '') => {
+    window.dispatchEvent(new CustomEvent('dsh-toast', { detail: { kind, title, text } }))
+  }
+
   const stylePayload = () => ({ tone: aiTone, person: aiPerson, language: aiLang })
+
+  const setRow = (shotId: string, title: string, status: string, note = '') =>
+    setAiRows((prev) => ({ ...prev, [shotId]: { title, status, note } }))
 
   const runAI = async () => {
     if (!ordered.length) return
@@ -266,35 +275,63 @@ export default function EditPanel({
     setAiUndo(snapshot)
     setAiRunning(true)
     setAiMessage('')
+    setAiRows({})
+    setAiProgress({ done: 0, total: ordered.length })
     let done = 0
     let failed = 0
+    let ttsFailed = 0
     try {
-      for (const shot of ordered) {
+      for (const [index, shot] of ordered.entries()) {
+        const title = shot.title || `镜头 ${shot.idx + 1}`
+        setRow(shot.id, title, 'running')
         const current = editOf(shot.id)
         const needSub = (aiKind === 'both' || aiKind === 'subtitle') && (aiMode === 'rewrite' || !current.subtitle)
         const needNarr = (aiKind === 'both' || aiKind === 'narration') && (aiMode === 'rewrite' || !current.narration)
+        const notes: string[] = []
         if (needSub) {
           try {
             const r = await api.aiScript({ shot_id: shot.id, kind: 'subtitle', style: stylePayload() })
             patchEdit(shot.id, { subtitle: r.text })
             done += 1
-          } catch { failed += 1 }
+            notes.push(`字幕 ${r.chars}/${r.budget} 字`)
+          } catch (err) {
+            failed += 1
+            const msg = err instanceof Error ? err.message : String(err)
+            notes.push('字幕失败：' + msg.slice(0, 60))
+            notify('err', `${title} 字幕生成失败`, msg.slice(0, 120))
+          }
         }
         if (needNarr) {
           try {
             const r = await api.aiScript({ shot_id: shot.id, kind: 'narration', style: stylePayload() })
             patchEdit(shot.id, { narration: r.text })
             done += 1
+            notes.push(`旁白 ${r.chars}/${r.budget} 字`)
             if (aiTtsOn && r.text) {
               try {
                 const audio = await api.aiTts({ text: r.text, shot_id: shot.id })
                 patchEdit(shot.id, { voice_asset: audio.asset_id })
-              } catch { /* 配音失败不阻断文案 */ }
+                notes.push(`配音 ${audio.duration}s`)
+              } catch (err) {
+                ttsFailed += 1
+                notes.push('配音失败：' + (err instanceof Error ? err.message : String(err)).slice(0, 50))
+              }
             }
-          } catch { failed += 1 }
+          } catch (err) {
+            failed += 1
+            const msg = err instanceof Error ? err.message : String(err)
+            notes.push('旁白失败：' + msg.slice(0, 60))
+            notify('err', `${title} 旁白生成失败`, msg.slice(0, 120))
+          }
         }
+        if (!needSub && !needNarr) notes.push('已有内容，跳过')
+        const ok = !notes.some((n) => n.includes('失败'))
+        setRow(shot.id, title, ok ? 'done' : 'error', notes.join(' · '))
+        setAiProgress({ done: index + 1, total: ordered.length })
       }
-      setAiMessage(`完成：${done} 项${failed ? `，失败 ${failed} 项` : ''}`)
+      const summary = `成功 ${done} 项${failed ? `，失败 ${failed} 项` : ''}${ttsFailed ? `，配音失败 ${ttsFailed} 项` : ''}`
+      setAiMessage(summary)
+      notify(failed || ttsFailed ? 'err' : 'ok', 'AI 生成完成', summary)
     } finally {
       setAiRunning(false)
     }
@@ -304,8 +341,11 @@ export default function EditPanel({
     try {
       const r = await api.aiScript({ shot_id: shotId, kind, style: stylePayload() })
       patchEdit(shotId, kind === 'subtitle' ? { subtitle: r.text } : { narration: r.text })
+      notify('ok', kind === 'subtitle' ? '字幕已生成' : '旁白已生成', `${r.chars}/${r.budget} 字`)
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      const msg = err instanceof Error ? err.message : String(err)
+      setError(msg)
+      notify('err', 'AI 生成失败', msg.slice(0, 120))
     }
   }
 
@@ -315,8 +355,11 @@ export default function EditPanel({
     try {
       const audio = await api.aiTts({ text, shot_id: shotId })
       patchEdit(shotId, { voice_asset: audio.asset_id })
+      notify('ok', '配音完成', `${audio.duration}s`)
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      const msg = err instanceof Error ? err.message : String(err)
+      setError(msg)
+      notify('err', '配音失败', msg.slice(0, 120))
     }
   }
 
@@ -448,6 +491,23 @@ export default function EditPanel({
                 </label>
               )}
             </div>
+            {aiRunning && (
+              <div className="ai-progress">
+                <span className="spin" />
+                <span>{aiProgress.done}/{aiProgress.total} 镜处理中…</span>
+              </div>
+            )}
+            {Object.keys(aiRows).length > 0 && (
+              <div className="ai-rows">
+                {Object.entries(aiRows).map(([id, row]) => (
+                  <div key={id} className={`ai-row ${row.status}`}>
+                    <span className="ai-dot" />
+                    <b>{row.title}</b>
+                    <span>{row.note || (row.status === 'running' ? '生成中…' : '')}</span>
+                  </div>
+                ))}
+              </div>
+            )}
             {aiMessage && <div className="notice">{aiMessage}</div>}
             <div className="row-actions">
               <button className="primary" disabled={aiRunning || !ordered.length} onClick={() => void runAI()}>

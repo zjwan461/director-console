@@ -109,6 +109,20 @@ export default function App() {
     return () => { stopped = true; window.clearInterval(timer) }
   }, [pushToast])
 
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent).detail as { kind?: 'ok' | 'err'; title?: string; text?: string } | undefined
+      if (!detail) return
+      pushToast({
+        kind: detail.kind === 'err' ? 'err' : 'ok',
+        title: detail.title || '提示',
+        text: detail.text || '',
+      })
+    }
+    window.addEventListener('dsh-toast', handler)
+    return () => window.removeEventListener('dsh-toast', handler)
+  }, [pushToast])
+
   const onJobCreated = (_job: Job) => {
     setJobsRefresh((v) => v + 1)
   }

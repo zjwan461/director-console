@@ -504,3 +504,15 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
 /* 预览画布：显示成片实际画幅 */
 .canvas-box { position: relative; width: 100%; background: #000; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
 .canvas-box .preview-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; max-height: none; border-radius: 0; }
+
+
+/* AI 生成进度 */
+.ai-progress { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+.ai-rows { display: flex; flex-direction: column; gap: 4px; max-height: 200px; overflow-y: auto; }
+.ai-row { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--muted); }
+.ai-row b { color: var(--fg); font-weight: 500; min-width: 80px; }
+.ai-dot { width: 7px; height: 7px; border-radius: 50%; background: #666; flex: 0 0 auto; }
+.ai-row.running .ai-dot { background: #facc15; animation: pulse 1s infinite; }
+.ai-row.done .ai-dot { background: #4ade80; }
+.ai-row.error .ai-dot { background: #f87171; }
+@keyframes pulse { 0%,100% { opacity: .35 } 50% { opacity: 1 } }
