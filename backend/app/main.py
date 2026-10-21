@@ -84,6 +84,26 @@ async def _shutdown() -> None:
 
 
 # ---------------------------------------------------------------- 基础
+_ERROR_LOG = DATA / "panel-error.log"
+
+
+@app.middleware("http")
+async def _log_unhandled(request, call_next):
+    """把未捕获异常写进 data/panel-error.log，方便定位 500。"""
+    try:
+        return await call_next(request)
+    except Exception:
+        import traceback
+
+        try:
+            with _ERROR_LOG.open("a", encoding="utf-8") as fh:
+                fh.write(f"\n=== {time.strftime('%Y-%m-%d %H:%M:%S')} {request.method} {request.url.path}\n")
+                fh.write(traceback.format_exc())
+        except Exception:
+            pass
+        raise
+
+
 @app.get("/api/health")
 async def health() -> dict:
     return {"ok": True, "version": app.version, "time": time.time()}
@@ -899,7 +919,10 @@ async def shot_frames(shot_id: str, count: int = 3) -> dict:
     if not found or not found[1].exists():
         return {"items": []}
     frame_dir = DATA / "thumbs" / "frames"
-    files = await ffmpeg.extract_frames(found[1], frame_dir, count, prefix=f"shot_{shot_id}")
+    try:
+        files = await ffmpeg.extract_frames(found[1], frame_dir, count, prefix=f"shot_{shot_id}")
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"截帧失败：{exc}")
     items = []
     for path in files:
         rel = path.relative_to(DATA).as_posix()
@@ -1324,8 +1347,11 @@ async def ai_script_one(body: ScriptRequest) -> dict:
     images: list[Path] = []
     if body.frames > 0 and found and found[1].exists():
         frame_dir = DATA / "thumbs" / "frames"
-        images = await ffmpeg.extract_frames(found[1], frame_dir, body.frames,
-                                             prefix=f"shot_{shot['id']}")
+        try:
+            images = await ffmpeg.extract_frames(found[1], frame_dir, body.frames,
+                                                 prefix=f"shot_{shot['id']}")
+        except Exception:
+            images = []
     try:
         return await ai_script.generate(kind, shot, project, neighbors, duration,
                                        body.style or {}, images=images)
