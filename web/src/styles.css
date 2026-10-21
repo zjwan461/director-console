@@ -435,3 +435,13 @@ label.check input { flex: 0 0 auto; }
 label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
 .render-history-item { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; }
 .render-history-item a { font-size: 12px; }
+
+
+/* 成片列表 */
+.render-row { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: #10121a; display: flex; flex-direction: column; gap: 6px; }
+.render-row-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.render-row-head b { font-size: 13px; }
+.render-row-head .meta { color: var(--muted); font-size: 11px; }
+.render-row-head .list-actions { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+.render-row .bar { height: 4px; }
+.render-row .err { font-size: 12px; }

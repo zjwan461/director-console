@@ -37,6 +37,7 @@ export default function RenderPanel({ projectId, shots }: Props) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [active, setActive] = useState<Render | null>(null)
+  const [draftNote, setDraftNote] = useState('')
   const [caps, setCaps] = useState<{ subtitles?: boolean }>({})
   const timer = useRef<number | null>(null)
 
@@ -78,6 +79,43 @@ export default function RenderPanel({ projectId, shots }: Props) {
       setBusy(false)
     }
   }, [])
+
+  const buildPayload = () => {
+    const res = RESOLUTIONS.find((r) => r.key === resKey) || RESOLUTIONS[1]
+    const shotEdits = ordered.map((s) => {
+      const e = editOf(s.id)
+      return {
+        shot_id: s.id,
+        in_point: Number(e.in_point) || 0,
+        out_point: e.out_point ? Number(e.out_point) : undefined,
+        subtitle: e.subtitle || s.title || '',
+      }
+    })
+    return {
+      width: res.width,
+      height: res.height,
+      shots: ordered.map((s) => s.id),
+      shotEdits,
+    }
+  }
+
+  const saveDraft = async () => {
+    if (!ordered.length) return
+    setError('')
+    setDraftNote('')
+    const { width, height, shots, shotEdits } = buildPayload()
+    try {
+      const render = await api.createRender(projectId, shots, {
+        width, height, fps, draft: true,
+        bgm: bgmId ? { asset_id: bgmId, volume_db: bgmVolume, fade_in: fadeIn, fade_out: fadeOut, loop: loopBgm } : {},
+        subtitles: { enabled: subsEnabled, style: { size: subSize, margin_v: subMargin } },
+        loudness: { enabled: loudness },
+      }, shotEdits)
+      setDraftNote(`已保存草稿 ${render.id}，可在「成片」页继续导出`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    }
+  }
 
   const start = async () => {
     if (!ordered.length) return
@@ -246,8 +284,12 @@ export default function RenderPanel({ projectId, shots }: Props) {
             <button className="primary" disabled={busy || !ordered.length} onClick={() => void start()}>
               {busy ? <><span className="spin" /> 导出中</> : '导出成片'}
             </button>
+            <button className="ghost" disabled={!ordered.length} onClick={() => void saveDraft()}>
+              保存草稿
+            </button>
             {active && <span className="meta">{active.message || active.status}</span>}
           </div>
+          {draftNote && <div className="notice" style={{ marginTop: 8 }}>{draftNote}</div>}
           {active && (
             <div className="bar" style={{ marginTop: 8 }}>
               <i style={{ width: `${Math.round((active.progress || 0) * 100)}%` }} />

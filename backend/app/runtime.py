@@ -8,6 +8,11 @@ MODE_KEY = "comfy.mode"
 URL_KEY = "comfy.base_url"
 TOKEN_KEY = "comfy.token"
 
+AI_BASE_KEY = "ai.base_url"
+AI_KEY_KEY = "ai.api_key"
+AI_MODEL_KEY = "ai.model"
+AI_PROXY_KEY = "ai.proxy"
+
 VALID_MODES = {"local", "ssh", "external", "mock"}
 
 
@@ -21,6 +26,16 @@ def apply_runtime_settings() -> None:
         comfy["base_url"] = stored[URL_KEY]
     if stored.get(TOKEN_KEY):
         comfy["token"] = stored[TOKEN_KEY]
+
+    ai = settings.raw.setdefault("ai", {})
+    if stored.get(AI_BASE_KEY):
+        ai["base_url"] = stored[AI_BASE_KEY]
+    if stored.get(AI_KEY_KEY):
+        ai["api_key"] = stored[AI_KEY_KEY]
+    if stored.get(AI_MODEL_KEY):
+        ai["model"] = stored[AI_MODEL_KEY]
+    if stored.get(AI_PROXY_KEY):
+        ai["proxy"] = stored[AI_PROXY_KEY]
 
 
 def normalize_url(url: str) -> str:
@@ -57,6 +72,7 @@ def reset_comfy_settings() -> dict:
 
     reload(config_module)
     settings.raw = config_module.settings.raw
+    apply_runtime_settings()
     return public_comfy_settings()
 
 
@@ -77,4 +93,44 @@ def public_comfy_settings() -> dict:
         "token_hint": mask_token(token),
         "managed": settings.comfy_mode in {"local", "ssh"},
         "overridden": bool(store.list_settings().get(URL_KEY)),
+    }
+
+
+def save_ai_settings(base_url: str, api_key: str | None, model: str, proxy: str = "") -> dict:
+    from .runtime import normalize_url as _normalize
+
+    url = _normalize(base_url)
+    if not url:
+        raise ValueError("请填写提示词模型的 Base URL")
+    store.set_setting(AI_BASE_KEY, url)
+    store.set_setting(AI_MODEL_KEY, (model or "").strip())
+    store.set_setting(AI_PROXY_KEY, (proxy or "").strip())
+    if api_key is not None:
+        store.set_setting(AI_KEY_KEY, api_key.strip())
+    apply_runtime_settings()
+    return public_ai_settings()
+
+
+def reset_ai_settings() -> dict:
+    for key in (AI_BASE_KEY, AI_KEY_KEY, AI_MODEL_KEY, AI_PROXY_KEY):
+        store.delete_setting(key)
+    from importlib import reload
+
+    from . import config as config_module
+
+    reload(config_module)
+    settings.raw = config_module.settings.raw
+    apply_runtime_settings()
+    return public_ai_settings()
+
+
+def public_ai_settings() -> dict:
+    key = str(settings.get("ai.api_key", "") or "")
+    return {
+        "base_url": str(settings.get("ai.base_url", "") or ""),
+        "model": str(settings.get("ai.model", "") or ""),
+        "proxy": str(settings.get("ai.proxy", "") or ""),
+        "key_set": bool(key),
+        "key_hint": mask_token(key),
+        "overridden": bool(store.list_settings().get(AI_BASE_KEY)),
     }

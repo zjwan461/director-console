@@ -6,10 +6,11 @@ import StudioPanel from './components/StudioPanel'
 import JobsPanel from './components/JobsPanel'
 import ProjectsPanel from './components/ProjectsPanel'
 import AssetsPanel from './components/AssetsPanel'
+import RendersPanel from './components/RendersPanel'
 
-type Tab = 'studio' | 'projects' | 'assets' | 'jobs' | 'service'
+type Tab = 'studio' | 'projects' | 'assets' | 'renders' | 'jobs' | 'service'
 
-const TAB_KEYS: Tab[] = ['studio', 'projects', 'assets', 'jobs', 'service']
+const TAB_KEYS: Tab[] = ['studio', 'projects', 'assets', 'renders', 'jobs', 'service']
 
 function initialTab(): Tab {
   const fromUrl = new URLSearchParams(window.location.search).get('tab')
@@ -57,6 +58,7 @@ export default function App() {
           <button className={tab === 'studio' ? 'active' : ''} onClick={() => setTab('studio')}>创作台</button>
           <button className={tab === 'projects' ? 'active' : ''} onClick={() => setTab('projects')}>项目</button>
           <button className={tab === 'assets' ? 'active' : ''} onClick={() => setTab('assets')}>资产</button>
+          <button className={tab === 'renders' ? 'active' : ''} onClick={() => setTab('renders')}>成片</button>
           <button className={tab === 'jobs' ? 'active' : ''} onClick={() => setTab('jobs')}>任务</button>
           <button className={tab === 'service' ? 'active' : ''} onClick={() => setTab('service')}>服务管家</button>
         </nav>
@@ -81,6 +83,16 @@ export default function App() {
         )}
         {tab === 'jobs' && <JobsPanel refreshKey={jobsRefresh} />}
         {tab === 'projects' && <ProjectsPanel />}
+        {tab === 'renders' && (
+          <RendersPanel
+            onOpenProject={(projectId) => {
+              const url = new URL(window.location.href)
+              url.searchParams.set('project', projectId)
+              window.history.replaceState({}, '', url)
+              setTab('projects')
+            }}
+          />
+        )}
         {tab === 'assets' && (
           <AssetsPanel
             onOpenProject={(projectId, shotId) => {

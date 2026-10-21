@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { api, formatBytes, timeAgo } from '../api'
 import type { Asset, AssetUsage, Project, Shot } from '../types'
 
@@ -20,6 +20,9 @@ export default function AssetsPanel({ onOpenProject }: { onOpenProject: (project
   const [creating, setCreating] = useState(false)
   const [notice, setNotice] = useState('')
   const [createdShot, setCreatedShot] = useState<Shot | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [uploadNote, setUploadNote] = useState('')
+  const fileInput = useRef<HTMLInputElement>(null)
 
   const PAGE = 60
 
@@ -99,6 +102,33 @@ export default function AssetsPanel({ onOpenProject }: { onOpenProject: (project
     }
   }
 
+  const kindOf = (name: string): string => {
+    const ext = name.split('.').pop()?.toLowerCase() || ''
+    if (['mp4', 'mov', 'webm', 'mkv', 'avi', 'm4v'].includes(ext)) return 'video'
+    if (['mp3', 'wav', 'm4a', 'aac', 'flac', 'ogg', 'opus'].includes(ext)) return 'audio'
+    return 'image'
+  }
+
+  const uploadFiles = async (files: FileList | null) => {
+    if (!files || !files.length) return
+    setUploading(true)
+    setUploadNote('')
+    let ok = 0
+    const failed: string[] = []
+    for (const file of Array.from(files)) {
+      try {
+        await api.upload(file, kindOf(file.name))
+        ok += 1
+      } catch {
+        failed.push(file.name)
+      }
+    }
+    setUploadNote(`已上传 ${ok} 个${failed.length ? `，失败：${failed.join('、')}` : ''}`)
+    setUploading(false)
+    if (fileInput.current) fileInput.current.value = ''
+    await load(0, false)
+  }
+
   const remove = async (asset: Asset) => {
     if (!window.confirm(`删除 ${asset.path.split('/').pop()}？文件也会删除，且无法恢复。`)) return
     try {
@@ -121,8 +151,19 @@ export default function AssetsPanel({ onOpenProject }: { onOpenProject: (project
           <p>所有生成结果与上传素材都在这里；点开可以看它被哪些镜头用过。</p>
         </div>
         <div className="row">
+          <button className="primary" disabled={uploading} onClick={() => fileInput.current?.click()}>
+            {uploading ? '上传中…' : '上传素材'}
+          </button>
           <button className="ghost" onClick={() => void cleanup()}>清理测试产物</button>
           <button className="ghost" onClick={() => void load(0, false)}>刷新</button>
+          <input
+            ref={fileInput}
+            type="file"
+            multiple
+            hidden
+            accept="image/*,video/*,audio/*"
+            onChange={(e) => void uploadFiles(e.target.files)}
+          />
         </div>
       </div>
 
@@ -148,6 +189,7 @@ export default function AssetsPanel({ onOpenProject }: { onOpenProject: (project
       </div>
 
       {error && <div className="notice err">{error}</div>}
+      {uploadNote && <div className="notice">{uploadNote}</div>}
 
       <div className={`assets-split ${selected ? 'with-detail' : ''}`}>
         <div className="asset-grid">

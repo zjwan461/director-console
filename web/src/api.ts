@@ -56,6 +56,26 @@ export const api = {
     return request<Asset>('/api/assets/upload', { method: 'POST', body: form })
   },
 
+  aiSettings: () =>
+    request<{ base_url: string; model: string; proxy: string; key_set: boolean; key_hint: string; overridden: boolean }>(
+      '/api/settings/ai',
+    ),
+  saveAiSettings: (payload: { base_url: string; api_key?: string; model: string; proxy?: string }) =>
+    request<{ base_url: string; model: string; key_set: boolean; key_hint: string }>('/api/settings/ai', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }),
+  resetAiSettings: () => request<unknown>('/api/settings/ai/reset', { method: 'POST' }),
+  testAiSettings: (payload: { base_url: string; api_key?: string; model: string; proxy?: string }) =>
+    request<{ ok: boolean; latency_ms?: number; error?: string; model_count?: number }>('/api/settings/ai/test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }),
+  allRenders: (limit = 50, status?: string) =>
+    request<{ items: Render[] }>(`/api/renders?limit=${limit}${status ? `&status=${status}` : ''}`),
+  startRender: (id: string) => request<Render>(`/api/renders/${id}/start`, { method: 'POST' }),
   assets: (params: { kind?: string; q?: string; limit?: number; offset?: number } = {}) => {
     const qs = new URLSearchParams()
     if (params.kind) qs.set('kind', params.kind)

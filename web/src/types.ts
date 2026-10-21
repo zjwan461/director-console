@@ -166,7 +166,8 @@ export interface Shot {
 export interface Render {
   id: string
   project_id: string
-  status: 'queued' | 'preparing' | 'rendering' | 'succeeded' | 'failed'
+  project_name?: string
+  status: 'draft' | 'queued' | 'preparing' | 'rendering' | 'succeeded' | 'failed'
   progress: number
   message?: string
   shot_ids: string[]

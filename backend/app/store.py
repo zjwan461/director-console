@@ -386,6 +386,25 @@ def list_renders(project_id: str, limit: int = 20) -> list[dict]:
         ))
 
 
+def list_renders_all(limit: int = 50, status: str | None = None) -> list[dict]:
+    with _lock, connect() as conn:
+        if status:
+            rows = conn.execute(
+                "SELECT r.*, p.name AS project_name FROM renders r "
+                "LEFT JOIN projects p ON p.id = r.project_id "
+                "WHERE r.status=? ORDER BY r.created_at DESC LIMIT ?",
+                (status, limit),
+            )
+        else:
+            rows = conn.execute(
+                "SELECT r.*, p.name AS project_name FROM renders r "
+                "LEFT JOIN projects p ON p.id = r.project_id "
+                "ORDER BY r.created_at DESC LIMIT ?",
+                (limit,),
+            )
+        return _rows(rows)
+
+
 def recover_renders() -> None:
     with _lock, connect() as conn:
         conn.execute(

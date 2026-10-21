@@ -857,6 +857,55 @@ class RenderCreate(BaseModel):
     shot_edits: list[dict[str, Any]] = []
 
 
+class AISettings(BaseModel):
+    base_url: str
+    api_key: str | None = None
+    model: str = ""
+    proxy: str = ""
+
+
+@app.get("/api/settings/ai")
+async def get_ai_settings() -> dict:
+    return runtime.public_ai_settings()
+
+
+@app.put("/api/settings/ai")
+async def put_ai_settings(body: AISettings) -> dict:
+    try:
+        return runtime.save_ai_settings(body.base_url, body.api_key, body.model, body.proxy)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@app.post("/api/settings/ai/reset")
+async def reset_ai_settings() -> dict:
+    return runtime.reset_ai_settings()
+
+
+@app.post("/api/settings/ai/test")
+async def test_ai_settings(body: AISettings) -> dict:
+    """用当前（或传入）配置请求 /models，验证 key 与地址。"""
+    base = runtime.normalize_url(body.base_url or str(settings.get("ai.base_url", "")))
+    key = (body.api_key or str(settings.get("ai.api_key", ""))).strip()
+    proxy = (body.proxy or str(settings.get("ai.proxy", ""))).strip()
+    if not base:
+        raise HTTPException(status_code=400, detail="请先填写 Base URL")
+    if not key:
+        raise HTTPException(status_code=400, detail="请先填写 API Key")
+    import time
+
+    started = time.time()
+    try:
+        async with httpx.AsyncClient(timeout=20, trust_env=False, proxy=proxy or None) as client:
+            resp = await client.get(f"{base}/models", headers={"Authorization": f"Bearer {key}"})
+        latency = int((time.time() - started) * 1000)
+        if resp.status_code >= 400:
+            return {"ok": False, "latency_ms": latency, "error": f"HTTP {resp.status_code}: {resp.text[:200]}"}
+        return {"ok": True, "latency_ms": latency, "model_count": len((resp.json() or {}).get("data") or [])}
+    except Exception as exc:
+        return {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
+
+
 @app.get("/api/ffmpeg/status")
 async def ffmpeg_status() -> dict:
     return {**ffmpeg.status(), "capabilities": ffmpeg.capabilities()}
@@ -884,12 +933,35 @@ async def create_render(project_id: str, body: RenderCreate) -> dict:
         raise HTTPException(status_code=400, detail="分辨率太小")
     if not ffmpeg.status()["available"]:
         raise HTTPException(status_code=400, detail=ffmpeg.status()["hint"])
+    draft = bool(body.options.get("draft"))
     render = store.create_render(project_id, shot_ids, options)
+    if draft:
+        store.update_render(render["id"], status="draft", message="草稿")
     if body.shot_edits:
         allowed = set(shot_ids)
         store.save_render_shots(render["id"], [e for e in body.shot_edits if e.get("shot_id") in allowed])
-    await render_runner.enqueue(render["id"])
+    if not draft:
+        await render_runner.enqueue(render["id"])
     return _enrich_render(render)
+
+
+@app.get("/api/renders")
+async def list_all_renders(limit: int = 50, status: str | None = None) -> dict:
+    items = store.list_renders_all(limit, status)
+    return {"items": [_enrich_render(r) for r in items]}
+
+
+@app.post("/api/renders/{render_id}/start")
+async def start_render(render_id: str) -> dict:
+    render = store.get_render(render_id)
+    if not render:
+        raise HTTPException(status_code=404, detail="成片不存在")
+    if render["status"] not in {"draft", "failed"}:
+        raise HTTPException(status_code=400, detail="只有草稿或失败的成片可以重新开始")
+    store.update_render(render_id, status="queued", progress=0.0, message="排队中",
+                        error="", started_at=None, finished_at=None)
+    await render_runner.enqueue(render_id)
+    return _enrich_render(store.get_render(render_id) or render)
 
 
 @app.get("/api/renders/{render_id}/subtitles")

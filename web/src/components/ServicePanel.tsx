@@ -168,6 +168,8 @@ export default function ServicePanel({ status, onRefresh }: Props) {
         </div>
       )}
 
+      <AISettingsPanel />
+
       <ModelCheckPanel />
     </div>
   )
@@ -343,6 +345,115 @@ function ConnectionSettings({ status, onSaved }: { status: ServiceStatus | null;
         {error && <div className="notice err">{error}</div>}
         {saved && <div className="notice">{saved}</div>}
       </div>
+    </div>
+  )
+}
+
+
+function AISettingsPanel() {
+  const [baseUrl, setBaseUrl] = useState('')
+  const [model, setModel] = useState('')
+  const [proxy, setProxy] = useState('')
+  const [apiKey, setApiKey] = useState('')
+  const [keyHint, setKeyHint] = useState('')
+  const [overridden, setOverridden] = useState(false)
+  const [note, setNote] = useState('')
+  const [busy, setBusy] = useState('')
+
+  useEffect(() => {
+    api.aiSettings().then((s) => {
+      setBaseUrl(s.base_url)
+      setModel(s.model)
+      setProxy(s.proxy || '')
+      setKeyHint(s.key_hint)
+      setOverridden(s.overridden)
+    }).catch(() => undefined)
+  }, [])
+
+  const payload = () => ({ base_url: baseUrl, model, proxy, api_key: apiKey || undefined })
+
+  const save = async () => {
+    setBusy('save')
+    setNote('')
+    try {
+      const s = await api.saveAiSettings(payload())
+      setKeyHint(s.key_hint)
+      setOverridden(true)
+      setApiKey('')
+      setNote('已保存，提示词助手立即生效')
+    } catch (err) {
+      setNote(err instanceof Error ? err.message : String(err))
+    } finally {
+      setBusy('')
+    }
+  }
+
+  const test = async () => {
+    setBusy('test')
+    setNote('')
+    try {
+      const r = await api.testAiSettings(payload())
+      setNote(r.ok ? `连接正常（${r.latency_ms}ms，${r.model_count ?? 0} 个模型）` : `失败：${r.error}`)
+    } catch (err) {
+      setNote(err instanceof Error ? err.message : String(err))
+    } finally {
+      setBusy('')
+    }
+  }
+
+  const reset = async () => {
+    setBusy('reset')
+    try {
+      await api.resetAiSettings()
+      const s = await api.aiSettings()
+      setBaseUrl(s.base_url)
+      setModel(s.model)
+      setProxy(s.proxy || '')
+      setKeyHint(s.key_hint)
+      setOverridden(s.overridden)
+      setNote('已恢复配置文件默认值')
+    } finally {
+      setBusy('')
+    }
+  }
+
+  return (
+    <div className="panel">
+      <h2>
+        <span>提示词助手</span>
+        {overridden && <span className="badge">已覆盖配置文件</span>}
+      </h2>
+      <p className="hint">填自己的 OpenAI 兼容接口；留空 API Key 表示不修改已保存的 key。</p>
+      <div className="field">
+        <label><span>Base URL</span></label>
+        <input value={baseUrl} placeholder="https://api.openai.com/v1"
+               onChange={(e) => setBaseUrl(e.target.value)} />
+      </div>
+      <div className="field">
+        <label><span>模型</span></label>
+        <input value={model} placeholder="gpt-4o-mini / deepseek-chat"
+               onChange={(e) => setModel(e.target.value)} />
+      </div>
+      <div className="field">
+        <label><span>API Key{keyHint ? `（当前 ${keyHint}）` : ''}</span></label>
+        <input type="password" value={apiKey} placeholder="留空表示不修改"
+               onChange={(e) => setApiKey(e.target.value)} />
+      </div>
+      <div className="field">
+        <label><span>代理（可选）</span></label>
+        <input value={proxy} placeholder="http://127.0.0.1:1081"
+               onChange={(e) => setProxy(e.target.value)} />
+      </div>
+      <div className="row-actions">
+        <button className="primary" disabled={!baseUrl || busy === 'save'} onClick={() => void save()}>
+          {busy === 'save' ? '保存中…' : '保存'}
+        </button>
+        <button disabled={busy === 'test'} onClick={() => void test()}>
+          {busy === 'test' ? '测试中…' : '测试连接'}
+        </button>
+        <button className="ghost" disabled={busy === 'reset'} onClick={() => void reset()}>恢复默认</button>
+      </div>
+      {note && <div className="notice" style={{ marginTop: 8 }}>{note}</div>}
     </div>
   )
 }
