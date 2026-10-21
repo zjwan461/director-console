@@ -15,6 +15,7 @@ interface Edit {
   narration: string
   voice_asset: string
   fit: string
+  mode: string
 }
 
 export default function EditPanel({
@@ -55,7 +56,8 @@ export default function EditPanel({
   const [loaded, setLoaded] = useState(false)
   const [savedAt, setSavedAt] = useState('')
   const [error, setError] = useState('')
-  const [busy, setBusy] = useState(false)
+  const [previewBusy, setPreviewBusy] = useState(false)
+  const [exportBusy, setExportBusy] = useState(false)
   const [activeShot, setActiveShot] = useState('')
   const [uploadFor, setUploadFor] = useState('')
   const [picker, setPicker] = useState<'' | 'title' | 'tail'>('')
@@ -147,6 +149,7 @@ export default function EditPanel({
             narration: String(item.narration || ''),
             voice_asset: String(item.voice_asset || ''),
             fit: String(item.fit || ''),
+            mode: String(item.mode || ''),
           }
         }
         setEdits(map)
@@ -181,6 +184,7 @@ export default function EditPanel({
           narration: editOf(s.id).narration || '',
           voice_asset: editOf(s.id).voice_asset || '',
           fit: editOf(s.id).fit || '',
+          mode: editOf(s.id).mode || '',
         })),
       }).then(() => setSavedAt(new Date().toLocaleTimeString())).catch(() => undefined)
     }, 800)
@@ -244,8 +248,13 @@ export default function EditPanel({
     return found ? (found.url || `/media/files/${found.path}`) : ''
   }
 
+  const modeOf = (shotId: string): 'narration' | 'lip' | 'silent' => {
+    const value = editOf(shotId).mode
+    return (value || contentMode) as 'narration' | 'lip' | 'silent'
+  }
+
   const ordered = useMemo(() => shots.filter((s) => selected.includes(s.id)), [shots, selected])
-  const editOf = (id: string): Edit => edits[id] || { in_point: '', out_point: '', subtitle: '', narration: '', voice_asset: '', fit: '' }
+  const editOf = (id: string): Edit => edits[id] || { in_point: '', out_point: '', subtitle: '', narration: '', voice_asset: '', fit: '', mode: '' }
   const patchEdit = (id: string, patch: Partial<Edit>) =>
     setEdits((prev) => ({ ...prev, [id]: { ...editOf(id), ...patch } }))
   const voiceAudio = useRef<HTMLAudioElement | null>(null)
@@ -376,8 +385,9 @@ export default function EditPanel({
         const title = shot.title || `镜头 ${shot.idx + 1}`
         setRow(shot.id, title, 'running')
         const current = editOf(shot.id)
-        const wantSub = aiKind !== 'narration' || contentMode === 'narration'
-        const wantNarr = contentMode === 'narration' && (aiKind === 'both' || aiKind === 'narration')
+        const shotMode = modeOf(shot.id)
+        const wantSub = shotMode !== 'silent' && (aiKind !== 'narration' || shotMode === 'narration')
+        const wantNarr = shotMode === 'narration' && (aiKind === 'both' || aiKind === 'narration')
         let narrationText = current.narration
         const needNarr = wantNarr && (aiMode === 'rewrite' || !current.narration)
         const notes: string[] = []
@@ -400,7 +410,7 @@ export default function EditPanel({
           try {
             const r = await api.aiScript({
               shot_id: shot.id, kind: 'subtitle', style: stylePayload(),
-              narration: contentMode === 'narration' ? narrationText : '', frames: aiFrames,
+              narration: shotMode === 'narration' ? narrationText : '', frames: aiFrames,
             })
             if (r.skip === 'silent') {
               notes.push('无口播，跳过字幕')
@@ -446,9 +456,13 @@ export default function EditPanel({
 
   const aiOne = async (shotId: string, kind: 'subtitle' | 'narration') => {
     const key = `${shotId}:${kind}`
+    if (kind === 'subtitle' && modeOf(shotId) === 'silent') {
+      notify('ok', '纯画面镜头', '这个镜头设置为纯画面，不生成字幕')
+      return
+    }
     setAiBusy(key)
     try {
-      const narration = kind === 'subtitle' && contentMode === 'narration'
+      const narration = kind === 'subtitle' && modeOf(shotId) === 'narration'
         ? editOf(shotId).narration
         : undefined
       const r = await api.aiScript({
@@ -502,7 +516,7 @@ export default function EditPanel({
 
   const startPreview = async () => {
     if (!ordered.length) return
-    setBusy(true)
+    setPreviewBusy(true)
     setError('')
     setPreviewJob(null)
     const res = RESOLUTIONS.find((r) => r.key === resKey) || RESOLUTIONS[1]
@@ -534,13 +548,13 @@ export default function EditPanel({
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
-      setBusy(false)
+      setPreviewBusy(false)
     }
   }
 
   const exportRender = async () => {
     if (!ordered.length) return
-    setBusy(true)
+    setExportBusy(true)
     setError('')
     const res = RESOLUTIONS.find((r) => r.key === resKey) || RESOLUTIONS[1]
     try {
@@ -564,7 +578,7 @@ export default function EditPanel({
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
-      setBusy(false)
+      setExportBusy(false)
     }
   }
 
@@ -579,9 +593,12 @@ export default function EditPanel({
           <select value={projectId} onChange={(e) => setProjectId(e.target.value)}>
             {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
-          <span className="badge">
-            {contentMode === 'narration' ? '解说类' : contentMode === 'lip' ? '口播类' : '纯画面'}
-          </span>
+          <select value={contentMode} onChange={(e) => setContentMode(e.target.value as typeof contentMode)}
+                  title="整个项目的视频类型（可在镜头里单独覆盖）">
+            <option value="narration">解说类</option>
+            <option value="lip">口播类</option>
+            <option value="silent">纯画面</option>
+          </select>
           <button className="primary" onClick={() => setAiOpen(true)} disabled={aiRunning}>
             {aiRunning ? <><span className="spin" /> 生成中</> : 'AI 生成'}
           </button>
@@ -812,6 +829,13 @@ export default function EditPanel({
                         </label>
                       </div>
                       <div className="shot-row">
+                        {modeOf(shot.id) !== 'narration' && (
+                          <div className="meta" style={{ flexBasis: '100%' }}>
+                            {modeOf(shot.id) === 'lip'
+                              ? '口播类：字幕来自语音转写，不需要旁白'
+                              : '纯画面：不生成字幕，也不需要旁白'}
+                          </div>
+                        )}
                         <label className="grow">
                           旁白
                           <div className="voice-pick">
@@ -843,9 +867,22 @@ export default function EditPanel({
                             {!edit.narration.trim() && edit.voice_asset && <span className="badge">仅音频</span>}
                           </div>
                         </label>
+                      </div>
+                      <div className="shot-row">
+                        <label>
+                          类型
+                          <select value={edit.mode} onChange={(e) => patchEdit(shot.id, { mode: e.target.value })}>
+                            <option value="">跟随全局</option>
+                            <option value="narration">解说</option>
+                            <option value="lip">口播</option>
+                            <option value="silent">纯画面</option>
+                          </select>
+                        </label>
                         <label>
                           旁白文案
-                          <input placeholder="旁白文本（配音用）" value={edit.narration}
+                          <input placeholder={modeOf(shot.id) === 'narration' ? '旁白文本（配音用）' : '该镜头不是解说类'}
+                                 disabled={modeOf(shot.id) !== 'narration'}
+                                 value={edit.narration}
                                  onChange={(e) => patchEdit(shot.id, { narration: e.target.value })} />
                         </label>
                         <label>
@@ -1056,11 +1093,12 @@ export default function EditPanel({
           </label>
 
           <div className="row-actions" style={{ marginTop: 12 }}>
-            <button className="primary" disabled={busy || !ordered.length} onClick={() => void startPreview()}>
-              {previewJob && ['queued', 'preparing', 'rendering'].includes(previewJob.status) ? '预览生成中…' : '预览（480p）'}
+            <button className="primary" disabled={previewBusy || !ordered.length} onClick={() => void startPreview()}>
+              {previewBusy || (previewJob && ['queued', 'preparing', 'rendering'].includes(previewJob.status))
+                ? <><span className="spin" /> 预览生成中</> : '预览（480p）'}
             </button>
-            <button disabled={busy || !ordered.length} onClick={() => void exportRender()}>
-              {busy ? <><span className="spin" /> 提交中</> : '导出成片'}
+            <button disabled={exportBusy || !ordered.length} onClick={() => void exportRender()}>
+              {exportBusy ? <><span className="spin" /> 提交中</> : '导出成片'}
             </button>
           </div>
         </div>
