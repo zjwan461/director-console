@@ -5,7 +5,9 @@
  "bytes": 234873971,
  "sha256": "d5cc76385b04c2b198f0c2518d5a44546d16a78c943a4de7b3d8c937b1cf606d",
  "urls": [
-  "https://github.com/zjwan461/director-console/releases/download/director-node-pack/director-node-pack.zip"
+  "https://github.com/zjwan461/director-console/releases/download/director-node-pack/director-node-pack.zip",
+  "https://ghfast.top/https://github.com/zjwan461/director-console/releases/download/director-node-pack/director-node-pack.zip",
+  "https://gh-proxy.com/https://github.com/zjwan461/director-console/releases/download/director-node-pack/director-node-pack.zip"
  ],
  "packs": {
   "ComfyUI-Custom-Scripts": {
@@ -178,5 +180,5 @@
    ]
   }
  },
- "note": "zip 不进 git；用 tools/pack_nodes.py 生成后上传 GitHub Release，再把 URL 填到 urls"
+ "note": "zip 不进 git；用 tools/pack_nodes.py 生成后上传 GitHub Release，再把 URL 填到 urls（可多条，install.py 依次尝试并校验 sha256）"
 }
