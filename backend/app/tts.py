@@ -36,9 +36,23 @@ VOICES = {
 HINTS = {
     "Model not exist": "model 名在这个工作区不存在，请换 model",
     "url error": "端点不对，检查 Base URL（工作区域名）",
-    "[cosyvoice:]Engine error [411]": "音色和 model 不配对（3.0-plus 只能用 longanlufeng / longanlingxin，不带后缀）",
+    "[cosyvoice:]Engine error [411]": (
+        "音色和 model 不配对（3.0-plus 只能用 longanlufeng / longanlingxin；"
+        "带 _v3.1 后缀的音色只能配 3.1 模型）"
+    ),
     "InvalidApiKey": "API Key 与 Base URL 不属于同一个工作区",
 }
+
+
+def check_voice(model: str, voice: str) -> str:
+    """音色必须属于这个模型：配错了服务端只回一个含糊的 411。"""
+    allowed = [v["id"] for v in VOICES.get(model, [])]
+    if allowed and voice and voice not in allowed:
+        raise ValueError(
+            f"音色 {voice} 不属于 {model}；可选：{' / '.join(allowed)}"
+        )
+    return voice
+
 
 
 def _cfg(key: str):
@@ -99,7 +113,7 @@ async def synthesize(text: str, voice: str | None = None, use_cache: bool = True
         raise ValueError("旁白文本为空")
 
     model = cfg["model"]
-    voice = voice or cfg["voice"]
+    voice = check_voice(model, voice or cfg["voice"])
     fmt = cfg["format"]
     rate = cfg["sample_rate"]
 
@@ -117,7 +131,15 @@ async def synthesize(text: str, voice: str | None = None, use_cache: bool = True
     if proxy:
         kwargs["proxy"] = proxy
     async with httpx.AsyncClient(**kwargs) as client:
-        resp = await client.post(url, json=payload, headers={"Authorization": f"Bearer {key}"})
+        try:
+            resp = await client.post(url, json=payload, headers={"Authorization": f"Bearer {key}"})
+        except Exception as exc:
+            # httpx 的超时/连接类异常 str() 经常是空串，前端就只显示「失败：」，这里补上类型
+            raise RuntimeError(
+                f"连不上 TTS 接口（{type(exc).__name__}: {exc or '无错误信息'}）"
+                + (f"；当前走的代理 {proxy}" if proxy else "；当前没走代理")
+                + f" [POST {url}]"
+            ) from exc
         if resp.status_code >= 400:
             raw = resp.text[:400]
             hint = _explain(raw)
@@ -130,9 +152,14 @@ async def synthesize(text: str, voice: str | None = None, use_cache: bool = True
         audio_url = ((body.get("output") or {}).get("audio") or {}).get("url")
         if not audio_url:
             raise RuntimeError("TTS 没有返回音频地址：" + json.dumps(body, ensure_ascii=False)[:300])
-        audio = await client.get(audio_url)
+        try:
+            audio = await client.get(audio_url)
+        except Exception as exc:
+            raise RuntimeError(
+                f"下载合成音频失败（{type(exc).__name__}: {exc or '无错误信息'}）：{audio_url[:120]}"
+            ) from exc
         if audio.status_code >= 400:
-            raise RuntimeError(f"下载 TTS 音频失败：{audio.status_code}")
+            raise RuntimeError(f"下载 TTS 音频失败：{audio.status_code} {audio_url[:120]}")
 
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_bytes(audio.content)

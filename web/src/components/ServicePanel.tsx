@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { api, formatDuration } from '../api'
 import type { ServiceStatus } from '../types'
 import ModelCheckPanel from './ModelCheckPanel'
@@ -57,6 +57,13 @@ export default function ServicePanel({ status, onRefresh }: Props) {
     const timer = setInterval(() => void loadLogs(), 5000)
     return () => clearInterval(timer)
   }, [showLogs, loadLogs])
+
+  // 日志刷新后自动滚到底部（ComfyUI 启动时刷得很快，不跟到底就等于没看）
+  const logRef = useRef<HTMLPreElement | null>(null)
+  useEffect(() => {
+    const el = logRef.current
+    if (el) el.scrollTop = el.scrollHeight
+  }, [logs])
 
   const local = status?.local
   const health = local?.health || status?.health
@@ -164,7 +171,7 @@ export default function ServicePanel({ status, onRefresh }: Props) {
       {showLogs && (
         <div className="panel">
           <h2>ComfyUI 日志 <button className="ghost" onClick={() => void loadLogs()}>刷新</button></h2>
-          <pre className="logs">{logs || '（云端模式下没有本地日志）'}</pre>
+          <pre className="logs" ref={logRef}>{logs || '（云端模式下没有本地日志）'}</pre>
         </div>
       )}
 
@@ -483,14 +490,27 @@ function TTSPanel() {
 
   useEffect(() => {
     api.ttsSettings().then((s) => {
+      const list = s.voices || []
       setBaseUrl(s.base_url)
       setModel(s.model)
-      setVoice(s.voice)
+      // 存下来的音色可能属于别的模型（切过模型就会这样），对不上就退回该模型的第一个
+      setVoice(list.some((v) => v.id === s.voice) ? s.voice : (list[0]?.id || s.voice))
       setProxy(s.proxy || '')
       setKeyHint(s.key_hint)
-      setVoices(s.voices || [])
+      setVoices(list)
     }).catch(() => undefined)
   }, [])
+
+  const changeModel = (next: string) => {
+    setModel(next)
+    // 换模型必须同时换音色：3.0-plus 只认 longanlufeng/longanlingxin，
+    // 3.1 的 *_v3.1 音色配到 3.0 上会被服务端拒成 411
+    api.ttsVoices(next).then((r) => {
+      const list = r.items || []
+      setVoices(list)
+      setVoice(list[0]?.id || '')
+    }).catch(() => { setVoices([]); setVoice('') })
+  }
 
   const payload = () => ({ base_url: baseUrl, model, voice, proxy, api_key: apiKey || undefined })
 
@@ -551,7 +571,7 @@ function TTSPanel() {
                onChange={(e) => setProxy(e.target.value)} />
       </div>
       <div className="row">
-        <select value={model} onChange={(e) => setModel(e.target.value)}>
+        <select value={model} onChange={(e) => changeModel(e.target.value)}>
           <option value="qwen-audio-3.0-tts-plus">qwen-audio-3.0-tts-plus</option>
           <option value="qwen-audio-3.1-tts-flash">qwen-audio-3.1-tts-flash</option>
         </select>

@@ -13,6 +13,7 @@ import json
 import re
 import os
 import shutil
+import subprocess
 from pathlib import Path
 from typing import Iterable
 
@@ -77,13 +78,32 @@ def status() -> dict:
     }
 
 
+def _run_sync(cmd: list[str], timeout: float, cwd: Path | None) -> tuple[int, str]:
+    try:
+        proc = subprocess.run(
+            cmd,
+            cwd=str(cwd) if cwd else None,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
+            timeout=timeout,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError("ffmpeg 执行超时") from exc
+    return proc.returncode or 0, (proc.stderr or b"").decode("utf-8", "replace")
+
+
 async def _run(cmd: list[str], timeout: float = 1800, cwd: Path | None = None) -> tuple[int, str]:
-    proc = await asyncio.create_subprocess_exec(
-        *cmd,
-        cwd=str(cwd) if cwd else None,
-        stdout=asyncio.subprocess.DEVNULL,
-        stderr=asyncio.subprocess.PIPE,
-    )
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            *cmd,
+            cwd=str(cwd) if cwd else None,
+            stdout=asyncio.subprocess.DEVNULL,
+            stderr=asyncio.subprocess.PIPE,
+        )
+    except NotImplementedError:
+        # Windows 上 uvicorn --reload 用 SelectorEventLoop，它不支持子进程；
+        # 不兜底的话合成完音频、算时长的这一步会抛一个没有信息的 NotImplementedError
+        return await asyncio.to_thread(_run_sync, cmd, timeout, cwd)
     try:
         _, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout)
     except asyncio.TimeoutError:
@@ -91,6 +111,25 @@ async def _run(cmd: list[str], timeout: float = 1800, cwd: Path | None = None) -
         raise RuntimeError("ffmpeg 执行超时")
     text = (stderr or b"").decode("utf-8", "replace")
     return proc.returncode or 0, text
+
+
+def _capture_sync(cmd: list[str]) -> bytes:
+    proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    return proc.stdout or b""
+
+
+async def _capture(cmd: list[str]) -> bytes:
+    """拿子进程 stdout；事件循环不支持子进程时退回线程。"""
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.DEVNULL,
+        )
+        out, _ = await proc.communicate()
+        return out or b""
+    except NotImplementedError:
+        return await asyncio.to_thread(_capture_sync, cmd)
 
 
 async def _probe_json(path: Path, args: list[str]) -> dict:
@@ -650,12 +689,10 @@ async def probe_size(path: Path) -> tuple[int, int]:
     probe = ffprobe_path()
     if not probe or not path.exists():
         return 0, 0
-    proc = await asyncio.create_subprocess_exec(
+    out = await _capture([
         probe, "-v", "error", "-select_streams", "v:0",
         "-show_entries", "stream=width,height", "-of", "json", str(path),
-        stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.DEVNULL,
-    )
-    out, _ = await proc.communicate()
+    ])
     try:
         data = json.loads((out or b"{}").decode("utf-8", "replace"))
         stream = (data.get("streams") or [{}])[0]
@@ -721,12 +758,10 @@ async def pixel_format(path: Path) -> str:
     probe = ffprobe_path()
     if not probe or not path.exists():
         return ""
-    proc = await asyncio.create_subprocess_exec(
+    out = await _capture([
         probe, "-v", "error", "-select_streams", "v:0",
         "-show_entries", "stream=pix_fmt", "-of", "json", str(path),
-        stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.DEVNULL,
-    )
-    out, _ = await proc.communicate()
+    ])
     try:
         data = json.loads((out or b"{}").decode("utf-8", "replace"))
         return str((data.get("streams") or [{}])[0].get("pix_fmt") or "")

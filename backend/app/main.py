@@ -1333,6 +1333,7 @@ async def get_tts_settings() -> dict:
 @app.put("/api/settings/tts")
 async def put_tts_settings(body: TTSSettings) -> dict:
     try:
+        tts_module.check_voice(body.model, body.voice)
         data = runtime.save_tts_settings(body.base_url, body.api_key, body.model,
                                          body.voice, body.format, body.sample_rate, body.proxy)
     except ValueError as exc:
@@ -1393,7 +1394,8 @@ async def test_tts(body: TTSSettings | None = None) -> dict:
         return {"ok": True, "duration": result["duration"], "cached": result.get("cached", False),
                 "url": f"/media/files/{rel}"}
     except Exception as exc:
-        return {"ok": False, "error": str(exc)}
+        detail = f"{type(exc).__name__}: {exc}" if str(exc) else f"{type(exc).__name__}（没有错误信息）"
+        return {"ok": False, "error": detail}
 
 
 @app.post("/api/ai/tts")

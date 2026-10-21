@@ -17,6 +17,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import re
 import signal
 import subprocess
 import sys
@@ -36,17 +37,25 @@ class LaunchError(RuntimeError):
     pass
 
 
-def _tail(path: Path, lines: int = 200) -> str:
+_START_MARK_RE = re.compile(r"^===== \d{4}-\d{2}-\d{2} .* start =====$", re.M)
+
+
+def _tail(path: Path, lines: int = 200, only_last_run: bool = True) -> str:
+    """读日志尾部；only_last_run=True 时只保留最后一次「===== … start =====」之后的内容。"""
     if not path.exists():
         return ""
     try:
         with path.open("rb") as f:
             f.seek(0, os.SEEK_END)
             size = f.tell()
-            block = min(size, 200_000)
+            block = min(size, 2_000_000)   # 一次跑下来几 MB 也算够；太大的旧内容反正不要
             f.seek(size - block)
             data = f.read().decode("utf-8", "replace")
-        return "\n".join(data.splitlines()[-lines:])
+        if only_last_run:
+            marks = list(_START_MARK_RE.finditer(data))
+            if marks:
+                data = data[marks[-1].end():]
+        return "\n".join(data.splitlines()[-lines:]).strip("\n")
     except Exception as exc:
         return f"<读取日志失败：{exc}>"
 
@@ -396,8 +405,9 @@ class LocalLauncher(BaseLauncher):
         env.update({str(k): str(v) for k, v in (self._cfg("env", {}) or {}).items()})
 
         log_path = Path(settings.paths["data"]) / "comfy.log"
-        self._logfile = log_path.open("ab")
-        self._logfile.write(f"\n\n===== {time.strftime('%Y-%m-%d %H:%M:%S')} start =====\n".encode())
+        # 每次启动重写日志：面板里只看得到这一次的内容，也不会越滚越大
+        self._logfile = log_path.open("wb")
+        self._logfile.write(f"===== {time.strftime('%Y-%m-%d %H:%M:%S')} start =====\n".encode())
         self._logfile.flush()
 
         kwargs: dict[str, Any] = {
