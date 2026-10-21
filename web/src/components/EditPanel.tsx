@@ -16,6 +16,10 @@ interface Edit {
   voice_asset: string
   fit: string
   mode: string
+  tts_voice: string
+  narration_on: boolean
+  lip_on: boolean
+  volume_db: string
 }
 
 export default function EditPanel({
@@ -33,6 +37,7 @@ export default function EditPanel({
   const [resKey, setResKey] = useState('720p')
   const [fps, setFps] = useState(24)
   const [audios, setAudios] = useState<Asset[]>([])
+  const [voiceOptions, setVoiceOptions] = useState<Array<{ id: string; name: string }>>([])
   const [images, setImages] = useState<Asset[]>([])
   const [titleOn, setTitleOn] = useState(false)
   const [titleText, setTitleText] = useState('')
@@ -96,6 +101,7 @@ export default function EditPanel({
     }).catch(() => undefined)
     api.assets({ kind: 'audio', limit: 50 }).then((res) => setAudios(res.items)).catch(() => undefined)
     api.assets({ kind: 'image', limit: 50 }).then((res) => setImages(res.items)).catch(() => undefined)
+    api.ttsVoices().then((res) => setVoiceOptions(res.items || [])).catch(() => undefined)
   }, [])
 
   // 载入项目 + 剪辑状态
@@ -150,6 +156,14 @@ export default function EditPanel({
             voice_asset: String(item.voice_asset || ''),
             fit: String(item.fit || ''),
             mode: String(item.mode || ''),
+            tts_voice: String(item.tts_voice || ''),
+            narration_on: item.narration_on !== undefined
+              ? Boolean(item.narration_on)
+              : (String(item.mode || '') ? String(item.mode) === 'narration' : true),
+            lip_on: item.lip_on !== undefined
+              ? Boolean(item.lip_on)
+              : String(item.mode || '') === 'lip',
+            volume_db: String(item.volume_db ?? '0'),
           }
         }
         setEdits(map)
@@ -185,6 +199,10 @@ export default function EditPanel({
           voice_asset: editOf(s.id).voice_asset || '',
           fit: editOf(s.id).fit || '',
           mode: editOf(s.id).mode || '',
+          tts_voice: editOf(s.id).tts_voice || '',
+          narration_on: editOf(s.id).narration_on,
+          lip_on: editOf(s.id).lip_on,
+          volume_db: Number(editOf(s.id).volume_db) || 0,
         })),
       }).then(() => setSavedAt(new Date().toLocaleTimeString())).catch(() => undefined)
     }, 800)
@@ -248,27 +266,21 @@ export default function EditPanel({
     return found ? (found.url || `/media/files/${found.path}`) : ''
   }
 
-  const changeMode = (next: 'narration' | 'lip' | 'silent') => {
-    setContentMode(next)
-    if (next === 'narration') return
-    const withNarration = shots.filter((s) => (editOf(s.id).mode || contentMode) === 'narration'
-      && (editOf(s.id).narration || '').trim())
-    if (withNarration.length) {
-      notify('ok', next === 'lip' ? '已切换为口播类' : '已切换为纯画面',
-             `${withNarration.length} 条旁白已保留，但当前类型下不参与生成`)
-    }
-  }
-
   const modeLabel = (mode: string) =>
     mode === 'narration' ? '解说' : mode === 'lip' ? '口播' : '纯画面'
 
+  const setNarration = (shotId: string, on: boolean) => patchEdit(shotId, { narration_on: on })
+  const setLip = (shotId: string, on: boolean) => patchEdit(shotId, { lip_on: on })
+
   const modeOf = (shotId: string): 'narration' | 'lip' | 'silent' => {
-    const value = editOf(shotId).mode
-    return (value || contentMode) as 'narration' | 'lip' | 'silent'
+    const edit = editOf(shotId)
+    if (edit.narration_on) return 'narration'
+    if (edit.lip_on) return 'lip'
+    return 'silent'
   }
 
   const ordered = useMemo(() => shots.filter((s) => selected.includes(s.id)), [shots, selected])
-  const editOf = (id: string): Edit => edits[id] || { in_point: '', out_point: '', subtitle: '', narration: '', voice_asset: '', fit: '', mode: '' }
+  const editOf = (id: string): Edit => edits[id] || { in_point: '', out_point: '', subtitle: '', narration: '', voice_asset: '', fit: '', mode: '', tts_voice: '', narration_on: true, lip_on: false, volume_db: '0' }
   const patchEdit = (id: string, patch: Partial<Edit>) =>
     setEdits((prev) => ({ ...prev, [id]: { ...editOf(id), ...patch } }))
   const voiceAudio = useRef<HTMLAudioElement | null>(null)
@@ -401,7 +413,7 @@ export default function EditPanel({
         setRow(shot.id, title, 'running')
         const current = editOf(shot.id)
         const shotMode = modeOf(shot.id)
-        const wantSub = shotMode !== 'silent' && (aiKind !== 'narration' || shotMode === 'narration')
+        const wantSub = (editOf(shot.id).narration_on || editOf(shot.id).lip_on) && aiKind !== 'narration'
         const wantNarr = shotMode === 'narration' && (aiKind === 'both' || aiKind === 'narration')
         let narrationText = current.narration
         const needNarr = wantNarr && (aiMode === 'rewrite' || !current.narration)
@@ -425,7 +437,9 @@ export default function EditPanel({
           try {
             const r = await api.aiScript({
               shot_id: shot.id, kind: 'subtitle', style: stylePayload(),
-              narration: shotMode === 'narration' ? narrationText : '', frames: aiFrames,
+              narration: editOf(shot.id).narration_on
+                ? narrationText
+                : (editOf(shot.id).lip_on ? '' : undefined), frames: aiFrames,
             })
             if (r.skip === 'silent') {
               notes.push('无口播，跳过字幕')
@@ -445,7 +459,7 @@ export default function EditPanel({
         }
         if (needNarr && aiTtsOn && narrationText) {
           try {
-            const audio = await api.aiTts({ text: narrationText, shot_id: shot.id })
+            const audio = await api.aiTts({ text: narrationText, shot_id: shot.id, voice: editOf(shot.id).tts_voice || undefined })
             patchEdit(shot.id, { voice_asset: audio.asset_id })
             await refreshAudios(audio.asset_id)
             notes.push(audio.too_long
@@ -511,7 +525,7 @@ export default function EditPanel({
     const text = editOf(shotId).narration.trim()
     if (!text) { setError('先写旁白文案，再点配音'); return }
     try {
-      const audio = await api.aiTts({ text, shot_id: shotId })
+      const audio = await api.aiTts({ text, shot_id: shotId, voice: editOf(shotId).tts_voice || undefined })
       patchEdit(shotId, { voice_asset: audio.asset_id })
       await refreshAudios(audio.asset_id)
       if (audio.too_long) {
@@ -612,14 +626,6 @@ export default function EditPanel({
               {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </label>
-          <label className="inline-field">
-            <span>类型</span>
-            <select value={contentMode} onChange={(e) => changeMode(e.target.value as typeof contentMode)}>
-              <option value="narration">解说类（有旁白）</option>
-              <option value="lip">口播类（语音转写）</option>
-              <option value="silent">纯画面（不加字幕）</option>
-            </select>
-          </label>
           <button className="primary" onClick={() => setAiOpen(true)} disabled={aiRunning}>
             {aiRunning ? <><span className="spin" /> 生成中</> : 'AI 生成'}
           </button>
@@ -637,13 +643,7 @@ export default function EditPanel({
               <b>AI 生成</b>
               <button className="ghost tiny" onClick={() => setAiOpen(false)}>关闭</button>
             </div>
-            <div className="field"><label><span>视频类型</span></label>
-              <select value={contentMode} onChange={(e) => changeMode(e.target.value as typeof contentMode)}>
-                <option value="narration">解说类：有旁白，字幕跟随旁白</option>
-                <option value="lip">口播类：无旁白，字幕来自语音转写</option>
-                <option value="silent">纯画面：不加字幕</option>
-              </select>
-            </div>
+            <div className="meta">按每个镜头的「有旁白 / 有口播」设置分别生成。</div>
             <div className="field"><label><span>生成内容</span></label>
               <select value={aiKind} onChange={(e) => setAiKind(e.target.value as typeof aiKind)}>
                 <option value="both">字幕 + 旁白</option>
@@ -854,62 +854,91 @@ export default function EditPanel({
                         </label>
                       </div>
                       <div className="shot-row">
-                        {modeOf(shot.id) !== 'narration' && (
+                        {edit.narration_on ? (
+                          <label className="grow">
+                            旁白
+                            <div className="voice-pick">
+                              <select className="grow" value={edit.voice_asset}
+                                      onChange={(e) => patchEdit(shot.id, { voice_asset: e.target.value })}>
+                                <option value="">无旁白音频</option>
+                                {audios.map((a) => (
+                                  <option key={a.id} value={a.id}>{audioLabel(a)}</option>
+                                ))}
+                              </select>
+                              <button className="ghost tiny"
+                                      onClick={() => { setUploadFor(shot.id); voiceInput.current?.click() }}>
+                                上传
+                              </button>
+                              <button className="ghost tiny" disabled={aiBusy === `${shot.id}:narration`}
+                                      onClick={() => void aiOne(shot.id, 'narration')}>
+                                {aiBusy === `${shot.id}:narration` ? <><span className="spin" /> 生成中</> : 'AI 写'}
+                              </button>
+                              <button className="ghost tiny" disabled={!edit.narration.trim() || aiBusy === `${shot.id}:tts`}
+                                      title={edit.narration.trim() ? '合成配音' : '先写旁白文案'}
+                                      onClick={() => void ttsOne(shot.id)}>
+                                {aiBusy === `${shot.id}:tts` ? <><span className="spin" /> 配音中</> : '配音'}
+                              </button>
+                              <button className="ghost tiny" disabled={!edit.voice_asset}
+                                      onClick={() => void playVoice(shot.id)}>
+                                {playingVoice === shot.id ? '停止' : '试听'}
+                              </button>
+                              {edit.narration.trim() && !edit.voice_asset && <span className="badge warn">未配音</span>}
+                              {!edit.narration.trim() && edit.voice_asset && <span className="badge">仅音频</span>}
+                            </div>
+                          </label>
+                        ) : (
                           <div className="meta" style={{ flexBasis: '100%' }}>
-                            {modeOf(shot.id) === 'lip'
-                              ? '口播类：字幕来自语音转写，不需要旁白'
-                              : '纯画面：不生成字幕，也不需要旁白'}
+                            {edit.lip_on
+                              ? '没有旁白：字幕来自语音转写，保留原声'
+                              : '既没有旁白也没有口播：不加字幕'}
                           </div>
                         )}
-                        <label className="grow">
-                          旁白
-                          <div className="voice-pick">
-                            <select className="grow" value={edit.voice_asset}
-                                    onChange={(e) => patchEdit(shot.id, { voice_asset: e.target.value })}>
-                              <option value="">无旁白音频</option>
-                              {audios.map((a) => (
-                                <option key={a.id} value={a.id}>{audioLabel(a)}</option>
+                      </div>
+                      {edit.narration_on && edit.lip_on && (
+                        <div className="meta" style={{ color: '#facc15' }}>
+                          同时有旁白和口播：字幕跟随旁白，旁白会叠在原声上，建议把原声音量调到 -10dB 左右
+                        </div>
+                      )}
+                      <div className="shot-row">
+                        <div className="mode-toggles">
+                          <label className="check" style={{ margin: 0 }}>
+                            <input type="checkbox" checked={edit.narration_on}
+                                   onChange={(e) => setNarration(shot.id, e.target.checked)} />
+                            有旁白
+                          </label>
+                          <label className="check" style={{ margin: 0 }}>
+                            <input type="checkbox" checked={edit.lip_on}
+                                   onChange={(e) => setLip(shot.id, e.target.checked)} />
+                            有口播
+                          </label>
+                        </div>
+                        {edit.narration_on && (
+                          <label>
+                            音色
+                            <select value={edit.tts_voice}
+                                    onChange={(e) => patchEdit(shot.id, { tts_voice: e.target.value })}>
+                              <option value="">跟随默认</option>
+                              {voiceOptions.map((v) => (
+                                <option key={v.id} value={v.id}>{v.name || v.id}</option>
                               ))}
                             </select>
-                            <button className="ghost tiny"
-                                    onClick={() => { setUploadFor(shot.id); voiceInput.current?.click() }}>
-                              上传
-                            </button>
-                            <button className="ghost tiny" disabled={aiBusy === `${shot.id}:narration`}
-                                    onClick={() => void aiOne(shot.id, 'narration')}>
-                              {aiBusy === `${shot.id}:narration` ? <><span className="spin" /> 生成中</> : 'AI 写'}
-                            </button>
-                            <button className="ghost tiny" disabled={!edit.narration.trim() || aiBusy === `${shot.id}:tts`}
-                                    title={edit.narration.trim() ? '合成配音' : '先写旁白文案'}
-                                    onClick={() => void ttsOne(shot.id)}>
-                              {aiBusy === `${shot.id}:tts` ? <><span className="spin" /> 配音中</> : '配音'}
-                            </button>
-                            <button className="ghost tiny" disabled={!edit.voice_asset}
-                                    onClick={() => void playVoice(shot.id)}>
-                              {playingVoice === shot.id ? '停止' : '试听'}
-                            </button>
-                            {edit.narration.trim() && !edit.voice_asset && <span className="badge warn">未配音</span>}
-                            {!edit.narration.trim() && edit.voice_asset && <span className="badge">仅音频</span>}
-                          </div>
-                        </label>
-                      </div>
-                      <div className="shot-row">
-                        <label>
-                          类型
-                          <select value={edit.mode} onChange={(e) => patchEdit(shot.id, { mode: e.target.value })}>
-                            <option value="">跟随全局</option>
-                            <option value="narration">解说</option>
-                            <option value="lip">口播</option>
-                            <option value="silent">纯画面</option>
-                          </select>
-                        </label>
-                        <label>
-                          旁白文案
-                          <input placeholder={modeOf(shot.id) === 'narration' ? '旁白文本（配音用）' : '该镜头不是解说类'}
-                                 disabled={modeOf(shot.id) !== 'narration'}
-                                 value={edit.narration}
-                                 onChange={(e) => patchEdit(shot.id, { narration: e.target.value })} />
-                        </label>
+                          </label>
+                        )}
+                        {edit.lip_on && (
+                          <label>
+                            原声音量
+                            <input type="number" step={1} value={edit.volume_db}
+                                   onChange={(e) => patchEdit(shot.id, { volume_db: e.target.value })} />
+                          </label>
+                        )}
+                        {edit.narration_on && (
+                          <label>
+                            旁白文案
+                            <input placeholder="旁白文本（配音用）"
+                                   value={edit.narration}
+                                   onChange={(e) => patchEdit(shot.id, { narration: e.target.value })} />
+                          </label>
+                        )}
                         <label>
                           适配
                           <select value={edit.fit} onChange={(e) => patchEdit(shot.id, { fit: e.target.value })}>
