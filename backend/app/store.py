@@ -170,7 +170,7 @@ def save_render_shots(render_id: str, edits: list[dict]) -> None:
         for idx, item in enumerate(edits):
             conn.execute(
                 "INSERT INTO render_shots(render_id,shot_id,idx,in_point,out_point,speed,"
-                "volume_db,muted,voice_asset,subtitle,fit) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+                "volume_db,muted,voice_asset,subtitle,fit,burned_subtitle) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
                 (
                     render_id, item.get("shot_id"), idx,
                     float(item.get("in_point") or 0),
@@ -181,6 +181,7 @@ def save_render_shots(render_id: str, edits: list[dict]) -> None:
                     str(item.get("voice_asset") or ""),
                     str(item.get("subtitle") or ""),
                     str(item.get("fit") or ""),
+                    1 if item.get("burned_subtitle") else 0,
                 ),
             )
 

@@ -200,6 +200,8 @@ class RenderRunner:
             voice_segments.append((voice_path, dur))
 
             text = str(edit.get("subtitle") or "").strip() or (shot.get("title") or "")
+            if edit.get("burned_subtitle"):
+                text = ""  # 视频里已经烧好字幕，不再重复烧
             timeline.append({
                 "shot_id": shot["id"], "title": shot.get("title") or "",
                 "start": cursor, "end": cursor + dur, "duration": dur, "subtitle": text,

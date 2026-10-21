@@ -21,6 +21,7 @@ interface Edit {
   lip_on: boolean
   volume_db: string
   subtitle_lock: boolean
+  burned_subtitle: boolean
 }
 
 export default function EditPanel({
@@ -87,7 +88,7 @@ export default function EditPanel({
   const [titleBusy, setTitleBusy] = useState('')
   const [rhythm, setRhythm] = useState<{ summary: string; items: Array<{ shot_id: string; title: string; duration: number; level: string; advice: string }> } | null>(null)
   const [rhythmBusy, setRhythmBusy] = useState(false)
-  const [aiFrameUrls, setAiFrameUrls] = useState<string[]>([])
+  const [aiFrameGroups, setAiFrameGroups] = useState<Array<{ shotId: string; title: string; urls: string[] }>>([])
   const [showPrompt, setShowPrompt] = useState(false)
   const voiceInput = useRef<HTMLInputElement | null>(null)
   const [shotPreview, setShotPreview] = useState<{ url: string; duration: number }>({ url: '', duration: 0 })
@@ -172,6 +173,7 @@ export default function EditPanel({
               : String(item.mode || '') === 'lip',
             volume_db: String(item.volume_db ?? '0'),
             subtitle_lock: Boolean(item.subtitle_lock),
+            burned_subtitle: Boolean(item.burned_subtitle),
           }
         }
         // 有旁白且没手动锁定时，字幕以旁白为准（修正历史遗留的不一致）
@@ -218,6 +220,7 @@ export default function EditPanel({
           lip_on: editOf(s.id).lip_on,
           volume_db: Number(editOf(s.id).volume_db) || 0,
           subtitle_lock: editOf(s.id).subtitle_lock,
+          burned_subtitle: editOf(s.id).burned_subtitle,
         })),
       }).then(() => setSavedAt(new Date().toLocaleTimeString())).catch(() => undefined)
     }, 800)
@@ -344,7 +347,7 @@ export default function EditPanel({
   }, [durations, subAutoFit, loaded, shots])
 
   const ordered = useMemo(() => shots.filter((s) => selected.includes(s.id)), [shots, selected])
-  const editOf = (id: string): Edit => edits[id] || { in_point: '', out_point: '', subtitle: '', narration: '', voice_asset: '', fit: '', mode: '', tts_voice: '', narration_on: true, lip_on: false, volume_db: '0', subtitle_lock: false }
+  const editOf = (id: string): Edit => edits[id] || { in_point: '', out_point: '', subtitle: '', narration: '', voice_asset: '', fit: '', mode: '', tts_voice: '', narration_on: true, lip_on: false, volume_db: '0', subtitle_lock: false, burned_subtitle: false }
   const patchEdit = (id: string, patch: Partial<Edit>) =>
     setEdits((prev) => ({ ...prev, [id]: { ...editOf(id), ...patch } }))
   const voiceAudio = useRef<HTMLAudioElement | null>(null)
@@ -428,10 +431,19 @@ export default function EditPanel({
     setAiRows((prev) => ({ ...prev, [shotId]: { title, status, note } }))
 
   const loadFrames = async () => {
-    if (!activeShot) return
+    if (!ordered.length) return
     try {
-      const res = await api.shotFrames(activeShot, aiFrames || 3)
-      setAiFrameUrls(res.items.map((i) => i.url))
+      const count = aiFrames || 3
+      const groups: Array<{ shotId: string; title: string; urls: string[] }> = []
+      for (const shot of ordered) {
+        const res = await api.shotFrames(shot.id, count)
+        groups.push({
+          shotId: shot.id,
+          title: shot.title || `镜头 ${shot.idx + 1}`,
+          urls: res.items.map((i) => i.url),
+        })
+      }
+      setAiFrameGroups(groups)
     } catch (err) {
       notify('err', '截帧失败', err instanceof Error ? err.message : String(err))
     }
@@ -504,7 +516,7 @@ export default function EditPanel({
         setRow(shot.id, title, 'running')
         const current = editOf(shot.id)
         const shotMode = modeOf(shot.id)
-        const wantSub = (editOf(shot.id).narration_on || editOf(shot.id).lip_on) && aiKind !== 'narration'
+        const wantSub = !editOf(shot.id).burned_subtitle && (editOf(shot.id).narration_on || editOf(shot.id).lip_on) && aiKind !== 'narration'
         const wantNarr = shotMode === 'narration' && (aiKind === 'both' || aiKind === 'narration')
         let narrationText = current.narration
         const needNarr = wantNarr && (aiMode === 'rewrite' || !current.narration)
@@ -595,7 +607,7 @@ export default function EditPanel({
         return
       }
       if (kind === 'subtitle') {
-        patchEdit(shotId, { subtitle: r.text, subtitle_lock: false })
+        patchEdit(shotId, { subtitle: r.text, subtitle_lock: false, burned_subtitle: false })
       } else {
         const cur = editOf(shotId)
         patchEdit(shotId, cur.subtitle_lock
@@ -787,21 +799,28 @@ export default function EditPanel({
             <div className="row" style={{ alignItems: 'center' }}>
               <label className="check" style={{ margin: 0 }}>
                 <input type="checkbox" checked={aiFrames > 0}
-                       onChange={(e) => { setAiFrames(e.target.checked ? 3 : 0); setAiFrameUrls([]) }} />
+                       onChange={(e) => { setAiFrames(e.target.checked ? 3 : 0); setAiFrameGroups([]) }} />
                 附带视频截图给 AI（多模态）
               </label>
               {aiFrames > 0 && (
                 <>
                   <input type="range" min={1} max={6} value={aiFrames}
-                         onChange={(e) => { setAiFrames(Number(e.target.value)); setAiFrameUrls([]) }} />
+                         onChange={(e) => { setAiFrames(Number(e.target.value)); setAiFrameGroups([]) }} />
                   <span className="meta">{aiFrames} 张</span>
                   <button className="ghost tiny" onClick={() => void loadFrames()}>预览截图</button>
                 </>
               )}
             </div>
-            {aiFrameUrls.length > 0 && (
-              <div className="frame-strip">
-                {aiFrameUrls.map((url) => <img key={url} src={url} alt="截图" />)}
+            {aiFrameGroups.length > 0 && (
+              <div className="frame-groups">
+                {aiFrameGroups.map((group) => (
+                  <div key={group.shotId} className="frame-group">
+                    <span className="meta">{group.title}</span>
+                    <div className="frame-strip">
+                      {group.urls.map((url) => <img key={url} src={url} alt={group.title} />)}
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
             <div className="row" style={{ alignItems: 'center' }}>
@@ -970,6 +989,7 @@ export default function EditPanel({
                             <input className="grow" placeholder={shot.title || '这一镜的字幕'}
                                    value={edit.subtitle}
                                    onChange={(e) => patchEdit(shot.id, { subtitle: e.target.value })} />
+                            {edit.burned_subtitle && <span className="badge">视频自带字幕</span>}
                             {edit.narration_on && !edit.subtitle_lock && edit.narration.trim() && (
                               <span className="badge">
                                 {edit.subtitle !== edit.narration && subAutoFit ? '已按阅读速度压缩' : '跟随旁白'}
@@ -981,7 +1001,7 @@ export default function EditPanel({
                             {edit.narration_on && edit.subtitle_lock && (
                               <button className="ghost tiny"
                                       title="重新让字幕和旁白保持一致"
-                                      onClick={() => patchEdit(shot.id, { subtitle: fitSubtitle(edit.narration, shot.id), subtitle_lock: false })}>
+                                      onClick={() => patchEdit(shot.id, { subtitle: fitSubtitle(edit.narration, shot.id), subtitle_lock: false, burned_subtitle: false })}>
                                 恢复跟随
                               </button>
                             )}
@@ -1052,6 +1072,11 @@ export default function EditPanel({
                             <input type="checkbox" checked={edit.lip_on}
                                    onChange={(e) => setLip(shot.id, e.target.checked)} />
                             有口播
+                          </label>
+                          <label className="check" style={{ margin: 0 }}>
+                            <input type="checkbox" checked={edit.burned_subtitle}
+                                   onChange={(e) => patchEdit(shot.id, { burned_subtitle: e.target.checked })} />
+                            视频自带字幕
                           </label>
                         </div>
                         {edit.narration_on && (

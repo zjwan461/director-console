@@ -558,3 +558,6 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
 
 .voice-pick .badge { white-space: nowrap; flex: 0 0 auto; }
 .voice-pick .ghost.tiny { white-space: nowrap; flex: 0 0 auto; }
+
+.frame-groups { display: flex; flex-direction: column; gap: 8px; max-height: 240px; overflow-y: auto; }
+.frame-group { display: flex; flex-direction: column; gap: 4px; }
