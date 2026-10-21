@@ -310,26 +310,56 @@ async def process_clip(
     out_point: float | None = None,
     volume_db: float = 0.0,
     muted: bool = False,
+    fit: str = "letterbox",
 ) -> None:
-    """单镜处理：裁剪 + 缩放/补边 + 帧率 + 音量。"""
+    """单镜处理：裁剪 + 画布适配 + 帧率 + 音量。
+
+    fit: letterbox=等比缩放补黑边 / crop=裁切填满 / blur=模糊背景补边
+    """
     ff = ffmpeg_path()
     if not ff:
         raise FFmpegMissing("未检测到 ffmpeg")
     with_audio = await has_audio(src)
-    vf = (
-        f"scale={width}:{height}:force_original_aspect_ratio=decrease,"
-        f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps={fps}"
-    )
+    fit = fit if fit in {"letterbox", "crop", "blur"} else "letterbox"
+
+    if fit == "crop":
+        vf = (
+            f"scale={width}:{height}:force_original_aspect_ratio=increase,"
+            f"crop={width}:{height},setsar=1,fps={fps}"
+        )
+        graph = None
+    elif fit == "blur":
+        graph = (
+            f"[0:v]split=2[bg][fg];"
+            f"[bg]scale={width}:{height}:force_original_aspect_ratio=increase,"
+            f"crop={width}:{height},gblur=sigma=28[bg2];"
+            f"[fg]scale={width}:{height}:force_original_aspect_ratio=decrease[fg2];"
+            f"[bg2][fg2]overlay=(W-w)/2:(H-h)/2,setsar=1,fps={fps}[v]"
+        )
+        vf = None
+    else:
+        vf = (
+            f"scale={width}:{height}:force_original_aspect_ratio=decrease,"
+            f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps={fps}"
+        )
+        graph = None
+
     cmd = [ff, "-y", "-loglevel", "error", "-ss", f"{max(in_point, 0):.3f}", "-i", str(src)]
     if out_point is not None and out_point > in_point:
         cmd += ["-t", f"{out_point - in_point:.3f}"]
 
     if with_audio and not muted:
         af = f"volume={volume_db}dB,aresample=48000"
-        cmd += ["-map", "0:v:0", "-map", "0:a:0", "-vf", vf, "-af", af]
+        if graph:
+            cmd += ["-filter_complex", graph, "-map", "[v]", "-map", "0:a:0", "-af", af]
+        else:
+            cmd += ["-map", "0:v:0", "-map", "0:a:0", "-vf", vf, "-af", af]
     else:
-        cmd += ["-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=48000",
-                "-map", "0:v:0", "-map", "1:a:0", "-vf", vf, "-shortest"]
+        cmd += ["-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=48000"]
+        if graph:
+            cmd += ["-filter_complex", graph, "-map", "[v]", "-map", "1:a:0", "-shortest"]
+        else:
+            cmd += ["-map", "0:v:0", "-map", "1:a:0", "-vf", vf, "-shortest"]
 
     cmd += [
         "-c:v", "libx264", "-crf", _cfg("crf", "20"), "-preset", "veryfast",
@@ -386,6 +416,7 @@ async def make_title_card(
     bg_color: str = "#000000",
     bg_image: Path | None = None,
     fade: float = 0.3,
+    bg_fit: str = "crop",
 ) -> None:
     """生成片头/片尾卡：纯色或图片背景 + 居中文字，带淡入淡出。"""
     from PIL import Image, ImageDraw
@@ -394,11 +425,17 @@ async def make_title_card(
     if bg_image and bg_image.exists():
         try:
             src = Image.open(bg_image).convert("RGB")
-            scale = max(width / src.width, height / src.height)
-            resized = src.resize((int(src.width * scale) + 1, int(src.height * scale) + 1))
-            left = (resized.width - width) // 2
-            top = (resized.height - height) // 2
-            frame = resized.crop((left, top, left + width, top + height))
+            if bg_fit == "letterbox":
+                factor = min(width / src.width, height / src.height)
+                resized = src.resize((max(1, int(src.width * factor)), max(1, int(src.height * factor))))
+                frame = Image.new("RGB", (width, height), bg_color)
+                frame.paste(resized, ((width - resized.width) // 2, (height - resized.height) // 2))
+            else:
+                scale = max(width / src.width, height / src.height)
+                resized = src.resize((int(src.width * scale) + 1, int(src.height * scale) + 1))
+                left = (resized.width - width) // 2
+                top = (resized.height - height) // 2
+                frame = resized.crop((left, top, left + width, top + height))
         except Exception:
             pass
 
@@ -531,6 +568,25 @@ async def mix_bgm(
     code, err = await _run(cmd)
     if code != 0:
         raise RuntimeError(f"混音失败：{_tail(err)}")
+
+
+async def probe_size(path: Path) -> tuple[int, int]:
+    """读视频分辨率；ffprobe 不可用时返回 (0, 0)。"""
+    probe = ffprobe_path()
+    if not probe or not path.exists():
+        return 0, 0
+    proc = await asyncio.create_subprocess_exec(
+        probe, "-v", "error", "-select_streams", "v:0",
+        "-show_entries", "stream=width,height", "-of", "json", str(path),
+        stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.DEVNULL,
+    )
+    out, _ = await proc.communicate()
+    try:
+        data = json.loads((out or b"{}").decode("utf-8", "replace"))
+        stream = (data.get("streams") or [{}])[0]
+        return int(stream.get("width") or 0), int(stream.get("height") or 0)
+    except (json.JSONDecodeError, TypeError, ValueError):
+        return 0, 0
 
 
 def write_srt(timeline: list[dict], path: Path) -> None:

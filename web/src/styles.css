@@ -499,3 +499,8 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
 .picker-item span { font-size: 10px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .picker-item:hover { border-color: #7c6cf0; }
 .picker-item.color-none { align-items: center; justify-content: center; height: 104px; font-size: 12px; }
+
+
+/* 预览画布：显示成片实际画幅 */
+.canvas-box { position: relative; width: 100%; background: #000; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.canvas-box .preview-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; max-height: none; border-radius: 0; }

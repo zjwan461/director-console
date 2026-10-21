@@ -13,6 +13,7 @@ interface Edit {
   out_point: string
   subtitle: string
   voice_asset: string
+  fit: string
 }
 
 export default function EditPanel({
@@ -60,7 +61,9 @@ export default function EditPanel({
   const voiceInput = useRef<HTMLInputElement | null>(null)
   const [shotPreview, setShotPreview] = useState<{ url: string; duration: number }>({ url: '', duration: 0 })
   const [previewJob, setPreviewJob] = useState<{ id: string; status: string; message: string; url?: string } | null>(null)
+  const [dims, setDims] = useState<Record<string, { w: number; h: number }>>({})
   const [timeline, setTimeline] = useState<Array<{ shot_id: string; title: string; duration: number; start: number; end: number }>>([])
+  const [fitMode, setFitMode] = useState('letterbox')
   const [transType, setTransType] = useState('none')
   const [transDur, setTransDur] = useState(0.4)
   const saveTimer = useRef<number | null>(null)
@@ -86,6 +89,7 @@ export default function EditPanel({
         const w = Number(opts.width || 1280)
         setResKey(RESOLUTIONS.find((r) => r.width === w)?.key || '720p')
         setFps(Number(opts.fps || 24))
+        setFitMode(String(opts.fit || 'letterbox'))
         const bgm = (opts.bgm || {}) as Record<string, unknown>
         setBgmId(String(bgm.asset_id || ''))
         setBgmVolume(Number(bgm.volume_db ?? -14))
@@ -122,6 +126,7 @@ export default function EditPanel({
             out_point: item.out_point ? String(item.out_point) : '',
             subtitle: String(item.subtitle || ''),
             voice_asset: String(item.voice_asset || ''),
+            fit: String(item.fit || ''),
           }
         }
         setEdits(map)
@@ -154,11 +159,12 @@ export default function EditPanel({
           out_point: editOf(s.id).out_point ? Number(editOf(s.id).out_point) : undefined,
           subtitle: editOf(s.id).subtitle || s.title || '',
           voice_asset: editOf(s.id).voice_asset || '',
+          fit: editOf(s.id).fit || '',
         })),
       }).then(() => setSavedAt(new Date().toLocaleTimeString())).catch(() => undefined)
     }, 800)
   }, [loaded, projectId, resKey, fps, bgmId, bgmVolume, fadeIn, fadeOut, loopBgm,
-      subsEnabled, subSize, subMargin, loudness, transType, transDur, titleOn, titleText, titleDur, titleBg, titleImage,
+      subsEnabled, subSize, subMargin, loudness, fitMode, transType, transDur, titleOn, titleText, titleDur, titleBg, titleImage,
       tailOn, tailText, tailDur, tailBg, tailImage, edits, selected, shots])
 
   useEffect(() => {
@@ -176,8 +182,15 @@ export default function EditPanel({
     let cancelled = false
     if (!ordered.length) { setTimeline([]); return }
     const overlap = transType === 'none' ? 0 : transDur
-    Promise.all(ordered.map((s) => api.shotPreview(s.id).catch(() => ({ duration: 0 })))).then((list) => {
+    Promise.all(ordered.map((s) => api.shotPreview(s.id).catch(() => ({ duration: 0, width: 0, height: 0 })))).then((list) => {
       if (cancelled) return
+      const nextDims: Record<string, { w: number; h: number }> = {}
+      ordered.forEach((s, i) => {
+        const w = Number((list[i] as { width?: number }).width) || 0
+        const h = Number((list[i] as { height?: number }).height) || 0
+        if (w && h) nextDims[s.id] = { w, h }
+      })
+      setDims((prev) => ({ ...prev, ...nextDims }))
       let cursor = 0
       const items = ordered.map((s, i) => {
         const edit = editOf(s.id)
@@ -211,7 +224,7 @@ export default function EditPanel({
   }
 
   const ordered = useMemo(() => shots.filter((s) => selected.includes(s.id)), [shots, selected])
-  const editOf = (id: string): Edit => edits[id] || { in_point: '', out_point: '', subtitle: '', voice_asset: '' }
+  const editOf = (id: string): Edit => edits[id] || { in_point: '', out_point: '', subtitle: '', voice_asset: '', fit: '' }
   const patchEdit = (id: string, patch: Partial<Edit>) =>
     setEdits((prev) => ({ ...prev, [id]: { ...editOf(id), ...patch } }))
   const uploadVoice = async (files: FileList | null) => {
@@ -240,7 +253,7 @@ export default function EditPanel({
     const res = RESOLUTIONS.find((r) => r.key === resKey) || RESOLUTIONS[1]
     try {
       const render = await api.createRender(projectId, ordered.map((s) => s.id), {
-        width: res.width, height: res.height, fps, preview: true,
+        width: res.width, height: res.height, fps, preview: true, fit: fitMode,
         transition: { type: transType, duration: transDur },
         title: { enabled: titleOn, text: titleText, duration: titleDur, bg: titleBg, bg_asset: titleImage },
         tail: { enabled: tailOn, text: tailText, duration: tailDur, bg: tailBg, bg_asset: tailImage },
@@ -250,6 +263,7 @@ export default function EditPanel({
         out_point: editOf(s.id).out_point ? Number(editOf(s.id).out_point) : undefined,
         subtitle: editOf(s.id).subtitle || s.title || '',
         voice_asset: editOf(s.id).voice_asset || '',
+        fit: editOf(s.id).fit || '',
       })))
       setPreviewJob({ id: render.id, status: render.status, message: render.message || '排队中' })
       const poll = async (id: string) => {
@@ -276,7 +290,7 @@ export default function EditPanel({
     const res = RESOLUTIONS.find((r) => r.key === resKey) || RESOLUTIONS[1]
     try {
       await api.createRender(projectId, ordered.map((s) => s.id), {
-        width: res.width, height: res.height, fps,
+        width: res.width, height: res.height, fps, fit: fitMode,
         transition: { type: transType, duration: transDur },
         title: { enabled: titleOn, text: titleText, duration: titleDur, bg: titleBg, bg_asset: titleImage },
         tail: { enabled: tailOn, text: tailText, duration: tailDur, bg: tailBg, bg_asset: tailImage },
@@ -289,6 +303,7 @@ export default function EditPanel({
         out_point: editOf(s.id).out_point ? Number(editOf(s.id).out_point) : undefined,
         subtitle: editOf(s.id).subtitle || s.title || '',
         voice_asset: editOf(s.id).voice_asset || '',
+        fit: editOf(s.id).fit || '',
       })))
       onGoRenders()
     } catch (err) {
@@ -385,6 +400,20 @@ export default function EditPanel({
                     <input type="checkbox" checked={on} onChange={() => toggle(shot.id)}
                            onClick={(e) => e.stopPropagation()} />
                     <b title={shot.title}>{shot.title || `镜头 ${shot.idx + 1}`}</b>
+                    {(() => {
+                      const d = dims[shot.id]
+                      if (!d) return null
+                      const canvas = RESOLUTIONS.find((r) => r.key === resKey) || RESOLUTIONS[1]
+                      const srcRatio = d.w / d.h
+                      const canvasRatio = canvas.width / canvas.height
+                      const off = Math.abs(srcRatio - canvasRatio) > 0.05
+                      const label = srcRatio > 1.2 ? '横屏' : srcRatio < 0.85 ? '竖屏' : '方形'
+                      return (
+                        <span className={`badge ${off ? 'warn' : ''}`} title={`${d.w}×${d.h}`}>
+                          {label} {off ? '· 比例不符' : ''}
+                        </span>
+                      )
+                    })()}
                     <span className="meta">{shot.last_frame_url ? '已出片' : '暂无产物'}</span>
                   </div>
                   {on && (
@@ -426,6 +455,15 @@ export default function EditPanel({
                             </button>
                           </div>
                         </label>
+                        <label>
+                          适配
+                          <select value={edit.fit} onChange={(e) => patchEdit(shot.id, { fit: e.target.value })}>
+                            <option value="">跟随全局</option>
+                            <option value="letterbox">补边</option>
+                            <option value="crop">裁切</option>
+                            <option value="blur">模糊</option>
+                          </select>
+                        </label>
                       </div>
                     </div>
                   )}
@@ -442,8 +480,13 @@ export default function EditPanel({
             <span className="meta">{activeShot ? (shots.find((s) => s.id === activeShot)?.title || '') : '选择镜头'}</span>
           </h2>
           {(previewJob?.status === 'succeeded' && previewJob.url) || shotPreview.url ? (
-            <video key={previewJob?.url || shotPreview.url} className="preview-video"
-                   src={previewJob?.status === 'succeeded' && previewJob.url ? previewJob.url : shotPreview.url} controls />
+            <div className="canvas-box" style={{
+              aspectRatio: `${(RESOLUTIONS.find((r) => r.key === resKey) || RESOLUTIONS[1]).width} / ${
+                (RESOLUTIONS.find((r) => r.key === resKey) || RESOLUTIONS[1]).height}`,
+            }}>
+              <video key={previewJob?.url || shotPreview.url} className="preview-video"
+                     src={previewJob?.status === 'succeeded' && previewJob.url ? previewJob.url : shotPreview.url} controls />
+            </div>
           ) : (
             <div className="preview-empty">这个镜头还没有可预览的视频</div>
           )}
@@ -476,6 +519,13 @@ export default function EditPanel({
               <option value={30}>30 fps</option>
             </select>
           </div>
+
+          <h3>画布适配</h3>
+          <select className="grow" value={fitMode} onChange={(e) => setFitMode(e.target.value)}>
+            <option value="letterbox">补边（保留完整画面，可能有黑边）</option>
+            <option value="crop">裁切填满（切掉超出部分）</option>
+            <option value="blur">模糊背景补边（无黑边）</option>
+          </select>
 
           <h3>转场</h3>
           <div className="row">

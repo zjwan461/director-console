@@ -74,7 +74,9 @@ export const api = {
       body: JSON.stringify(payload),
     }),
   shotPreview: (shotId: string) =>
-    request<{ url: string; duration: number; source: string }>(`/api/shots/${shotId}/preview`),
+    request<{ url: string; duration: number; source: string; width: number; height: number }>(
+      `/api/shots/${shotId}/preview`,
+    ),
   renderTimeline: (renderId: string) =>
     request<{ items: Array<{ shot_id: string; title: string; duration: number; start: number; end: number }>; total: number }>(
       `/api/renders/${renderId}/timeline`,

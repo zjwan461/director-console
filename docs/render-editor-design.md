@@ -238,6 +238,9 @@ tts:
 | M3 旁白（上传音频 + 混音 + 闪避） + 片头片尾 | ✅ 已实现 | 本轮提交 |
 | M4 TTS（GPT-SoVITS） | 📝 计划 | 见第 10 节 |
 
+M2.5 画布适配：`options.fit` + 每镜 `fit` 覆盖，支持 letterbox / crop / blur；
+剪辑页显示素材方向徽标（横屏/竖屏/方形），比例不符时标黄；预览按成片画幅显示。
+
 M2 补充说明：
 
 - 预览：`options.preview=true` → 854 宽、跳过字幕与响度，`POST /api/projects/{pid}/renders` 后轮询

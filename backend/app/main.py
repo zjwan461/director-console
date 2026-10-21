@@ -900,12 +900,18 @@ async def shot_preview(shot_id: str) -> dict:
         return {"url": "", "duration": 0, "source": ""}
     url, path = found
     duration = 0.0
+    width = height = 0
     if path.exists():
         try:
             duration = await ffmpeg.duration_of(path)
         except Exception:
             duration = 0.0
-    return {"url": url, "duration": round(duration, 3), "source": path.name}
+        try:
+            width, height = await ffmpeg.probe_size(path)
+        except Exception:
+            width = height = 0
+    return {"url": url, "duration": round(duration, 3), "source": path.name,
+            "width": width, "height": height}
 
 
 @app.get("/api/renders/{render_id}/timeline")
@@ -1046,7 +1052,7 @@ async def create_render(project_id: str, body: RenderCreate) -> dict:
         "loudness": body.options.get("loudness") or {},
     }
     # 转场 / 预览等可选参数原样带上
-    for extra in ("transition", "preview", "title", "tail"):
+    for extra in ("transition", "preview", "title", "tail", "fit"):
         if extra in body.options:
             options[extra] = body.options[extra]
     if options["width"] < 64 or options["height"] < 64:

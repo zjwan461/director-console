@@ -87,6 +87,7 @@ class RenderRunner:
         sub_opt = options.get("subtitles") or {}
         loud_opt = options.get("loudness") or {}
         preview = bool(options.get("preview"))
+        global_fit = str(options.get("fit") or "letterbox")
         title_opt = options.get("title") or {}
         tail_opt = options.get("tail") or {}
         title_text = str(title_opt.get("text") or "").strip() if title_opt.get("enabled") else ""
@@ -141,12 +142,14 @@ class RenderRunner:
                 message=f"{idx-1}/{total} 段处理：{shot['title'] or shot['id']}",
                 progress=0.05 + 0.55 * (idx - 1) / total,
             )
+            shot_fit = str(edit.get("fit") or "") or global_fit
             await ffmpeg.process_clip(
                 src, dst, width, height, fps,
                 in_point=float(edit.get("in_point") or 0),
                 out_point=float(edit["out_point"]) if edit.get("out_point") else None,
                 volume_db=float(edit.get("volume_db") or 0),
                 muted=bool(edit.get("muted")),
+                fit=shot_fit,
             )
             dur = await ffmpeg.duration_of(dst)
 
@@ -195,6 +198,7 @@ class RenderRunner:
                 card, title_text, title_dur, width, height, fps,
                 bg_color=str(title_opt.get("bg") or "#000000"),
                 bg_image=bg_path,
+                bg_fit=global_fit,
             )
             parts.append(card)
         parts.append(current)
@@ -211,6 +215,7 @@ class RenderRunner:
                 card, tail_text, tail_dur, width, height, fps,
                 bg_color=str(tail_opt.get("bg") or "#000000"),
                 bg_image=bg_path,
+                bg_fit=global_fit,
             )
             parts.append(card)
         if len(parts) > 1:
