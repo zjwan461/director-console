@@ -22,7 +22,7 @@ FIELD_CATEGORY = {
     "vae_name": "vae",
     "audio_vae": "vae",
     "video_vae": "vae",
-    "tiny_vae": "vae",
+    "tiny_vae": "vae_approx",
     "lora_name": "loras",
     "control_net_name": "controlnet",
     "style_model_name": "style_models",

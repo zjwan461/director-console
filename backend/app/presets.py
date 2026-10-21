@@ -278,6 +278,8 @@ MODEL_EXTS = (".safetensors", ".ckpt", ".pt", ".pth", ".bin", ".gguf", ".sft")
 ENUM_FALLBACKS = {
     "sampler_name": ["res_multistep", "euler", "dpmpp_2m", "ddim"],
     "scheduler": ["normal", "simple", "karras"],
+    # KJNodes 预览用的小 VAE：本机没有对应文件时用 none（只影响实时预览）
+    "tiny_vae": ["none"],
 }
 
 
@@ -308,6 +310,7 @@ def adapt_workflow_models(workflow: dict, object_info: dict) -> tuple[dict, list
             if not options or value in options:
                 continue
 
+            matched = False
             if is_model:
                 base = value.rsplit("/", 1)[-1]
                 matches = [o for o in options if o.rsplit("/", 1)[-1] == base]
@@ -315,6 +318,8 @@ def adapt_workflow_models(workflow: dict, object_info: dict) -> tuple[dict, list
                     inputs[field] = matches[0]
                     changes.append({"good": value, "actual": matches[0],
                                     "node": class_type, "field": field})
+                    matched = True
+            if matched or field not in ENUM_FALLBACKS:
                 continue
 
             for candidate in ENUM_FALLBACKS[field]:
