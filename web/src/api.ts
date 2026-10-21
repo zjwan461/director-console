@@ -95,7 +95,7 @@ export const api = {
       { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) },
     ),
   testTts: (payload: { base_url: string; api_key?: string; model: string; voice: string; proxy?: string }) =>
-    request<{ ok: boolean; duration?: number; error?: string }>('/api/settings/tts/test', {
+    request<{ ok: boolean; duration?: number; url?: string; error?: string }>('/api/settings/tts/test', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),

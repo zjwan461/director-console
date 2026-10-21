@@ -516,3 +516,5 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
 .ai-row.done .ai-dot { background: #4ade80; }
 .ai-row.error .ai-dot { background: #f87171; }
 @keyframes pulse { 0%,100% { opacity: .35 } 50% { opacity: 1 } }
+
+.tts-audio { width: 100%; margin-top: 10px; }

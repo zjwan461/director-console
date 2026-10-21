@@ -456,6 +456,9 @@ function AISettingsPanel() {
         <button className="ghost" disabled={busy === 'reset'} onClick={() => void reset()}>恢复默认</button>
       </div>
       {note && <div className="notice" style={{ marginTop: 8 }}>{note}</div>}
+      {audioUrl && (
+        <audio className="tts-audio" src={audioUrl} controls autoPlay />
+      )}
     </div>
   )
 }
@@ -469,6 +472,7 @@ function TTSPanel() {
   const [keyHint, setKeyHint] = useState('')
   const [proxy, setProxy] = useState('')
   const [voices, setVoices] = useState<Array<{ id: string; name: string }>>([])
+  const [audioUrl, setAudioUrl] = useState('')
   const [note, setNote] = useState('')
   const [busy, setBusy] = useState('')
 
@@ -504,7 +508,13 @@ function TTSPanel() {
     setNote('')
     try {
       const r = await api.testTts(payload())
-      setNote(r.ok ? `试听成功（${r.duration}s）` : `失败：${r.error}`)
+      if (r.ok) {
+        setAudioUrl(r.url || '')
+        setNote(`试听成功（${r.duration}s）`)
+      } else {
+        setAudioUrl('')
+        setNote(`失败：${r.error}`)
+      }
     } catch (err) {
       setNote(err instanceof Error ? err.message : String(err))
     } finally { setBusy('') }
@@ -554,6 +564,9 @@ function TTSPanel() {
         </button>
       </div>
       {note && <div className="notice" style={{ marginTop: 8 }}>{note}</div>}
+      {audioUrl && (
+        <audio className="tts-audio" src={audioUrl} controls autoPlay />
+      )}
     </div>
   )
 }
