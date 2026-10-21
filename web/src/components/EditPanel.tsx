@@ -71,6 +71,9 @@ export default function EditPanel({
   const [aiUndo, setAiUndo] = useState<Record<string, Edit> | null>(null)
   const [aiProgress, setAiProgress] = useState({ done: 0, total: 0 })
   const [aiRows, setAiRows] = useState<Record<string, { title: string; status: string; note?: string }>>({})
+  const [aiFrames, setAiFrames] = useState(0)
+  const [aiFrameUrls, setAiFrameUrls] = useState<string[]>([])
+  const [showPrompt, setShowPrompt] = useState(false)
   const voiceInput = useRef<HTMLInputElement | null>(null)
   const [shotPreview, setShotPreview] = useState<{ url: string; duration: number }>({ url: '', duration: 0 })
   const [previewJob, setPreviewJob] = useState<{ id: string; status: string; message: string; url?: string } | null>(null)
@@ -322,6 +325,33 @@ export default function EditPanel({
   const setRow = (shotId: string, title: string, status: string, note = '') =>
     setAiRows((prev) => ({ ...prev, [shotId]: { title, status, note } }))
 
+  const loadFrames = async () => {
+    if (!activeShot) return
+    try {
+      const res = await api.shotFrames(activeShot, aiFrames || 3)
+      setAiFrameUrls(res.items.map((i) => i.url))
+    } catch (err) {
+      notify('err', '截帧失败', err instanceof Error ? err.message : String(err))
+    }
+  }
+
+  const promptPreview = () => {
+    const first = ordered[0]
+    const canvas = RESOLUTIONS.find((r) => r.key === resKey) || RESOLUTIONS[1]
+    return JSON.stringify({
+      kind: aiKind,
+      style: { tone: aiTone, person: aiPerson, language: aiLang },
+      frames_per_shot: aiFrames,
+      shots: ordered.slice(0, 3).map((s) => ({
+        title: s.title,
+        description: String(s.values?.prompt || '').slice(0, 200),
+        duration: Number(editOf(s.id).out_point || 5) - Number(editOf(s.id).in_point || 0),
+      })),
+      canvas: `${canvas.width}x${canvas.height}`,
+      note: first ? `共 ${ordered.length} 镜` : '未选择镜头',
+    }, null, 2)
+  }
+
   const runAI = async () => {
     if (!ordered.length) return
     const snapshot = { ...edits }
@@ -345,7 +375,7 @@ export default function EditPanel({
         const notes: string[] = []
         if (needNarr) {
           try {
-            const r = await api.aiScript({ shot_id: shot.id, kind: 'narration', style: stylePayload() })
+            const r = await api.aiScript({ shot_id: shot.id, kind: 'narration', style: stylePayload(), frames: aiFrames })
             patchEdit(shot.id, { narration: r.text })
             narrationText = r.text
             done += 1
@@ -362,7 +392,7 @@ export default function EditPanel({
           try {
             const r = await api.aiScript({
               shot_id: shot.id, kind: 'subtitle', style: stylePayload(),
-              narration: narrationText,
+              narration: narrationText, frames: aiFrames,
             })
             if (r.skip === 'silent') {
               notes.push('无口播，跳过字幕')
@@ -409,7 +439,7 @@ export default function EditPanel({
   const aiOne = async (shotId: string, kind: 'subtitle' | 'narration') => {
     try {
       const r = await api.aiScript({
-        shot_id: shotId, kind, style: stylePayload(),
+        shot_id: shotId, kind, style: stylePayload(), frames: aiFrames,
         narration: kind === 'subtitle' ? editOf(shotId).narration : undefined,
       })
       if (r.skip === 'silent') {
@@ -580,6 +610,31 @@ export default function EditPanel({
                 </label>
               )}
             </div>
+            <div className="row" style={{ alignItems: 'center' }}>
+              <label className="check" style={{ margin: 0 }}>
+                <input type="checkbox" checked={aiFrames > 0}
+                       onChange={(e) => { setAiFrames(e.target.checked ? 3 : 0); setAiFrameUrls([]) }} />
+                附带视频截图给 AI（多模态）
+              </label>
+              {aiFrames > 0 && (
+                <>
+                  <input type="range" min={1} max={6} value={aiFrames}
+                         onChange={(e) => { setAiFrames(Number(e.target.value)); setAiFrameUrls([]) }} />
+                  <span className="meta">{aiFrames} 张</span>
+                  <button className="ghost tiny" onClick={() => void loadFrames()}>预览截图</button>
+                </>
+              )}
+            </div>
+            {aiFrameUrls.length > 0 && (
+              <div className="frame-strip">
+                {aiFrameUrls.map((url) => <img key={url} src={url} alt="截图" />)}
+              </div>
+            )}
+            <button className="ghost tiny" onClick={() => setShowPrompt((v) => !v)}>
+              {showPrompt ? '收起提示词预览' : '查看提示词预览'}
+            </button>
+            {showPrompt && <pre className="prompt-preview">{promptPreview()}</pre>}
+
             {aiRunning && (
               <div className="ai-progress">
                 <span className="spin" />

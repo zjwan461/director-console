@@ -474,6 +474,30 @@ async def make_title_card(
         raise RuntimeError("生成片头/片尾失败：" + err[-600:])
 
 
+async def extract_frames(src: Path, out_dir: Path, count: int = 3,
+                          prefix: str = "f", width: int = 768) -> list[Path]:
+    """按时间均匀抽 count 张 jpg，供多模态模型看画面。"""
+    ff = ffmpeg_path()
+    if not ff:
+        raise FFmpegMissing("未检测到 ffmpeg")
+    count = max(1, min(count, 9))
+    total = await duration_of(src)
+    if total <= 0:
+        return []
+    out_dir.mkdir(parents=True, exist_ok=True)
+    files: list[Path] = []
+    for index in range(count):
+        at = total * (index + 1) / (count + 1)
+        out = out_dir / f"{prefix}_{index + 1}.jpg"
+        code, err = await _run([
+            ff, "-y", "-loglevel", "error", "-ss", f"{at:.3f}", "-i", str(src),
+            "-frames:v", "1", "-vf", f"scale={width}:-2", "-q:v", "3", str(out),
+        ])
+        if code == 0 and out.exists():
+            files.append(out)
+    return files
+
+
 async def to_asr_wav(src: Path, out: Path) -> None:
     """抽出音轨并转成 16k 单声道 wav，供语音转写使用。"""
     ff = ffmpeg_path()

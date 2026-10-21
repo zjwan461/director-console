@@ -282,6 +282,8 @@ GET /api/ffmpeg/status      # 含 capabilities
 - ASR：阿里云 `qwen-audio-3.0-asr-flash`，走
   `/api/v1/services/aigc/multimodal-generation/generation`，音频以 data URI 传入，
   视频先用 ffmpeg 转 16k 单声道 wav；
+- 可勾选「附带视频截图」：每镜均匀抽 1~6 帧，作为 image_url 一起发给多模态模型；
+  需要在提示词助手配置 `ai.vision_model`（当前工作区需有对应 VL 模型）；
 - 有声音但 ASR 返回 400（通常是没有可识别人声，只有音乐/环境音）→ 按「无口播」跳过。
 
 ## 9. 已确认的决策（2026-10-20）

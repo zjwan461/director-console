@@ -57,10 +57,10 @@ export const api = {
   },
 
   aiSettings: () =>
-    request<{ base_url: string; model: string; proxy: string; key_set: boolean; key_hint: string; overridden: boolean }>(
+    request<{ base_url: string; model: string; proxy: string; vision_model: string; key_set: boolean; key_hint: string; overridden: boolean }>(
       '/api/settings/ai',
     ),
-  saveAiSettings: (payload: { base_url: string; api_key?: string; model: string; proxy?: string }) =>
+  saveAiSettings: (payload: { base_url: string; api_key?: string; model: string; proxy?: string; vision_model?: string }) =>
     request<{ base_url: string; model: string; key_set: boolean; key_hint: string }>('/api/settings/ai', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -83,7 +83,7 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     }),
-  aiScript: (payload: { shot_id: string; kind: 'subtitle' | 'narration'; mode?: string; narration?: string; style?: Record<string, string> }) =>
+  aiScript: (payload: { shot_id: string; kind: 'subtitle' | 'narration'; mode?: string; narration?: string; frames?: number; style?: Record<string, string> }) =>
     request<{ text: string; chars: number; budget: number; over: boolean; compressed: boolean; original_chars: number; duration: number; skip?: string; reason?: string; transcribed?: boolean; followed_narration?: boolean; narration_mismatch?: boolean }>('/api/ai/script', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -110,6 +110,8 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     }),
+  shotFrames: (shotId: string, count: number) =>
+    request<{ items: Array<{ url: string }> }>(`/api/shots/${shotId}/frames?count=${count}`),
   shotPreview: (shotId: string) =>
     request<{ url: string; duration: number; source: string; width: number; height: number }>(
       `/api/shots/${shotId}/preview`,

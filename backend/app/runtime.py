@@ -12,6 +12,7 @@ AI_BASE_KEY = "ai.base_url"
 AI_KEY_KEY = "ai.api_key"
 AI_MODEL_KEY = "ai.model"
 AI_PROXY_KEY = "ai.proxy"
+AI_VISION_KEY = "ai.vision_model"
 
 TTS_BASE_KEY = "tts.base_url"
 TTS_KEY_KEY = "tts.api_key"
@@ -49,6 +50,8 @@ def apply_runtime_settings() -> None:
         ai["model"] = stored[AI_MODEL_KEY]
     if stored.get(AI_PROXY_KEY):
         ai["proxy"] = stored[AI_PROXY_KEY]
+    if stored.get(AI_VISION_KEY):
+        ai["vision_model"] = stored[AI_VISION_KEY]
 
     asr = settings.raw.setdefault("asr", {})
     if stored.get(ASR_BASE_KEY):
@@ -127,7 +130,8 @@ def public_comfy_settings() -> dict:
     }
 
 
-def save_ai_settings(base_url: str, api_key: str | None, model: str, proxy: str = "") -> dict:
+def save_ai_settings(base_url: str, api_key: str | None, model: str, proxy: str = "",
+                     vision_model: str = "") -> dict:
     from .runtime import normalize_url as _normalize
 
     url = _normalize(base_url)
@@ -136,6 +140,7 @@ def save_ai_settings(base_url: str, api_key: str | None, model: str, proxy: str 
     store.set_setting(AI_BASE_KEY, url)
     store.set_setting(AI_MODEL_KEY, (model or "").strip())
     store.set_setting(AI_PROXY_KEY, (proxy or "").strip())
+    store.set_setting(AI_VISION_KEY, (vision_model or "").strip())
     if api_key is not None:
         store.set_setting(AI_KEY_KEY, api_key.strip())
     apply_runtime_settings()
@@ -143,7 +148,7 @@ def save_ai_settings(base_url: str, api_key: str | None, model: str, proxy: str 
 
 
 def reset_ai_settings() -> dict:
-    for key in (AI_BASE_KEY, AI_KEY_KEY, AI_MODEL_KEY, AI_PROXY_KEY):
+    for key in (AI_BASE_KEY, AI_KEY_KEY, AI_MODEL_KEY, AI_PROXY_KEY, AI_VISION_KEY):
         store.delete_setting(key)
     from importlib import reload
 
@@ -161,6 +166,7 @@ def public_ai_settings() -> dict:
         "base_url": str(settings.get("ai.base_url", "") or ""),
         "model": str(settings.get("ai.model", "") or ""),
         "proxy": str(settings.get("ai.proxy", "") or ""),
+        "vision_model": str(settings.get("ai.vision_model", "") or ""),
         "key_set": bool(key),
         "key_hint": mask_token(key),
         "overridden": bool(store.list_settings().get(AI_BASE_KEY)),

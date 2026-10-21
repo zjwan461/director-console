@@ -358,6 +358,7 @@ function AISettingsPanel() {
   const [baseUrl, setBaseUrl] = useState('')
   const [model, setModel] = useState('')
   const [proxy, setProxy] = useState('')
+  const [visionModel, setVisionModel] = useState('')
   const [apiKey, setApiKey] = useState('')
   const [keyHint, setKeyHint] = useState('')
   const [overridden, setOverridden] = useState(false)
@@ -374,7 +375,7 @@ function AISettingsPanel() {
     }).catch(() => undefined)
   }, [])
 
-  const payload = () => ({ base_url: baseUrl, model, proxy, api_key: apiKey || undefined })
+  const payload = () => ({ base_url: baseUrl, model, proxy, vision_model: visionModel, api_key: apiKey || undefined })
 
   const save = async () => {
     setBusy('save')
@@ -437,6 +438,11 @@ function AISettingsPanel() {
         <label><span>模型</span></label>
         <input value={model} placeholder="gpt-4o-mini / deepseek-chat"
                onChange={(e) => setModel(e.target.value)} />
+      </div>
+      <div className="field">
+        <label><span>多模态模型（可选，带视频截图生成时用）</span></label>
+        <input value={visionModel} placeholder="例如 qwen3-vl-plus"
+               onChange={(e) => setVisionModel(e.target.value)} />
       </div>
       <div className="field">
         <label><span>API Key{keyHint ? `（当前 ${keyHint}）` : ''}</span></label>

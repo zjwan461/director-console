@@ -57,6 +57,11 @@ async def narration_matches(narration: str, description: str) -> bool:
     api_key = str(settings.get("ai.api_key", "") or "")
     base = str(settings.get("ai.base_url", "")).rstrip("/")
     model = str(settings.get("ai.model", "") or "")
+    if images:
+        vision_model = str(settings.get("ai.vision_model", "") or "").strip()
+        if not vision_model:
+            raise ValueError("要带视频截图给 AI，需要先在提示词助手配置「多模态模型」")
+        model = vision_model
     proxy = str(settings.get("ai.proxy", "") or "").strip()
     if not (api_key and base and description):
         return True
@@ -100,7 +105,7 @@ def fit_narration(narration: str, budget: int) -> dict:
 
 
 async def generate(kind: str, shot: dict, project: dict, neighbors: dict,
-                   duration: float, style: dict) -> dict:
+                   duration: float, style: dict, images: list[Path] | None = None) -> dict:
     prompts = _prompts()
     system = prompts.get(PROMPT_KEYS[kind])
     if not system:
@@ -111,6 +116,11 @@ async def generate(kind: str, shot: dict, project: dict, neighbors: dict,
         raise ValueError("没有配置 ai.api_key")
     base = str(settings.get("ai.base_url", "")).rstrip("/")
     model = str(settings.get("ai.model", "") or "")
+    if images:
+        vision_model = str(settings.get("ai.vision_model", "") or "").strip()
+        if not vision_model:
+            raise ValueError("要带视频截图给 AI，需要先在提示词助手配置「多模态模型」")
+        model = vision_model
     proxy = str(settings.get("ai.proxy", "") or "").strip()
 
     description = shot_description(shot)
@@ -118,11 +128,7 @@ async def generate(kind: str, shot: dict, project: dict, neighbors: dict,
         raise ValueError("这个镜头没有画面描述，AI 无法对照画面；请先在项目页填写「画面描述」")
 
     budget = char_budget(kind, duration)
-    payload = {
-        "model": model,
-        "messages": [
-            {"role": "system", "content": system},
-            {"role": "user", "content": json.dumps({
+    context = json.dumps({
                 "kind": kind,
                 "char_budget": budget,
                 "duration_seconds": round(duration, 2),
@@ -135,7 +141,21 @@ async def generate(kind: str, shot: dict, project: dict, neighbors: dict,
                     "duration_seconds": round(duration, 2),
                 },
                 "neighbors": neighbors,
-            }, ensure_ascii=False)},
+            }, ensure_ascii=False)
+    user_content: list[dict] = [{"type": "text", "text": context}]
+    for image in (images or []):
+        import base64
+
+        data = base64.b64encode(image.read_bytes()).decode()
+        user_content.append({
+            "type": "image_url",
+            "image_url": {"url": f"data:image/jpeg;base64,{data}"},
+        })
+    payload = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": system},
+            {"role": "user", "content": user_content},
         ],
         "temperature": 0.6,
         "stream": False,

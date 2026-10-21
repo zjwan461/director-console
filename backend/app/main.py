@@ -890,6 +890,23 @@ def _shot_video(shot: dict) -> tuple[str, Path] | None:
     return None
 
 
+@app.get("/api/shots/{shot_id}/frames")
+async def shot_frames(shot_id: str, count: int = 3) -> dict:
+    shot = store.get_shot(shot_id)
+    if not shot:
+        raise HTTPException(status_code=404, detail="镜头不存在")
+    found = _shot_video(shot)
+    if not found or not found[1].exists():
+        return {"items": []}
+    frame_dir = DATA / "thumbs" / "frames"
+    files = await ffmpeg.extract_frames(found[1], frame_dir, count, prefix=f"shot_{shot_id}")
+    items = []
+    for path in files:
+        rel = path.relative_to(DATA).as_posix()
+        items.append({"url": f"/media/files/{rel}"})
+    return {"items": items}
+
+
 @app.get("/api/shots/{shot_id}/preview")
 async def shot_preview(shot_id: str) -> dict:
     shot = store.get_shot(shot_id)
@@ -984,6 +1001,7 @@ class AISettings(BaseModel):
     api_key: str | None = None
     model: str = ""
     proxy: str = ""
+    vision_model: str = ""
 
 
 @app.get("/api/settings/ai")
@@ -994,7 +1012,7 @@ async def get_ai_settings() -> dict:
 @app.put("/api/settings/ai")
 async def put_ai_settings(body: AISettings) -> dict:
     try:
-        return runtime.save_ai_settings(body.base_url, body.api_key, body.model, body.proxy)
+        return runtime.save_ai_settings(body.base_url, body.api_key, body.model, body.proxy, body.vision_model)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 
@@ -1126,6 +1144,7 @@ class ScriptRequest(BaseModel):
     kind: str = "subtitle"
     mode: str = "fill"
     narration: str = ""
+    frames: int = 0
     style: dict[str, Any] = {}
 
 
@@ -1302,9 +1321,14 @@ async def ai_script_one(body: ScriptRequest) -> dict:
                 "compressed": False, "original_chars": len(text),
                 "transcribed": True, "duration": round(duration, 2)}
 
+    images: list[Path] = []
+    if body.frames > 0 and found and found[1].exists():
+        frame_dir = DATA / "thumbs" / "frames"
+        images = await ffmpeg.extract_frames(found[1], frame_dir, body.frames,
+                                             prefix=f"shot_{shot['id']}")
     try:
         return await ai_script.generate(kind, shot, project, neighbors, duration,
-                                       body.style or {})
+                                       body.style or {}, images=images)
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 
