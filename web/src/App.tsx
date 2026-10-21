@@ -7,10 +7,11 @@ import JobsPanel from './components/JobsPanel'
 import ProjectsPanel from './components/ProjectsPanel'
 import AssetsPanel from './components/AssetsPanel'
 import RendersPanel from './components/RendersPanel'
+import EditPanel from './components/EditPanel'
 
-type Tab = 'studio' | 'projects' | 'assets' | 'renders' | 'jobs' | 'service'
+type Tab = 'studio' | 'projects' | 'edit' | 'assets' | 'renders' | 'jobs' | 'service'
 
-const TAB_KEYS: Tab[] = ['studio', 'projects', 'assets', 'renders', 'jobs', 'service']
+const TAB_KEYS: Tab[] = ['studio', 'projects', 'edit', 'assets', 'renders', 'jobs', 'service']
 
 function initialTab(): Tab {
   const fromUrl = new URLSearchParams(window.location.search).get('tab')
@@ -57,6 +58,7 @@ export default function App() {
         <nav className="nav">
           <button className={tab === 'studio' ? 'active' : ''} onClick={() => setTab('studio')}>创作台</button>
           <button className={tab === 'projects' ? 'active' : ''} onClick={() => setTab('projects')}>项目</button>
+          <button className={tab === 'edit' ? 'active' : ''} onClick={() => setTab('edit')}>剪辑</button>
           <button className={tab === 'assets' ? 'active' : ''} onClick={() => setTab('assets')}>资产</button>
           <button className={tab === 'renders' ? 'active' : ''} onClick={() => setTab('renders')}>成片</button>
           <button className={tab === 'jobs' ? 'active' : ''} onClick={() => setTab('jobs')}>任务</button>
@@ -82,7 +84,22 @@ export default function App() {
           />
         )}
         {tab === 'jobs' && <JobsPanel refreshKey={jobsRefresh} />}
-        {tab === 'projects' && <ProjectsPanel />}
+        {tab === 'projects' && (
+          <ProjectsPanel
+            onEdit={(projectId) => {
+              const url = new URL(window.location.href)
+              url.searchParams.set('project', projectId)
+              window.history.replaceState({}, '', url)
+              setTab('edit')
+            }}
+          />
+        )}
+        {tab === 'edit' && (
+          <EditPanel
+            initialProjectId={new URLSearchParams(window.location.search).get('project') || undefined}
+            onGoRenders={() => setTab('renders')}
+          />
+        )}
         {tab === 'renders' && (
           <RendersPanel
             onOpenProject={(projectId) => {

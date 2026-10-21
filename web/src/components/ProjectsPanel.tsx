@@ -3,11 +3,10 @@ import { api, timeAgo } from '../api'
 import type { Asset, Job, Preset, Project, Shot } from '../types'
 import PresetFields, { makeDefaults } from './PresetForm'
 import { OutputGrid, statusText } from './StudioPanel'
-import RenderPanel from './RenderPanel'
 
 const MEDIA_TYPES = new Set(['image', 'video', 'audio'])
 
-export default function ProjectsPanel() {
+export default function ProjectsPanel({ onEdit }: { onEdit?: (projectId: string) => void }) {
   const [projects, setProjects] = useState<Project[]>([])
   const [projectId, setProjectId] = useState('')
   const [shots, setShots] = useState<Shot[]>([])
@@ -436,7 +435,15 @@ export default function ProjectsPanel() {
       </div>
 
       {projectId && (
-        <RenderPanel projectId={projectId} shots={shots} />
+        <div className="panel">
+          <h2>成片</h2>
+          <p className="hint">剪辑（裁剪 / 字幕 / BGM）已移到独立的「剪辑」页，改动会自动保存。</p>
+          <div className="row-actions">
+            <button className="primary" disabled={!projectId} onClick={() => projectId && onEdit?.(projectId)}>
+              去剪辑
+            </button>
+          </div>
+        </div>
       )}
     </div>
   )

@@ -945,6 +945,40 @@ async def create_render(project_id: str, body: RenderCreate) -> dict:
     return _enrich_render(render)
 
 
+class EditState(BaseModel):
+    options: dict[str, Any] = {}
+    shot_edits: list[dict[str, Any]] = []
+
+
+def _edit_state_key(project_id: str) -> str:
+    return f"edit_state.{project_id}"
+
+
+@app.get("/api/projects/{project_id}/edit-state")
+async def get_edit_state(project_id: str) -> dict:
+    if not store.get_project(project_id):
+        raise HTTPException(status_code=404, detail="项目不存在")
+    raw = store.get_setting(_edit_state_key(project_id), "")
+    if not raw:
+        return {"options": {}, "shot_edits": []}
+    try:
+        data = json.loads(raw)
+        return {"options": data.get("options") or {}, "shot_edits": data.get("shot_edits") or []}
+    except Exception:
+        return {"options": {}, "shot_edits": []}
+
+
+@app.put("/api/projects/{project_id}/edit-state")
+async def put_edit_state(project_id: str, body: EditState) -> dict:
+    if not store.get_project(project_id):
+        raise HTTPException(status_code=404, detail="项目不存在")
+    store.set_setting(
+        _edit_state_key(project_id),
+        json.dumps({"options": body.options, "shot_edits": body.shot_edits}, ensure_ascii=False),
+    )
+    return {"ok": True, "saved_at": int(time.time())}
+
+
 @app.get("/api/renders")
 async def list_all_renders(limit: int = 50, status: str | None = None) -> dict:
     items = store.list_renders_all(limit, status)

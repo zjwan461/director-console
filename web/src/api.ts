@@ -73,6 +73,16 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     }),
+  editState: (projectId: string) =>
+    request<{ options: Record<string, unknown>; shot_edits: Array<Record<string, unknown>> }>(
+      `/api/projects/${projectId}/edit-state`,
+    ),
+  saveEditState: (projectId: string, payload: { options: Record<string, unknown>; shot_edits: Array<Record<string, unknown>> }) =>
+    request<{ ok: boolean }>(`/api/projects/${projectId}/edit-state`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }),
   allRenders: (limit = 50, status?: string) =>
     request<{ items: Render[] }>(`/api/renders?limit=${limit}${status ? `&status=${status}` : ''}`),
   startRender: (id: string) => request<Render>(`/api/renders/${id}/start`, { method: 'POST' }),
