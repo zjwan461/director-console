@@ -283,10 +283,15 @@ ENUM_FALLBACKS = {
 }
 
 
+def _model_key(name: str) -> str:
+    """模型名归一化：Windows 上 ComfyUI 用反斜杠报路径，工作流里写的是正斜杠。"""
+    return name.replace("\\", "/").lower()
+
+
 def adapt_workflow_models(workflow: dict, object_info: dict) -> tuple[dict, list[dict]]:
     """提交前按本机 object_info 校正工作流里的枚举值。
 
-    1. 模型文件：路径层级不同（minimax/x vs x）时按文件名找唯一匹配；
+    1. 模型文件：分隔符（\\ 与 /）、大小写、路径层级不同时，按文件名找唯一匹配；
     2. sampler / scheduler：节点包版本差异导致名字不存在时降级到安全候选。
     """
     if not object_info:
@@ -307,22 +312,31 @@ def adapt_workflow_models(workflow: dict, object_info: dict) -> tuple[dict, list
             if not is_model and field not in ENUM_FALLBACKS:
                 continue
             options = _enum_options(object_info, class_type, field)
-            if not options or value in options:
+            if not options:
                 continue
 
-            matched = False
             if is_model:
-                base = value.rsplit("/", 1)[-1]
-                matches = [o for o in options if o.rsplit("/", 1)[-1] == base]
+                want = _model_key(value)
+                # 同一个文件，只是分隔符/大小写不同（Windows 上 ComfyUI 报的是反斜杠）
+                same = next((o for o in options if _model_key(o) == want), None)
+                if same is not None:
+                    if same != value:
+                        inputs[field] = same
+                        changes.append({"good": value, "actual": same,
+                                        "node": class_type, "field": field})
+                    continue
+                # 真的换了目录层级：按文件名找唯一匹配
+                base = want.rsplit("/", 1)[-1]
+                matches = [o for o in options if _model_key(o).rsplit("/", 1)[-1] == base]
                 if len(matches) == 1:
                     inputs[field] = matches[0]
                     changes.append({"good": value, "actual": matches[0],
                                     "node": class_type, "field": field})
-                    matched = True
-            if matched or field not in ENUM_FALLBACKS:
                 continue
 
-            for candidate in ENUM_FALLBACKS[field]:
+            if value in options:
+                continue
+            for candidate in ENUM_FALLBACKS.get(field, []):
                 if candidate in options:
                     inputs[field] = candidate
                     changes.append({"good": value, "actual": candidate,
