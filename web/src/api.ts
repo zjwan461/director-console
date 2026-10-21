@@ -279,6 +279,7 @@ export const api = {
     }),
   renders: (projectId: string) => request<{ items: Render[] }>(`/api/projects/${projectId}/renders`),
   render: (id: string) => request<Render>(`/api/renders/${id}`),
+  cancelRender: (id: string) => request<Render>(`/api/renders/${id}/cancel`, { method: 'POST' }),
   deleteRender: (id: string) => request<{ ok: boolean }>(`/api/renders/${id}`, { method: 'DELETE' }),
 }
 

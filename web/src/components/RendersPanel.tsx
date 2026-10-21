@@ -9,6 +9,7 @@ const STATUS_TEXT: Record<string, string> = {
   rendering: '导出中',
   succeeded: '完成',
   failed: '失败',
+  canceled: '已取消',
 }
 
 export default function RendersPanel({ onOpenProject }: { onOpenProject: (projectId: string) => void }) {
@@ -42,6 +43,15 @@ export default function RendersPanel({ onOpenProject }: { onOpenProject: (projec
       setError(err instanceof Error ? err.message : String(err))
     } finally {
       setBusy('')
+    }
+  }
+
+  const cancel = async (id: string) => {
+    try {
+      await api.cancelRender(id)
+      await load()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
     }
   }
 
@@ -93,6 +103,9 @@ export default function RendersPanel({ onOpenProject }: { onOpenProject: (projec
                       <a href={r.output_url} target="_blank" rel="noreferrer"><button className="ghost tiny">预览</button></a>
                       <a href={`/api/renders/${r.id}/subtitles`}><button className="ghost tiny">字幕</button></a>
                     </>
+                  )}
+                  {running && (
+                    <button className="ghost tiny" onClick={() => void cancel(r.id)}>取消</button>
                   )}
                   {(r.status === 'draft' || r.status === 'failed') && (
                     <button className="primary tiny" disabled={busy === r.id} onClick={() => void start(r.id)}>

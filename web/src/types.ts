@@ -169,7 +169,7 @@ export interface Render {
   id: string
   project_id: string
   project_name?: string
-  status: 'draft' | 'queued' | 'preparing' | 'rendering' | 'succeeded' | 'failed'
+  status: 'draft' | 'queued' | 'preparing' | 'rendering' | 'succeeded' | 'failed' | 'canceled'
   progress: number
   message?: string
   shot_ids: string[]

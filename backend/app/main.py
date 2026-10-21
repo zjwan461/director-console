@@ -1200,6 +1200,31 @@ async def create_render(project_id: str, body: RenderCreate) -> dict:
     if not ffmpeg.status()["available"]:
         raise HTTPException(status_code=400, detail=ffmpeg.status()["hint"])
     draft = bool(body.options.get("draft"))
+    cache_key = ""
+    if options.get("preview"):
+        import hashlib
+
+        signature = {
+            "options": options,
+            "shot_ids": shot_ids,
+            "shot_edits": body.shot_edits,
+        }
+        for sid in shot_ids:
+            shot = store.get_shot(sid) or {}
+            found = _shot_video(shot)
+            if found and found[1].exists():
+                st = found[1].stat()
+                signature.setdefault("sources", {})[sid] = [found[1].name, int(st.st_size), int(st.st_mtime)]
+        cache_key = hashlib.sha1(json.dumps(signature, sort_keys=True, ensure_ascii=False).encode()).hexdigest()[:16]
+        options["cache_key"] = cache_key
+        cached_id = store.get_setting("preview_cache." + cache_key, "")
+        if cached_id:
+            cached = store.get_render(cached_id)
+            if cached and cached["status"] == "succeeded":
+                out = DATA / "renders" / cached_id / "final.mp4"
+                if out.exists():
+                    return _enrich_render(cached)
+
     render = store.create_render(project_id, shot_ids, options)
     if draft:
         store.update_render(render["id"], status="draft", message="草稿")
@@ -1474,6 +1499,18 @@ async def start_render(render_id: str) -> dict:
     store.update_render(render_id, status="queued", progress=0.0, message="排队中",
                         error="", started_at=None, finished_at=None)
     await render_runner.enqueue(render_id)
+    return _enrich_render(store.get_render(render_id) or render)
+
+
+@app.post("/api/renders/{render_id}/cancel")
+async def cancel_render(render_id: str) -> dict:
+    render = store.get_render(render_id)
+    if not render:
+        raise HTTPException(status_code=404, detail="成片不存在")
+    if render["status"] in {"succeeded", "failed", "canceled"}:
+        raise HTTPException(status_code=400, detail="这个成片已经结束")
+    render_runner.cancel(render_id)
+    store.update_render(render_id, message="取消中…", status="rendering" if render["status"] == "rendering" else render["status"])
     return _enrich_render(store.get_render(render_id) or render)
 
 

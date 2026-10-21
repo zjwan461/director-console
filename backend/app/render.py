@@ -12,10 +12,15 @@ DATA = Path(settings.paths["data"])
 RENDERS = DATA / "renders"
 
 
+class RenderCanceled(Exception):
+    pass
+
+
 class RenderRunner:
     def __init__(self) -> None:
         self.queue: asyncio.Queue[str] = asyncio.Queue()
         self._worker: asyncio.Task | None = None
+        self.cancelled: set[str] = set()
 
     def start(self) -> None:
         if self._worker is None or self._worker.done():
@@ -32,13 +37,27 @@ class RenderRunner:
     async def enqueue(self, render_id: str) -> None:
         await self.queue.put(render_id)
 
+    def cancel(self, render_id: str) -> None:
+        self.cancelled.add(render_id)
+
+    def _check(self, render_id: str) -> None:
+        if render_id in self.cancelled:
+            raise RenderCanceled()
+
     async def _loop(self) -> None:
         while True:
             rid = await self.queue.get()
             try:
+                if rid in self.cancelled:
+                    self.cancelled.discard(rid)
+                    store.update_render(rid, status="canceled", message="已取消", finished_at=time.time())
+                    continue
                 await self._run_one(rid)
             except asyncio.CancelledError:
                 raise
+            except RenderCanceled:
+                self.cancelled.discard(rid)
+                store.update_render(rid, status="canceled", message="已取消", finished_at=time.time())
             except Exception as exc:  # 兜底，别让 worker 挂掉
                 store.update_render(
                     rid, status="failed", error=str(exc), message="失败",
@@ -133,6 +152,7 @@ class RenderRunner:
         cursor = title_dur
 
         for idx, shot in enumerate(ordered, start=1):
+            self._check(render_id)
             src = self._video_path_for_shot(shot["id"])
             assert src is not None
             edit = edits.get(shot["id"]) or {}
@@ -187,6 +207,7 @@ class RenderRunner:
             cursor += dur
             clips.append(dst)
 
+        self._check(render_id)
         store.update_render(render_id, message="拼接中", progress=0.62)
         joined = work / "joined.mp4"
         if trans_kind in {"fade", "dissolve"}:
@@ -243,6 +264,7 @@ class RenderRunner:
             except Exception:
                 voice_full = None
 
+        self._check(render_id)
         if bgm_opt.get("asset_id"):
             bgm_asset = store.get_asset(str(bgm_opt["asset_id"]))
             bgm_path = DATA / bgm_asset["path"] if bgm_asset else None
@@ -260,6 +282,7 @@ class RenderRunner:
                 )
                 current = mixed
 
+        self._check(render_id)
         srt_path = work / "subtitles.srt"
         if timeline:
             ffmpeg.write_srt(timeline, srt_path)
@@ -287,6 +310,7 @@ class RenderRunner:
             except Exception:
                 pass  # 响度失败不阻断导出
 
+        self._check(render_id)
         if current != final:
             current.replace(final)
 
@@ -311,6 +335,9 @@ class RenderRunner:
             render_id, status="succeeded", progress=1.0, message="完成",
             output_path=out_rel, cover_path=cover_rel, finished_at=time.time(),
         )
+        cache_key = str(options.get("cache_key") or "")
+        if preview and cache_key:
+            store.set_setting("preview_cache." + cache_key, render_id)
 
 
 runner = RenderRunner()
