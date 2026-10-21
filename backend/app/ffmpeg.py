@@ -341,6 +341,55 @@ async def process_clip(
         raise RuntimeError(f"单镜处理失败：{_tail(err)}")
 
 
+async def mix_voice(clip: Path, voice: Path, out: Path, volume_db: float = 0.0) -> None:
+    """把旁白混到单镜音频上；旁白按镜头时长裁断，短了补静音。"""
+    ff = ffmpeg_path()
+    if not ff:
+        raise FFmpegMissing("未检测到 ffmpeg")
+    dur = await duration_of(clip)
+    filt = (
+        f"[1:a]volume={volume_db}dB,atrim=0:{dur:.3f},apad,atrim=0:{dur:.3f}[vo];"
+        f"[0:a][vo]amix=inputs=2:duration=first:dropout_transition=0:normalize=0[a]"
+    )
+    code, err = await _run([
+        ff, "-y", "-loglevel", "error", "-i", str(clip), "-i", str(voice),
+        "-filter_complex", filt, "-map", "0:v", "-map", "[a]",
+        "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", str(out),
+    ])
+    if code != 0:
+        raise RuntimeError("混入旁白失败：" + err[-600:])
+
+
+async def build_narration_track(segments: list[tuple[Path | None, float]], out: Path) -> None:
+    """按时间轴拼一条纯旁白轨（没旁白的镜头补静音），用于 BGM 闪避。"""
+    ff = ffmpeg_path()
+    if not ff:
+        raise FFmpegMissing("未检测到 ffmpeg")
+    args: list[str] = [ff, "-y", "-loglevel", "error"]
+    filters: list[str] = []
+    labels: list[str] = []
+    input_index = 0
+    for index, (path, dur) in enumerate(segments):
+        if path and path.exists():
+            args += ["-i", str(path)]
+            filters.append(
+                f"[{input_index}:a]aformat=sample_rates=48000:channel_layouts=stereo,"
+                f"atrim=0:{dur:.3f},apad,atrim=0:{dur:.3f}[v{index}]"
+            )
+            input_index += 1
+        else:
+            filters.append(f"anullsrc=r=48000:cl=stereo,atrim=0:{dur:.3f}[v{index}]")
+        labels.append(f"[v{index}]")
+    filters.append("".join(labels) + f"concat=n={len(segments)}:v=0:a=1[a]")
+    args += [
+        "-filter_complex", ";".join(filters),
+        "-map", "[a]", "-c:a", "aac", "-b:a", "192k", str(out),
+    ]
+    code, err = await _run(args)
+    if code != 0:
+        raise RuntimeError("生成旁白轨失败：" + err[-600:])
+
+
 async def mix_bgm(
     video: Path,
     bgm: Path,
@@ -349,6 +398,8 @@ async def mix_bgm(
     fade_in: float = 0.0,
     fade_out: float = 0.0,
     loop: bool = True,
+    duck_track: Path | None = None,
+    duck_db: float = -14,
 ) -> None:
     ff = ffmpeg_path()
     if not ff:
@@ -361,10 +412,22 @@ async def mix_bgm(
     if fade_out > 0:
         bg_chain += f",afade=t=out:st={max(total - fade_out, 0):.3f}:d={fade_out:.3f}"
     loop_args = ["-stream_loop", "-1"] if loop else []
+    duck = duck_track if (duck_track and duck_track.exists()) else None
+    if duck:
+        # 旁白出现时把 BGM 压下去（sidechaincompress），旁白结束后恢复
+        filters = (
+            f"[1:a]{bg_chain}[bg];"
+            f"[2:a]aformat=sample_rates=48000:channel_layouts=stereo,volume={duck_db}dB[sc];"
+            f"[bg][sc]sidechaincompress=threshold=0.03:ratio=6:attack=20:release=400[bgd];"
+            f"[0:a][bgd]amix=inputs=2:duration=first:normalize=0[a]"
+        )
+        inputs = ["-i", str(video), *loop_args, "-i", str(bgm), "-i", str(duck)]
+    else:
+        filters = f"[1:a]{bg_chain}[bg];[0:a][bg]amix=inputs=2:duration=first:normalize=0[a]"
+        inputs = ["-i", str(video), *loop_args, "-i", str(bgm)]
     cmd = [
-        ff, "-y", "-loglevel", "error", "-i", str(video), *loop_args, "-i", str(bgm),
-        "-filter_complex",
-        f"[1:a]{bg_chain}[bg];[0:a][bg]amix=inputs=2:duration=first:normalize=0[a]",
+        ff, "-y", "-loglevel", "error", *inputs,
+        "-filter_complex", filters,
         "-map", "0:v:0", "-map", "[a]",
         "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2",
         "-movflags", "+faststart", str(out),

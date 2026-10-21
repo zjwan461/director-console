@@ -12,6 +12,7 @@ interface Edit {
   in_point: string
   out_point: string
   subtitle: string
+  voice_asset: string
 }
 
 export default function EditPanel({
@@ -43,6 +44,8 @@ export default function EditPanel({
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [activeShot, setActiveShot] = useState('')
+  const [uploadFor, setUploadFor] = useState('')
+  const voiceInput = useRef<HTMLInputElement | null>(null)
   const [shotPreview, setShotPreview] = useState<{ url: string; duration: number }>({ url: '', duration: 0 })
   const [previewJob, setPreviewJob] = useState<{ id: string; status: string; message: string; url?: string } | null>(null)
   const [timeline, setTimeline] = useState<Array<{ shot_id: string; title: string; duration: number; start: number; end: number }>>([])
@@ -93,6 +96,7 @@ export default function EditPanel({
             in_point: item.in_point ? String(item.in_point) : '',
             out_point: item.out_point ? String(item.out_point) : '',
             subtitle: String(item.subtitle || ''),
+            voice_asset: String(item.voice_asset || ''),
           }
         }
         setEdits(map)
@@ -122,6 +126,7 @@ export default function EditPanel({
           in_point: Number(editOf(s.id).in_point) || 0,
           out_point: editOf(s.id).out_point ? Number(editOf(s.id).out_point) : undefined,
           subtitle: editOf(s.id).subtitle || s.title || '',
+          voice_asset: editOf(s.id).voice_asset || '',
         })),
       }).then(() => setSavedAt(new Date().toLocaleTimeString())).catch(() => undefined)
     }, 800)
@@ -163,9 +168,24 @@ export default function EditPanel({
   }, [selected, shots, edits, transType, transDur])
 
   const ordered = useMemo(() => shots.filter((s) => selected.includes(s.id)), [shots, selected])
-  const editOf = (id: string): Edit => edits[id] || { in_point: '', out_point: '', subtitle: '' }
+  const editOf = (id: string): Edit => edits[id] || { in_point: '', out_point: '', subtitle: '', voice_asset: '' }
   const patchEdit = (id: string, patch: Partial<Edit>) =>
     setEdits((prev) => ({ ...prev, [id]: { ...editOf(id), ...patch } }))
+  const uploadVoice = async (files: FileList | null) => {
+    if (!files || !files.length || !uploadFor) return
+    try {
+      const asset = await api.upload(files[0], 'audio')
+      patchEdit(uploadFor, { voice_asset: asset.id })
+      const res = await api.assets({ kind: 'audio', limit: 50 })
+      setAudios(res.items)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setUploadFor('')
+      if (voiceInput.current) voiceInput.current.value = ''
+    }
+  }
+
   const toggle = (id: string) =>
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
 
@@ -184,6 +204,7 @@ export default function EditPanel({
         in_point: Number(editOf(s.id).in_point) || 0,
         out_point: editOf(s.id).out_point ? Number(editOf(s.id).out_point) : undefined,
         subtitle: editOf(s.id).subtitle || s.title || '',
+        voice_asset: editOf(s.id).voice_asset || '',
       })))
       setPreviewJob({ id: render.id, status: render.status, message: render.message || '排队中' })
       const poll = async (id: string) => {
@@ -220,6 +241,7 @@ export default function EditPanel({
         in_point: Number(editOf(s.id).in_point) || 0,
         out_point: editOf(s.id).out_point ? Number(editOf(s.id).out_point) : undefined,
         subtitle: editOf(s.id).subtitle || s.title || '',
+        voice_asset: editOf(s.id).voice_asset || '',
       })))
       onGoRenders()
     } catch (err) {
@@ -244,6 +266,8 @@ export default function EditPanel({
         </div>
       </div>
 
+      <input ref={voiceInput} type="file" hidden accept="audio/*"
+             onChange={(e) => void uploadVoice(e.target.files)} />
       {error && <div className="notice err">{error}</div>}
 
       <div className="render-editor">
@@ -302,6 +326,22 @@ export default function EditPanel({
                         <input placeholder={shot.title || '这一镜的字幕'}
                                value={edit.subtitle}
                                onChange={(e) => patchEdit(shot.id, { subtitle: e.target.value })} />
+                      </label>
+                      <label className="grow">
+                        旁白
+                        <div className="row" style={{ gap: 6 }}>
+                          <select className="grow" value={edit.voice_asset}
+                                  onChange={(e) => patchEdit(shot.id, { voice_asset: e.target.value })}>
+                            <option value="">无旁白</option>
+                            {audios.map((a) => (
+                              <option key={a.id} value={a.id}>{a.path.split('/').pop()}</option>
+                            ))}
+                          </select>
+                          <button className="ghost tiny"
+                                  onClick={() => { setUploadFor(shot.id); voiceInput.current?.click() }}>
+                            上传
+                          </button>
+                        </div>
                       </label>
                     </div>
                   )}

@@ -121,6 +121,7 @@ class RenderRunner:
 
         total = len(ordered)
         clips: list[Path] = []
+        voice_segments: list[tuple[Path | None, float]] = []
         timeline: list[dict] = []
         cursor = 0.0
 
@@ -142,6 +143,21 @@ class RenderRunner:
                 muted=bool(edit.get("muted")),
             )
             dur = await ffmpeg.duration_of(dst)
+
+            voice_path = None
+            voice_id = str(edit.get("voice_asset") or "")
+            if voice_id:
+                voice_asset = store.get_asset(voice_id)
+                if voice_asset:
+                    candidate = DATA / voice_asset["path"]
+                    if candidate.exists():
+                        voice_path = candidate
+                        voiced = work / f"clipv_{idx:03d}.mp4"
+                        store.update_render(render_id, message=f"{idx}/{total} 混入旁白", progress=0.05 + 0.55 * idx / total)
+                        await ffmpeg.mix_voice(dst, candidate, voiced)
+                        dst = voiced
+            voice_segments.append((voice_path, dur))
+
             text = str(edit.get("subtitle") or "").strip() or (shot.get("title") or "")
             timeline.append({
                 "shot_id": shot["id"], "title": shot.get("title") or "",
@@ -159,6 +175,14 @@ class RenderRunner:
             await ffmpeg.concat_clips(clips, joined, work)
         current = joined
 
+        voice_full: Path | None = None
+        if any(path for path, _ in voice_segments):
+            voice_full = work / "narration.m4a"
+            try:
+                await ffmpeg.build_narration_track(voice_segments, voice_full)
+            except Exception:
+                voice_full = None
+
         if bgm_opt.get("asset_id"):
             bgm_asset = store.get_asset(str(bgm_opt["asset_id"]))
             bgm_path = DATA / bgm_asset["path"] if bgm_asset else None
@@ -171,6 +195,8 @@ class RenderRunner:
                     fade_in=float(bgm_opt.get("fade_in") or 0),
                     fade_out=float(bgm_opt.get("fade_out") or 0),
                     loop=bool(bgm_opt.get("loop", True)),
+                    duck_track=voice_full if bgm_opt.get("duck", True) else None,
+                    duck_db=float(bgm_opt.get("duck_db") or -14),
                 )
                 current = mixed
 
