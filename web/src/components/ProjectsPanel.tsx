@@ -200,8 +200,18 @@ export default function ProjectsPanel({ onEdit }: { onEdit?: (projectId: string)
     }
   }
 
+  const runningTakes = takes.filter((j) => ['queued', 'running'].includes(j.status))
+
   const generate = async () => {
     if (!shot || !card) return
+    if (runningTakes.length) {
+      const ok = window.confirm(
+        `这个镜头已有 ${runningTakes.length} 个任务正在生成（${runningTakes
+          .map((j) => statusText(j.status))
+          .join('、')}）。\n继续提交会再排一个任务，可能同时占用显卡。\n\n仍要提交吗？`,
+      )
+      if (!ok) return
+    }
     setError('')
     setBusy('generate')
     try {
@@ -398,7 +408,10 @@ export default function ProjectsPanel({ onEdit }: { onEdit?: (projectId: string)
                   {busy === 'generate' ? <><span className="spin" /> 提交中</> : '生成本镜'}
                 </button>
                 <button className="ghost" onClick={() => void saveShot()}>保存参数</button>
-                {job && <span className="badge">{statusText(job.status)} · {job.message}</span>}
+                {runningTakes.length > 0 && (
+                  <span className="badge warn">本镜生成中（{runningTakes.length}）</span>
+                )}
+                {job && !runningTakes.length && <span className="badge">{statusText(job.status)} · {job.message}</span>}
               </div>
 
               {job?.error && <div className="notice err" style={{ marginTop: 10 }}>{job.error}</div>}
