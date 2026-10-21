@@ -1046,7 +1046,7 @@ async def create_render(project_id: str, body: RenderCreate) -> dict:
         "loudness": body.options.get("loudness") or {},
     }
     # 转场 / 预览等可选参数原样带上
-    for extra in ("transition", "preview"):
+    for extra in ("transition", "preview", "title", "tail"):
         if extra in body.options:
             options[extra] = body.options[extra]
     if options["width"] < 64 or options["height"] < 64:

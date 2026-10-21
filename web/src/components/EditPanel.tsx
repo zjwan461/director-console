@@ -30,6 +30,17 @@ export default function EditPanel({
   const [resKey, setResKey] = useState('720p')
   const [fps, setFps] = useState(24)
   const [audios, setAudios] = useState<Asset[]>([])
+  const [images, setImages] = useState<Asset[]>([])
+  const [titleOn, setTitleOn] = useState(false)
+  const [titleText, setTitleText] = useState('')
+  const [titleDur, setTitleDur] = useState(1.5)
+  const [titleBg, setTitleBg] = useState('#000000')
+  const [titleImage, setTitleImage] = useState('')
+  const [tailOn, setTailOn] = useState(false)
+  const [tailText, setTailText] = useState('')
+  const [tailDur, setTailDur] = useState(2)
+  const [tailBg, setTailBg] = useState('#000000')
+  const [tailImage, setTailImage] = useState('')
   const [bgmId, setBgmId] = useState('')
   const [bgmVolume, setBgmVolume] = useState(-14)
   const [fadeIn, setFadeIn] = useState(0.5)
@@ -60,6 +71,7 @@ export default function EditPanel({
       if (!projectId && res.items.length) setProjectId(res.items[0].id)
     }).catch(() => undefined)
     api.assets({ kind: 'audio', limit: 50 }).then((res) => setAudios(res.items)).catch(() => undefined)
+    api.assets({ kind: 'image', limit: 50 }).then((res) => setImages(res.items)).catch(() => undefined)
   }, [])
 
   // 载入项目 + 剪辑状态
@@ -85,6 +97,18 @@ export default function EditPanel({
         setSubSize(Number(style.size || 42))
         setSubMargin(Number(style.margin_v || 48))
         setLoudness(Boolean((opts.loudness as Record<string, unknown>)?.enabled ?? true))
+        const title = (opts.title || {}) as Record<string, unknown>
+        setTitleOn(Boolean(title.enabled))
+        setTitleText(String(title.text || ''))
+        setTitleDur(Number(title.duration ?? 1.5))
+        setTitleBg(String(title.bg || '#000000'))
+        setTitleImage(String(title.bg_asset || ''))
+        const tail = (opts.tail || {}) as Record<string, unknown>
+        setTailOn(Boolean(tail.enabled))
+        setTailText(String(tail.text || ''))
+        setTailDur(Number(tail.duration ?? 2))
+        setTailBg(String(tail.bg || '#000000'))
+        setTailImage(String(tail.bg_asset || ''))
         const trans = (opts.transition || {}) as Record<string, unknown>
         setTransType(String(trans.type || 'none'))
         setTransDur(Number(trans.duration ?? 0.4))
@@ -117,6 +141,8 @@ export default function EditPanel({
         options: {
           width: res.width, height: res.height, fps,
           transition: { type: transType, duration: transDur },
+          title: { enabled: titleOn, text: titleText, duration: titleDur, bg: titleBg, bg_asset: titleImage },
+          tail: { enabled: tailOn, text: tailText, duration: tailDur, bg: tailBg, bg_asset: tailImage },
           bgm: bgmId ? { asset_id: bgmId, volume_db: bgmVolume, fade_in: fadeIn, fade_out: fadeOut, loop: loopBgm } : {},
           subtitles: { enabled: subsEnabled, style: { size: subSize, margin_v: subMargin } },
           loudness: { enabled: loudness },
@@ -131,7 +157,8 @@ export default function EditPanel({
       }).then(() => setSavedAt(new Date().toLocaleTimeString())).catch(() => undefined)
     }, 800)
   }, [loaded, projectId, resKey, fps, bgmId, bgmVolume, fadeIn, fadeOut, loopBgm,
-      subsEnabled, subSize, subMargin, loudness, transType, transDur, edits, selected, shots])
+      subsEnabled, subSize, subMargin, loudness, transType, transDur, titleOn, titleText, titleDur, titleBg, titleImage,
+      tailOn, tailText, tailDur, tailBg, tailImage, edits, selected, shots])
 
   useEffect(() => {
     if (!activeShot) return
@@ -199,6 +226,8 @@ export default function EditPanel({
       const render = await api.createRender(projectId, ordered.map((s) => s.id), {
         width: res.width, height: res.height, fps, preview: true,
         transition: { type: transType, duration: transDur },
+        title: { enabled: titleOn, text: titleText, duration: titleDur, bg: titleBg, bg_asset: titleImage },
+        tail: { enabled: tailOn, text: tailText, duration: tailDur, bg: tailBg, bg_asset: tailImage },
       }, ordered.map((s) => ({
         shot_id: s.id,
         in_point: Number(editOf(s.id).in_point) || 0,
@@ -233,6 +262,8 @@ export default function EditPanel({
       await api.createRender(projectId, ordered.map((s) => s.id), {
         width: res.width, height: res.height, fps,
         transition: { type: transType, duration: transDur },
+        title: { enabled: titleOn, text: titleText, duration: titleDur, bg: titleBg, bg_asset: titleImage },
+        tail: { enabled: tailOn, text: tailText, duration: tailDur, bg: tailBg, bg_asset: tailImage },
         bgm: bgmId ? { asset_id: bgmId, volume_db: bgmVolume, fade_in: fadeIn, fade_out: fadeOut, loop: loopBgm } : {},
         subtitles: { enabled: subsEnabled, style: { size: subSize, margin_v: subMargin } },
         loudness: { enabled: loudness },
@@ -276,7 +307,13 @@ export default function EditPanel({
             <span>镜头与字幕</span>
             <span className="meta">
               已选 {ordered.length} / {shots.length}
-              {timeline.length ? ` · 总时长 ${timeline[timeline.length - 1].end.toFixed(1)}s` : ''}
+              {timeline.length
+                ? ` · 总时长 ${(
+                    timeline[timeline.length - 1].end +
+                    (titleOn && titleText.trim() ? titleDur : 0) +
+                    (tailOn && tailText.trim() ? tailDur : 0)
+                  ).toFixed(1)}s`
+                : ''}
             </span>
           </h2>
 
@@ -410,6 +447,50 @@ export default function EditPanel({
               </select>
             )}
           </div>
+
+          <h3>片头片尾</h3>
+          <label className="check">
+            <input type="checkbox" checked={titleOn} onChange={(e) => setTitleOn(e.target.checked)} />
+            片头
+          </label>
+          {titleOn && (
+            <div className="row" style={{ flexWrap: 'wrap', gap: 6 }}>
+              <input className="grow" placeholder="片头文字，如：雪夜"
+                     value={titleText} onChange={(e) => setTitleText(e.target.value)} />
+              <select value={titleDur} onChange={(e) => setTitleDur(Number(e.target.value))}>
+                <option value={1}>1s</option>
+                <option value={1.5}>1.5s</option>
+                <option value={2}>2s</option>
+                <option value={3}>3s</option>
+              </select>
+              <input type="color" value={titleBg} onChange={(e) => setTitleBg(e.target.value)} />
+              <select value={titleImage} onChange={(e) => setTitleImage(e.target.value)}>
+                <option value="">纯色背景</option>
+                {images.map((a) => <option key={a.id} value={a.id}>{a.path.split('/').pop()}</option>)}
+              </select>
+            </div>
+          )}
+          <label className="check">
+            <input type="checkbox" checked={tailOn} onChange={(e) => setTailOn(e.target.checked)} />
+            片尾
+          </label>
+          {tailOn && (
+            <div className="row" style={{ flexWrap: 'wrap', gap: 6 }}>
+              <input className="grow" placeholder="片尾文字，如：第一集 · 完"
+                     value={tailText} onChange={(e) => setTailText(e.target.value)} />
+              <select value={tailDur} onChange={(e) => setTailDur(Number(e.target.value))}>
+                <option value={1}>1s</option>
+                <option value={1.5}>1.5s</option>
+                <option value={2}>2s</option>
+                <option value={3}>3s</option>
+              </select>
+              <input type="color" value={tailBg} onChange={(e) => setTailBg(e.target.value)} />
+              <select value={tailImage} onChange={(e) => setTailImage(e.target.value)}>
+                <option value="">纯色背景</option>
+                {images.map((a) => <option key={a.id} value={a.id}>{a.path.split('/').pop()}</option>)}
+              </select>
+            </div>
+          )}
 
           <h3>背景音乐</h3>
           <div className="row">

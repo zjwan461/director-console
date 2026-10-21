@@ -87,6 +87,12 @@ class RenderRunner:
         sub_opt = options.get("subtitles") or {}
         loud_opt = options.get("loudness") or {}
         preview = bool(options.get("preview"))
+        title_opt = options.get("title") or {}
+        tail_opt = options.get("tail") or {}
+        title_text = str(title_opt.get("text") or "").strip() if title_opt.get("enabled") else ""
+        tail_text = str(tail_opt.get("text") or "").strip() if tail_opt.get("enabled") else ""
+        title_dur = float(title_opt.get("duration") or 1.5) if title_text else 0.0
+        tail_dur = float(tail_opt.get("duration") or 2.0) if tail_text else 0.0
         trans = options.get("transition") or {}
         trans_kind = str(trans.get("type") or "none")
         trans_dur = float(trans.get("duration") or 0.4)
@@ -123,7 +129,7 @@ class RenderRunner:
         clips: list[Path] = []
         voice_segments: list[tuple[Path | None, float]] = []
         timeline: list[dict] = []
-        cursor = 0.0
+        cursor = title_dur
 
         for idx, shot in enumerate(ordered, start=1):
             src = self._video_path_for_shot(shot["id"])
@@ -174,6 +180,43 @@ class RenderRunner:
         else:
             await ffmpeg.concat_clips(clips, joined, work)
         current = joined
+
+        parts: list[Path] = []
+        if title_text:
+            store.update_render(render_id, message="生成片头", progress=0.68)
+            bg_path = None
+            if title_opt.get("bg_asset"):
+                bg_asset = store.get_asset(str(title_opt["bg_asset"]))
+                if bg_asset:
+                    candidate = DATA / bg_asset["path"]
+                    bg_path = candidate if candidate.exists() else None
+            card = work / "title.mp4"
+            await ffmpeg.make_title_card(
+                card, title_text, title_dur, width, height, fps,
+                bg_color=str(title_opt.get("bg") or "#000000"),
+                bg_image=bg_path,
+            )
+            parts.append(card)
+        parts.append(current)
+        if tail_text:
+            store.update_render(render_id, message="生成片尾", progress=0.69)
+            bg_path = None
+            if tail_opt.get("bg_asset"):
+                bg_asset = store.get_asset(str(tail_opt["bg_asset"]))
+                if bg_asset:
+                    candidate = DATA / bg_asset["path"]
+                    bg_path = candidate if candidate.exists() else None
+            card = work / "tail.mp4"
+            await ffmpeg.make_title_card(
+                card, tail_text, tail_dur, width, height, fps,
+                bg_color=str(tail_opt.get("bg") or "#000000"),
+                bg_image=bg_path,
+            )
+            parts.append(card)
+        if len(parts) > 1:
+            with_cards = work / "with_cards.mp4"
+            await ffmpeg.concat_clips(parts, with_cards, work)
+            current = with_cards
 
         voice_full: Path | None = None
         if any(path for path, _ in voice_segments):

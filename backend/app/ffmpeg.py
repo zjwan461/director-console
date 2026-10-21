@@ -341,6 +341,102 @@ async def process_clip(
         raise RuntimeError(f"单镜处理失败：{_tail(err)}")
 
 
+def _cjk_font(size: int):
+    from PIL import ImageFont
+
+    candidates = [
+        "C:/Windows/Fonts/msyh.ttc",
+        "C:/Windows/Fonts/msyhbd.ttc",
+        "C:/Windows/Fonts/simhei.ttf",
+        "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+        "/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    ]
+    for item in candidates:
+        if Path(item).exists():
+            try:
+                return ImageFont.truetype(item, size)
+            except Exception:
+                continue
+    return ImageFont.load_default()
+
+
+def _wrap(text: str, draw, font, max_width: int) -> list[str]:
+    lines: list[str] = []
+    for paragraph in text.split("\n"):
+        current = ""
+        for char in paragraph:
+            probe = current + char
+            if draw.textlength(probe, font=font) <= max_width or not current:
+                current = probe
+            else:
+                lines.append(current)
+                current = char
+        lines.append(current)
+    return lines[:4]
+
+
+async def make_title_card(
+    out: Path,
+    text: str,
+    duration: float,
+    width: int,
+    height: int,
+    fps: int = 24,
+    bg_color: str = "#000000",
+    bg_image: Path | None = None,
+    fade: float = 0.3,
+) -> None:
+    """生成片头/片尾卡：纯色或图片背景 + 居中文字，带淡入淡出。"""
+    from PIL import Image, ImageDraw
+
+    frame = Image.new("RGB", (width, height), bg_color)
+    if bg_image and bg_image.exists():
+        try:
+            src = Image.open(bg_image).convert("RGB")
+            scale = max(width / src.width, height / src.height)
+            resized = src.resize((int(src.width * scale) + 1, int(src.height * scale) + 1))
+            left = (resized.width - width) // 2
+            top = (resized.height - height) // 2
+            frame = resized.crop((left, top, left + width, top + height))
+        except Exception:
+            pass
+
+    text = (text or "").strip()
+    if text:
+        draw = ImageDraw.Draw(frame)
+        font = _cjk_font(max(18, height // 12))
+        lines = _wrap(text, draw, font, int(width * 0.8))
+        line_height = int(font.size * 1.35) if hasattr(font, "size") else int(height * 0.12)
+        total = line_height * len(lines)
+        y = (height - total) // 2
+        for line in lines:
+            w = draw.textlength(line, font=font)
+            draw.text(((width - w) / 2, y), line, font=font, fill="#FFFFFF")
+            y += line_height
+
+    png = out.with_suffix(".png")
+    frame.save(png)
+
+    ff = ffmpeg_path()
+    if not ff:
+        raise FFmpegMissing("未检测到 ffmpeg")
+    dur = max(0.5, duration)
+    fade = min(fade, dur / 3)
+    vf = f"fade=t=in:st=0:d={fade:.2f},fade=t=out:st={dur - fade:.2f}:d={fade:.2f}"
+    code, err = await _run([
+        ff, "-y", "-loglevel", "error",
+        "-loop", "1", "-t", f"{dur:.3f}", "-i", str(png),
+        "-f", "lavfi", "-t", f"{dur:.3f}", "-i", "anullsrc=r=48000:cl=stereo",
+        "-vf", vf, "-r", str(fps),
+        "-c:v", "libx264", "-crf", "18", "-preset", "medium", "-pix_fmt", "yuv420p",
+        "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2",
+        "-shortest", "-movflags", "+faststart", str(out),
+    ])
+    if code != 0:
+        raise RuntimeError("生成片头/片尾失败：" + err[-600:])
+
+
 async def mix_voice(clip: Path, voice: Path, out: Path, volume_db: float = 0.0) -> None:
     """把旁白混到单镜音频上；旁白按镜头时长裁断，短了补静音。"""
     ff = ffmpeg_path()
