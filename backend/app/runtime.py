@@ -13,6 +13,13 @@ AI_KEY_KEY = "ai.api_key"
 AI_MODEL_KEY = "ai.model"
 AI_PROXY_KEY = "ai.proxy"
 
+TTS_BASE_KEY = "tts.base_url"
+TTS_KEY_KEY = "tts.api_key"
+TTS_MODEL_KEY = "tts.model"
+TTS_VOICE_KEY = "tts.voice"
+TTS_FORMAT_KEY = "tts.format"
+TTS_RATE_KEY = "tts.sample_rate"
+
 VALID_MODES = {"local", "ssh", "external", "mock"}
 
 
@@ -36,6 +43,13 @@ def apply_runtime_settings() -> None:
         ai["model"] = stored[AI_MODEL_KEY]
     if stored.get(AI_PROXY_KEY):
         ai["proxy"] = stored[AI_PROXY_KEY]
+
+    tts = settings.raw.setdefault("tts", {})
+    for key, name in ((TTS_BASE_KEY, "base_url"), (TTS_KEY_KEY, "api_key"),
+                      (TTS_MODEL_KEY, "model"), (TTS_VOICE_KEY, "voice"),
+                      (TTS_FORMAT_KEY, "format"), (TTS_RATE_KEY, "sample_rate")):
+        if stored.get(key):
+            tts[name] = stored[key]
 
 
 def normalize_url(url: str) -> str:
@@ -134,3 +148,36 @@ def public_ai_settings() -> dict:
         "key_hint": mask_token(key),
         "overridden": bool(store.list_settings().get(AI_BASE_KEY)),
     }
+
+
+def save_tts_settings(base_url: str, api_key: str | None, model: str,
+                      voice: str, fmt: str = "wav", sample_rate: int = 24000) -> dict:
+    url = normalize_url(base_url)
+    if not url:
+        raise ValueError("请填写 TTS Base URL")
+    store.set_setting(TTS_BASE_KEY, url)
+    store.set_setting(TTS_MODEL_KEY, (model or "").strip())
+    store.set_setting(TTS_VOICE_KEY, (voice or "").strip())
+    store.set_setting(TTS_FORMAT_KEY, (fmt or "wav").strip())
+    store.set_setting(TTS_RATE_KEY, str(int(sample_rate or 24000)))
+    if api_key is not None:
+        store.set_setting(TTS_KEY_KEY, api_key.strip())
+    apply_runtime_settings()
+    from . import tts as tts_module
+
+    return tts_module.config()
+
+
+def reset_tts_settings() -> dict:
+    for key in (TTS_BASE_KEY, TTS_KEY_KEY, TTS_MODEL_KEY, TTS_VOICE_KEY, TTS_FORMAT_KEY, TTS_RATE_KEY):
+        store.delete_setting(key)
+    from importlib import reload
+
+    from . import config as config_module
+
+    reload(config_module)
+    settings.raw = config_module.settings.raw
+    apply_runtime_settings()
+    from . import tts as tts_module
+
+    return tts_module.config()

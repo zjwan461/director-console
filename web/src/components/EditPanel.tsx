@@ -12,6 +12,7 @@ interface Edit {
   in_point: string
   out_point: string
   subtitle: string
+  narration: string
   voice_asset: string
   fit: string
 }
@@ -58,6 +59,16 @@ export default function EditPanel({
   const [activeShot, setActiveShot] = useState('')
   const [uploadFor, setUploadFor] = useState('')
   const [picker, setPicker] = useState<'' | 'title' | 'tail'>('')
+  const [aiOpen, setAiOpen] = useState(false)
+  const [aiKind, setAiKind] = useState<'both' | 'subtitle' | 'narration'>('both')
+  const [aiTone, setAiTone] = useState('documentary')
+  const [aiPerson, setAiPerson] = useState('third')
+  const [aiLang, setAiLang] = useState('zh')
+  const [aiMode, setAiMode] = useState<'fill' | 'rewrite'>('fill')
+  const [aiTtsOn, setAiTtsOn] = useState(false)
+  const [aiRunning, setAiRunning] = useState(false)
+  const [aiMessage, setAiMessage] = useState('')
+  const [aiUndo, setAiUndo] = useState<Record<string, Edit> | null>(null)
   const voiceInput = useRef<HTMLInputElement | null>(null)
   const [shotPreview, setShotPreview] = useState<{ url: string; duration: number }>({ url: '', duration: 0 })
   const [previewJob, setPreviewJob] = useState<{ id: string; status: string; message: string; url?: string } | null>(null)
@@ -125,6 +136,7 @@ export default function EditPanel({
             in_point: item.in_point ? String(item.in_point) : '',
             out_point: item.out_point ? String(item.out_point) : '',
             subtitle: String(item.subtitle || ''),
+            narration: String(item.narration || ''),
             voice_asset: String(item.voice_asset || ''),
             fit: String(item.fit || ''),
           }
@@ -158,6 +170,7 @@ export default function EditPanel({
           in_point: Number(editOf(s.id).in_point) || 0,
           out_point: editOf(s.id).out_point ? Number(editOf(s.id).out_point) : undefined,
           subtitle: editOf(s.id).subtitle || s.title || '',
+          narration: editOf(s.id).narration || '',
           voice_asset: editOf(s.id).voice_asset || '',
           fit: editOf(s.id).fit || '',
         })),
@@ -224,7 +237,7 @@ export default function EditPanel({
   }
 
   const ordered = useMemo(() => shots.filter((s) => selected.includes(s.id)), [shots, selected])
-  const editOf = (id: string): Edit => edits[id] || { in_point: '', out_point: '', subtitle: '', voice_asset: '', fit: '' }
+  const editOf = (id: string): Edit => edits[id] || { in_point: '', out_point: '', subtitle: '', narration: '', voice_asset: '', fit: '' }
   const patchEdit = (id: string, patch: Partial<Edit>) =>
     setEdits((prev) => ({ ...prev, [id]: { ...editOf(id), ...patch } }))
   const uploadVoice = async (files: FileList | null) => {
@@ -244,6 +257,68 @@ export default function EditPanel({
 
   const toggle = (id: string) =>
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
+
+  const stylePayload = () => ({ tone: aiTone, person: aiPerson, language: aiLang })
+
+  const runAI = async () => {
+    if (!ordered.length) return
+    const snapshot = { ...edits }
+    setAiUndo(snapshot)
+    setAiRunning(true)
+    setAiMessage('')
+    let done = 0
+    let failed = 0
+    try {
+      for (const shot of ordered) {
+        const current = editOf(shot.id)
+        const needSub = (aiKind === 'both' || aiKind === 'subtitle') && (aiMode === 'rewrite' || !current.subtitle)
+        const needNarr = (aiKind === 'both' || aiKind === 'narration') && (aiMode === 'rewrite' || !current.narration)
+        if (needSub) {
+          try {
+            const r = await api.aiScript({ shot_id: shot.id, kind: 'subtitle', style: stylePayload() })
+            patchEdit(shot.id, { subtitle: r.text })
+            done += 1
+          } catch { failed += 1 }
+        }
+        if (needNarr) {
+          try {
+            const r = await api.aiScript({ shot_id: shot.id, kind: 'narration', style: stylePayload() })
+            patchEdit(shot.id, { narration: r.text })
+            done += 1
+            if (aiTtsOn && r.text) {
+              try {
+                const audio = await api.aiTts({ text: r.text, shot_id: shot.id })
+                patchEdit(shot.id, { voice_asset: audio.asset_id })
+              } catch { /* 配音失败不阻断文案 */ }
+            }
+          } catch { failed += 1 }
+        }
+      }
+      setAiMessage(`完成：${done} 项${failed ? `，失败 ${failed} 项` : ''}`)
+    } finally {
+      setAiRunning(false)
+    }
+  }
+
+  const aiOne = async (shotId: string, kind: 'subtitle' | 'narration') => {
+    try {
+      const r = await api.aiScript({ shot_id: shotId, kind, style: stylePayload() })
+      patchEdit(shotId, kind === 'subtitle' ? { subtitle: r.text } : { narration: r.text })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    }
+  }
+
+  const ttsOne = async (shotId: string) => {
+    const text = editOf(shotId).narration.trim()
+    if (!text) { setError('先写旁白文案，再点配音'); return }
+    try {
+      const audio = await api.aiTts({ text, shot_id: shotId })
+      patchEdit(shotId, { voice_asset: audio.asset_id })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    }
+  }
 
   const startPreview = async () => {
     if (!ordered.length) return
@@ -324,12 +399,70 @@ export default function EditPanel({
           <select value={projectId} onChange={(e) => setProjectId(e.target.value)}>
             {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
+          <button className="primary" onClick={() => setAiOpen(true)}>AI 生成</button>
           {savedAt && <span className="meta">已自动保存 {savedAt}</span>}
         </div>
       </div>
 
       <input ref={voiceInput} type="file" hidden accept="audio/*"
              onChange={(e) => void uploadVoice(e.target.files)} />
+
+      {aiOpen && (
+        <div className="picker-overlay" onClick={() => !aiRunning && setAiOpen(false)}>
+          <div className="picker" style={{ width: 460 }} onClick={(e) => e.stopPropagation()}>
+            <div className="picker-head">
+              <b>AI 生成</b>
+              <button className="ghost tiny" onClick={() => setAiOpen(false)}>关闭</button>
+            </div>
+            <div className="field"><label><span>生成内容</span></label>
+              <select value={aiKind} onChange={(e) => setAiKind(e.target.value as typeof aiKind)}>
+                <option value="both">字幕 + 旁白</option>
+                <option value="subtitle">只生成字幕</option>
+                <option value="narration">只生成旁白</option>
+              </select>
+            </div>
+            <div className="row">
+              <select value={aiTone} onChange={(e) => setAiTone(e.target.value)}>
+                <option value="documentary">纪实解说</option>
+                <option value="suspense">悬念</option>
+                <option value="casual">口语</option>
+              </select>
+              <select value={aiPerson} onChange={(e) => setAiPerson(e.target.value)}>
+                <option value="third">第三人称</option>
+                <option value="first">第一人称</option>
+              </select>
+              <select value={aiLang} onChange={(e) => setAiLang(e.target.value)}>
+                <option value="zh">中文</option>
+                <option value="bilingual">中英双语</option>
+              </select>
+            </div>
+            <div className="row">
+              <select value={aiMode} onChange={(e) => setAiMode(e.target.value as typeof aiMode)}>
+                <option value="fill">只填空白</option>
+                <option value="rewrite">全部重写</option>
+              </select>
+              {(aiKind === 'narration' || aiKind === 'both') && (
+                <label className="check" style={{ margin: 0 }}>
+                  <input type="checkbox" checked={aiTtsOn} onChange={(e) => setAiTtsOn(e.target.checked)} />
+                  同时配音
+                </label>
+              )}
+            </div>
+            {aiMessage && <div className="notice">{aiMessage}</div>}
+            <div className="row-actions">
+              <button className="primary" disabled={aiRunning || !ordered.length} onClick={() => void runAI()}>
+                {aiRunning ? '生成中…' : `开始（${ordered.length} 镜）`}
+              </button>
+              {aiUndo && (
+                <button className="ghost" disabled={aiRunning}
+                        onClick={() => { setEdits(aiUndo); setAiUndo(null); setAiMessage('已撤销') }}>
+                  撤销上次 AI
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {picker && (
         <div className="picker-overlay" onClick={() => setPicker('')}>
@@ -433,9 +566,12 @@ export default function EditPanel({
                         </label>
                         <label className="grow">
                           字幕
-                          <input placeholder={shot.title || '这一镜的字幕'}
-                                 value={edit.subtitle}
-                                 onChange={(e) => patchEdit(shot.id, { subtitle: e.target.value })} />
+                          <div className="voice-pick">
+                            <input className="grow" placeholder={shot.title || '这一镜的字幕'}
+                                   value={edit.subtitle}
+                                   onChange={(e) => patchEdit(shot.id, { subtitle: e.target.value })} />
+                            <button className="ghost tiny" onClick={() => void aiOne(shot.id, 'subtitle')}>AI 写</button>
+                          </div>
                         </label>
                       </div>
                       <div className="shot-row">
@@ -453,7 +589,14 @@ export default function EditPanel({
                                     onClick={() => { setUploadFor(shot.id); voiceInput.current?.click() }}>
                               上传
                             </button>
+                            <button className="ghost tiny" onClick={() => void aiOne(shot.id, 'narration')}>AI 写</button>
+                            <button className="ghost tiny" onClick={() => void ttsOne(shot.id)}>配音</button>
                           </div>
+                        </label>
+                        <label>
+                          旁白文案
+                          <input placeholder="旁白文本（配音用）" value={edit.narration}
+                                 onChange={(e) => patchEdit(shot.id, { narration: e.target.value })} />
                         </label>
                         <label>
                           适配

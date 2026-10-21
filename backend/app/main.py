@@ -19,7 +19,7 @@ from pydantic import BaseModel
 
 from . import store
 from . import runtime
-from . import ffmpeg
+from . import ai_script, ffmpeg, tts as tts_module
 from .render import runner as render_runner
 from .comfy import ComfyError, make_client, probe
 from .config import settings
@@ -1103,6 +1103,116 @@ async def put_edit_state(project_id: str, body: EditState) -> dict:
         json.dumps({"options": body.options, "shot_edits": body.shot_edits}, ensure_ascii=False),
     )
     return {"ok": True, "saved_at": int(time.time())}
+
+
+class TTSSettings(BaseModel):
+    base_url: str
+    api_key: str | None = None
+    model: str = "qwen-audio-3.0-tts-plus"
+    voice: str = "longanlufeng"
+    format: str = "wav"
+    sample_rate: int = 24000
+
+
+class TTSRequest(BaseModel):
+    text: str
+    voice: str | None = None
+    shot_id: str | None = None
+
+
+class ScriptRequest(BaseModel):
+    shot_id: str
+    kind: str = "subtitle"
+    mode: str = "fill"
+    style: dict[str, Any] = {}
+
+
+@app.get("/api/settings/tts")
+async def get_tts_settings() -> dict:
+    data = tts_module.config()
+    data["overridden"] = bool(store.list_settings().get("tts.base_url"))
+    data["voices"] = tts_module.VOICES.get(data["model"], [])
+    return data
+
+
+@app.put("/api/settings/tts")
+async def put_tts_settings(body: TTSSettings) -> dict:
+    try:
+        data = runtime.save_tts_settings(body.base_url, body.api_key, body.model,
+                                         body.voice, body.format, body.sample_rate)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    data["voices"] = tts_module.VOICES.get(data["model"], [])
+    return data
+
+
+@app.post("/api/settings/tts/reset")
+async def reset_tts() -> dict:
+    return runtime.reset_tts_settings()
+
+
+@app.get("/api/tts/voices")
+async def tts_voices(model: str | None = None) -> dict:
+    name = model or tts_module.config()["model"]
+    return {"model": name, "items": tts_module.VOICES.get(name, [])}
+
+
+@app.post("/api/settings/tts/test")
+async def test_tts(body: TTSSettings | None = None) -> dict:
+    try:
+        result = await tts_module.synthesize("测试一二。", body.voice if body else None)
+        return {"ok": True, "duration": result["duration"], "cached": result.get("cached", False)}
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)}
+
+
+@app.post("/api/ai/tts")
+async def ai_tts(body: TTSRequest) -> dict:
+    try:
+        result = await tts_module.synthesize(body.text, body.voice)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    path = Path(result["path"])
+    rel = path.relative_to(DATA).as_posix()
+    asset = store.add_asset("audio", rel, size=path.stat().st_size,
+                            meta={"origin": "tts", "text": body.text[:120]})
+    return {
+        "asset_id": asset["id"],
+        "url": f"/media/files/{rel}",
+        "duration": result["duration"],
+        "cached": result.get("cached", False),
+    }
+
+
+@app.post("/api/ai/script")
+async def ai_script_one(body: ScriptRequest) -> dict:
+    shot = store.get_shot(body.shot_id)
+    if not shot:
+        raise HTTPException(status_code=404, detail="镜头不存在")
+    kind = body.kind if body.kind in {"subtitle", "narration"} else "subtitle"
+    project = store.get_project(shot["project_id"]) or {}
+    siblings = sorted(store.list_shots(shot["project_id"]), key=lambda s: s["idx"])
+    index = next((i for i, s in enumerate(siblings) if s["id"] == shot["id"]), -1)
+    neighbors = {
+        "prev": (siblings[index - 1].get("title", "") if index > 0 else ""),
+        "next": (siblings[index + 1].get("title", "") if 0 <= index < len(siblings) - 1 else ""),
+        "prev_prompt": (siblings[index - 1].get("prompt", "")[:120] if index > 0 else ""),
+        "next_prompt": (siblings[index + 1].get("prompt", "")[:120] if 0 <= index < len(siblings) - 1 else ""),
+    }
+
+    found = _shot_video(shot)
+    duration = 5.0
+    if found and found[1].exists():
+        try:
+            duration = await ffmpeg.duration_of(found[1]) or 5.0
+        except Exception:
+            pass
+
+    try:
+        return await ai_script.generate(kind, shot, project, neighbors, duration,
+                                       body.style or {})
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
 
 
 @app.get("/api/renders")

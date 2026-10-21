@@ -73,6 +73,33 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     }),
+  aiScript: (payload: { shot_id: string; kind: 'subtitle' | 'narration'; mode?: string; style?: Record<string, string> }) =>
+    request<{ text: string; chars: number; budget: number; over: boolean; duration: number }>('/api/ai/script', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }),
+  aiTts: (payload: { text: string; shot_id?: string; voice?: string }) =>
+    request<{ asset_id: string; url: string; duration: number; cached: boolean }>('/api/ai/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }),
+  ttsSettings: () =>
+    request<{ base_url: string; model: string; voice: string; key_set: boolean; key_hint: string; overridden: boolean; voices: Array<{ id: string; name: string }> }>(
+      '/api/settings/tts',
+    ),
+  saveTtsSettings: (payload: { base_url: string; api_key?: string; model: string; voice: string }) =>
+    request<{ base_url: string; model: string; voice: string; key_set: boolean; key_hint: string; voices: Array<{ id: string; name: string }> }>(
+      '/api/settings/tts',
+      { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) },
+    ),
+  testTts: (payload: { base_url: string; api_key?: string; model: string; voice: string }) =>
+    request<{ ok: boolean; duration?: number; error?: string }>('/api/settings/tts/test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }),
   shotPreview: (shotId: string) =>
     request<{ url: string; duration: number; source: string; width: number; height: number }>(
       `/api/shots/${shotId}/preview`,

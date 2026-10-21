@@ -170,6 +170,8 @@ export default function ServicePanel({ status, onRefresh }: Props) {
 
       <AISettingsPanel />
 
+      <TTSPanel />
+
       <ModelCheckPanel />
     </div>
   )
@@ -452,6 +454,97 @@ function AISettingsPanel() {
           {busy === 'test' ? '测试中…' : '测试连接'}
         </button>
         <button className="ghost" disabled={busy === 'reset'} onClick={() => void reset()}>恢复默认</button>
+      </div>
+      {note && <div className="notice" style={{ marginTop: 8 }}>{note}</div>}
+    </div>
+  )
+}
+
+
+function TTSPanel() {
+  const [baseUrl, setBaseUrl] = useState('')
+  const [model, setModel] = useState('qwen-audio-3.0-tts-plus')
+  const [voice, setVoice] = useState('longanlufeng')
+  const [apiKey, setApiKey] = useState('')
+  const [keyHint, setKeyHint] = useState('')
+  const [voices, setVoices] = useState<Array<{ id: string; name: string }>>([])
+  const [note, setNote] = useState('')
+  const [busy, setBusy] = useState('')
+
+  useEffect(() => {
+    api.ttsSettings().then((s) => {
+      setBaseUrl(s.base_url)
+      setModel(s.model)
+      setVoice(s.voice)
+      setKeyHint(s.key_hint)
+      setVoices(s.voices || [])
+    }).catch(() => undefined)
+  }, [])
+
+  const payload = () => ({ base_url: baseUrl, model, voice, api_key: apiKey || undefined })
+
+  const save = async () => {
+    setBusy('save')
+    setNote('')
+    try {
+      const s = await api.saveTtsSettings(payload())
+      setVoices(s.voices || [])
+      setKeyHint(s.key_hint)
+      setApiKey('')
+      setNote('已保存')
+    } catch (err) {
+      setNote(err instanceof Error ? err.message : String(err))
+    } finally { setBusy('') }
+  }
+
+  const test = async () => {
+    setBusy('test')
+    setNote('')
+    try {
+      const r = await api.testTts(payload())
+      setNote(r.ok ? `试听成功（${r.duration}s）` : `失败：${r.error}`)
+    } catch (err) {
+      setNote(err instanceof Error ? err.message : String(err))
+    } finally { setBusy('') }
+  }
+
+  return (
+    <div className="panel">
+      <h2>
+        <span>旁白配音（TTS）</span>
+        {keyHint && <span className="badge">当前 {keyHint}</span>}
+      </h2>
+      <p className="hint">
+        阿里云百炼 qwen-audio-3.0-tts-plus。Base URL 填控制台给的工作区域名，例如
+        https://xxx.cn-beijing.maas.aliyuncs.com
+      </p>
+      <div className="field">
+        <label><span>Base URL</span></label>
+        <input value={baseUrl} placeholder="https://<workspace>.cn-beijing.maas.aliyuncs.com"
+               onChange={(e) => setBaseUrl(e.target.value)} />
+      </div>
+      <div className="field">
+        <label><span>API Key{keyHint ? `（当前 ${keyHint}）` : ''}</span></label>
+        <input type="password" value={apiKey} placeholder="留空表示不修改"
+               onChange={(e) => setApiKey(e.target.value)} />
+      </div>
+      <div className="row">
+        <select value={model} onChange={(e) => setModel(e.target.value)}>
+          <option value="qwen-audio-3.0-tts-plus">qwen-audio-3.0-tts-plus</option>
+          <option value="qwen-audio-3.1-tts-flash">qwen-audio-3.1-tts-flash</option>
+        </select>
+        <select className="grow" value={voice} onChange={(e) => setVoice(e.target.value)}>
+          {voices.map((v) => <option key={v.id} value={v.id}>{v.name || v.id}</option>)}
+          {!voices.length && <option value={voice}>{voice}</option>}
+        </select>
+      </div>
+      <div className="row-actions">
+        <button className="primary" disabled={!baseUrl || busy === 'save'} onClick={() => void save()}>
+          {busy === 'save' ? '保存中…' : '保存'}
+        </button>
+        <button disabled={busy === 'test'} onClick={() => void test()}>
+          {busy === 'test' ? '合成中…' : '试听'}
+        </button>
       </div>
       {note && <div className="notice" style={{ marginTop: 8 }}>{note}</div>}
     </div>

@@ -337,3 +337,29 @@ GET  /api/tts/voices                              → 音色列表
 
 `voice_asset` 已经是 `render_shots` 的字段，TTS 只是“把资产造出来”的多一种方式，
 剪辑侧不需要改。
+
+---
+
+## 11. AI 辅助剪辑（2026-10-21）
+
+原则：AI 出初稿，人做决定；默认只填空白；生成结果就是普通可编辑字段。
+
+| 能力 | 实现 | 接口 |
+|---|---|---|
+| 字幕生成（本镜/批量） | ✅ | `POST /api/ai/script` `kind=subtitle` |
+| 旁白文案（本镜/批量） | ✅ | `POST /api/ai/script` `kind=narration` |
+| 旁白配音（阿里云百炼） | ✅ 代码就绪，需填 Base URL / Key | `POST /api/ai/tts` |
+| TTS 配置与试听 | ✅ | `GET/PUT /api/settings/tts`、`POST /api/settings/tts/test` |
+
+约束：
+
+- 字幕预算 = 时长 × 4.5 字/秒（8~60 字），旁白 = 时长 × 4.0 字/秒（10~90 字）
+- 三档语气（纪实/悬念/口语）× 两种人称（第三人称/第一人称）× 语言（中文/中英双语）
+- 提示词模板放 `content/ai-prompts.json`，和剪辑状态分离
+
+TTS 流程：文本 → 阿里云 `SpeechSynthesizer`（qwen-audio-3.0-tts-plus）→ 下载音频 →
+按 `sha1(model|voice|text)` 缓存在 `data/uploads/tts/` → 建 audio asset → 回填 `voice_asset`。
+
+注意：qwen-audio-3.0-tts-plus 只有 `longanlufeng`（男）/ `longanlingxin`（女）两个音色，
+带 `_v3.1` 后缀的音色属于 3.1-flash，配错会报 411。
+
