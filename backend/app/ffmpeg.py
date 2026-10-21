@@ -474,6 +474,21 @@ async def make_title_card(
         raise RuntimeError("生成片头/片尾失败：" + err[-600:])
 
 
+async def speed_audio(src: Path, out: Path, tempo: float) -> None:
+    """旁白变速（1.0~1.3），用于把配音压进镜头时长。"""
+    ff = ffmpeg_path()
+    if not ff:
+        raise FFmpegMissing("未检测到 ffmpeg")
+    tempo = min(max(tempo, 1.0), 1.3)
+    code, err = await _run([
+        ff, "-y", "-loglevel", "error", "-i", str(src),
+        "-filter:a", f"atempo={tempo:.4f}",
+        "-c:a", "pcm_s16le", "-ar", "48000", "-ac", "2", str(out),
+    ])
+    if code != 0:
+        raise RuntimeError("旁白变速失败：" + err[-400:])
+
+
 async def mix_voice(clip: Path, voice: Path, out: Path, volume_db: float = 0.0) -> None:
     """把旁白混到单镜音频上；旁白按镜头时长裁断，短了补静音。"""
     ff = ffmpeg_path()

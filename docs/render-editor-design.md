@@ -271,6 +271,7 @@ GET /api/ffmpeg/status      # 含 capabilities
 - 每镜一个 `voice_asset`，剪辑页可直接从素材库选或上传音频；
 - 渲染时先 `mix_voice` 把旁白按镜头时长裁断/补静音混进该镜音频；
 - 再按时间轴生成 `narration.m4a`，作为 `sidechaincompress` 的 sidechain 压 BGM（`bgm.duck`，默认开）；
+- 旁白比镜头长时自动 `atempo` 提速（最多 1.3x），仍超长才被裁切并在界面提示；
 - 片头片尾：整片级 `options.title/tail`，支持纯色或图片背景 + 居中文字，默认 0.3s 淡入淡出；
 - 片头片尾作为独立片段拼接在正片前后，字幕时间轴自动偏移片头时长。
 

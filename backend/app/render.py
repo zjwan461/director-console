@@ -163,7 +163,19 @@ class RenderRunner:
                         voice_path = candidate
                         voiced = work / f"clipv_{idx:03d}.mp4"
                         store.update_render(render_id, message=f"{idx}/{total} 混入旁白", progress=0.05 + 0.55 * idx / total)
-                        await ffmpeg.mix_voice(dst, candidate, voiced)
+                        # 旁白比镜头长时，按建议值提速压进镜头（最多 1.3x）
+                        try:
+                            voice_dur = await ffmpeg.duration_of(candidate)
+                        except Exception:
+                            voice_dur = 0.0
+                        tempo = 1.0
+                        if voice_dur and dur > 0.5:
+                            tempo = min(max(voice_dur / max(dur - 0.3, 0.5), 1.0), 1.3)
+                        if tempo > 1.001:
+                            adjusted = work / f"vo_{idx:03d}.wav"
+                            await ffmpeg.speed_audio(candidate, adjusted, tempo)
+                            voice_path = adjusted
+                        await ffmpeg.mix_voice(dst, voice_path, voiced)
                         dst = voiced
             voice_segments.append((voice_path, dur))
 
