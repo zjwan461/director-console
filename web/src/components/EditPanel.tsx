@@ -338,15 +338,39 @@ export default function EditPanel({
         const title = shot.title || `镜头 ${shot.idx + 1}`
         setRow(shot.id, title, 'running')
         const current = editOf(shot.id)
-        const needSub = (aiKind === 'both' || aiKind === 'subtitle') && (aiMode === 'rewrite' || !current.subtitle)
-        const needNarr = (aiKind === 'both' || aiKind === 'narration') && (aiMode === 'rewrite' || !current.narration)
+        const wantSub = aiKind === 'both' || aiKind === 'subtitle'
+        const wantNarr = aiKind === 'both' || aiKind === 'narration'
+        let narrationText = current.narration
+        const needNarr = wantNarr && (aiMode === 'rewrite' || !current.narration)
         const notes: string[] = []
+        if (needNarr) {
+          try {
+            const r = await api.aiScript({ shot_id: shot.id, kind: 'narration', style: stylePayload() })
+            patchEdit(shot.id, { narration: r.text })
+            narrationText = r.text
+            done += 1
+            notes.push(`旁白 ${r.chars}/${r.budget} 字${r.compressed ? '（已压缩）' : r.over ? '（超预算）' : ''}`)
+          } catch (err) {
+            failed += 1
+            const msg = err instanceof Error ? err.message : String(err)
+            notes.push('旁白失败：' + msg.slice(0, 60))
+            notify('err', `${title} 旁白生成失败`, msg.slice(0, 120))
+          }
+        }
+        const needSub = wantSub && (aiMode === 'rewrite' || !current.subtitle)
         if (needSub) {
           try {
-            const r = await api.aiScript({ shot_id: shot.id, kind: 'subtitle', style: stylePayload() })
-            patchEdit(shot.id, { subtitle: r.text })
-            done += 1
-            notes.push(`字幕 ${r.chars}/${r.budget} 字${r.compressed ? '（已压缩）' : r.over ? '（超预算）' : ''}`)
+            const r = await api.aiScript({
+              shot_id: shot.id, kind: 'subtitle', style: stylePayload(),
+              narration: narrationText,
+            })
+            if (r.skip === 'silent') {
+              notes.push('无口播，跳过字幕')
+            } else {
+              patchEdit(shot.id, { subtitle: r.text })
+              done += 1
+              notes.push(`字幕 ${r.chars}/${r.budget} 字${r.followed_narration ? '（跟随旁白）' : r.transcribed ? '（口播转写）' : r.compressed ? '（已压缩）' : r.over ? '（超预算）' : ''}`)
+            }
           } catch (err) {
             failed += 1
             const msg = err instanceof Error ? err.message : String(err)
@@ -354,30 +378,17 @@ export default function EditPanel({
             notify('err', `${title} 字幕生成失败`, msg.slice(0, 120))
           }
         }
-        if (needNarr) {
+        if (needNarr && aiTtsOn && narrationText) {
           try {
-            const r = await api.aiScript({ shot_id: shot.id, kind: 'narration', style: stylePayload() })
-            patchEdit(shot.id, { narration: r.text })
-            done += 1
-            notes.push(`旁白 ${r.chars}/${r.budget} 字${r.compressed ? '（已压缩）' : r.over ? '（超预算）' : ''}`)
-            if (aiTtsOn && r.text) {
-              try {
-                const audio = await api.aiTts({ text: r.text, shot_id: shot.id })
-                patchEdit(shot.id, { voice_asset: audio.asset_id })
-                await refreshAudios(audio.asset_id)
-                notes.push(audio.too_long
-                  ? `配音 ${audio.duration}s 超镜头 ${audio.slot}s`
-                  : `配音 ${audio.duration}s${audio.tempo > 1 ? `（${audio.tempo.toFixed(2)}x）` : ''}`)
-              } catch (err) {
-                ttsFailed += 1
-                notes.push('配音失败：' + (err instanceof Error ? err.message : String(err)).slice(0, 50))
-              }
-            }
+            const audio = await api.aiTts({ text: narrationText, shot_id: shot.id })
+            patchEdit(shot.id, { voice_asset: audio.asset_id })
+            await refreshAudios(audio.asset_id)
+            notes.push(audio.too_long
+              ? `配音 ${audio.duration}s 超镜头 ${audio.slot}s`
+              : `配音 ${audio.duration}s${audio.tempo > 1 ? `（${audio.tempo.toFixed(2)}x）` : ''}`)
           } catch (err) {
-            failed += 1
-            const msg = err instanceof Error ? err.message : String(err)
-            notes.push('旁白失败：' + msg.slice(0, 60))
-            notify('err', `${title} 旁白生成失败`, msg.slice(0, 120))
+            ttsFailed += 1
+            notes.push('配音失败：' + (err instanceof Error ? err.message : String(err)).slice(0, 50))
           }
         }
         if (!needSub && !needNarr) notes.push('已有内容，跳过')
@@ -395,9 +406,17 @@ export default function EditPanel({
 
   const aiOne = async (shotId: string, kind: 'subtitle' | 'narration') => {
     try {
-      const r = await api.aiScript({ shot_id: shotId, kind, style: stylePayload() })
+      const r = await api.aiScript({
+        shot_id: shotId, kind, style: stylePayload(),
+        narration: kind === 'subtitle' ? editOf(shotId).narration : undefined,
+      })
+      if (r.skip === 'silent') {
+        notify('ok', '跳过字幕', r.reason || '这个镜头没有明显人声')
+        return
+      }
       patchEdit(shotId, kind === 'subtitle' ? { subtitle: r.text } : { narration: r.text })
-      const extra = r.compressed ? `（从 ${r.original_chars} 字压缩）` : r.over ? '（仍超预算，建议手改）' : ''
+      const extra = r.followed_narration ? '（跟随旁白）' : r.transcribed ? '（口播转写）'
+        : r.compressed ? `（从 ${r.original_chars} 字压缩）` : r.over ? '（仍超预算，建议手改）' : ''
       notify(r.over ? 'err' : 'ok', kind === 'subtitle' ? '字幕已生成' : '旁白已生成',
              `${r.chars}/${r.budget} 字${extra}`)
     } catch (err) {

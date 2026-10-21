@@ -21,6 +21,11 @@ TTS_FORMAT_KEY = "tts.format"
 TTS_RATE_KEY = "tts.sample_rate"
 TTS_PROXY_KEY = "tts.proxy"
 
+ASR_BASE_KEY = "asr.base_url"
+ASR_KEY_KEY = "asr.api_key"
+ASR_MODEL_KEY = "asr.model"
+ASR_PROXY_KEY = "asr.proxy"
+
 VALID_MODES = {"local", "ssh", "external", "mock"}
 
 
@@ -44,6 +49,16 @@ def apply_runtime_settings() -> None:
         ai["model"] = stored[AI_MODEL_KEY]
     if stored.get(AI_PROXY_KEY):
         ai["proxy"] = stored[AI_PROXY_KEY]
+
+    asr = settings.raw.setdefault("asr", {})
+    if stored.get(ASR_BASE_KEY):
+        asr["base_url"] = stored[ASR_BASE_KEY]
+    if stored.get(ASR_KEY_KEY):
+        asr["api_key"] = stored[ASR_KEY_KEY]
+    if stored.get(ASR_MODEL_KEY):
+        asr["model"] = stored[ASR_MODEL_KEY]
+    if stored.get(ASR_PROXY_KEY):
+        asr["proxy"] = stored[ASR_PROXY_KEY]
 
     tts = settings.raw.setdefault("tts", {})
     for key, name in ((TTS_BASE_KEY, "base_url"), (TTS_KEY_KEY, "api_key"),
@@ -185,3 +200,33 @@ def reset_tts_settings() -> dict:
     from . import tts as tts_module
 
     return tts_module.config()
+
+
+def save_asr_settings(base_url: str, api_key: str | None, model: str, proxy: str = "") -> dict:
+    url = normalize_url(base_url)
+    if not url:
+        raise ValueError("请填写 ASR Base URL")
+    store.set_setting(ASR_BASE_KEY, url)
+    store.set_setting(ASR_MODEL_KEY, (model or "").strip())
+    store.set_setting(ASR_PROXY_KEY, (proxy or "").strip())
+    if api_key is not None:
+        store.set_setting(ASR_KEY_KEY, api_key.strip())
+    apply_runtime_settings()
+    from . import asr as asr_module
+
+    return asr_module.config()
+
+
+def reset_asr_settings() -> dict:
+    for key in (ASR_BASE_KEY, ASR_KEY_KEY, ASR_MODEL_KEY, ASR_PROXY_KEY):
+        store.delete_setting(key)
+    from importlib import reload
+
+    from . import config as config_module
+
+    reload(config_module)
+    settings.raw = config_module.settings.raw
+    apply_runtime_settings()
+    from . import asr as asr_module
+
+    return asr_module.config()

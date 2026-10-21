@@ -73,8 +73,18 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     }),
-  aiScript: (payload: { shot_id: string; kind: 'subtitle' | 'narration'; mode?: string; style?: Record<string, string> }) =>
-    request<{ text: string; chars: number; budget: number; over: boolean; compressed: boolean; original_chars: number; duration: number }>('/api/ai/script', {
+  asrSettings: () =>
+    request<{ base_url: string; model: string; proxy: string; key_set: boolean; key_hint: string; available: boolean; overridden: boolean }>(
+      '/api/settings/asr',
+    ),
+  saveAsrSettings: (payload: { base_url: string; api_key?: string; model: string; proxy?: string }) =>
+    request<{ base_url: string; model: string; key_set: boolean; key_hint: string; available: boolean }>('/api/settings/asr', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }),
+  aiScript: (payload: { shot_id: string; kind: 'subtitle' | 'narration'; mode?: string; narration?: string; style?: Record<string, string> }) =>
+    request<{ text: string; chars: number; budget: number; over: boolean; compressed: boolean; original_chars: number; duration: number; skip?: string; reason?: string; transcribed?: boolean; followed_narration?: boolean }>('/api/ai/script', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),

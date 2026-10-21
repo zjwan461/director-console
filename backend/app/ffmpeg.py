@@ -474,6 +474,29 @@ async def make_title_card(
         raise RuntimeError("生成片头/片尾失败：" + err[-600:])
 
 
+async def speech_ratio(path: Path, noise_db: int = -35) -> float:
+    """估算音频里“有声”的占比（0~1），用来判断镜头里有没有口播/人声。"""
+    ff = ffmpeg_path()
+    if not ff or not path.exists():
+        return 0.0
+    total = await duration_of(path)
+    if total <= 0:
+        return 0.0
+    code, err = await _run([
+        ff, "-hide_banner", "-i", str(path),
+        "-af", f"silencedetect=noise={noise_db}dB:d=0.35",
+        "-f", "null", "-",
+    ], timeout=120)
+    silence = 0.0
+    for line in err.splitlines():
+        if "silence_duration:" in line:
+            try:
+                silence += float(line.split("silence_duration:")[1].strip().split()[0])
+            except (IndexError, ValueError):
+                pass
+    return max(0.0, min(1.0, 1.0 - silence / total))
+
+
 async def speed_audio(src: Path, out: Path, tempo: float) -> None:
     """旁白变速（1.0~1.3），用于把配音压进镜头时长。"""
     ff = ffmpeg_path()

@@ -52,6 +52,20 @@ def shot_description(shot: dict) -> str:
     return ""
 
 
+def fit_narration(narration: str, budget: int) -> dict:
+    """字幕跟随旁白：不超预算就原样用，超了才压缩。"""
+    text = clean(narration)
+    return {
+        "text": text if len(text) <= budget else text[:budget].rstrip("，。！？、,.!? "),
+        "chars": min(len(text), budget),
+        "budget": budget,
+        "over": len(text) > budget,
+        "compressed": len(text) > budget,
+        "original_chars": len(text),
+        "followed_narration": True,
+    }
+
+
 async def generate(kind: str, shot: dict, project: dict, neighbors: dict,
                    duration: float, style: dict) -> dict:
     prompts = _prompts()

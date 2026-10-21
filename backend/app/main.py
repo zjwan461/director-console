@@ -19,7 +19,7 @@ from pydantic import BaseModel
 
 from . import store
 from . import runtime
-from . import ai_script, ffmpeg, tts as tts_module
+from . import ai_script, asr, ffmpeg, tts as tts_module
 from .render import runner as render_runner
 from .comfy import ComfyError, make_client, probe
 from .config import settings
@@ -1125,6 +1125,7 @@ class ScriptRequest(BaseModel):
     shot_id: str
     kind: str = "subtitle"
     mode: str = "fill"
+    narration: str = ""
     style: dict[str, Any] = {}
 
 
@@ -1150,6 +1151,39 @@ async def put_tts_settings(body: TTSSettings) -> dict:
 @app.post("/api/settings/tts/reset")
 async def reset_tts() -> dict:
     return runtime.reset_tts_settings()
+
+
+class ASRSettings(BaseModel):
+    base_url: str
+    api_key: str | None = None
+    model: str = "qwen-audio-3.0-asr-flash"
+    proxy: str = ""
+
+
+@app.get("/api/settings/asr")
+async def get_asr_settings() -> dict:
+    cfg = asr.config()
+    key = str(cfg.pop("api_key", "") or "")
+    cfg["key_set"] = bool(key)
+    cfg["key_hint"] = (key[:4] + "…" + key[-4:]) if len(key) > 8 else ""
+    cfg["available"] = asr.available()
+    cfg["overridden"] = bool(store.list_settings().get("asr.base_url"))
+    return cfg
+
+
+@app.put("/api/settings/asr")
+async def put_asr_settings(body: ASRSettings) -> dict:
+    try:
+        runtime.save_asr_settings(body.base_url, body.api_key, body.model, body.proxy)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return await get_asr_settings()
+
+
+@app.post("/api/settings/asr/reset")
+async def reset_asr() -> dict:
+    runtime.reset_asr_settings()
+    return await get_asr_settings()
 
 
 @app.get("/api/tts/voices")
@@ -1224,6 +1258,37 @@ async def ai_script_one(body: ScriptRequest) -> dict:
             duration = await ffmpeg.duration_of(found[1]) or 5.0
         except Exception:
             pass
+
+    budget = ai_script.char_budget(kind, duration)
+
+    # 字幕优先跟随旁白（旁白已经写好时，不再让模型另写一套）
+    if kind == "subtitle" and body.narration.strip():
+        return ai_script.fit_narration(body.narration, budget)
+
+    # 没有旁白：先看镜头里有没有人声/口播
+    if kind == "subtitle" and found and found[1].exists():
+        try:
+            ratio = await ffmpeg.speech_ratio(found[1])
+        except Exception:
+            ratio = 0.0
+        if ratio < 0.15:
+            return {"skip": "silent", "reason": "这个镜头没有明显人声，按设置不加字幕",
+                    "text": "", "chars": 0, "budget": budget, "duration": round(duration, 2)}
+        if not asr.available():
+            raise HTTPException(
+                status_code=400,
+                detail="检测到这个镜头有口播，但还没有配置语音转写（ASR）",
+            )
+        try:
+            text = await asr.transcribe(found[1])
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+        text = ai_script.clean(text)
+        if len(text) > budget:
+            text = text[:budget].rstrip("，。！？、,.!? ")
+        return {"text": text, "chars": len(text), "budget": budget, "over": False,
+                "compressed": False, "original_chars": len(text),
+                "transcribed": True, "duration": round(duration, 2)}
 
     try:
         return await ai_script.generate(kind, shot, project, neighbors, duration,

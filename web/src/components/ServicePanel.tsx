@@ -172,6 +172,8 @@ export default function ServicePanel({ status, onRefresh }: Props) {
 
       <TTSPanel />
 
+      <ASRPanel />
+
       <ModelCheckPanel />
     </div>
   )
@@ -564,6 +566,78 @@ function TTSPanel() {
       {audioUrl && (
         <audio className="tts-audio" src={audioUrl} controls autoPlay />
       )}
+    </div>
+  )
+}
+
+
+function ASRPanel() {
+  const [baseUrl, setBaseUrl] = useState('')
+  const [model, setModel] = useState('qwen-audio-3.0-asr-flash')
+  const [proxy, setProxy] = useState('')
+  const [apiKey, setApiKey] = useState('')
+  const [keyHint, setKeyHint] = useState('')
+  const [note, setNote] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  useEffect(() => {
+    api.asrSettings().then((s) => {
+      setBaseUrl(s.base_url)
+      setModel(s.model)
+      setProxy(s.proxy || '')
+      setKeyHint(s.key_hint)
+    }).catch(() => undefined)
+  }, [])
+
+  const save = async () => {
+    setBusy(true)
+    setNote('')
+    try {
+      const s = await api.saveAsrSettings({ base_url: baseUrl, model, proxy, api_key: apiKey || undefined })
+      setKeyHint(s.key_hint)
+      setApiKey('')
+      setNote('已保存')
+    } catch (err) {
+      setNote(err instanceof Error ? err.message : String(err))
+    } finally { setBusy(false) }
+  }
+
+  return (
+    <div className="panel">
+      <h2>
+        <span>语音转写（ASR）</span>
+        {keyHint && <span className="badge">当前 {keyHint}</span>}
+      </h2>
+      <p className="hint">
+        没有旁白、但镜头里有人说话时，用这里的模型把口播转成字幕。
+        模型必须在当前工作区可用（例如 qwen3-asr-flash 或你控制台里开通的转写模型）。
+      </p>
+      <div className="field">
+        <label><span>Base URL</span></label>
+        <input value={baseUrl} placeholder="https://<workspace>.cn-beijing.maas.aliyuncs.com/compatible-mode/v1"
+               onChange={(e) => setBaseUrl(e.target.value)} />
+      </div>
+      <div className="field">
+        <label><span>API Key{keyHint ? `（当前 ${keyHint}）` : ''}</span></label>
+        <input type="password" value={apiKey} placeholder="留空表示沿用提示词助手的 key"
+               onChange={(e) => setApiKey(e.target.value)} />
+      </div>
+      <div className="field">
+        <label><span>转写模型</span></label>
+        <input value={model} placeholder="qwen-audio-3.0-asr-flash"
+               onChange={(e) => setModel(e.target.value)} />
+      </div>
+      <div className="field">
+        <label><span>代理（可选）</span></label>
+        <input value={proxy} placeholder="留空沿用提示词助手的代理"
+               onChange={(e) => setProxy(e.target.value)} />
+      </div>
+      <div className="row-actions">
+        <button className="primary" disabled={!baseUrl || busy} onClick={() => void save()}>
+          {busy ? '保存中…' : '保存'}
+        </button>
+      </div>
+      {note && <div className="notice" style={{ marginTop: 8 }}>{note}</div>}
     </div>
   )
 }
