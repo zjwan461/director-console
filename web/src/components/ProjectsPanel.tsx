@@ -15,6 +15,7 @@ export default function ProjectsPanel({ onEdit }: { onEdit?: (projectId: string)
   const [values, setValues] = useState<Record<string, unknown>>({})
   const [assets, setAssetsState] = useState<Record<string, Asset>>({})
   const [takes, setTakes] = useState<Job[]>([])
+  const [showAllTakes, setShowAllTakes] = useState(false)
   const [job, setJob] = useState<Job | null>(null)
   const [error, setError] = useState('')
   const [newProject, setNewProject] = useState('')
@@ -107,6 +108,7 @@ export default function ProjectsPanel({ onEdit }: { onEdit?: (projectId: string)
     setAssetsState({})
     setJob(null)
     setTakes([])
+    setShowAllTakes(false)
     if (!next) {
       setValues({})
       return
@@ -419,9 +421,16 @@ export default function ProjectsPanel({ onEdit }: { onEdit?: (projectId: string)
 
               {takes.length > 0 && (
                 <div style={{ marginTop: 18 }}>
-                  <h2>本镜历史（{takes.length}）</h2>
-                  <div className="job-list">
-                    {takes.slice(0, 5).map((take) => (
+                  <h2>
+                    <span>本镜历史（{takes.length}）</span>
+                    {takes.length > 3 && (
+                      <button className="ghost tiny" onClick={() => setShowAllTakes((v) => !v)}>
+                        {showAllTakes ? '收起' : `展开全部（${takes.length}）`}
+                      </button>
+                    )}
+                  </h2>
+                  <div className={`job-list takes-scroll ${showAllTakes ? 'expanded' : ''}`}>
+                    {takes.slice(0, showAllTakes ? takes.length : 3).map((take) => (
                       <div className="job" key={take.id}>
                         <div className="body">
                           <div className="title">

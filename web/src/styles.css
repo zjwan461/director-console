@@ -445,3 +445,11 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
 .render-row-head .list-actions { margin-left: auto; display: flex; gap: 6px; align-items: center; }
 .render-row .bar { height: 4px; }
 .render-row .err { font-size: 12px; }
+
+
+/* 本镜历史：默认 3 条，展开后限高滚动，避免把页面拉得很长 */
+.takes-scroll.expanded {
+  max-height: 480px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
