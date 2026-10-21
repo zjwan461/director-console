@@ -90,7 +90,9 @@ class Installer:
         self.args = args
         self.state: dict = self._load_state()
         self.comfy_dir: Path = args.comfy_dir
-        self.panel_venv: Path = ROOT / ".venv"
+        explicit = getattr(args, "venv_dir", None)
+        self.venv_is_explicit = bool(explicit)
+        self.panel_venv: Path = Path(explicit) if explicit else ROOT / ".venv"
         self.comfy_venv: Path = self.comfy_dir / ".venv"
         LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
 
@@ -212,8 +214,38 @@ class Installer:
 # --------------------------------------------------------------------------- #
 # 步骤实现
 # --------------------------------------------------------------------------- #
+
+def _low_integrity_dir(path: Path) -> bool:
+    """Windows：目录是否带 Low Mandatory Level（低完整性进程写不了系统临时目录）。"""
+    if not HOST:
+        return False
+    try:
+        out = subprocess.run(["icacls", str(path)], capture_output=True, text=True,
+                             errors="replace", timeout=20).stdout
+    except Exception:
+        return False
+    return "Low Mandatory Level" in out
+
+
+def _fallback_venv_dir() -> Path:
+    base = os.environ.get("LOCALAPPDATA") or os.environ.get("XDG_DATA_HOME")
+    if base:
+        return Path(base) / "director-console" / ".venv"
+    return ROOT.parent / ".director-venv"
+
+
 def step_check(inst: Installer) -> None:
     inst.log(f"  python: {sys.version.split()[0]} @ {sys.executable}")
+
+    # DSH/AppLocker 之类会给目录打 Low 标签，venv 里的 python 会继承，
+    # 于是 pip 的临时目录退化到项目目录并卡死。这里提前把 venv 挪到项目外。
+    if _low_integrity_dir(ROOT):
+        inst.log("  [warn] 项目目录带 Low 完整性标签：venv 里的 pip 会卡在临时目录")
+        if inst.venv_is_explicit:
+            inst.log(f"  沿用 --venv-dir：{inst.panel_venv}")
+        else:
+            inst.panel_venv = _fallback_venv_dir()
+            inst.log(f"  已自动改用项目外的 venv：{inst.panel_venv}")
     if sys.version_info < (3, 10):
         raise RuntimeError("需要 Python >= 3.10")
     if not inst.args.skip_comfy and not shutil.which("git"):
@@ -258,6 +290,8 @@ def step_dirs(inst: Installer) -> None:
 
 def step_panel_venv(inst: Installer) -> None:
     if inst.panel_venv.exists() and (inst.panel_venv / VENV_PY).exists():
+        if _low_integrity_dir(inst.panel_venv):
+            inst.log("  [warn] 现有 venv 带 Low 标签，pip 会卡住；建议删除后重跑")
         inst.log("  已存在，跳过创建")
         return
     inst.run([sys.executable, "-m", "venv", str(inst.panel_venv)])
@@ -1029,6 +1063,8 @@ def step_selfcheck(inst: Installer) -> None:
         inst.log("  dry-run，跳过自检")
         return
     py = inst.python_of(inst.panel_venv)
+    inst.log("  venv 临时目录：")
+    inst.run([py, "-c", "import tempfile;print('  ', tempfile.gettempdir())"])
     inst.log("  面板依赖：")
     inst.run([py, "-c", "import fastapi, uvicorn, sqlalchemy, alembic, httpx, yaml; print('  ok')"])
 
@@ -1076,6 +1112,8 @@ def step_selfcheck(inst: Installer) -> None:
 # --------------------------------------------------------------------------- #
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="导演台安装器")
+    p.add_argument("--venv-dir", type=Path, default=None,
+                   help="面板 venv 位置（默认项目内 .venv；目录带 Low 标签时会自动挪到项目外）")
     p.add_argument("--comfy-dir", type=Path, default=Path("/root/ComfyUI") if not HOST else Path("D:/ComfyUI"))
     p.add_argument("--comfy-ref", default="v0.39.0")
     p.add_argument("--comfy-port", type=int, default=8188)
