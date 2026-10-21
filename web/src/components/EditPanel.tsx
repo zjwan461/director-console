@@ -346,40 +346,44 @@ export default function EditPanel({
                   </div>
                   {on && (
                     <div className="render-shot-edit" onClick={(e) => e.stopPropagation()}>
-                      <label>
-                        入点
-                        <input type="number" min={0} step={0.1} placeholder="0"
-                               value={edit.in_point}
-                               onChange={(e) => patchEdit(shot.id, { in_point: e.target.value })} />
-                      </label>
-                      <label>
-                        出点
-                        <input type="number" min={0} step={0.1} placeholder="到尾"
-                               value={edit.out_point}
-                               onChange={(e) => patchEdit(shot.id, { out_point: e.target.value })} />
-                      </label>
-                      <label className="grow">
-                        字幕
-                        <input placeholder={shot.title || '这一镜的字幕'}
-                               value={edit.subtitle}
-                               onChange={(e) => patchEdit(shot.id, { subtitle: e.target.value })} />
-                      </label>
-                      <label className="grow">
-                        旁白
-                        <div className="row" style={{ gap: 6 }}>
-                          <select className="grow" value={edit.voice_asset}
-                                  onChange={(e) => patchEdit(shot.id, { voice_asset: e.target.value })}>
-                            <option value="">无旁白</option>
-                            {audios.map((a) => (
-                              <option key={a.id} value={a.id}>{a.path.split('/').pop()}</option>
-                            ))}
-                          </select>
-                          <button className="ghost tiny"
-                                  onClick={() => { setUploadFor(shot.id); voiceInput.current?.click() }}>
-                            上传
-                          </button>
-                        </div>
-                      </label>
+                      <div className="shot-row">
+                        <label>
+                          入点
+                          <input type="number" min={0} step={0.1} placeholder="0"
+                                 value={edit.in_point}
+                                 onChange={(e) => patchEdit(shot.id, { in_point: e.target.value })} />
+                        </label>
+                        <label>
+                          出点
+                          <input type="number" min={0} step={0.1} placeholder="到尾"
+                                 value={edit.out_point}
+                                 onChange={(e) => patchEdit(shot.id, { out_point: e.target.value })} />
+                        </label>
+                        <label className="grow">
+                          字幕
+                          <input placeholder={shot.title || '这一镜的字幕'}
+                                 value={edit.subtitle}
+                                 onChange={(e) => patchEdit(shot.id, { subtitle: e.target.value })} />
+                        </label>
+                      </div>
+                      <div className="shot-row">
+                        <label className="grow">
+                          旁白
+                          <div className="voice-pick">
+                            <select className="grow" value={edit.voice_asset}
+                                    onChange={(e) => patchEdit(shot.id, { voice_asset: e.target.value })}>
+                              <option value="">无旁白</option>
+                              {audios.map((a) => (
+                                <option key={a.id} value={a.id}>{a.path.split('/').pop()}</option>
+                              ))}
+                            </select>
+                            <button className="ghost tiny"
+                                    onClick={() => { setUploadFor(shot.id); voiceInput.current?.click() }}>
+                              上传
+                            </button>
+                          </div>
+                        </label>
+                      </div>
                     </div>
                   )}
                 </div>
