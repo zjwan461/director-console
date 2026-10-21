@@ -7,9 +7,11 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw
 
+from . import ffmpeg as ffmpeg_mod
+
 
 def ffmpeg_available() -> bool:
-    return shutil.which("ffmpeg") is not None
+    return bool(ffmpeg_mod.ffmpeg_path())
 
 
 def _placeholder(out: Path, label: str) -> None:
@@ -23,7 +25,7 @@ def _placeholder(out: Path, label: str) -> None:
 def extract_last_frame(video: Path, out: Path) -> tuple[bool, str]:
     """从视频取最后一帧；返回 (是否真实取帧, 说明)。"""
     out.parent.mkdir(parents=True, exist_ok=True)
-    ffmpeg = shutil.which("ffmpeg")
+    ffmpeg = ffmpeg_mod.ffmpeg_path()
     if ffmpeg:
         cmd = [
             ffmpeg, "-y", "-loglevel", "error",
