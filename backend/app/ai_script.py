@@ -27,8 +27,14 @@ def char_budget(kind: str, duration: float) -> int:
     return max(10, min(int(duration * 4.0), 90))
 
 
-def clean(text: str) -> str:
-    text = (text or "").strip()
+def clean(text) -> str:
+    """content 可能是字符串，也可能是多模态返回的 [{"type":"text","text":...}] 列表。"""
+    if isinstance(text, list):
+        text = "".join(
+            str(part.get("text") or "") if isinstance(part, dict) else str(part)
+            for part in text
+        )
+    text = str(text or "").strip()
     text = re.sub(r"^```.*?\n|```$", "", text, flags=re.S).strip()
     text = text.strip("\"'“”‘’ ")
     text = re.sub(r"^(字幕|旁白)[:：]\s*", "", text)
