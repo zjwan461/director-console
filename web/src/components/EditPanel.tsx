@@ -238,6 +238,29 @@ export default function EditPanel({
       .catch((err) => setError(err instanceof Error ? err.message : String(err)))
   }, [projectId])
 
+  // 时间轴以后端为准：转场重叠、变速、片头偏移都在服务端算一次
+  const refreshTimeline = useCallback(async () => {
+    if (!projectId) return
+    try {
+      const res = await api.projectTimeline(projectId)
+      setTimeline(res.items.map((i) => ({
+        shot_id: i.shot_id,
+        title: i.title || '镜头',
+        duration: i.duration,
+        start: i.start,
+        end: i.end,
+      })))
+      setTimelineMeta({
+        total: res.total,
+        title_duration: res.title_duration,
+        tail_duration: res.tail_duration,
+        full_total: res.full_total,
+      })
+    } catch {
+      /* 接口不可用时保留旧时间轴 */
+    }
+  }, [projectId])
+
   useEffect(() => {
     if (!loaded || !projectId) return
     if (saveTimer.current) window.clearTimeout(saveTimer.current)
@@ -282,7 +305,11 @@ export default function EditPanel({
           subtitle_lock: editOf(s.id).subtitle_lock,
           burned_subtitle: isBurned(s.id),
         })),
-      }).then(() => setSavedAt(new Date().toLocaleTimeString())).catch(() => undefined)
+      }).then(() => {
+        setSavedAt(new Date().toLocaleTimeString())
+        // 保存成功后再拉时间轴，否则后端拿到的还是旧的 shot_edits
+        void refreshTimeline()
+      }).catch(() => undefined)
     }, 800)
   }, [loaded, projectId, resKey, fps, bgmTracks, duckBgm,
       subsEnabled, subSize, subMargin, subAutoFit, subLang, burnedDefault, loudness, fitMode, contentMode, transType, transDur, titleOn, titleText, titleDur, titleBg, titleImage,
@@ -364,29 +391,6 @@ export default function EditPanel({
   useEffect(() => () => {
     if (pollTimer.current) window.clearTimeout(pollTimer.current)
   }, [])
-
-  // 时间轴以后端为准：转场重叠、变速、片头偏移都在服务端算一次
-  const refreshTimeline = useCallback(async () => {
-    if (!projectId) return
-    try {
-      const res = await api.projectTimeline(projectId)
-      setTimeline(res.items.map((i) => ({
-        shot_id: i.shot_id,
-        title: i.title || '镜头',
-        duration: i.duration,
-        start: i.start,
-        end: i.end,
-      })))
-      setTimelineMeta({
-        total: res.total,
-        title_duration: res.title_duration,
-        tail_duration: res.tail_duration,
-        full_total: res.full_total,
-      })
-    } catch {
-      /* 接口不可用时保留旧时间轴 */
-    }
-  }, [projectId])
 
   // 镜头尺寸/时长仍要本地探测（预览比例、入出点上限用得到）
   useEffect(() => {
