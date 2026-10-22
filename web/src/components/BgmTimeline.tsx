@@ -206,11 +206,15 @@ export default function BgmTimeline({
         <div className="tl-scroll">
           <div className="tl-rail" ref={railRef} style={{ width: `${zoom * 100}%` }}>
             <div className="tl-ruler" onClick={seekAt}>
-              {ticks.map((tick) => (
-                <span key={tick} className="tl-tick" style={{ left: `${(tick / total) * 100}%` }}>
-                  {formatTime(tick)}
-                </span>
-              ))}
+              {ticks.map((tick) => {
+                const pct = (tick / total) * 100
+                const shift = pct <= 0.5 ? '0' : pct >= 99.5 ? '-100%' : '-50%'
+                return (
+                  <span key={tick} className="tl-tick" style={{ left: `${pct}%`, transform: `translateX(${shift})` }}>
+                    {formatTime(tick)}
+                  </span>
+                )
+              })}
             </div>
 
             <div className="tl-shots" onClick={seekAt}>
@@ -302,6 +306,7 @@ function buildTicks(total: number, zoom: number) {
   const base = total > 60 ? 15 : total > 30 ? 10 : total > 12 ? 5 : 2
   const step = Math.max(0.5, base / Math.max(zoom, 1))
   const ticks: number[] = []
-  for (let t = 0; t <= total + 0.001; t += step) ticks.push(Math.round(t * 10) / 10)
+  for (let t = 0; t < total - 0.05; t += step) ticks.push(Math.round(t * 10) / 10)
+  ticks.push(Math.round(total * 10) / 10)
   return ticks
 }

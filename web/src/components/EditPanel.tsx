@@ -302,7 +302,8 @@ export default function EditPanel({
   const filmTimeOf = useCallback((localSeconds: number) => {
     if (usingFilmPreview) return localSeconds
     const item = timeline.find((i) => i.shot_id === activeShot)
-    return (item?.start || 0) + localSeconds
+    if (!item) return localSeconds
+    return item.start + Math.min(localSeconds, item.duration)
   }, [timeline, activeShot, usingFilmPreview])
 
   const seekFilm = useCallback((filmSeconds: number) => {
@@ -409,10 +410,11 @@ export default function EditPanel({
   const updateTrack = (id: string, patch: Partial<BgmTrack>) =>
     setBgmTracks((prev) => prev.map((t) => (t.id === id ? { ...t, ...patch } : t)))
 
-  const filmDuration = useMemo(
-    () => timeline.reduce((sum, item) => sum + (item.duration || 0), 0),
-    [timeline],
-  )
+  // 全片时长 = 最后一个镜头块的结束时间（转场会让块之间有重叠，不能用求和）
+  const filmDuration = useMemo(() => {
+    if (!timeline.length) return 0
+    return timeline[timeline.length - 1].end
+  }, [timeline])
 
   const modeLabel = (mode: string) =>
     mode === 'narration' ? '解说' : mode === 'lip' ? '口播' : '纯画面'
@@ -1454,6 +1456,16 @@ export default function EditPanel({
                      src={previewJob?.status === 'succeeded' && previewJob.url ? previewJob.url : shotPreview.url}
                      onTimeUpdate={(e) => setPlayhead(filmTimeOf(e.currentTarget.currentTime))}
                      onSeeked={(e) => setPlayhead(filmTimeOf(e.currentTarget.currentTime))}
+                     onEnded={(e) => {
+                       if (usingFilmPreview) {
+                         setPlayhead(e.currentTarget.duration || filmDuration)
+                         return
+                       }
+                       const index = timeline.findIndex((i) => i.shot_id === activeShot)
+                       const item = timeline[index]
+                       if (!item) return
+                       setPlayhead(index === timeline.length - 1 ? filmDuration : item.end)
+                     }}
                      controls />
             </div>
           ) : (
