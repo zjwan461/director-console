@@ -59,6 +59,7 @@ export default function BgmTimeline({
   const [zoom, setZoom] = useState(1)
   const [peaks, setPeaks] = useState<Record<string, number[]>>({})
   const [audition, setAudition] = useState('')
+  const auditionEnd = useRef(0)
   const [drag, setDrag] = useState<{
     id: string; mode: DragMode; x0: number; start0: number; end0: number; endOpen: boolean; width: number; moved: boolean
   } | null>(null)
@@ -147,26 +148,38 @@ export default function BgmTimeline({
     onSeek(ratio * total)
   }
 
-  const auditionTrack = async (track: BgmTrackView) => {
-    const url = urls[track.asset_id]
+  const playSegment = async (key: string, assetId: string, from: number, until: number, volume: number) => {
+    const url = urls[assetId]
     if (!url) return
-    if (audition === track.id) {
-      audioRef.current?.pause()
+    const audio = audioRef.current
+    if (!audio) return
+    if (audition === key) {
+      audio.pause()
       setAudition('')
       return
     }
-    const audio = audioRef.current
-    if (!audio) return
+    audio.pause()
     audio.src = url
-    audio.currentTime = track.start
-    audio.volume = Math.max(0, Math.min(1, Math.pow(10, track.volume_db / 20)))
+    audio.currentTime = Math.max(0, from)
+    audio.volume = Math.max(0, Math.min(1, volume))
+    auditionEnd.current = until
     try {
       await audio.play()
-      setAudition(track.id)
+      setAudition(key)
     } catch {
       setAudition('')
     }
   }
+
+  const auditionTrack = (track: BgmTrackView) =>
+    playSegment(track.id, track.asset_id, track.start, track.end ?? total,
+      Math.pow(10, track.volume_db / 20))
+
+  // 旁白：从 0 播到镜头区间结束
+  const auditionNarration = (clip: NarrationClip) =>
+    playSegment(`nar:${clip.shot_id}`, clip.asset_id, 0,
+      clip.audio_duration > 0 ? Math.min(clip.audio_duration, clip.end - clip.start) : clip.end - clip.start,
+      1)
 
   useEffect(() => {
     const audio = audioRef.current
@@ -176,21 +189,19 @@ export default function BgmTimeline({
     return () => audio.removeEventListener('ended', stop)
   }, [])
 
-  // 试听时到了区间末尾自动停
+  // 试听到区间末尾自动停
   useEffect(() => {
     if (!audition) return
     const timer = window.setInterval(() => {
-      const track = tracks.find((t) => t.id === audition)
       const audio = audioRef.current
-      if (!track || !audio) return
-      const end = track.end ?? total
-      if (!audio.paused && audio.currentTime >= end) {
+      if (!audio || audio.paused) return
+      if (audio.currentTime >= auditionEnd.current - 0.02) {
         audio.pause()
         setAudition('')
       }
-    }, 200)
+    }, 120)
     return () => window.clearInterval(timer)
-  }, [audition, tracks, total])
+  }, [audition])
 
   const ticks = buildTicks(total, zoom)
 
@@ -272,14 +283,15 @@ export default function BgmTimeline({
                          className="tl-clip tl-clip-narration"
                          style={{ left: `${left}%`, width: `${width}%`, borderColor: '#9a7bf0', background: '#9a7bf022' }}
                          onClick={(event) => { event.stopPropagation(); onSelectShot?.(clip.shot_id) }}
-                         title={`${clip.title} · 旁白 ${clip.audio_duration.toFixed(1)}s`}>
+                         onDoubleClick={() => void auditionNarration(clip)}
+                         title={`${clip.title} · 旁白 ${clip.audio_duration.toFixed(1)}s（双击试听）`}>
                       <div className="tl-wave">
                         {bars.map((peak, i) => (
                           <i key={i} style={{ height: `${Math.max(peak * 100, 6)}%`, background: '#b39cf5' }} />
                         ))}
                       </div>
                       <span className="tl-clip-label">
-                        {clip.asset_id ? `旁白 · ${clip.title}` : '无旁白'}
+                        {audition === `nar:${clip.shot_id}` ? '▶ ' : ''}旁白 · {clip.title}
                       </span>
                     </div>
                   )
