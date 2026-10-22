@@ -85,6 +85,7 @@ export default function EditPanel({
   const [mergeBurned, setMergeBurned] = useState(true)
   const [aiTitles, setAiTitles] = useState(true)
   const [aiAutoSpeed, setAiAutoSpeed] = useState(true)
+  const [aiBgmId, setAiBgmId] = useState('')
   const [framesBusy, setFramesBusy] = useState(false)
   const [aiTone, setAiTone] = useState('documentary')
   const [aiPerson, setAiPerson] = useState('third')
@@ -592,6 +593,22 @@ export default function EditPanel({
     let done = 0
     let failed = 0
     let ttsFailed = 0
+    // 用户指定的 BGM：自动写入一条轨道，参数按是否有旁白给合理默认
+    if (aiBgmId) {
+      const hasNarration = ordered.some((s) => editOf(s.id).narration_on || editOf(s.id).voice_asset)
+      setBgmTracks([{
+        id: `t${Date.now().toString(36)}`,
+        asset_id: aiBgmId,
+        volume_db: hasNarration ? -18 : -12,
+        start: 0,
+        end: null,
+        fade_in: 1,
+        fade_out: 2,
+        loop: true,
+      }])
+      setDuckBgm(true)
+      done += 1
+    }
     try {
       for (const [index, shot] of ordered.entries()) {
         const title = shot.title || `镜头 ${shot.idx + 1}`
@@ -943,6 +960,21 @@ export default function EditPanel({
                 <input type="checkbox" checked={aiTitles} onChange={(e) => setAiTitles(e.target.checked)} />
                 同时生成片头/片尾文案（全片一键）
               </label>
+            </div>
+            <div className="field">
+              <label><span>背景音乐（可选）</span></label>
+              <select value={aiBgmId} onChange={(e) => setAiBgmId(e.target.value)}>
+                <option value="">不自动配置 BGM</option>
+                {audios.map((a) => (
+                  <option key={a.id} value={a.id}>{audioLabel(a)}</option>
+                ))}
+              </select>
+              {aiBgmId && (
+                <p className="hint" style={{ marginTop: 4 }}>
+                  会自动写入一条铺满正片的 BGM（淡入 1s、淡出 2s、循环），
+                  音量按有无旁白取 -18 / -12dB，之后可在右侧微调。
+                </p>
+              )}
             </div>
             </>
             )}
