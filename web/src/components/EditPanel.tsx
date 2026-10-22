@@ -1078,110 +1078,43 @@ export default function EditPanel({
                   </div>
                   {on && (
                     <div className="render-shot-edit" onClick={(e) => e.stopPropagation()}>
-                      <div className="shot-row">
-                        <label>
-                          入点
-                          <input type="number" min={0} step={0.1} placeholder="0"
-                                 value={edit.in_point}
-                                 onChange={(e) => patchEdit(shot.id, { in_point: e.target.value })} />
-                        </label>
-                        <label>
-                          出点
-                          <input type="number" min={0} step={0.1} placeholder="到尾"
-                                 value={edit.out_point}
-                                 onChange={(e) => patchEdit(shot.id, { out_point: e.target.value })} />
-                        </label>
-                        <label className="grow">
-                          字幕
-                          <div className="voice-pick">
-                            <input className="grow" placeholder={shot.title || '这一镜的字幕'}
-                                   value={edit.subtitle}
-                                   onChange={(e) => patchEdit(shot.id, { subtitle: e.target.value })} />
-                            {isBurned(shot.id) && <span className="badge">视频自带字幕</span>}
-                            {edit.narration_on && !edit.subtitle_lock && edit.narration.trim() && (
-                              <span className="badge">
-                                {edit.subtitle !== edit.narration && subAutoFit ? '已按阅读速度压缩' : '跟随旁白'}
-                              </span>
-                            )}
-                            {edit.narration_on && !edit.narration.trim() && (
-                              <span className="badge warn">无旁白文案</span>
-                            )}
-                            {edit.narration_on && edit.subtitle_lock && (
-                              <button className="ghost tiny"
-                                      title="重新让字幕和旁白保持一致"
-                                      onClick={() => patchEdit(shot.id, { subtitle: fitSubtitle(edit.narration, shot.id), subtitle_lock: false, burned_mode: 'inherit' })}>
-                                恢复跟随
-                              </button>
-                            )}
-                            {!edit.narration_on && edit.lip_on && (
-                              <button className="ghost tiny" disabled={aiBusy === `${shot.id}:subtitle`}
-                                      title="检测人声并转写"
-                                      onClick={() => void aiOne(shot.id, 'subtitle')}>
-                                {aiBusy === `${shot.id}:subtitle` ? <><span className="spin" /> 转写中</> : '转写'}
-                              </button>
-                            )}
-                          </div>
-                        </label>
-                      </div>
-                      <div className="shot-row">
-                        {edit.narration_on ? (
-                          <label className="grow">
-                            旁白
-                            <div className="voice-pick">
-                              <select className="grow" value={edit.voice_asset}
-                                      onChange={(e) => patchEdit(shot.id, { voice_asset: e.target.value })}>
-                                <option value="">无旁白音频</option>
-                                {audios.map((a) => (
-                                  <option key={a.id} value={a.id}>{audioLabel(a)}</option>
-                                ))}
-                              </select>
-                              <button className="ghost tiny"
-                                      onClick={() => { setUploadFor(shot.id); voiceInput.current?.click() }}>
-                                上传
-                              </button>
-                              <button className="ghost tiny" disabled={aiBusy === `${shot.id}:narration`}
-                                      onClick={() => void aiOne(shot.id, 'narration')}>
-                                {aiBusy === `${shot.id}:narration` ? <><span className="spin" /> 生成中</> : 'AI 写'}
-                              </button>
-                              <button className="ghost tiny" disabled={!edit.narration.trim() || aiBusy === `${shot.id}:tts`}
-                                      title={edit.narration.trim() ? '合成配音' : '先写旁白文案'}
-                                      onClick={() => void ttsOne(shot.id)}>
-                                {aiBusy === `${shot.id}:tts` ? <><span className="spin" /> 配音中</> : '配音'}
-                              </button>
-                              <button className="ghost tiny" disabled={!edit.voice_asset}
-                                      onClick={() => void playVoice(shot.id)}>
-                                {playingVoice === shot.id ? '停止' : '试听'}
-                              </button>
-                              {edit.narration.trim() && !edit.voice_asset && <span className="badge warn">未配音</span>}
-                              {!edit.narration.trim() && edit.voice_asset && <span className="badge">仅音频</span>}
-                            </div>
+                      <div className="shot-section">
+                        <div className="shot-section-head">基础</div>
+                        <div className="shot-row">
+                          <label>
+                            入点
+                            <input type="number" min={0} step={0.1} placeholder="0"
+                                   value={edit.in_point}
+                                   onChange={(e) => patchEdit(shot.id, { in_point: e.target.value })} />
                           </label>
-                        ) : (
-                          <div className="meta" style={{ flexBasis: '100%' }}>
-                            {edit.lip_on
-                              ? '没有旁白：字幕来自语音转写，保留原声'
-                              : '既没有旁白也没有口播：不加字幕'}
-                          </div>
-                        )}
-                      </div>
-                      {edit.narration_on && edit.lip_on && (
-                        <div className="meta" style={{ color: '#facc15' }}>
-                          同时有旁白和口播：字幕跟随旁白，旁白会叠在原声上，建议把原声音量调到 -10dB 左右
-                        </div>
-                      )}
-                      <div className="shot-row">
-                        <div className="mode-toggles">
-                          <label className="check" style={{ margin: 0 }}>
-                            <input type="checkbox" checked={edit.narration_on}
-                                   onChange={(e) => setNarration(shot.id, e.target.checked)} />
-                            有旁白
+                          <label>
+                            出点
+                            <input type="number" min={0} step={0.1} placeholder="到尾"
+                                   value={edit.out_point}
+                                   onChange={(e) => patchEdit(shot.id, { out_point: e.target.value })} />
                           </label>
-                          <label className="check" style={{ margin: 0 }}>
-                            <input type="checkbox" checked={edit.lip_on}
-                                   onChange={(e) => setLip(shot.id, e.target.checked)} />
-                            有口播
+                          <label>
+                            速度
+                            <select value={edit.speed}
+                                    onChange={(e) => patchEdit(shot.id, { speed: e.target.value })}>
+                              <option value="1">1.0x</option>
+                              <option value="0.6">0.6x 慢</option>
+                              <option value="0.8">0.8x</option>
+                              <option value="1.2">1.2x</option>
+                              <option value="1.5">1.5x 快</option>
+                              <option value="2">2.0x</option>
+                            </select>
                           </label>
-                          <label style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <label>
+                            适配
+                            <select value={edit.fit} onChange={(e) => patchEdit(shot.id, { fit: e.target.value })}>
+                              <option value="">跟随全局</option>
+                              <option value="letterbox">补边</option>
+                              <option value="crop">裁切</option>
+                              <option value="blur">模糊</option>
+                            </select>
+                          </label>
+                          <label>
                             自带字幕
                             <select value={edit.burned_mode}
                                     onChange={(e) => patchEdit(shot.id, { burned_mode: e.target.value })}>
@@ -1191,54 +1124,138 @@ export default function EditPanel({
                             </select>
                           </label>
                         </div>
-                        {edit.narration_on && (
-                          <label>
-                            音色
-                            <select value={edit.tts_voice}
-                                    onChange={(e) => patchEdit(shot.id, { tts_voice: e.target.value })}>
-                              <option value="">跟随默认</option>
-                              {voiceOptions.map((v) => (
-                                <option key={v.id} value={v.id}>{v.name || v.id}</option>
-                              ))}
-                            </select>
+                      </div>
+
+                      <div className="shot-section">
+                        <div className="shot-section-head">字幕</div>
+                        <div className="shot-row">
+                          <label className="grow">
+                            文案
+                            <div className="voice-pick">
+                              <input className="grow" placeholder={shot.title || '这一镜的字幕'}
+                                     value={edit.subtitle}
+                                     onChange={(e) => patchEdit(shot.id, { subtitle: e.target.value })} />
+                              {isBurned(shot.id) && <span className="badge">视频自带字幕</span>}
+                              {edit.narration_on && !edit.subtitle_lock && edit.narration.trim() && (
+                                <span className="badge">
+                                  {edit.subtitle !== edit.narration && subAutoFit ? '已按阅读速度压缩' : '跟随旁白'}
+                                </span>
+                              )}
+                              {edit.narration_on && !edit.narration.trim() && (
+                                <span className="badge warn">无旁白文案</span>
+                              )}
+                              {edit.narration_on && edit.subtitle_lock && (
+                                <button className="ghost tiny"
+                                        title="重新让字幕和旁白保持一致"
+                                        onClick={() => patchEdit(shot.id, { subtitle: fitSubtitle(edit.narration, shot.id), subtitle_lock: false, burned_mode: 'inherit' })}>
+                                  恢复跟随
+                                </button>
+                              )}
+                              {!edit.narration_on && edit.lip_on && (
+                                <button className="ghost tiny" disabled={aiBusy === `${shot.id}:subtitle`}
+                                        title="检测人声并转写"
+                                        onClick={() => void aiOne(shot.id, 'subtitle')}>
+                                  {aiBusy === `${shot.id}:subtitle` ? <><span className="spin" /> 转写中</> : '转写'}
+                                </button>
+                              )}
+                            </div>
                           </label>
+                        </div>
+                      </div>
+
+                      <div className="shot-section">
+                        <div className="shot-section-head">旁白 / 口播</div>
+                        <div className="shot-row">
+                          <div className="mode-toggles">
+                            <label className="check" style={{ margin: 0 }}>
+                              <input type="checkbox" checked={edit.narration_on}
+                                     onChange={(e) => setNarration(shot.id, e.target.checked)} />
+                              有旁白
+                            </label>
+                            <label className="check" style={{ margin: 0 }}>
+                              <input type="checkbox" checked={edit.lip_on}
+                                     onChange={(e) => setLip(shot.id, e.target.checked)} />
+                              有口播
+                            </label>
+                          </div>
+                          {edit.lip_on && (
+                            <label>
+                              原声音量
+                              <input type="number" step={1} value={edit.volume_db}
+                                     onChange={(e) => patchEdit(shot.id, { volume_db: e.target.value })} />
+                            </label>
+                          )}
+                          {edit.narration_on && (
+                            <label>
+                              音色
+                              <select value={edit.tts_voice}
+                                      onChange={(e) => patchEdit(shot.id, { tts_voice: e.target.value })}>
+                                <option value="">跟随默认</option>
+                                {voiceOptions.map((v) => (
+                                  <option key={v.id} value={v.id}>{v.name || v.id}</option>
+                                ))}
+                              </select>
+                            </label>
+                          )}
+                        </div>
+
+                        {edit.narration_on ? (
+                          <>
+                            <div className="shot-row">
+                              <label className="grow">
+                                文案
+                                <input placeholder="旁白文本（配音用）"
+                                       value={edit.narration}
+                                       onChange={(e) => setNarrationText(shot.id, e.target.value)} />
+                              </label>
+                            </div>
+                            <div className="shot-row">
+                              <label className="grow">
+                                音频
+                                <div className="voice-pick">
+                                  <select className="grow" value={edit.voice_asset}
+                                          onChange={(e) => patchEdit(shot.id, { voice_asset: e.target.value })}>
+                                    <option value="">无旁白音频</option>
+                                    {audios.map((a) => (
+                                      <option key={a.id} value={a.id}>{audioLabel(a)}</option>
+                                    ))}
+                                  </select>
+                                  <button className="ghost tiny"
+                                          onClick={() => { setUploadFor(shot.id); voiceInput.current?.click() }}>
+                                    上传
+                                  </button>
+                                  <button className="ghost tiny" disabled={aiBusy === `${shot.id}:narration`}
+                                          onClick={() => void aiOne(shot.id, 'narration')}>
+                                    {aiBusy === `${shot.id}:narration` ? <><span className="spin" /> 生成中</> : 'AI 写'}
+                                  </button>
+                                  <button className="ghost tiny" disabled={!edit.narration.trim() || aiBusy === `${shot.id}:tts`}
+                                          title={edit.narration.trim() ? '合成配音' : '先写旁白文案'}
+                                          onClick={() => void ttsOne(shot.id)}>
+                                    {aiBusy === `${shot.id}:tts` ? <><span className="spin" /> 配音中</> : '配音'}
+                                  </button>
+                                  <button className="ghost tiny" disabled={!edit.voice_asset}
+                                          onClick={() => void playVoice(shot.id)}>
+                                    {playingVoice === shot.id ? '停止' : '试听'}
+                                  </button>
+                                  {edit.narration.trim() && !edit.voice_asset && <span className="badge warn">未配音</span>}
+                                  {!edit.narration.trim() && edit.voice_asset && <span className="badge">仅音频</span>}
+                                </div>
+                              </label>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="meta">
+                            {edit.lip_on
+                              ? '没有旁白：字幕来自语音转写，保留原声'
+                              : '既没有旁白也没有口播：不加字幕'}
+                          </div>
                         )}
-                        {edit.lip_on && (
-                          <label>
-                            原声音量
-                            <input type="number" step={1} value={edit.volume_db}
-                                   onChange={(e) => patchEdit(shot.id, { volume_db: e.target.value })} />
-                          </label>
+
+                        {edit.narration_on && edit.lip_on && (
+                          <div className="meta" style={{ color: '#facc15' }}>
+                            同时有旁白和口播：字幕跟随旁白，旁白会叠在原声上，建议把原声音量调到 -10dB 左右
+                          </div>
                         )}
-                        <label>
-                          速度
-                          <select value={edit.speed}
-                                  onChange={(e) => patchEdit(shot.id, { speed: e.target.value })}>
-                            <option value="1">1.0x</option>
-                            <option value="0.6">0.6x 慢</option>
-                            <option value="0.8">0.8x</option>
-                            <option value="1.2">1.2x</option>
-                            <option value="1.5">1.5x 快</option>
-                            <option value="2">2.0x</option>
-                          </select>
-                        </label>
-                        {edit.narration_on && (
-                          <label>
-                            旁白文案
-                            <input placeholder="旁白文本（配音用）"
-                                   value={edit.narration}
-                                   onChange={(e) => setNarrationText(shot.id, e.target.value)} />
-                          </label>
-                        )}
-                        <label>
-                          适配
-                          <select value={edit.fit} onChange={(e) => patchEdit(shot.id, { fit: e.target.value })}>
-                            <option value="">跟随全局</option>
-                            <option value="letterbox">补边</option>
-                            <option value="crop">裁切</option>
-                            <option value="blur">模糊</option>
-                          </select>
-                        </label>
                       </div>
                     </div>
                   )}

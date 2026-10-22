@@ -580,3 +580,12 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
   border-radius: 999px; padding: 1px 8px; }
 .render-card-actions { display: grid; grid-template-columns: repeat(2, 76px); gap: 6px; align-content: center; flex: 0 0 auto; }
 .render-card-actions .tiny, .render-card-actions a button { width: 100%; }
+
+
+/* 镜头编辑分区 */
+.shot-section { display: flex; flex-direction: column; gap: 8px; padding-top: 10px; margin-top: 10px;
+  border-top: 1px dashed var(--line); }
+.shot-section:first-child { padding-top: 0; margin-top: 0; border-top: none; }
+.shot-section-head { font-size: 11px; color: #8b93a7; letter-spacing: .08em; }
+.shot-section .shot-row { flex-wrap: wrap; }
+.shot-section .shot-row label.grow { min-width: 220px; }
