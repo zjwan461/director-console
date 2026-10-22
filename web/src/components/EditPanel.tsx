@@ -67,6 +67,7 @@ export default function EditPanel({
   const [bgmTracks, setBgmTracks] = useState<BgmTrack[]>([])
   const [duckBgm, setDuckBgm] = useState(true)
   const [activeTrackId, setActiveTrackId] = useState('')
+  const [playhead, setPlayhead] = useState(0)
   const [subsEnabled, setSubsEnabled] = useState(true)
   const [subSize, setSubSize] = useState(42)
   const [subAutoFit, setSubAutoFit] = useState(true)
@@ -1117,7 +1118,7 @@ export default function EditPanel({
       {error && <div className="notice err">{error}</div>}
 
       <div className="render-editor">
-        <div className="panel">
+        <div className="panel panel-shots">
           <h2>
             <span>镜头与字幕</span>
             <span className="meta">
@@ -1177,7 +1178,7 @@ export default function EditPanel({
                     })()}
                     <span className="meta">{shot.last_frame_url ? '已出片' : '暂无产物'}</span>
                   </div>
-                  {on && (
+                  {on && activeShot === shot.id && (
                     <div className="render-shot-edit"
                          onClick={(e) => { e.stopPropagation(); setActiveShot(shot.id) }}
                          onFocusCapture={() => setActiveShot(shot.id)}>
@@ -1373,7 +1374,7 @@ export default function EditPanel({
           </div>
         </div>
 
-        <div className="panel">
+        <div className="panel panel-preview">
           <h2>
             <span>预览</span>
             <span className="meta">{activeShot ? (shots.find((s) => s.id === activeShot)?.title || '') : '选择镜头'}</span>
@@ -1388,7 +1389,11 @@ export default function EditPanel({
                 (RESOLUTIONS.find((r) => r.key === resKey) || RESOLUTIONS[1]).height}`,
             }}>
               <video key={previewJob?.url || shotPreview.url} className="preview-video" ref={previewVideoRef}
-                     src={previewJob?.status === 'succeeded' && previewJob.url ? previewJob.url : shotPreview.url} controls />
+                     src={previewJob?.status === 'succeeded' && previewJob.url ? previewJob.url : shotPreview.url}
+                     onTimeUpdate={(e) => setPlayhead(e.currentTarget.currentTime)}
+                     onSeeked={(e) => setPlayhead(e.currentTarget.currentTime)}
+                     onLoadedMetadata={(e) => setPlayhead(e.currentTarget.currentTime)}
+                     controls />
             </div>
           ) : (
             <div className="preview-empty">这个镜头还没有可预览的视频</div>
@@ -1411,8 +1416,10 @@ export default function EditPanel({
                    value={editOf(activeShot).out_point ? Math.min(Number(editOf(activeShot).out_point), shotPreview.duration) : shotPreview.duration}
                    onChange={(e) => patchEdit(activeShot, { out_point: e.target.value })} />
           </div>
+        </div>
 
-          <h2 style={{ marginTop: 14 }}>成片设置</h2>
+        <div className="panel panel-side">
+          <h2>成片设置</h2>
           <div className="row">
             <select value={resKey} onChange={(e) => setResKey(e.target.value)}>
               {RESOLUTIONS.map((r) => <option key={r.key} value={r.key}>{r.label}</option>)}
@@ -1646,11 +1653,14 @@ export default function EditPanel({
             tracks={bgmTracks}
             activeId={activeTrackId}
             titles={Object.fromEntries(audios.map((a) => [a.id, audioLabel(a)]))}
+            urls={Object.fromEntries(audios.map((a) => [a.id, a.url || `/media/files/${a.path}`]))}
+            currentTime={playhead}
             onSelect={setActiveTrackId}
             onChange={updateTrack}
             onSeek={(seconds) => {
               const video = previewVideoRef.current
               if (video) video.currentTime = seconds
+              setPlayhead(seconds)
             }}
           />
         </div>

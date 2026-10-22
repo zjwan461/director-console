@@ -656,3 +656,34 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
 .tl-empty { font-size: 10px; color: #6f7688; padding: 6px 2px; }
 
 .render-editor > .span-all { grid-column: 1 / -1; }
+
+
+/* 时间轴扩展：缩放滚动 / 播放头 */
+.tl-tools { display: flex; align-items: center; gap: 6px; }
+.tl-tools button { padding: 1px 6px; line-height: 1.4; }
+.tl-body { overflow: hidden; }
+.tl-scroll { flex: 1; min-width: 0; overflow-x: auto; overflow-y: hidden; }
+.tl-scroll::-webkit-scrollbar { height: 6px; }
+.tl-scroll::-webkit-scrollbar-thumb { background: #2c3243; border-radius: 3px; }
+.tl-playhead { position: absolute; top: 0; bottom: 0; width: 0; border-left: 1px solid #ff5c7a;
+  pointer-events: auto; cursor: ew-resize; z-index: 5; }
+.tl-playhead-grip { position: absolute; top: 0; left: -5px; width: 10px; height: 10px;
+  background: #ff5c7a; border-radius: 0 0 3px 3px; }
+
+
+/* 剪辑页三段式布局：左上预览 / 左下镜头 / 右侧设置 / 底部时间轴 */
+.render-editor { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 14px; align-items: start; }
+.render-editor > .panel-preview { grid-column: 1; grid-row: 1; }
+.render-editor > .panel-shots { grid-column: 1; grid-row: 2; }
+.render-editor > .panel-side { grid-column: 2; grid-row: 1 / span 2; max-height: calc(100vh - 140px);
+  overflow-y: auto; position: sticky; top: 12px; }
+.render-editor > .span-all { grid-column: 1 / -1; grid-row: 3; position: sticky; bottom: 8px;
+  z-index: 20; background: #0f1219; box-shadow: 0 -8px 24px rgba(0,0,0,.45); }
+@media (max-width: 1200px) {
+  .render-editor { grid-template-columns: minmax(0, 1fr); }
+  .render-editor > .panel-preview,
+  .render-editor > .panel-shots,
+  .render-editor > .panel-side,
+  .render-editor > .span-all { grid-column: 1; grid-row: auto; }
+  .render-editor > .panel-side { position: static; max-height: none; }
+}
