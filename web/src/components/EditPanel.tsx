@@ -79,7 +79,7 @@ export default function EditPanel({
   const [aiAutoSpeed, setAiAutoSpeed] = useState(true)
   const [aiTone, setAiTone] = useState('documentary')
   const [aiPerson, setAiPerson] = useState('third')
-  const [aiLang, setAiLang] = useState('zh')
+  const [subLang, setSubLang] = useState<'zh' | 'bilingual'>('zh')
   const [aiMode, setAiMode] = useState<'fill' | 'rewrite'>('fill')
   const [aiTtsOn, setAiTtsOn] = useState(false)
   const [aiRunning, setAiRunning] = useState(false)
@@ -141,6 +141,7 @@ export default function EditPanel({
         setSubSize(Number(style.size || 42))
         setSubMargin(Number(style.margin_v || 48))
         setSubAutoFit(Boolean(subs.autofit ?? true))
+        setSubLang((String(subs.language || 'zh') === 'bilingual' ? 'bilingual' : 'zh'))
         setBurnedDefault(Boolean(opts.burned_default))
         setLoudness(Boolean((opts.loudness as Record<string, unknown>)?.enabled ?? true))
         const title = (opts.title || {}) as Record<string, unknown>
@@ -210,7 +211,8 @@ export default function EditPanel({
           title: { enabled: titleOn, text: titleText, duration: titleDur, bg: titleBg, bg_asset: titleImage },
           tail: { enabled: tailOn, text: tailText, duration: tailDur, bg: tailBg, bg_asset: tailImage },
           bgm: bgmId ? { asset_id: bgmId, volume_db: bgmVolume, fade_in: fadeIn, fade_out: fadeOut, loop: loopBgm } : {},
-          subtitles: { enabled: subsEnabled, autofit: subAutoFit, style: { size: subSize, margin_v: subMargin } },
+          subtitles: { enabled: subsEnabled, autofit: subAutoFit, language: subLang,
+                        style: { size: subSize, margin_v: subMargin } },
           burned_default: burnedDefault,
           loudness: { enabled: loudness },
         },
@@ -234,7 +236,7 @@ export default function EditPanel({
       }).then(() => setSavedAt(new Date().toLocaleTimeString())).catch(() => undefined)
     }, 800)
   }, [loaded, projectId, resKey, fps, bgmId, bgmVolume, fadeIn, fadeOut, loopBgm,
-      subsEnabled, subSize, subMargin, subAutoFit, burnedDefault, loudness, fitMode, contentMode, transType, transDur, titleOn, titleText, titleDur, titleBg, titleImage,
+      subsEnabled, subSize, subMargin, subAutoFit, subLang, burnedDefault, loudness, fitMode, contentMode, transType, transDur, titleOn, titleText, titleDur, titleBg, titleImage,
       tailOn, tailText, tailDur, tailBg, tailImage, edits, selected, shots])
 
   useEffect(() => {
@@ -308,6 +310,12 @@ export default function EditPanel({
     if (mode === 'on') return true
     if (mode === 'off') return false
     return burnedDefault
+  }
+
+  const changeLang = (next: 'zh' | 'bilingual') => {
+    setSubLang(next)
+    // 双语是两行，字号自动压到 44 以内，避免占掉太多画面
+    if (next === 'bilingual') setSubSize((prev) => Math.min(prev, 44))
   }
 
   const fitSubtitle = (text: string, shotId: string) => {
@@ -442,7 +450,7 @@ export default function EditPanel({
     window.dispatchEvent(new CustomEvent('dsh-toast', { detail: { kind, title, text } }))
   }
 
-  const stylePayload = () => ({ tone: aiTone, person: aiPerson, language: aiLang })
+  const stylePayload = () => ({ tone: aiTone, person: aiPerson, language: subLang })
 
   const setRow = (shotId: string, title: string, status: string, note = '') =>
     setAiRows((prev) => ({ ...prev, [shotId]: { title, status, note } }))
@@ -471,7 +479,7 @@ export default function EditPanel({
     const canvas = RESOLUTIONS.find((r) => r.key === resKey) || RESOLUTIONS[1]
     return JSON.stringify({
       kind: aiKind,
-      style: { tone: aiTone, person: aiPerson, language: aiLang },
+      style: { tone: aiTone, person: aiPerson, language: subLang },
       frames_per_shot: aiFrames,
       shots: ordered.slice(0, 3).map((s) => ({
         title: s.title,
@@ -755,7 +763,8 @@ export default function EditPanel({
         title: { enabled: titleOn, text: titleText, duration: titleDur, bg: titleBg, bg_asset: titleImage },
         tail: { enabled: tailOn, text: tailText, duration: tailDur, bg: tailBg, bg_asset: tailImage },
         bgm: bgmId ? { asset_id: bgmId, volume_db: bgmVolume, fade_in: fadeIn, fade_out: fadeOut, loop: loopBgm } : {},
-        subtitles: { enabled: subsEnabled, style: { size: subSize, margin_v: subMargin } },
+        subtitles: { enabled: subsEnabled, autofit: subAutoFit, language: subLang,
+                     style: { size: subSize, margin_v: subMargin } },
         loudness: { enabled: loudness },
       }, ordered.map((s) => ({
         shot_id: s.id,
@@ -853,12 +862,7 @@ export default function EditPanel({
                 <option value="third">第三人称</option>
                 <option value="first">第一人称</option>
               </select>
-              <select value={aiLang} onChange={(e) => {
-                const next = e.target.value
-                setAiLang(next)
-                // 双语是两行，字号自动降一档，避免占掉太多画面
-                if (next === 'bilingual') setSubSize((prev) => Math.min(prev, 44))
-              }}>
+              <select value={subLang} onChange={(e) => changeLang(e.target.value as 'zh' | 'bilingual')}>
                 <option value="zh">中文</option>
                 <option value="bilingual">中英双语</option>
               </select>
@@ -1422,6 +1426,20 @@ export default function EditPanel({
             <input type="checkbox" checked={subsEnabled} onChange={(e) => setSubsEnabled(e.target.checked)} />
             烧录到画面
           </label>
+          <div className="row">
+            <label className="inline-field">
+              <span>字幕语言</span>
+              <select value={subLang} onChange={(e) => changeLang(e.target.value as 'zh' | 'bilingual')}>
+                <option value="zh">中文</option>
+                <option value="bilingual">中英双语</option>
+              </select>
+            </label>
+          </div>
+          <p className="hint" style={{ marginTop: 4 }}>
+            {subLang === 'bilingual'
+              ? 'AI 生成字幕时输出中英两行；手动改写的字幕请自己写成两行。'
+              : 'AI 生成字幕时输出中文；手动改写的字幕按你写的内容原样烧录。'}
+          </p>
           <label className="check">
             <input type="checkbox" checked={subAutoFit} onChange={(e) => setSubAutoFit(e.target.checked)} />
             旁白过长时自动压缩字幕（每秒 4.5 字）
@@ -1431,7 +1449,7 @@ export default function EditPanel({
             <div className="row">
               <label className="slider grow">
                 字号 {subSize}
-                {aiLang === 'bilingual' && <span className="meta">（双语建议 ≤44）</span>}
+                {subLang === 'bilingual' && <span className="meta">（双语建议 ≤44）</span>}
                 <input type="range" min={20} max={80} value={subSize}
                        onChange={(e) => setSubSize(Number(e.target.value))} />
               </label>
