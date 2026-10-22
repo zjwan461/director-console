@@ -1429,6 +1429,10 @@ export default function EditPanel({
             <div className="canvas-box" style={{
               aspectRatio: `${(RESOLUTIONS.find((r) => r.key === resKey) || RESOLUTIONS[1]).width} / ${
                 (RESOLUTIONS.find((r) => r.key === resKey) || RESOLUTIONS[1]).height}`,
+              ['--ar' as string]: String(
+                (RESOLUTIONS.find((r) => r.key === resKey) || RESOLUTIONS[1]).width /
+                (RESOLUTIONS.find((r) => r.key === resKey) || RESOLUTIONS[1]).height,
+              ),
             }}>
               <video key={previewJob?.url || shotPreview.url} className="preview-video" ref={previewVideoRef}
                      src={previewJob?.status === 'succeeded' && previewJob.url ? previewJob.url : shotPreview.url}
@@ -1457,6 +1461,25 @@ export default function EditPanel({
                    value={editOf(activeShot).out_point ? Math.min(Number(editOf(activeShot).out_point), shotPreview.duration) : shotPreview.duration}
                    onChange={(e) => patchEdit(activeShot, { out_point: e.target.value })} />
           </div>
+        </div>
+
+        <div className="panel panel-timeline">
+          <h2>
+            <span>音乐轨道</span>
+            <span className="meta">拖拽色块调整起止 · 点刻度跳转预览</span>
+          </h2>
+          <BgmTimeline
+            duration={filmDuration}
+            shots={timeline.map((t) => ({ shot_id: t.shot_id, title: t.title, duration: t.duration }))}
+            tracks={bgmTracks}
+            activeId={activeTrackId}
+            titles={Object.fromEntries(audios.map((a) => [a.id, audioLabel(a)]))}
+            urls={Object.fromEntries(audios.map((a) => [a.id, a.url || `/media/files/${a.path}`]))}
+            currentTime={playhead}
+            onSelect={setActiveTrackId}
+            onChange={updateTrack}
+            onSeek={seekFilm}
+          />
         </div>
         </div>
 
@@ -1684,24 +1707,6 @@ export default function EditPanel({
 
         </div>
 
-        <div className="panel span-all">
-          <h2>
-            <span>音乐轨道</span>
-            <span className="meta">拖拽色块调整起止 · 点刻度跳转预览</span>
-          </h2>
-          <BgmTimeline
-            duration={filmDuration}
-            shots={timeline.map((t) => ({ shot_id: t.shot_id, title: t.title, duration: t.duration }))}
-            tracks={bgmTracks}
-            activeId={activeTrackId}
-            titles={Object.fromEntries(audios.map((a) => [a.id, audioLabel(a)]))}
-            urls={Object.fromEntries(audios.map((a) => [a.id, a.url || `/media/files/${a.path}`]))}
-            currentTime={playhead}
-            onSelect={setActiveTrackId}
-            onChange={updateTrack}
-            onSeek={seekFilm}
-          />
-        </div>
       </div>
     </div>
   )

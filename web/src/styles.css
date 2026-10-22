@@ -506,7 +506,7 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
 
 
 /* 预览画布：显示成片实际画幅 */
-.canvas-box { position: relative; width: 100%; background: #000; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.canvas-box { position: relative; width: min(100%, calc(46vh * var(--ar, 1.7778))); margin-inline: auto; background: #000; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
 .canvas-box .preview-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; max-height: none; border-radius: 0; }
 
 
@@ -679,14 +679,18 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
   gap: 14px;
   align-items: start;
 }
-.render-editor > .span-all { grid-column: 1 / -1; grid-row: 1; }
-.ed-col { grid-column: 1; grid-row: 2; }
-.render-editor > .panel-side { grid-column: 2; grid-row: 2; }
+.ed-col { grid-column: 1; grid-row: 1; }
+.render-editor > .panel-side { grid-column: 2; grid-row: 1; }
+.ed-col > .panel-timeline { order: -1; }
 .ed-col { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
-.ed-col > .panel-preview { order: -1; }
+.ed-col > .panel-preview { order: -2; }
 .render-editor > .panel-side { min-width: 0; }
 .render-editor > .span-all { grid-column: 1 / -1; }
 @media (max-width: 1200px) {
   .render-editor { grid-template-columns: minmax(0, 1fr); }
   .render-editor > .panel-side { position: static; max-height: none; }
 }
+
+
+/* 预览画布：按视口高度限宽，避免一屏只看到视频 */
+.ed-col > .panel-preview .canvas-box { max-height: 46vh; }
