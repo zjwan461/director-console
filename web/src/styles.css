@@ -424,7 +424,8 @@ button { white-space: nowrap; }
 .render-shot-head .meta { flex: 0 0 auto; margin-left: auto; white-space: nowrap; }
 .render-shot-edit { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
 .shot-row { display: flex; gap: 8px; align-items: end; flex-wrap: wrap; }
-.shot-row label { display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: var(--muted); }
+.shot-row label { display: flex; flex-direction: column; gap: 4px; font-size: 11px;
+  color: #939bb0; letter-spacing: .02em; }
 .shot-row label.grow { flex: 1; min-width: 180px; }
 .voice-pick { display: flex; gap: 6px; align-items: center; }
 .voice-pick select { flex: 1; min-width: 180px; }
@@ -583,9 +584,15 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
 
 
 /* 镜头编辑分区 */
-.shot-section { display: flex; flex-direction: column; gap: 8px; padding-top: 10px; margin-top: 10px;
-  border-top: 1px dashed var(--line); }
+.shot-section { display: flex; flex-direction: column; gap: 8px; padding-top: 12px; margin-top: 12px;
+  border-top: 1px solid rgba(124, 108, 240, .14); }
 .shot-section:first-child { padding-top: 0; margin-top: 0; border-top: none; }
-.shot-section-head { font-size: 11px; color: #8b93a7; letter-spacing: .08em; }
+.shot-section-head { display: flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 700; letter-spacing: .12em;
+  color: #a5adc4; text-transform: uppercase; }
+.shot-section-head::before { content: ''; width: 3px; height: 11px; border-radius: 2px;
+  background: linear-gradient(180deg, #7c6cf0, #4f8ef7); }
 .shot-section .shot-row { flex-wrap: wrap; }
 .shot-section .shot-row label.grow { min-width: 220px; }
+.shot-section .shot-row > label > span:first-child,
+.shot-section .shot-row label { font-weight: 400; }
