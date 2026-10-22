@@ -951,9 +951,11 @@ export default function EditPanel({
                 ))}
               </div>
             )}
-            <button className="ghost tiny" onClick={() => setShowPrompt((v) => !v)}>
-              {showPrompt ? '收起提示词预览' : '查看提示词预览'}
-            </button>
+            <div style={{ display: 'flex' }}>
+              <button className="ghost tiny" onClick={() => setShowPrompt((v) => !v)}>
+                {showPrompt ? '收起提示词预览' : '查看提示词预览'}
+              </button>
+            </div>
             {showPrompt && <pre className="prompt-preview">{promptPreview()}</pre>}
 
             {aiRunning && (

@@ -527,8 +527,10 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
 .frame-strip { display: flex; gap: 6px; flex-wrap: wrap; align-items: flex-start; }
 .frame-strip img { width: 108px; height: 61px; flex: 0 0 auto; object-fit: cover;
   border-radius: 6px; border: 1px solid var(--line); background: #000; }
-.prompt-preview { max-height: 180px; overflow: auto; background: #0d0f15; border: 1px solid var(--line);
-  border-radius: 8px; padding: 8px; font-size: 11px; color: var(--muted); white-space: pre-wrap; }
+.prompt-preview { flex: 0 0 auto; max-height: 220px; min-height: 96px; overflow: auto;
+  background: #0d0f16; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px;
+  margin: 0; font-size: 11px; line-height: 1.6; color: #a9b1c6; white-space: pre-wrap;
+  overflow-wrap: anywhere; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 
 
 /* 页头紧凑控件 */
