@@ -206,7 +206,7 @@ export default function BgmTimeline({
     return () => window.clearInterval(timer)
   }, [audition])
 
-  const ticks = buildTicks(total, zoom)
+  const ticks = useMemo(() => buildTicks(total, shots), [total, shots])
 
   return (
     <div className="tl">
@@ -240,7 +240,7 @@ export default function BgmTimeline({
                 const shift = pct <= 0.5 ? '0' : pct >= 99.5 ? '-100%' : '-50%'
                 return (
                   <span key={tick} className="tl-tick" style={{ left: `${pct}%`, transform: `translateX(${shift})` }}>
-                    {formatTime(tick)}
+                    {formatTick(tick, total)}
                   </span>
                 )
               })}
@@ -368,6 +368,11 @@ function round(value: number) {
   return Math.round(value * 20) / 20
 }
 
+function formatTick(seconds: number, total: number) {
+  if (total <= 60) return `${seconds.toFixed(1)}s`
+  return formatTime(seconds)
+}
+
 function formatTime(seconds: number) {
   const s = Math.max(0, seconds)
   const m = Math.floor(s / 60)
@@ -375,11 +380,10 @@ function formatTime(seconds: number) {
   return `${m}:${String(rest).padStart(2, '0')}`
 }
 
-function buildTicks(total: number, zoom: number) {
-  const base = total > 60 ? 15 : total > 30 ? 10 : total > 12 ? 5 : 2
-  const step = Math.max(0.5, base / Math.max(zoom, 1))
-  const ticks: number[] = []
-  for (let t = 0; t < total - 0.05; t += step) ticks.push(Math.round(t * 10) / 10)
-  ticks.push(Math.round(total * 10) / 10)
-  return ticks
+function buildTicks(total: number, shots: ShotBlock[]) {
+  const points = new Set<number>([0, Math.round(total * 100) / 100])
+  shots.forEach((shot) => {
+    if (typeof shot.start === 'number') points.add(Math.round(shot.start * 100) / 100)
+  })
+  return [...points].filter((v) => v >= 0 && v <= total + 0.01).sort((a, b) => a - b)
 }
