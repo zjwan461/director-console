@@ -115,6 +115,7 @@ export default function EditPanel({
   const [previewJob, setPreviewJob] = useState<{ id: string; status: string; message: string; url?: string } | null>(null)
   const [dims, setDims] = useState<Record<string, { w: number; h: number }>>({})
   const [timeline, setTimeline] = useState<Array<{ shot_id: string; title: string; duration: number; start: number; end: number }>>([])
+  const [timelineMeta, setTimelineMeta] = useState<{ total: number; title_duration: number; tail_duration: number; full_total: number } | null>(null)
   const [fitMode, setFitMode] = useState('letterbox')
   const [transType, setTransType] = useState('none')
   const [transDur, setTransDur] = useState(0.4)
@@ -297,7 +298,9 @@ export default function EditPanel({
   // 预览源是「整片预览」时，视频时间 = 片头 + 正片时间
   const filmPreviewUrl = previewJob?.status === 'succeeded' ? (previewJob.url || '') : ''
   const usingFilmPreview = Boolean(filmPreviewUrl)
-  const titleOffset = titleOn && titleText.trim() ? titleDur : 0
+  const titleOffset = timelineMeta
+    ? timelineMeta.title_duration
+    : (titleOn && titleText.trim() ? titleDur : 0)
 
   // 时间轴点击 → 换算成「第几个镜头 + 镜头内偏移」，切镜头并定位
   const filmTimeOf = useCallback((localSeconds: number) => {
@@ -362,10 +365,33 @@ export default function EditPanel({
     if (pollTimer.current) window.clearTimeout(pollTimer.current)
   }, [])
 
+  // 时间轴以后端为准：转场重叠、变速、片头偏移都在服务端算一次
+  const refreshTimeline = useCallback(async () => {
+    if (!projectId) return
+    try {
+      const res = await api.projectTimeline(projectId)
+      setTimeline(res.items.map((i) => ({
+        shot_id: i.shot_id,
+        title: i.title || '镜头',
+        duration: i.duration,
+        start: i.start,
+        end: i.end,
+      })))
+      setTimelineMeta({
+        total: res.total,
+        title_duration: res.title_duration,
+        tail_duration: res.tail_duration,
+        full_total: res.full_total,
+      })
+    } catch {
+      /* 接口不可用时保留旧时间轴 */
+    }
+  }, [projectId])
+
+  // 镜头尺寸/时长仍要本地探测（预览比例、入出点上限用得到）
   useEffect(() => {
     let cancelled = false
     if (!ordered.length) { setTimeline([]); return }
-    const overlap = transType === 'none' ? 0 : transDur
     Promise.all(ordered.map((s) => api.shotPreview(s.id).catch(() => ({ duration: 0, width: 0, height: 0 })))).then((list) => {
       if (cancelled) return
       const nextDims: Record<string, { w: number; h: number }> = {}
@@ -381,23 +407,15 @@ export default function EditPanel({
         if (d) nextDur[s.id] = d
       })
       setDurations((prev) => ({ ...prev, ...nextDur }))
-      let cursor = 0
-      const items = ordered.map((s, i) => {
-        const edit = editOf(s.id)
-        const total = Number(list[i].duration) || 0
-        const startAt = Number(edit.in_point) || 0
-        const endAt = edit.out_point ? Math.min(Number(edit.out_point), total || Number(edit.out_point)) : total
-        const shotSpeed = Math.min(Math.max(Number(edit.speed) || 1, 0.5), 2)
-        const dur = Math.max(0, endAt - startAt) / shotSpeed
-        if (i && overlap) cursor = Math.max(0, cursor - overlap)
-        const item = { shot_id: s.id, title: s.title || `镜头 ${i + 1}`, duration: dur, start: cursor, end: cursor + dur }
-        cursor += dur
-        return item
-      })
-      setTimeline(items)
     })
     return () => { cancelled = true }
-  }, [selected, shots, edits, transType, transDur])
+  }, [selected, shots])
+
+  // 自动保存之后刷新时间轴，确保和已保存的编辑状态一致
+  useEffect(() => {
+    if (!loaded) return
+    void refreshTimeline()
+  }, [loaded, refreshTimeline, selected, transType, transDur, titleOn, titleText, titleDur, tailOn, tailText, tailDur])
 
   const uniqueImages = useMemo(() => {
     const seen = new Set<string>()
@@ -442,9 +460,10 @@ export default function EditPanel({
   }), [timeline, edits, audios])
 
   const filmDuration = useMemo(() => {
+    if (timelineMeta) return timelineMeta.total
     if (!timeline.length) return 0
     return timeline[timeline.length - 1].end
-  }, [timeline])
+  }, [timeline, timelineMeta])
 
   const modeLabel = (mode: string) =>
     mode === 'narration' ? '解说' : mode === 'lip' ? '口播' : '纯画面'

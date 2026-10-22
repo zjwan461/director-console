@@ -1123,33 +1123,45 @@ async def shot_preview(shot_id: str) -> dict:
             "width": width, "height": height}
 
 
-@app.get("/api/renders/{render_id}/timeline")
-async def render_timeline(render_id: str) -> dict:
-    render = store.get_render(render_id)
-    if not render:
-        raise HTTPException(status_code=404, detail="成片不存在")
-    shots = {s["id"]: s for s in store.list_shots(render["project_id"])}
-    edits = {row["shot_id"]: row for row in store.list_render_shots(render_id)}
-    trans = (render.get("options") or {}).get("transition") or {}
-    overlap = float(trans.get("duration") or 0) if str(trans.get("type") or "none") in {"fade", "dissolve"} else 0.0
+async def build_timeline(
+    shots: dict[str, dict],
+    shot_ids: list[str],
+    edits: dict[str, dict],
+    options: dict,
+) -> dict:
+    """权威时间轴：正片各镜的真实起止 + 片头/片尾时长。
+
+    转场重叠、变速、片头偏移都在这里算一次，前端只负责渲染。
+    """
+    trans = options.get("transition") or {}
+    overlap = float(trans.get("duration") or 0) \
+        if str(trans.get("type") or "none") in {"fade", "dissolve"} else 0.0
+
+    title_opt = options.get("title") or {}
+    tail_opt = options.get("tail") or {}
+    title_text = str(title_opt.get("text") or "").strip() if title_opt.get("enabled") else ""
+    tail_text = str(tail_opt.get("text") or "").strip() if tail_opt.get("enabled") else ""
+    title_dur = float(title_opt.get("duration") or 1.5) if title_text else 0.0
+    tail_dur = float(tail_opt.get("duration") or 2.0) if tail_text else 0.0
+
     items: list[dict] = []
     cursor = 0.0
-    for index, sid in enumerate(render.get("shot_ids") or []):
+    for index, sid in enumerate(shot_ids):
         shot = shots.get(sid)
         if not shot:
             continue
         found = _shot_video(shot)
-        total = 0.0
+        source = 0.0
         if found and found[1].exists():
             try:
-                total = await ffmpeg.duration_of(found[1])
+                source = await ffmpeg.duration_of(found[1])
             except Exception:
-                total = 0.0
+                source = 0.0
         edit = edits.get(sid) or {}
         start_at = float(edit.get("in_point") or 0)
-        end_at = float(edit["out_point"]) if edit.get("out_point") else total
-        if total:
-            end_at = min(end_at, total)
+        end_at = float(edit["out_point"]) if edit.get("out_point") else source
+        if source:
+            end_at = min(end_at, source)
         speed = min(max(float(edit.get("speed") or 1.0), 0.5), 2.0)
         dur = max(0.0, end_at - start_at) / speed
         if index and overlap:
@@ -1158,14 +1170,56 @@ async def render_timeline(render_id: str) -> dict:
             "shot_id": sid,
             "title": shot.get("title") or "",
             "duration": round(dur, 3),
-            "source_duration": round(total, 3),
+            "source_duration": round(source, 3),
             "in_point": round(start_at, 3),
-            "out_point": round(end_at, 3) if total else None,
+            "out_point": round(end_at, 3) if source else None,
+            "speed": speed,
             "start": round(cursor, 3),
             "end": round(cursor + dur, 3),
         })
         cursor += dur
-    return {"items": items, "total": round(cursor, 3)}
+
+    return {
+        "items": items,
+        "total": round(cursor, 3),
+        "title_duration": round(title_dur, 3),
+        "tail_duration": round(tail_dur, 3),
+        "overlap": round(overlap, 3),
+        "full_total": round(title_dur + cursor + tail_dur, 3),
+    }
+
+
+@app.get("/api/projects/{project_id}/timeline")
+async def project_timeline(project_id: str) -> dict:
+    """项目当前编辑状态下的时间轴（只计算，不改数据）。"""
+    project = store.get_project(project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="项目不存在")
+    raw = store.get_setting(_edit_state_key(project_id), "")
+    try:
+        state = json.loads(raw) if raw else {}
+    except Exception:
+        state = {}
+    options = state.get("options") or {}
+    all_shots = store.list_shots(project_id)
+    shots = {s["id"]: s for s in all_shots}
+    order = {s["id"]: index for index, s in enumerate(all_shots)}
+    edits = {str(e.get("shot_id")): e for e in (state.get("shot_edits") or []) if e.get("shot_id")}
+    # 前端只把「勾选参与导出」的镜头写进 shot_edits，按项目里的顺序排
+    selected = [sid for sid in edits if sid in shots]
+    ordered = sorted(selected or list(shots), key=lambda sid: order.get(sid, 0))
+    return await build_timeline(shots, ordered, edits, options)
+
+
+@app.get("/api/renders/{render_id}/timeline")
+async def render_timeline(render_id: str) -> dict:
+    render = store.get_render(render_id)
+    if not render:
+        raise HTTPException(status_code=404, detail="成片不存在")
+    shots = {s["id"]: s for s in store.list_shots(render["project_id"])}
+    edits = {row["shot_id"]: row for row in store.list_render_shots(render_id)}
+    return await build_timeline(shots, render.get("shot_ids") or [], edits,
+                                render.get("options") or {})
 
 
 @app.get("/api/shots/{shot_id}/takes")
