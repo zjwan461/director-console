@@ -604,3 +604,10 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
 .shot-section .shot-row label.grow { min-width: 220px; }
 .shot-section .shot-row > label > span:first-child,
 .shot-section .shot-row label { font-weight: 400; }
+
+
+/* 多轨 BGM */
+.bgm-track { display: flex; flex-direction: column; gap: 6px; padding: 10px; margin-bottom: 8px;
+  background: #0f1118; border: 1px solid var(--line); border-radius: 10px; }
+.bgm-track-head { display: flex; align-items: center; justify-content: space-between; }
+.bgm-track .inline-field input[type=number] { width: 68px; }

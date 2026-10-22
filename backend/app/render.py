@@ -272,22 +272,50 @@ class RenderRunner:
                 voice_full = None
 
         self._check(render_id)
-        if bgm_opt.get("asset_id"):
-            bgm_asset = store.get_asset(str(bgm_opt["asset_id"]))
-            bgm_path = DATA / bgm_asset["path"] if bgm_asset else None
-            if bgm_path and bgm_path.exists():
-                store.update_render(render_id, message="混入 BGM", progress=0.7)
-                mixed = work / "mixed.mp4"
-                await ffmpeg.mix_bgm(
-                    current, bgm_path, mixed,
-                    volume_db=float(bgm_opt.get("volume_db") or -12),
-                    fade_in=float(bgm_opt.get("fade_in") or 0),
-                    fade_out=float(bgm_opt.get("fade_out") or 0),
-                    loop=bool(bgm_opt.get("loop", True)),
-                    duck_track=voice_full if bgm_opt.get("duck", True) else None,
-                    duck_db=float(bgm_opt.get("duck_db") or -14),
-                )
-                current = mixed
+        tracks: list[dict] = []
+        raw_tracks = options.get("bgm_tracks")
+        if isinstance(raw_tracks, list):
+            for item in raw_tracks:
+                if not isinstance(item, dict) or not item.get("asset_id"):
+                    continue
+                asset = store.get_asset(str(item["asset_id"]))
+                path = DATA / asset["path"] if asset else None
+                if path and path.exists():
+                    tracks.append({
+                        "path": path,
+                        "volume_db": float(item.get("volume_db", -14)),
+                        "start": float(item.get("start") or 0),
+                        "end": item.get("end"),
+                        "fade_in": float(item.get("fade_in") or 0),
+                        "fade_out": float(item.get("fade_out") or 0),
+                        "loop": bool(item.get("loop", True)),
+                    })
+        elif bgm_opt.get("asset_id"):
+            # 老数据：单轨 bgm 转成一条 track
+            asset = store.get_asset(str(bgm_opt["asset_id"]))
+            path = DATA / asset["path"] if asset else None
+            if path and path.exists():
+                tracks.append({
+                    "path": path,
+                    "volume_db": float(bgm_opt.get("volume_db") or -12),
+                    "start": 0.0,
+                    "end": None,
+                    "fade_in": float(bgm_opt.get("fade_in") or 0),
+                    "fade_out": float(bgm_opt.get("fade_out") or 0),
+                    "loop": bool(bgm_opt.get("loop", True)),
+                })
+
+        if tracks:
+            store.update_render(render_id, message=f"混入 {len(tracks)} 条 BGM", progress=0.7)
+            mixed = work / "mixed.mp4"
+            await ffmpeg.mix_bgm_tracks(
+                current, tracks, mixed,
+                offset=title_dur,
+                duck_track=voice_full,
+                duck_db=float(bgm_opt.get("duck_db") or -14),
+                duck=bool(bgm_opt.get("duck", True)),
+            )
+            current = mixed
 
         self._check(render_id)
         srt_path = work / "subtitles.srt"

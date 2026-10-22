@@ -8,6 +8,17 @@ const RESOLUTIONS = [
   { key: '1080p', label: '1080p · 1920×1080', width: 1920, height: 1080 },
 ]
 
+interface BgmTrack {
+  id: string
+  asset_id: string
+  volume_db: number
+  start: number
+  end: number | null
+  fade_in: number
+  fade_out: number
+  loop: boolean
+}
+
 interface Edit {
   in_point: string
   out_point: string
@@ -52,11 +63,8 @@ export default function EditPanel({
   const [tailDur, setTailDur] = useState(2)
   const [tailBg, setTailBg] = useState('#000000')
   const [tailImage, setTailImage] = useState('')
-  const [bgmId, setBgmId] = useState('')
-  const [bgmVolume, setBgmVolume] = useState(-14)
-  const [fadeIn, setFadeIn] = useState(0.5)
-  const [fadeOut, setFadeOut] = useState(0.5)
-  const [loopBgm, setLoopBgm] = useState(true)
+  const [bgmTracks, setBgmTracks] = useState<BgmTrack[]>([])
+  const [duckBgm, setDuckBgm] = useState(true)
   const [subsEnabled, setSubsEnabled] = useState(true)
   const [subSize, setSubSize] = useState(42)
   const [subAutoFit, setSubAutoFit] = useState(true)
@@ -131,11 +139,34 @@ export default function EditPanel({
         setFitMode(String(opts.fit || 'letterbox'))
         setContentMode((String(opts.content_mode || 'narration') as typeof contentMode))
         const bgm = (opts.bgm || {}) as Record<string, unknown>
-        setBgmId(String(bgm.asset_id || ''))
-        setBgmVolume(Number(bgm.volume_db ?? -14))
-        setFadeIn(Number(bgm.fade_in ?? 0.5))
-        setFadeOut(Number(bgm.fade_out ?? 0.5))
-        setLoopBgm(Boolean(bgm.loop ?? true))
+        const rawTracks = Array.isArray(opts.bgm_tracks) ? (opts.bgm_tracks as Array<Record<string, unknown>>) : []
+        if (rawTracks.length) {
+          setBgmTracks(rawTracks.map((item, index) => ({
+            id: String(item.id || `t${index + 1}`),
+            asset_id: String(item.asset_id || ''),
+            volume_db: Number(item.volume_db ?? -14),
+            start: Number(item.start ?? 0),
+            end: item.end === null || item.end === undefined ? null : Number(item.end),
+            fade_in: Number(item.fade_in ?? 0.5),
+            fade_out: Number(item.fade_out ?? 0.5),
+            loop: Boolean(item.loop ?? true),
+          })))
+        } else if (bgm.asset_id) {
+          // 老数据：单条 bgm 升级成一条轨道
+          setBgmTracks([{
+            id: 't1',
+            asset_id: String(bgm.asset_id),
+            volume_db: Number(bgm.volume_db ?? -14),
+            start: 0,
+            end: null,
+            fade_in: Number(bgm.fade_in ?? 0.5),
+            fade_out: Number(bgm.fade_out ?? 0.5),
+            loop: Boolean(bgm.loop ?? true),
+          }])
+        } else {
+          setBgmTracks([])
+        }
+        setDuckBgm(Boolean(bgm.duck ?? true))
         const subs = (opts.subtitles || {}) as Record<string, unknown>
         const style = (subs.style || {}) as Record<string, unknown>
         setSubsEnabled(Boolean(subs.enabled ?? true))
@@ -211,7 +242,17 @@ export default function EditPanel({
           transition: { type: transType, duration: transDur },
           title: { enabled: titleOn, text: titleText, duration: titleDur, bg: titleBg, bg_asset: titleImage },
           tail: { enabled: tailOn, text: tailText, duration: tailDur, bg: tailBg, bg_asset: tailImage },
-          bgm: bgmId ? { asset_id: bgmId, volume_db: bgmVolume, fade_in: fadeIn, fade_out: fadeOut, loop: loopBgm } : {},
+          bgm: { duck: duckBgm, duck_db: -14 },
+          bgm_tracks: bgmTracks.filter((t) => t.asset_id).map((t) => ({
+            id: t.id,
+            asset_id: t.asset_id,
+            volume_db: t.volume_db,
+            start: t.start,
+            end: t.end,
+            fade_in: t.fade_in,
+            fade_out: t.fade_out,
+            loop: t.loop,
+          })),
           subtitles: { enabled: subsEnabled, autofit: subAutoFit, language: subLang,
                         style: { size: subSize, margin_v: subMargin } },
           burned_default: burnedDefault,
@@ -236,7 +277,7 @@ export default function EditPanel({
         })),
       }).then(() => setSavedAt(new Date().toLocaleTimeString())).catch(() => undefined)
     }, 800)
-  }, [loaded, projectId, resKey, fps, bgmId, bgmVolume, fadeIn, fadeOut, loopBgm,
+  }, [loaded, projectId, resKey, fps, bgmTracks, duckBgm,
       subsEnabled, subSize, subMargin, subAutoFit, subLang, burnedDefault, loudness, fitMode, contentMode, transType, transDur, titleOn, titleText, titleDur, titleBg, titleImage,
       tailOn, tailText, tailDur, tailBg, tailImage, edits, selected, shots])
 
@@ -302,6 +343,9 @@ export default function EditPanel({
     const found = images.find((a) => a.id === id)
     return found ? (found.url || `/media/files/${found.path}`) : ''
   }
+
+  const updateTrack = (id: string, patch: Partial<BgmTrack>) =>
+    setBgmTracks((prev) => prev.map((t) => (t.id === id ? { ...t, ...patch } : t)))
 
   const modeLabel = (mode: string) =>
     mode === 'narration' ? '解说' : mode === 'lip' ? '口播' : '纯画面'
@@ -768,7 +812,11 @@ export default function EditPanel({
         transition: { type: transType, duration: transDur },
         title: { enabled: titleOn, text: titleText, duration: titleDur, bg: titleBg, bg_asset: titleImage },
         tail: { enabled: tailOn, text: tailText, duration: tailDur, bg: tailBg, bg_asset: tailImage },
-        bgm: bgmId ? { asset_id: bgmId, volume_db: bgmVolume, fade_in: fadeIn, fade_out: fadeOut, loop: loopBgm } : {},
+        bgm: { duck: duckBgm, duck_db: -14 },
+        bgm_tracks: bgmTracks.filter((t) => t.asset_id).map((t) => ({
+          id: t.id, asset_id: t.asset_id, volume_db: t.volume_db,
+          start: t.start, end: t.end, fade_in: t.fade_in, fade_out: t.fade_out, loop: t.loop,
+        })),
         subtitles: { enabled: subsEnabled, autofit: subAutoFit, language: subLang,
                      style: { size: subSize, margin_v: subMargin } },
         loudness: { enabled: loudness },
@@ -1423,39 +1471,80 @@ export default function EditPanel({
           )}
 
           <h3>背景音乐</h3>
-          <div className="row">
-            <select className="grow" value={bgmId} onChange={(e) => setBgmId(e.target.value)}>
-              <option value="">不加 BGM</option>
-              {audios.map((a) => (
-                <option key={a.id} value={a.id}>{a.path.split('/').pop()}</option>
-              ))}
-            </select>
-          </div>
-          {bgmId && (
-            <>
-              <label className="slider">
-                音量 {bgmVolume} dB
-                <input type="range" min={-30} max={0} step={1} value={bgmVolume}
-                       onChange={(e) => setBgmVolume(Number(e.target.value))} />
-              </label>
+          {bgmTracks.length === 0 && (
+            <p className="hint">还没有音乐。可以加多条：铺底、高潮、结尾各一条。</p>
+          )}
+          {bgmTracks.map((track, index) => (
+            <div key={track.id} className="bgm-track">
+              <div className="bgm-track-head">
+                <span className="meta">音乐 {index + 1}</span>
+                <button className="ghost tiny"
+                        onClick={() => setBgmTracks((prev) => prev.filter((t) => t.id !== track.id))}>
+                  删除
+                </button>
+              </div>
+              <select className="grow" value={track.asset_id}
+                      onChange={(e) => updateTrack(track.id, { asset_id: e.target.value })}>
+                <option value="">选择音频</option>
+                {audios.map((a) => (
+                  <option key={a.id} value={a.id}>{audioLabel(a)}</option>
+                ))}
+              </select>
               <div className="row">
-                <label className="slider grow">
-                  淡入 {fadeIn}s
-                  <input type="range" min={0} max={3} step={0.1} value={fadeIn}
-                         onChange={(e) => setFadeIn(Number(e.target.value))} />
+                <label className="inline-field">
+                  <span>音量</span>
+                  <input type="number" step={1} value={track.volume_db}
+                         onChange={(e) => updateTrack(track.id, { volume_db: Number(e.target.value) })} />
+                  <span className="meta">dB</span>
                 </label>
-                <label className="slider grow">
-                  淡出 {fadeOut}s
-                  <input type="range" min={0} max={3} step={0.1} value={fadeOut}
-                         onChange={(e) => setFadeOut(Number(e.target.value))} />
+                <label className="inline-field">
+                  <span>起点</span>
+                  <input type="number" step={0.5} min={0} value={track.start}
+                         onChange={(e) => updateTrack(track.id, { start: Number(e.target.value) })} />
+                  <span className="meta">s</span>
+                </label>
+                <label className="inline-field">
+                  <span>终点</span>
+                  <input type="number" step={0.5} min={0} placeholder="到结尾"
+                         value={track.end ?? ''}
+                         onChange={(e) => updateTrack(track.id, { end: e.target.value === '' ? null : Number(e.target.value) })} />
+                  <span className="meta">s</span>
                 </label>
               </div>
-              <label className="check">
-                <input type="checkbox" checked={loopBgm} onChange={(e) => setLoopBgm(e.target.checked)} />
-                循环铺满整个成片
-              </label>
-            </>
-          )}
+              <div className="row">
+                <label className="inline-field">
+                  <span>淡入</span>
+                  <input type="number" step={0.1} min={0} value={track.fade_in}
+                         onChange={(e) => updateTrack(track.id, { fade_in: Number(e.target.value) })} />
+                </label>
+                <label className="inline-field">
+                  <span>淡出</span>
+                  <input type="number" step={0.1} min={0} value={track.fade_out}
+                         onChange={(e) => updateTrack(track.id, { fade_out: Number(e.target.value) })} />
+                </label>
+                <label className="check" style={{ margin: 0 }}>
+                  <input type="checkbox" checked={track.loop}
+                         onChange={(e) => updateTrack(track.id, { loop: e.target.checked })} />
+                  循环铺满区间
+                </label>
+              </div>
+            </div>
+          ))}
+          <div className="row">
+            <button className="ghost tiny" disabled={bgmTracks.length >= 4}
+                    onClick={() => setBgmTracks((prev) => [...prev, {
+                      id: `t${Date.now().toString(36)}`,
+                      asset_id: '', volume_db: -14, start: 0, end: null,
+                      fade_in: 0.5, fade_out: 0.5, loop: true,
+                    }])}>
+              + 添加音乐
+            </button>
+            <span className="meta">最多 4 条 · 起点相对正片（片头之后）</span>
+          </div>
+          <label className="check">
+            <input type="checkbox" checked={duckBgm} onChange={(e) => setDuckBgm(e.target.checked)} />
+            旁白出现时自动压低 BGM
+          </label>
 
           <h3>字幕</h3>
           <label className="check">

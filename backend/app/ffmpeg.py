@@ -717,6 +717,97 @@ async def mix_bgm(
         raise RuntimeError(f"混音失败：{_tail(err)}")
 
 
+async def mix_bgm_tracks(
+    video: Path,
+    tracks: list[dict],
+    out: Path,
+    offset: float = 0.0,
+    duck_track: Path | None = None,
+    duck_db: float = -14,
+    duck: bool = True,
+) -> None:
+    """多轨 BGM 混音。
+
+    tracks: [{path, volume_db, start, end, fade_in, fade_out, loop}]
+      start/end 相对「正片」开头，渲染时统一加 offset（片头时长）
+    """
+    ff = ffmpeg_path()
+    if not ff:
+        raise FFmpegMissing("未检测到 ffmpeg")
+    total = max(await duration_of(video), 1.0)
+    tracks = [t for t in tracks if t.get("path")]
+    if not tracks:
+        raise RuntimeError("没有可用的 BGM 轨道")
+
+    args: list[str] = [ff, "-y", "-loglevel", "error", "-i", str(video)]
+    index = 1
+    filters: list[str] = []
+    for track in tracks:
+        loop = bool(track.get("loop", True))
+        if loop:
+            args += ["-stream_loop", "-1"]
+        args += ["-i", str(track["path"])]
+
+        start = max(float(track.get("start") or 0) + offset, 0.0)
+        raw_end = track.get("end")
+        end = float(raw_end) + offset if raw_end else total
+        end = min(end, total)
+        length = max(end - start, 0.2)
+
+        volume = float(track.get("volume_db", -14))
+        fade_in = min(max(float(track.get("fade_in") or 0), 0.0), length / 2)
+        fade_out = min(max(float(track.get("fade_out") or 0), 0.0), length / 2)
+
+        chain = (
+            f"aformat=sample_rates=48000:channel_layouts=stereo,"
+            f"atrim=0:{length:.3f},asetpts=PTS-STARTPTS,"
+            f"volume={volume}dB"
+        )
+        if fade_in > 0:
+            chain += f",afade=t=in:st=0:d={fade_in:.3f}"
+        if fade_out > 0:
+            chain += f",afade=t=out:st={max(length - fade_out, 0):.3f}:d={fade_out:.3f}"
+        if start > 0:
+            chain += f",adelay={int(round(start * 1000))}|{int(round(start * 1000))}"
+        chain += ",apad"
+        filters.append(f"[{index}:a]{chain}[bg{index}]")
+        index += 1
+
+    mix_inputs = "".join(f"[bg{i}]" for i in range(1, index))
+    filters.append(
+        f"{mix_inputs}amix=inputs={index - 1}:duration=longest:normalize=0,"
+        f"atrim=0:{total:.3f}[bgbus]"
+    )
+
+    duck_path = duck_track if (duck and duck_track and duck_track.exists()) else None
+    if duck_path:
+        args += ["-i", str(duck_path)]
+        nar_index = index
+        filters.append(
+            f"[{nar_index}:a]aformat=sample_rates=48000:channel_layouts=stereo,"
+            f"volume={duck_db}dB[sc]"
+        )
+        filters.append(
+            "[bgbus][sc]sidechaincompress=threshold=0.03:ratio=6:attack=20:release=400[bgd]"
+        )
+        bus = "bgd"
+    else:
+        bus = "bgbus"
+
+    filters.append(
+        f"[0:a][{bus}]amix=inputs=2:duration=first:normalize=0,alimiter=limit=0.95[a]"
+    )
+    args += [
+        "-filter_complex", ";".join(filters),
+        "-map", "0:v:0", "-map", "[a]",
+        "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2",
+        "-movflags", "+faststart", str(out),
+    ]
+    code, err = await _run(args)
+    if code != 0:
+        raise RuntimeError(f"多轨混音失败：{_tail(err)}")
+
+
 async def probe_size(path: Path) -> tuple[int, int]:
     """读视频分辨率；ffprobe 不可用时返回 (0, 0)。"""
     probe = ffprobe_path()
