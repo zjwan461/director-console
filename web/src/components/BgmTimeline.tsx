@@ -25,6 +25,8 @@ export interface NarrationClip {
   end: number
   asset_id: string
   audio_duration: number
+  pending?: boolean
+  has_text?: boolean
 }
 
 interface Props {
@@ -243,15 +245,31 @@ export default function BgmTimeline({
               })}
             </div>
 
-            {narration.some((clip) => clip.asset_id) && (
+            {narration.some((clip) => clip.asset_id || clip.pending) && (
               <div className="tl-track tl-track-narration">
-                {narration.filter((clip) => clip.asset_id).map((clip) => {
+                {narration.filter((clip) => clip.asset_id || clip.pending).map((clip) => {
+                  if (!clip.asset_id) {
+                    const warnLeft = (clip.start / total) * 100
+                    const warnWidth = Math.max(((clip.end - clip.start) / total) * 100, 1)
+                    return (
+                      <div key={clip.shot_id}
+                           className="tl-clip tl-clip-pending"
+                           style={{ left: `${warnLeft}%`, width: `${warnWidth}%` }}
+                           onClick={(event) => { event.stopPropagation(); onSelectShot?.(clip.shot_id) }}
+                           title={`${clip.title}：开了旁白但还没配音${clip.has_text ? '（文案已写）' : '（也没写文案）'}`}>
+                        <span className="tl-pending-badge">⚠</span>
+                        <span className="tl-clip-label">
+                          {clip.has_text ? '待配音' : '待写文案'}
+                        </span>
+                      </div>
+                    )
+                  }
                   const left = (clip.start / total) * 100
                   const width = Math.max(((clip.end - clip.start) / total) * 100, 1)
                   const bars = peaks[clip.asset_id] || []
                   return (
                     <div key={clip.shot_id}
-                         className={`tl-clip tl-clip-narration ${clip.asset_id ? '' : 'empty'}`}
+                         className="tl-clip tl-clip-narration"
                          style={{ left: `${left}%`, width: `${width}%`, borderColor: '#9a7bf0', background: '#9a7bf022' }}
                          onClick={(event) => { event.stopPropagation(); onSelectShot?.(clip.shot_id) }}
                          title={`${clip.title} · 旁白 ${clip.audio_duration.toFixed(1)}s`}>

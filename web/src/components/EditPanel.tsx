@@ -417,6 +417,8 @@ export default function EditPanel({
     const assetId = edit?.narration_on ? (edit.voice_asset || '') : ''
     const asset = audios.find((a) => a.id === assetId)
     const raw = asset ? Number((asset.meta || {}).duration || 0) : 0
+    // 开了旁白但没有配音：标成待办，时间轴上画一条极淡的提示条
+    const pending = Boolean(edit?.narration_on) && !assetId
     // 转场会让相邻镜头块重叠，旁白块在下一镜起点处截断，避免叠在一起
     const nextStart = timeline[index + 1]?.start
     const visibleEnd = nextStart !== undefined ? Math.min(item.end, nextStart) : item.end
@@ -427,6 +429,8 @@ export default function EditPanel({
       end: Math.max(visibleEnd, item.start + 0.2),
       asset_id: assetId,
       audio_duration: raw,
+      pending,
+      has_text: Boolean((edit?.narration || '').trim()),
     }
   }), [timeline, edits, audios])
 

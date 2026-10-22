@@ -701,3 +701,12 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
 .tl-clip-narration { cursor: pointer; }
 .tl-clip-narration.empty { opacity: .45; border-style: dashed; }
 .tl-clip-narration:hover { filter: brightness(1.15); }
+
+
+/* 待配音的旁白提示条 */
+.tl-clip-pending { border: 1px dashed rgba(226, 160, 74, .55); background: rgba(226, 160, 74, .07);
+  cursor: pointer; }
+.tl-clip-pending .tl-clip-label { color: #d9b071; font-size: 10px; padding-left: 4px; }
+.tl-pending-badge { position: relative; z-index: 2; font-size: 10px; line-height: 1;
+  color: #e2a04a; padding-left: 6px; }
+.tl-clip-pending:hover { background: rgba(226, 160, 74, .14); }
