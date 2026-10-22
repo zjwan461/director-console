@@ -104,7 +104,7 @@ export default function EditPanel({
   const [aiRows, setAiRows] = useState<Record<string, { title: string; status: string; note?: string }>>({})
   const [contentMode, setContentMode] = useState<'narration' | 'lip' | 'silent'>('narration')
   const [aiBusy, setAiBusy] = useState('')
-  const [aiFrames, setAiFrames] = useState(0)
+  const [aiFrames, setAiFrames] = useState(3)
   const [titleBusy, setTitleBusy] = useState('')
   const [rhythm, setRhythm] = useState<{ summary: string; items: Array<{ shot_id: string; title: string; duration: number; level: string; advice: string }>; bgm_tips: Array<{ level: string; text: string }> } | null>(null)
   const [rhythmBusy, setRhythmBusy] = useState(false)
@@ -695,8 +695,37 @@ export default function EditPanel({
     }
   }
 
-  const runAI = async () => {
+  const batchSystem = useRef('')
+
+  const openBatchPrompt = async () => {
     if (!ordered.length) return
+    const first = ordered[0]
+    const kind: 'subtitle' | 'narration' = aiKind === 'narration' ? 'narration' : 'subtitle'
+    setPromptBusy(true)
+    try {
+      const res = await api.aiPromptPreview({ shot_id: first.id, kind, style: stylePayload(kind) })
+      pendingPrompt.current = { type: 'batch' }
+      setPromptDraft({
+        title: `AI 剪辑（${ordered.length} 镜）· 提示词`,
+        system: res.system,
+        user: res.user,
+        framesAvailable: res.frames_available,
+        frames: aiFrames,
+        withFrames: res.frames_available && aiFrames > 0,
+        userReadOnly: true,
+        note: '系统提示词对整批生效；下面是第 1 镜的输入样例，其余镜头会按各自画面重新生成。',
+      })
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      notify('err', '读取提示词失败', msg.slice(0, 120))
+    } finally {
+      setPromptBusy(false)
+    }
+  }
+
+  const runAI = async (batchFrames = aiFrames, systemOverride = '') => {
+    if (!ordered.length) return
+    batchSystem.current = systemOverride
     const snapshot = { ...edits }
     setAiUndo(snapshot)
     setAiRunning(true)
@@ -749,7 +778,8 @@ export default function EditPanel({
         const notes: string[] = []
         if (needNarr) {
           try {
-            const r = await api.aiScript({ shot_id: shot.id, kind: 'narration', style: stylePayload('narration'), frames: aiFrames })
+            const r = await api.aiScript({ shot_id: shot.id, kind: 'narration', style: stylePayload('narration'),
+              frames: batchFrames, system_prompt: batchSystem.current || undefined })
             patchEdit(shot.id, { narration: r.text })
             narrationText = r.text
             done += 1
@@ -768,7 +798,8 @@ export default function EditPanel({
               shot_id: shot.id, kind: 'subtitle', style: stylePayload('subtitle'),
               narration: editOf(shot.id).narration_on
                 ? narrationText
-                : (editOf(shot.id).lip_on ? '' : undefined), frames: aiFrames,
+                : (editOf(shot.id).lip_on ? '' : undefined),
+              frames: batchFrames, system_prompt: batchSystem.current || undefined,
             })
             if (r.skip === 'silent') {
               notes.push('无口播，跳过字幕')
@@ -841,6 +872,7 @@ export default function EditPanel({
   const pendingPrompt = useRef<
     | { type: 'script'; shotId: string; kind: 'subtitle' | 'narration' }
     | { type: 'title'; kind: 'title' | 'tail' }
+    | { type: 'batch' }
     | null
   >(null)
 
@@ -895,6 +927,13 @@ export default function EditPanel({
     if (!action) return
     setPromptBusy(true)
     try {
+      if (action.type === 'batch') {
+        const frames = payload.frames
+        setPromptDraft(null)
+        pendingPrompt.current = null
+        await runAI(frames, payload.system)
+        return
+      }
       if (action.type === 'script') {
         await runAiOne(action.shotId, action.kind,
           { system: payload.system, user: payload.user, frames: payload.frames })
@@ -1292,7 +1331,8 @@ export default function EditPanel({
             {aiMessage && <div className="notice">{aiMessage}</div>}
             </div>
             <div className="row-actions">
-              <button className="primary" disabled={aiRunning || !ordered.length} onClick={() => void runAI()}>
+              <button className="primary" disabled={aiRunning || !ordered.length}
+                      onClick={() => (aiKind === 'merge' ? void runAI() : void openBatchPrompt())}>
                 {aiRunning ? '处理中…' : aiKind === 'merge' ? '合并导出' : `开始（${ordered.length} 镜）`}
               </button>
               {aiUndo && (
