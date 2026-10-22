@@ -524,8 +524,9 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
 
 
 /* AI 截图与提示词预览 */
-.frame-strip { display: flex; gap: 6px; flex-wrap: wrap; }
-.frame-strip img { width: 84px; height: 48px; object-fit: cover; border-radius: 5px; border: 1px solid var(--line); }
+.frame-strip { display: flex; gap: 6px; flex-wrap: wrap; align-items: flex-start; }
+.frame-strip img { width: 108px; height: 61px; flex: 0 0 auto; object-fit: cover;
+  border-radius: 6px; border: 1px solid var(--line); background: #000; }
 .prompt-preview { max-height: 180px; overflow: auto; background: #0d0f15; border: 1px solid var(--line);
   border-radius: 8px; padding: 8px; font-size: 11px; color: var(--muted); white-space: pre-wrap; }
 
@@ -560,8 +561,12 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
 .voice-pick .badge { white-space: nowrap; flex: 0 0 auto; }
 .voice-pick .ghost.tiny { white-space: nowrap; flex: 0 0 auto; }
 
-.frame-groups { display: flex; flex-direction: column; gap: 8px; max-height: 240px; overflow-y: auto; }
-.frame-group { display: flex; flex-direction: column; gap: 4px; }
+.frame-groups { display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto;
+  flex: 0 0 auto; padding-right: 4px; }
+.frame-group { display: flex; flex-direction: column; gap: 6px; flex: 0 0 auto;
+  background: #0d0f16; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+.frame-group-head { display: flex; align-items: center; justify-content: space-between; font-size: 11px; }
+.frame-group-head b { font-size: 11px; font-weight: 600; color: #cdd3e2; }
 
 
 /* 成片卡片 */

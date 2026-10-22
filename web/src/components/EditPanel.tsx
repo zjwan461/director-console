@@ -913,7 +913,10 @@ export default function EditPanel({
               <div className="frame-groups">
                 {aiFrameGroups.map((group) => (
                   <div key={group.shotId} className="frame-group">
-                    <span className="meta">{group.title}</span>
+                    <div className="frame-group-head">
+                      <b>{group.title}</b>
+                      <span className="meta">{group.urls.length} 帧</span>
+                    </div>
                     <div className="frame-strip">
                       {group.urls.map((url) => <img key={url} src={url} alt={group.title} />)}
                     </div>
