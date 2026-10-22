@@ -375,7 +375,7 @@ def update_render(rid: str, **fields: Any) -> None:
         fields["options"] = json.dumps(fields["options"], ensure_ascii=False)
     allowed = {
         "status", "progress", "message", "shot_ids", "options",
-        "output_path", "cover_path", "error", "started_at", "finished_at",
+        "output_path", "cover_path", "error", "started_at", "finished_at", "duration",
     }
     fields = {k: v for k, v in fields.items() if k in allowed}
     if not fields:

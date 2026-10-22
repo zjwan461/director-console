@@ -113,6 +113,9 @@ class RenderRunner:
         tail_text = str(tail_opt.get("text") or "").strip() if tail_opt.get("enabled") else ""
         title_dur = float(title_opt.get("duration") or 1.5) if title_text else 0.0
         tail_dur = float(tail_opt.get("duration") or 2.0) if tail_text else 0.0
+        if title_dur and not options.get("cover_at"):
+            # 有片头时封面别取在色卡上，往后挪到正片开头
+            cover_at = title_dur + 0.8
         trans = options.get("transition") or {}
         trans_kind = str(trans.get("type") or "none")
         trans_dur = float(trans.get("duration") or 0.4)
@@ -340,9 +343,14 @@ class RenderRunner:
 
         out_rel = final.relative_to(DATA).as_posix()
         cover_rel = cover.relative_to(DATA).as_posix() if cover else ""
+        try:
+            duration = await ffmpeg.duration_of(final)
+        except Exception:
+            duration = 0.0
         store.update_render(
             render_id, status="succeeded", progress=1.0, message="完成",
             output_path=out_rel, cover_path=cover_rel, finished_at=time.time(),
+            duration=round(duration, 2),
         )
         cache_key = str(options.get("cache_key") or "")
         if preview and cache_key:

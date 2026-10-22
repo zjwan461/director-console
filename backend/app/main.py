@@ -1134,8 +1134,27 @@ def _enrich_render(render: dict) -> dict:
     if render.get("output_path"):
         render["output_url"] = f"/media/files/{render['output_path']}"
         render["download_name"] = Path(render["output_path"]).name
+        target = DATA / render["output_path"]
+        if target.exists():
+            render["size_bytes"] = target.stat().st_size
     if render.get("cover_path"):
         render["cover_url"] = f"/media/files/{render['cover_path']}"
+
+    options = render.get("options") or {}
+    trans = options.get("transition") or {}
+    render["is_preview"] = bool(options.get("preview"))
+    render["summary"] = {
+        "preview": bool(options.get("preview")),
+        "width": int(options.get("width") or 0),
+        "height": int(options.get("height") or 0),
+        "fps": int(options.get("fps") or 0),
+        "transition": str(trans.get("type") or "none"),
+        "bgm": bool((options.get("bgm") or {}).get("asset_id")),
+        "subtitles": bool((options.get("subtitles") or {}).get("enabled", True)),
+        "loudness": bool((options.get("loudness") or {}).get("enabled", True)),
+        "title": str((options.get("title") or {}).get("text") or ""),
+        "tail": str((options.get("tail") or {}).get("text") or ""),
+    }
     return render
 
 
@@ -1512,10 +1531,33 @@ async def ai_script_one(body: ScriptRequest) -> dict:
         raise HTTPException(status_code=400, detail=str(exc))
 
 
+async def _backfill_durations(items: list[dict], budget: int = 20) -> None:
+    """老记录没有 duration，顺手补一次并写回库，避免前端显示空。"""
+    done = 0
+    for item in items:
+        if done >= budget:
+            return
+        if item.get("duration") or not item.get("output_path"):
+            continue
+        target = DATA / item["output_path"]
+        if not target.exists():
+            continue
+        try:
+            value = await ffmpeg.duration_of(target)
+        except Exception:
+            continue
+        if value:
+            item["duration"] = round(value, 2)
+            store.update_render(item["id"], duration=item["duration"])
+        done += 1
+
+
 @app.get("/api/renders")
 async def list_all_renders(limit: int = 50, status: str | None = None) -> dict:
     items = store.list_renders_all(limit, status)
-    return {"items": [_enrich_render(r) for r in items]}
+    enriched = [_enrich_render(r) for r in items]
+    await _backfill_durations(enriched)
+    return {"items": enriched}
 
 
 @app.post("/api/renders/{render_id}/start")

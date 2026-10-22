@@ -561,3 +561,22 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
 
 .frame-groups { display: flex; flex-direction: column; gap: 8px; max-height: 240px; overflow-y: auto; }
 .frame-group { display: flex; flex-direction: column; gap: 4px; }
+
+
+/* 成片卡片 */
+.render-card { display: flex; gap: 14px; align-items: stretch; padding: 12px; border: 1px solid var(--line);
+  border-radius: 12px; background: #10121a; }
+.render-card.preview { opacity: .72; border-style: dashed; }
+.render-card-cover { width: 132px; flex: 0 0 132px; border-radius: 8px; overflow: hidden; background: #0b0d13;
+  display: flex; align-items: center; justify-content: center; }
+.render-card-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.render-card-cover .cover-empty { color: var(--muted); font-size: 11px; }
+.render-card-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; justify-content: center; }
+.render-card-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.render-card-title b { font-size: 13px; }
+.render-card-title .meta { color: var(--muted); font-size: 11px; }
+.render-card-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.render-card-tags .tag { font-size: 11px; color: #b9bfd0; background: #171a24; border: 1px solid var(--line);
+  border-radius: 999px; padding: 1px 8px; }
+.render-card-actions { display: grid; grid-template-columns: repeat(2, 76px); gap: 6px; align-content: center; flex: 0 0 auto; }
+.render-card-actions .tiny, .render-card-actions a button { width: 100%; }

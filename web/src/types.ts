@@ -180,6 +180,21 @@ export interface Render {
   error?: string
   created_at: number
   finished_at?: number
+  duration?: number
+  size_bytes?: number
+  is_preview?: boolean
+  summary?: {
+    preview: boolean
+    width: number
+    height: number
+    fps: number
+    transition: string
+    bgm: boolean
+    subtitles: boolean
+    loudness: boolean
+    title: string
+    tail: string
+  }
 }
 
 export interface ModelRef {
