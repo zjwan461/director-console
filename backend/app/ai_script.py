@@ -129,11 +129,17 @@ async def generate(kind: str, shot: dict, project: dict, neighbors: dict,
         raise ValueError("这个镜头没有画面描述，AI 无法对照画面；请先在项目页填写「画面描述」")
 
     budget = char_budget(kind, duration)
+    # 配音只支持中文：旁白永远单语，字幕的双语设置在旁白这里不生效
+    narration_style = dict(style or {})
+    if kind == "narration":
+        narration_style["language"] = "zh"
+        narration_style["narration_language"] = "zh"
     context = json.dumps({
                 "kind": kind,
                 "char_budget": budget,
                 "duration_seconds": round(duration, 2),
-                "style": style,
+                "style": narration_style,
+                "language_rule": "旁白只写中文，不要出现英文单词或英文句子" if kind == "narration" else "",
                 "project": {"name": project.get("name", "")},
                 "shot": {
                     "title": shot.get("title", ""),

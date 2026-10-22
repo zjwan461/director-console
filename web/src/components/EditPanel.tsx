@@ -613,7 +613,10 @@ export default function EditPanel({
     window.dispatchEvent(new CustomEvent('dsh-toast', { detail: { kind, title, text } }))
   }
 
-  const stylePayload = () => ({ tone: aiTone, person: aiPerson, language: subLang })
+  // 旁白固定中文（TTS 只支持中文），字幕才跟随 subLang
+  const stylePayload = (kind?: 'subtitle' | 'narration') => ({
+    tone: aiTone, person: aiPerson, language: kind === 'narration' ? 'zh' : subLang,
+  })
 
   const setRow = (shotId: string, title: string, status: string, note = '') =>
     setAiRows((prev) => ({ ...prev, [shotId]: { title, status, note } }))
@@ -740,7 +743,7 @@ export default function EditPanel({
         const notes: string[] = []
         if (needNarr) {
           try {
-            const r = await api.aiScript({ shot_id: shot.id, kind: 'narration', style: stylePayload(), frames: aiFrames })
+            const r = await api.aiScript({ shot_id: shot.id, kind: 'narration', style: stylePayload('narration'), frames: aiFrames })
             patchEdit(shot.id, { narration: r.text })
             narrationText = r.text
             done += 1
@@ -756,7 +759,7 @@ export default function EditPanel({
         if (needSub) {
           try {
             const r = await api.aiScript({
-              shot_id: shot.id, kind: 'subtitle', style: stylePayload(),
+              shot_id: shot.id, kind: 'subtitle', style: stylePayload('subtitle'),
               narration: editOf(shot.id).narration_on
                 ? narrationText
                 : (editOf(shot.id).lip_on ? '' : undefined), frames: aiFrames,
@@ -839,7 +842,7 @@ export default function EditPanel({
         ? editOf(shotId).narration
         : undefined
       const r = await api.aiScript({
-        shot_id: shotId, kind, style: stylePayload(), frames: aiFrames,
+        shot_id: shotId, kind, style: stylePayload(kind), frames: aiFrames,
         narration,
       })
       if (r.skip === 'silent') {
@@ -894,19 +897,31 @@ export default function EditPanel({
     }
   }
 
+  // 预览与导出共用同一份渲染参数，避免「预览没有 BGM」这类不一致
+  const renderOptions = (preview: boolean) => {
+    const res = RESOLUTIONS.find((r) => r.key === resKey) || RESOLUTIONS[1]
+    return {
+      width: res.width, height: res.height, fps, fit: fitMode,
+      ...(preview ? { preview: true } : {}),
+      transition: { type: transType, duration: transDur },
+      title: { enabled: titleOn, text: titleText, duration: titleDur, bg: titleBg, bg_asset: titleImage },
+      tail: { enabled: tailOn, text: tailText, duration: tailDur, bg: tailBg, bg_asset: tailImage },
+      bgm: { duck: duckBgm, duck_db: -14 },
+      bgm_tracks: bgmTracks.filter((x) => x.asset_id).map((x) => ({
+        id: x.id, asset_id: x.asset_id, volume_db: x.volume_db,
+        start: x.start, end: x.end, fade_in: x.fade_in, fade_out: x.fade_out, loop: x.loop,
+      })),
+    }
+  }
+
   const startPreview = async () => {
     if (!ordered.length) return
     setPreviewBusy(true)
     setError('')
     setPreviewJob(null)
-    const res = RESOLUTIONS.find((r) => r.key === resKey) || RESOLUTIONS[1]
     try {
-      const render = await api.createRender(projectId, ordered.map((s) => s.id), {
-        width: res.width, height: res.height, fps, preview: true, fit: fitMode,
-        transition: { type: transType, duration: transDur },
-        title: { enabled: titleOn, text: titleText, duration: titleDur, bg: titleBg, bg_asset: titleImage },
-        tail: { enabled: tailOn, text: tailText, duration: tailDur, bg: tailBg, bg_asset: tailImage },
-      }, ordered.map((s) => ({
+      const render = await api.createRender(projectId, ordered.map((s) => s.id), renderOptions(true),
+        ordered.map((s) => ({
         shot_id: s.id,
         in_point: Number(editOf(s.id).in_point) || 0,
         out_point: editOf(s.id).out_point ? Number(editOf(s.id).out_point) : undefined,

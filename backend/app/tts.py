@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import re
 import json
 from pathlib import Path
 
@@ -100,6 +101,29 @@ def tempo_for(voice_dur: float, slot: float, pad: float = 0.3) -> float:
     return round(min(max(voice_dur / target, 1.0), 1.3), 3)
 
 
+def zh_only(text: str) -> str:
+    """只保留中文内容。
+
+    双语字幕（中文行 + 英文行）送进 TTS 时，英文会被一起念出来，这里按行过滤：
+    丢掉以 ASCII 字母为主的整行，只留中文（标点、数字保留）。
+    """
+    lines = [line.strip() for line in (text or "").splitlines() if line.strip()]
+    kept: list[str] = []
+    for line in lines:
+        has_cjk = any("\u4e00" <= ch <= "\u9fff" for ch in line)
+        if not has_cjk:
+            continue
+        # 中文行里夹着的英文片段（如 “OK”）去掉
+        cleaned = re.sub(r"[A-Za-z][A-Za-z ,.'\"!?-]*", "", line)
+        cleaned = re.sub(r"\s+", " ", cleaned).strip()
+        if cleaned:
+            kept.append(cleaned)
+    if kept:
+        return "，".join(kept) if len(kept) > 1 else kept[0]
+    # 整段没有中文：退回原文，让模型自己读（避免直接报空文本）
+    return (text or "").strip()
+
+
 async def synthesize(text: str, voice: str | None = None, use_cache: bool = True) -> dict:
     cfg = config()
     base = _host(cfg["base_url"])
@@ -109,6 +133,8 @@ async def synthesize(text: str, voice: str | None = None, use_cache: bool = True
     if not key:
         raise ValueError("还没有配置 TTS API Key")
     text = (text or "").strip()
+    # 配音只支持中文：多语言字幕传进来时只念中文行，避免把英文也读出来
+    text = zh_only(text)
     if not text:
         raise ValueError("旁白文本为空")
 
