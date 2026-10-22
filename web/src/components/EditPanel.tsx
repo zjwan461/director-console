@@ -294,24 +294,31 @@ export default function EditPanel({
       .catch(() => setShotPreview({ url: '', duration: 0 }))
   }, [activeShot])
 
-  // 预览源是「整片预览」时，视频时间就是全片时间，不需要再叠加镜头偏移
+  // 预览源是「整片预览」时，视频时间 = 片头 + 正片时间
   const filmPreviewUrl = previewJob?.status === 'succeeded' ? (previewJob.url || '') : ''
   const usingFilmPreview = Boolean(filmPreviewUrl)
+  const titleOffset = titleOn && titleText.trim() ? titleDur : 0
 
   // 时间轴点击 → 换算成「第几个镜头 + 镜头内偏移」，切镜头并定位
   const filmTimeOf = useCallback((localSeconds: number) => {
-    if (usingFilmPreview) return localSeconds
+    if (usingFilmPreview) {
+      // 整片预览前面有片头卡，时间轴从片头结束后算起
+      const film = localSeconds - titleOffset
+      const last = timeline.length ? timeline[timeline.length - 1].end : 0
+      return Math.max(0, Math.min(film, last))
+    }
     const item = timeline.find((i) => i.shot_id === activeShot)
     if (!item) return localSeconds
     return item.start + Math.min(localSeconds, item.duration)
-  }, [timeline, activeShot, usingFilmPreview])
+  }, [timeline, activeShot, usingFilmPreview, titleOffset])
 
   const seekFilm = useCallback((filmSeconds: number) => {
     if (!timeline.length) return
     setPlayhead(Math.max(0, filmSeconds))
     if (usingFilmPreview) {
       const video = previewVideoRef.current
-      if (video) video.currentTime = Math.max(0, filmSeconds)
+      // 目标时间要加上片头卡的长度，别把片头当成正片
+      if (video) video.currentTime = Math.max(0, Math.min(filmSeconds + titleOffset, video.duration || Infinity))
       return
     }
     const target = timeline.find((item) => filmSeconds >= item.start && filmSeconds < item.end)
@@ -1479,9 +1486,9 @@ export default function EditPanel({
                      src={previewJob?.status === 'succeeded' && previewJob.url ? previewJob.url : shotPreview.url}
                      onTimeUpdate={(e) => setPlayhead(filmTimeOf(e.currentTarget.currentTime))}
                      onSeeked={(e) => setPlayhead(filmTimeOf(e.currentTarget.currentTime))}
-                     onEnded={(e) => {
+                     onEnded={() => {
                        if (usingFilmPreview) {
-                         setPlayhead(e.currentTarget.duration || filmDuration)
+                         setPlayhead(filmDuration)
                          return
                        }
                        const index = timeline.findIndex((i) => i.shot_id === activeShot)
