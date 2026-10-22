@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { api } from '../api'
 import type { Asset, Project, Shot } from '../types'
+import BgmTimeline from './BgmTimeline'
 
 const RESOLUTIONS = [
   { key: '480p', label: '480p · 854×480', width: 854, height: 480 },
@@ -65,6 +66,7 @@ export default function EditPanel({
   const [tailImage, setTailImage] = useState('')
   const [bgmTracks, setBgmTracks] = useState<BgmTrack[]>([])
   const [duckBgm, setDuckBgm] = useState(true)
+  const [activeTrackId, setActiveTrackId] = useState('')
   const [subsEnabled, setSubsEnabled] = useState(true)
   const [subSize, setSubSize] = useState(42)
   const [subAutoFit, setSubAutoFit] = useState(true)
@@ -106,6 +108,7 @@ export default function EditPanel({
   const [aiFrameGroups, setAiFrameGroups] = useState<Array<{ shotId: string; title: string; urls: string[] }>>([])
   const [showPrompt, setShowPrompt] = useState(false)
   const voiceInput = useRef<HTMLInputElement | null>(null)
+  const previewVideoRef = useRef<HTMLVideoElement | null>(null)
   const [shotPreview, setShotPreview] = useState<{ url: string; duration: number }>({ url: '', duration: 0 })
   const [previewJob, setPreviewJob] = useState<{ id: string; status: string; message: string; url?: string } | null>(null)
   const [dims, setDims] = useState<Record<string, { w: number; h: number }>>({})
@@ -347,6 +350,11 @@ export default function EditPanel({
 
   const updateTrack = (id: string, patch: Partial<BgmTrack>) =>
     setBgmTracks((prev) => prev.map((t) => (t.id === id ? { ...t, ...patch } : t)))
+
+  const filmDuration = useMemo(
+    () => timeline.reduce((sum, item) => sum + (item.duration || 0), 0),
+    [timeline],
+  )
 
   const modeLabel = (mode: string) =>
     mode === 'narration' ? '解说' : mode === 'lip' ? '口播' : '纯画面'
@@ -1379,7 +1387,7 @@ export default function EditPanel({
               aspectRatio: `${(RESOLUTIONS.find((r) => r.key === resKey) || RESOLUTIONS[1]).width} / ${
                 (RESOLUTIONS.find((r) => r.key === resKey) || RESOLUTIONS[1]).height}`,
             }}>
-              <video key={previewJob?.url || shotPreview.url} className="preview-video"
+              <video key={previewJob?.url || shotPreview.url} className="preview-video" ref={previewVideoRef}
                      src={previewJob?.status === 'succeeded' && previewJob.url ? previewJob.url : shotPreview.url} controls />
             </div>
           ) : (
@@ -1504,7 +1512,7 @@ export default function EditPanel({
 
           <h3>背景音乐</h3>
           {bgmTracks.length === 0 && (
-            <p className="hint">还没有音乐。可以加多条：铺底、高潮、结尾各一条。</p>
+            <p className="hint">还没有音乐。可以加多条：铺底、高潮、结尾各一条；在左侧「音乐轨道」里拖拽调整区间。</p>
           )}
           {bgmTracks.map((track, index) => (
             <div key={track.id} className="bgm-track">
@@ -1625,6 +1633,26 @@ export default function EditPanel({
           </label>
 
 
+        </div>
+
+        <div className="panel span-all">
+          <h2>
+            <span>音乐轨道</span>
+            <span className="meta">拖拽色块调整起止 · 点刻度跳转预览</span>
+          </h2>
+          <BgmTimeline
+            duration={filmDuration}
+            shots={timeline.map((t) => ({ shot_id: t.shot_id, title: t.title, duration: t.duration }))}
+            tracks={bgmTracks}
+            activeId={activeTrackId}
+            titles={Object.fromEntries(audios.map((a) => [a.id, audioLabel(a)]))}
+            onSelect={setActiveTrackId}
+            onChange={updateTrack}
+            onSeek={(seconds) => {
+              const video = previewVideoRef.current
+              if (video) video.currentTime = seconds
+            }}
+          />
         </div>
       </div>
     </div>

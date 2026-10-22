@@ -161,6 +161,8 @@ export const api = {
     return request<{ items: Asset[]; total: number; limit: number; offset: number }>(`/api/assets?${qs.toString()}`)
   },
   assetUsage: (id: string) => request<AssetUsage>(`/api/assets/${id}/usage`),
+  assetWaveform: (id: string, buckets = 160) =>
+    request<{ peaks: number[]; cached: boolean }>(`/api/assets/${id}/waveform?buckets=${buckets}`),
   createShotFromAsset: (
     assetId: string,
     payload: { project_id: string; title?: string; mode: 'restore' | 'first_frame' | 'audio'; preset_id?: string },

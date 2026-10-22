@@ -1002,3 +1002,33 @@ async def loudnorm(video: Path, out: Path, target: float = -16.0) -> None:
     code, err = await _run(cmd)
     if code != 0:
         raise RuntimeError(f"响度标准化失败：{_tail(err)}")
+
+
+async def waveform(path: Path, buckets: int = 160) -> list[float]:
+    """把音轨压成 buckets 个 0~1 的峰值，用于时间轴上的波形条。"""
+    ff = ffmpeg_path()
+    if not ff or not path.exists():
+        return []
+    buckets = max(16, min(int(buckets), 600))
+    raw = await _capture([
+        ff, "-v", "error", "-i", str(path),
+        "-ac", "1", "-ar", "4000", "-f", "s16le", "-",
+    ])
+    if not raw:
+        return []
+    import array
+
+    samples = array.array("h")
+    samples.frombytes(raw[: len(raw) - (len(raw) % 2)])
+    if not samples:
+        return []
+    step = max(1, len(samples) // buckets)
+    peaks: list[float] = []
+    for index in range(buckets):
+        chunk = samples[index * step:(index + 1) * step]
+        if not chunk:
+            peaks.append(0.0)
+            continue
+        peak = max(abs(min(chunk)), abs(max(chunk))) / 32768.0
+        peaks.append(round(min(peak, 1.0), 3))
+    return peaks

@@ -417,6 +417,32 @@ async def asset_detail(asset_id: str) -> dict:
     return asset
 
 
+@app.get("/api/assets/{asset_id}/waveform")
+async def asset_waveform(asset_id: str, buckets: int = Query(160, ge=16, le=600)) -> dict:
+    """音频波形峰值，供时间轴画波形条。结果按文件大小+修改时间缓存。"""
+    asset = store.get_asset(asset_id)
+    if not asset:
+        raise HTTPException(status_code=404, detail="素材不存在")
+    target = DATA / asset["path"]
+    if not target.exists():
+        raise HTTPException(status_code=404, detail="文件不存在")
+    stat = target.stat()
+    key = f"waveform.{asset_id}.{buckets}"
+    cached = store.get_setting(key) or ""
+    if cached:
+        try:
+            payload = json.loads(cached)
+            if payload.get("size") == stat.st_size and payload.get("mtime") == int(stat.st_mtime):
+                return {"peaks": payload["peaks"], "cached": True}
+        except Exception:
+            pass
+    peaks = await ffmpeg.waveform(target, buckets)
+    store.set_setting(key, json.dumps({
+        "size": stat.st_size, "mtime": int(stat.st_mtime), "peaks": peaks,
+    }))
+    return {"peaks": peaks, "cached": False}
+
+
 @app.get("/api/assets")
 async def assets(
     kind: str | None = None,
