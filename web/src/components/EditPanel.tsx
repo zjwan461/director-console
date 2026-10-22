@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { api } from '../api'
 import type { Asset, Project, Shot } from '../types'
 import BgmTimeline from './BgmTimeline'
@@ -110,6 +110,7 @@ export default function EditPanel({
   const [showPrompt, setShowPrompt] = useState(false)
   const voiceInput = useRef<HTMLInputElement | null>(null)
   const previewVideoRef = useRef<HTMLVideoElement | null>(null)
+  const pendingSeek = useRef<number | null>(null)
   const [shotPreview, setShotPreview] = useState<{ url: string; duration: number }>({ url: '', duration: 0 })
   const [previewJob, setPreviewJob] = useState<{ id: string; status: string; message: string; url?: string } | null>(null)
   const [dims, setDims] = useState<Record<string, { w: number; h: number }>>({})
@@ -292,6 +293,46 @@ export default function EditPanel({
       .then((res) => setShotPreview({ url: res.url, duration: res.duration }))
       .catch(() => setShotPreview({ url: '', duration: 0 }))
   }, [activeShot])
+
+  // 时间轴点击 → 换算成「第几个镜头 + 镜头内偏移」，切镜头并定位
+  const filmTimeOf = useCallback((localSeconds: number) => {
+    const item = timeline.find((i) => i.shot_id === activeShot)
+    return (item?.start || 0) + localSeconds
+  }, [timeline, activeShot])
+
+  const seekFilm = useCallback((filmSeconds: number) => {
+    if (!timeline.length) return
+    const target = timeline.find((item) => filmSeconds >= item.start && filmSeconds < item.end)
+      || timeline[timeline.length - 1]
+    const local = Math.max(0, Math.min(filmSeconds - target.start, Math.max(target.duration - 0.05, 0)))
+    setPlayhead(Math.max(0, filmSeconds))
+    if (target.shot_id !== activeShot) {
+      pendingSeek.current = local
+      setActiveShot(target.shot_id)
+    } else {
+      const video = previewVideoRef.current
+      if (video) video.currentTime = local
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeline, activeShot])
+
+  // 切镜头后（video 的 key 变了、元素重建）把待定的镜头内时间应用上去
+  useEffect(() => {
+    const local = pendingSeek.current
+    if (local === null) return
+    const video = previewVideoRef.current
+    if (!video) return
+    const apply = () => {
+      try { video.currentTime = local } catch { /* 忽略 */ }
+      pendingSeek.current = null
+      setPlayhead(filmTimeOf(local))
+    }
+    if (video.readyState >= 1) apply()
+    else {
+      video.addEventListener('loadedmetadata', apply, { once: true })
+      return () => video.removeEventListener('loadedmetadata', apply)
+    }
+  }, [shotPreview.url, previewJob?.url, filmTimeOf])
 
   useEffect(() => () => {
     if (pollTimer.current) window.clearTimeout(pollTimer.current)
@@ -1391,9 +1432,8 @@ export default function EditPanel({
             }}>
               <video key={previewJob?.url || shotPreview.url} className="preview-video" ref={previewVideoRef}
                      src={previewJob?.status === 'succeeded' && previewJob.url ? previewJob.url : shotPreview.url}
-                     onTimeUpdate={(e) => setPlayhead(e.currentTarget.currentTime)}
-                     onSeeked={(e) => setPlayhead(e.currentTarget.currentTime)}
-                     onLoadedMetadata={(e) => setPlayhead(e.currentTarget.currentTime)}
+                     onTimeUpdate={(e) => setPlayhead(filmTimeOf(e.currentTarget.currentTime))}
+                     onSeeked={(e) => setPlayhead(filmTimeOf(e.currentTarget.currentTime))}
                      controls />
             </div>
           ) : (
@@ -1659,11 +1699,7 @@ export default function EditPanel({
             currentTime={playhead}
             onSelect={setActiveTrackId}
             onChange={updateTrack}
-            onSeek={(seconds) => {
-              const video = previewVideoRef.current
-              if (video) video.currentTime = seconds
-              setPlayhead(seconds)
-            }}
+            onSeek={seekFilm}
           />
         </div>
       </div>
