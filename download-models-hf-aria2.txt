@@ -1,0 +1,63 @@
+https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/loras/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors
+  dir=D:\ComfyUI\models\loras\minimax
+  out=minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors
+https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_audio_vae_fp32.safetensors
+  dir=D:\ComfyUI\models\vae
+  out=minimax_h3_audio_vae_fp32.safetensors
+https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_video_vae_fp16.safetensors
+  dir=D:\ComfyUI\models\vae
+  out=minimax_h3_video_vae_fp16.safetensors
+https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/text_encoders/qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors
+  dir=D:\ComfyUI\models\text_encoders
+  out=qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors
+https://huggingface.co/OzzyGT/taeh3/resolve/main/taeh3.safetensors
+  dir=D:\ComfyUI\models\vae_approx
+  out=taeh3.safetensors
+https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/text_encoders/qwen3vl_32b_minimax_h3_int8_convrot.safetensors
+  dir=D:\ComfyUI\models\text_encoders
+  out=qwen3vl_32b_minimax_h3_int8_convrot.safetensors
+https://huggingface.co/Kijai/MiniMax-H3-experimental/resolve/main/minimax_h3_video_vae_int8_convrot.safetensors
+  dir=D:\ComfyUI\models\vae
+  out=minimax_h3_video_vae_int8_convrot.safetensors
+https://huggingface.co/t8star/Semantic-Bridge-Comfy/resolve/main/models/semantic_bridge/t8_compat/MiniMaxH3_SemanticBridge_v1_T8_Compat.safetensors
+  dir=D:\ComfyUI\models\loras\t8_compat
+  out=MiniMaxH3_SemanticBridge_v1_T8_Compat.safetensors
+https://huggingface.co/JOKER141/MiniMax-H3-Combat-Base-V2/resolve/main/H3_Combat_V2.safetensors
+  dir=D:\ComfyUI\models\loras\minimax
+  out=H3_Combat_V2.safetensors
+https://huggingface.co/RunningHubAI/rh-minimax-h3-fl2v-turbo-4step-v1.2-768p-comfyui-bf16.safetensors-lora/resolve/main/minimax_h3_fl2v_turbo_4step_v1.2_768p_comfyui_bf16.safetensors
+  dir=D:\ComfyUI\models\loras\minimax
+  out=minimax_h3_fl2v_turbo_4step_v1.2_768p_comfyui_bf16.safetensors
+https://huggingface.co/RunningHubAI/rh-minimax-h3-turbo-4step-10erosmax-test4-pruned-curveproj1025-exp-v001-t8-lora/resolve/main/minimax_h3_turbo_4step_10ErosMax_test4_pruned_curveproj1025_exp_v001-T8.safetensors
+  dir=D:\ComfyUI\models\loras\minimax
+  out=minimax_h3_turbo_4step_10ErosMax_test4_pruned_curveproj1025_exp_v001-T8.safetensors
+https://huggingface.co/t8star/minimax_h3_turbo_v4_step600_ema_DasiwaREF2VAHybridV1_0_curveproj1025_compat_v001/resolve/main/minimax_h3_turbo_v4_step600_ema_DasiwaREF2VAHybridV1_0_curveproj1025_compat_v001.safetensors
+  dir=D:\ComfyUI\models\loras\minimax
+  out=minimax_h3_turbo_v4_step600_ema_DasiwaREF2VAHybridV1_0_curveproj1025_compat_v001.safetensors
+https://huggingface.co/kirk86413/cinema-h3/resolve/main/Minimax%20H3%E7%9C%9F%E5%AE%9E%E7%94%B5%E5%BD%B1%E8%B4%A8%E6%84%9FV0.1%EF%BC%88%E8%A7%A3%E5%86%B3%E5%BC%A0%E9%87%8F%E6%8A%A5%E9%94%99%EF%BC%89.safetensors
+  dir=D:\ComfyUI\models\loras\minimax
+  out=MinimaxH3真实电影质感V0.1.safetensors
+https://huggingface.co/JOKER141/MiniMax-H3-General-Motion-Continuity-Repair/resolve/main/Motion_Repair.safetensors
+  dir=D:\ComfyUI\models\loras\minimax
+  out=Motion_Repair.safetensors
+https://huggingface.co/Asirus/Minimax-H3-Latent-Upscaler-BF16-MAXQUALITY/resolve/main/minimax_h3_latent_upscaler_3d_fp16.safetensors
+  dir=D:\ComfyUI\models\latent_upscale_models
+  out=minimax_h3_latent_upscaler_3d_fp16.safetensors
+https://huggingface.co/Konteni2/Minimax_h3_latent_Upscaler/resolve/main/minimax_h3_latent_upscaler_3d_bf16.safetensors
+  dir=D:\ComfyUI\models\latent_upscale_models
+  out=minimax_h3_latent_upscaler_3d_bf16.safetensors
+https://huggingface.co/Alissonerdx/Minimax-H3-ComfyUI/resolve/main/latent_upscaler/h3_upscaler_lms_v0.1.safetensors
+  dir=D:\ComfyUI\models\upscale_models
+  out=h3_upscaler_lms_v0.1.safetensors
+https://huggingface.co/Comfy-Org/gemma-4/resolve/main/text_encoders/gemma4_e4b_it_fp8_scaled.safetensors
+  dir=D:\ComfyUI\models\text_encoders
+  out=gemma4_e4b_it_fp8_scaled.safetensors
+https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/loras/minimax_h3_fl2v_turbo_4step_v1.0_768p_comfyui_bf16.safetensors
+  dir=D:\ComfyUI\models\loras\minimax
+  out=minimax_h3_fl2v_turbo_4step_v1.0_768p_comfyui_bf16.safetensors
+https://huggingface.co/unsloth/Qwen3.8-27B-GGUF/resolve/main/Qwen3.8-27B-UD-Q4_K_M.gguf
+  dir=D:\ComfyUI\models\LLM
+  out=Qwen3.8-27B-Q4_K_M.gguf
+https://huggingface.co/unsloth/Qwen3.8-27B-GGUF/resolve/main/mmproj-BF16.gguf
+  dir=D:\ComfyUI\models\LLM
+  out=Qwen3.8-mmproj-BF16.gguf

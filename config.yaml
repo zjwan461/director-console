@@ -54,6 +54,9 @@ models:
   # curl --limit-rate，留空不限速
   limit_rate: "50m"
   download_base: ""
+  # HuggingFace 镜像：填 https://hf-mirror.com 后，模型检查生成的下载命令自动换域名
+  # （huggingface.co 在国内大多连不上；有稳定代理就留空）
+  hf_mirror: ""
 
 ui:
   # 旧面板 / ComfyUI 作为「高级模式」入口，填了才显示

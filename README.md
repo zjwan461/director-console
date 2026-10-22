@@ -105,6 +105,7 @@ curl -L -C - --limit-rate 50m --create-dirs \
 ```yaml
 models:
   comfy_root: ""                 # 留空 -> models/<category>/<file>；填 ComfyUI 则为 ComfyUI/models/...
+  hf_mirror: ""                  # 填 https://hf-mirror.com，下载命令自动换成镜像地址
   limit_rate: "50m"              # 传给 curl --limit-rate，留空不限速
   download_base: ""              # 没有已知 URL 时的拼接基地址
 ```
@@ -112,6 +113,53 @@ models:
 > `mock` 模式没有真实模型清单，检查会直接提示“请配置真实 ComfyUI 地址”。
 
 ![模型检查](docs/preview-model-check.png)
+
+### 批量下载（开箱脚本）
+
+一次要补几十个模型时，逐条复制太慢。仓库里放了几个按当前缺失清单生成好的脚本：
+
+| 文件 | 平台 / 源 | 特点 |
+|---|---|---|
+| `download-models.ps1` | Windows，`hf-mirror.com` | 多文件并发、每 5 秒一行进度、断点续传、失败重试 |
+| `download-models-hf.ps1` | Windows，`huggingface.co` | 同上，走官网（国内一般要挂代理） |
+| `download-models.sh` | Linux / macOS，`-s mirror\|hf` 切换 | 同功能，参数 `-p / -x / -d / -n` |
+| `download-models-aria2.txt`、`download-models-hf-aria2.txt` | aria2c 清单 | 单文件 16 连接，大文件明显更快 |
+
+Windows：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\download-models.ps1 -Parallel 3
+powershell -NoProfile -ExecutionPolicy Bypass -File .\download-models.ps1 -DryRun    # 只看清单和总大小
+```
+
+> 直接双击 `.ps1` 会被执行策略拦住（“未对文件进行数字签名”）。两种合法做法：用上面的
+> `-ExecutionPolicy Bypass` 只对这一次放行，或 `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`
+> （只影响当前用户，本地脚本放行、网上下载的仍会拦）。
+
+Linux：
+
+```bash
+chmod +x download-models.sh
+./download-models.sh -p 3 -d /root/ComfyUI          # 默认源 hf-mirror
+./download-models.sh -s hf -x http://127.0.0.1:7897 # 官网 + 代理
+./download-models.sh -n                             # dry-run
+```
+
+想要“单文件多连接”（一个 20 GB 的模型拆 16 段）就用 aria2：
+
+```bash
+aria2c -i download-models-aria2.txt -c -x16 -s16 -k1M -j3 --dir=/root/ComfyUI/models
+```
+
+几条约定：
+
+- 每条命令都带 `-C -`，**中断了直接重跑**，会按字节续传；
+- 进度每 5 秒一行（`文件 / 已下 / 总量 / 百分比 / 速度`），并发时每个文件各占一行；
+- 下载完**重启 ComfyUI** 再点检查：模型列表是启动时扫盘缓存的，而加到子目录（如 `loras/minimax/x`）
+  不会改变父目录 mtime，它扫不到；
+- 这些脚本是按当时的缺失清单生成的，模型补齐后重新生成即可（也可以直接逐条用面板上的「复制下载命令」）；
+- Windows 版把落地路径写成了 `D:/ComfyUI/models/...`（来自 `models.comfy_root`），换目录就改脚本里的这个前缀；
+  Linux 版用 `-d` 指定，默认 `/root/ComfyUI`。
 
 ### 找不到时的搜索入口
 

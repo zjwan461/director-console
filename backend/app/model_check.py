@@ -146,11 +146,23 @@ def _available(object_info: dict) -> tuple[set[str], set[str]]:
     return full, base
 
 
+def _mirror(url: str) -> str:
+    """HF 直连在国内基本跑不动：按 config 里的 models.hf_mirror 换成镜像前缀。"""
+    mirror = str(settings.get("models.hf_mirror", "") or "").rstrip("/")
+    if not mirror or not url:
+        return url
+    for host in ("https://huggingface.co", "http://huggingface.co"):
+        if url.startswith(host):
+            return mirror + url[len(host):]
+    return url
+
+
 def _command(category: str, filename: str, url: str = "") -> str:
     root = str(settings.get("models.comfy_root", "") or "").rstrip("/")
     if not url:
         base = str(settings.get("models.download_base", "") or "").rstrip("/")
         url = f"{base}/{quote(category)}/{quote(filename)}" if base else "<下载地址>"
+    url = _mirror(url)
     limit = str(settings.get("models.limit_rate", "50m") or "")
     rate = f" --limit-rate {limit}" if limit else ""
     target = f"{root}/models/{category}/{filename}" if root else f"models/{category}/{filename}"
