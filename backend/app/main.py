@@ -1400,6 +1400,23 @@ async def reset_asr() -> dict:
     return await get_asr_settings()
 
 
+@app.post("/api/settings/asr/test")
+async def test_asr() -> dict:
+    """用 TTS 合成一句测试语音，再交给 ASR 转写，验证配置是否可用。"""
+    sample = "这是语音转写测试。"
+    try:
+        audio = await tts_module.synthesize(sample)
+    except Exception as exc:
+        return {"ok": False, "stage": "tts", "error": f"先生成测试语音失败：{exc}"}
+    try:
+        text = await asr.transcribe(Path(audio["path"]))
+    except Exception as exc:
+        return {"ok": False, "stage": "asr", "error": str(exc)}
+    return {"ok": True, "expect": sample, "text": text,
+            "duration": audio.get("duration", 0),
+            "match": sample.strip("。") in text.replace(" ", "")}
+
+
 @app.get("/api/tts/voices")
 async def tts_voices(model: str | None = None) -> dict:
     name = model or tts_module.config()["model"]

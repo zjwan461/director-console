@@ -628,6 +628,21 @@ function ASRPanel() {
     } finally { setBusy(false) }
   }
 
+  const testAsr = async () => {
+    setBusy(true)
+    setNote('正在合成测试语音并转写…')
+    try {
+      const r = await api.testAsr()
+      if (r.ok) {
+        setNote(`转写成功：${r.text}${r.match ? '（内容匹配）' : '（内容与预期不同，但接口可用）'}`)
+      } else {
+        setNote(`失败（${r.stage === 'tts' ? '生成语音' : '转写'}）：${r.error}`)
+      }
+    } catch (err) {
+      setNote(err instanceof Error ? err.message : String(err))
+    } finally { setBusy(false) }
+  }
+
   return (
     <div className="panel">
       <h2>
@@ -661,6 +676,9 @@ function ASRPanel() {
       <div className="row-actions">
         <button className="primary" disabled={!baseUrl || busy} onClick={() => void save()}>
           {busy ? '保存中…' : '保存'}
+        </button>
+        <button disabled={busy || !baseUrl} onClick={() => void testAsr()}>
+          {busy ? '处理中…' : '测试转写'}
         </button>
       </div>
       {note && <div className="notice" style={{ marginTop: 8 }}>{note}</div>}

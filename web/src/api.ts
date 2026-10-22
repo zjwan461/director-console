@@ -83,6 +83,11 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     }),
+  testAsr: () =>
+    request<{ ok: boolean; stage?: string; error?: string; text?: string; expect?: string; duration?: number; match?: boolean }>(
+      '/api/settings/asr/test',
+      { method: 'POST' },
+    ),
   aiScript: (payload: { shot_id: string; kind: 'subtitle' | 'narration'; mode?: string; narration?: string; frames?: number; style?: Record<string, string> }) =>
     request<{ text: string; chars: number; budget: number; over: boolean; compressed: boolean; original_chars: number; duration: number; skip?: string; reason?: string; transcribed?: boolean; followed_narration?: boolean; narration_mismatch?: boolean }>('/api/ai/script', {
       method: 'POST',
