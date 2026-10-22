@@ -77,6 +77,7 @@ export default function EditPanel({
   const [mergeBurned, setMergeBurned] = useState(true)
   const [aiTitles, setAiTitles] = useState(true)
   const [aiAutoSpeed, setAiAutoSpeed] = useState(true)
+  const [framesBusy, setFramesBusy] = useState(false)
   const [aiTone, setAiTone] = useState('documentary')
   const [aiPerson, setAiPerson] = useState('third')
   const [subLang, setSubLang] = useState<'zh' | 'bilingual'>('zh')
@@ -457,6 +458,8 @@ export default function EditPanel({
 
   const loadFrames = async () => {
     if (!ordered.length) return
+    setFramesBusy(true)
+    setAiFrameGroups([])
     try {
       const count = aiFrames || 3
       const groups: Array<{ shotId: string; title: string; urls: string[] }> = []
@@ -467,10 +470,13 @@ export default function EditPanel({
           title: shot.title || `镜头 ${shot.idx + 1}`,
           urls: res.items.map((i) => i.url),
         })
+        setAiFrameGroups([...groups])
       }
       setAiFrameGroups(groups)
     } catch (err) {
       notify('err', '截帧失败', err instanceof Error ? err.message : String(err))
+    } finally {
+      setFramesBusy(false)
     }
   }
 
@@ -904,7 +910,9 @@ export default function EditPanel({
                   <input type="range" min={1} max={6} value={aiFrames}
                          onChange={(e) => { setAiFrames(Number(e.target.value)); setAiFrameGroups([]) }} />
                   <span className="meta">{aiFrames} 张</span>
-                  <button className="ghost tiny" onClick={() => void loadFrames()}>预览截图</button>
+                  <button className="ghost tiny" disabled={framesBusy} onClick={() => void loadFrames()}>
+                    {framesBusy ? <><span className="spin" /> 截图中</> : '预览截图'}
+                  </button>
                 </>
               )}
             </div>
