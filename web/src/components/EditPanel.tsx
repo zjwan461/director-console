@@ -853,7 +853,12 @@ export default function EditPanel({
                 <option value="third">第三人称</option>
                 <option value="first">第一人称</option>
               </select>
-              <select value={aiLang} onChange={(e) => setAiLang(e.target.value)}>
+              <select value={aiLang} onChange={(e) => {
+                const next = e.target.value
+                setAiLang(next)
+                // 双语是两行，字号自动降一档，避免占掉太多画面
+                if (next === 'bilingual') setSubSize((prev) => Math.min(prev, 44))
+              }}>
                 <option value="zh">中文</option>
                 <option value="bilingual">中英双语</option>
               </select>
@@ -1426,6 +1431,7 @@ export default function EditPanel({
             <div className="row">
               <label className="slider grow">
                 字号 {subSize}
+                {aiLang === 'bilingual' && <span className="meta">（双语建议 ≤44）</span>}
                 <input type="range" min={20} max={80} value={subSize}
                        onChange={(e) => setSubSize(Number(e.target.value))} />
               </label>
