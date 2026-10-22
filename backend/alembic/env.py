@@ -17,7 +17,10 @@ config = context.config
 
 if config.config_file_name is not None:
     try:
-        fileConfig(config.config_file_name)
+        # disable_existing_loggers 必须关掉：迁移是在 app 导入时跑的，
+        # 默认 True 会把 uvicorn 已经配好的 logger 全部禁掉，
+        # 于是启动日志只剩 alembic 这两行，「Started server process / Uvicorn running on …」全被吞掉。
+        fileConfig(config.config_file_name, disable_existing_loggers=False)
     except Exception:
         pass
 

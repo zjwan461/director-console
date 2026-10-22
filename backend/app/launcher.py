@@ -120,6 +120,32 @@ def _pid_alive(pid: int) -> bool:
     return True
 
 
+def _process_created(pid: int) -> int | None:
+    """进程创建时间（拿不到就 None）。用来防「pid 被系统复用后认错进程」。"""
+    if pid <= 0:
+        return None
+    if os.name == "nt":
+        handle = _kernel32.OpenProcess(_PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
+        if not handle:
+            return None
+        try:
+            created, exited, kernel, user = (wintypes.FILETIME() for _ in range(4))
+            ok = _kernel32.GetProcessTimes(
+                handle, ctypes.byref(created), ctypes.byref(exited),
+                ctypes.byref(kernel), ctypes.byref(user),
+            )
+            if not ok:
+                return None
+            return (created.dwHighDateTime << 32) | created.dwLowDateTime
+        finally:
+            _kernel32.CloseHandle(handle)
+    try:
+        stat = Path(f"/proc/{pid}/stat").read_text()
+        return int(stat.rsplit(")", 1)[1].split()[19])   # starttime（开机后的 tick 数）
+    except Exception:
+        return None
+
+
 def _process_image(pid: int) -> str:
     """进程可执行文件路径；拿不到就返回空串。"""
     if pid <= 0:
@@ -325,15 +351,30 @@ class LocalLauncher(BaseLauncher):
         return settings.get(f"comfy.local.{key}", default)
 
     # ---------- 内部：pid 记账 ----------
+    def _recorded_ok(self) -> bool:
+        """记录的 pid 现在还指同一个进程吗（防 pid 被系统复用后认错人）。"""
+        if not self.adopted_pid or not _pid_alive(self.adopted_pid):
+            return False
+        if not _looks_like_comfy(self.adopted_pid):
+            return False
+        state = _read_state()
+        created = state.get("created")
+        if isinstance(created, int):
+            # 创建时间对不上 = pid 已被别的进程复用（比如面板自己的 uvicorn）
+            return _process_created(self.adopted_pid) == created
+        # 老版本记录没存创建时间：退回「端口上是不是它」
+        return _find_listening_pid(_local_port()) == self.adopted_pid
+
     def _restore_state(self) -> None:
         state = _read_state()
         pid = state.get("pid")
         if not isinstance(pid, int):
             return
-        if not _pid_alive(pid) or not _looks_like_comfy(pid):
+        self.adopted_pid = pid
+        if not self._recorded_ok():
+            self.adopted_pid = None
             _clear_state()
             return
-        self.adopted_pid = pid
         self.started_at = float(state.get("started_at") or 0.0)
 
     def _remember(self, pid: int, adopted: bool) -> None:
@@ -341,6 +382,7 @@ class LocalLauncher(BaseLauncher):
         _write_state({
             "pid": pid,
             "adopted": adopted,
+            "created": _process_created(pid),
             "started_at": self.started_at,
             "port": _local_port(),
             "workdir": str(self._cfg("workdir", "")),
@@ -364,7 +406,7 @@ class LocalLauncher(BaseLauncher):
             self._close_log()
             _clear_state()
         if self.adopted_pid:
-            if _pid_alive(self.adopted_pid) and _looks_like_comfy(self.adopted_pid):
+            if self._recorded_ok():
                 return self.adopted_pid
             self.adopted_pid = None
             self.started_at = 0.0

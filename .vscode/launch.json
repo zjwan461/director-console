@@ -4,31 +4,10 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "后端：FastAPI（uvicorn --reload）",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "uvicorn",
-      "args": [
-        "app.main:app",
-        "--reload",
-        "--reload-dir",
-        "${workspaceFolder}/backend/app",
-        "--host",
-        "127.0.0.1",
-        "--port",
-        "6006"
-      ],
-      "cwd": "${workspaceFolder}/backend",
-      "env": {
-        "PYTHONUNBUFFERED": "1",
-        "PYTHONPATH": "${workspaceFolder}/backend"
-      },
-      "console": "integratedTerminal",
-      "justMyCode": true,
-      "subProcess": true
-    },
-    {
-      "name": "后端：FastAPI（无 reload，断点最稳）",
+      // 原生模式：不带 --reload。日志会正常打出
+      // "Started server process / Application startup complete"，断点也最稳。
+      // 代价：改了后端代码要手动重启（Ctrl+C 再 F5）。
+      "name": "后端：FastAPI（默认）",
       "type": "debugpy",
       "request": "launch",
       "module": "uvicorn",
@@ -100,7 +79,7 @@
     {
       "name": "全栈：后端 + 前端",
       "configurations": [
-        "后端：FastAPI（uvicorn --reload）",
+        "后端：FastAPI（默认）",
         "前端：Chrome 调试（Vite dev）"
       ],
       "stopAll": true,
@@ -112,7 +91,7 @@
     {
       "name": "全栈：后端 + 前端（Edge）",
       "configurations": [
-        "后端：FastAPI（uvicorn --reload）",
+        "后端：FastAPI（默认）",
         "前端：Edge 调试（Vite dev）"
       ],
       "stopAll": true,
