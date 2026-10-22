@@ -488,7 +488,8 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
 .preview-empty { padding: 40px 12px; text-align: center; color: var(--muted); border: 1px dashed var(--line); border-radius: 8px; font-size: 12px; }
 .trim { margin-top: 10px; display: flex; flex-direction: column; gap: 4px; }
 .trim-head { display: flex; gap: 12px; font-size: 11px; color: var(--muted); }
-.render-shot.active { border-color: #7c6cf0; }
+.render-shot.active { border-color: #7c6cf0;
+  box-shadow: 0 0 0 1px rgba(124, 108, 240, .35), 0 4px 18px rgba(124, 108, 240, .10); }
 
 
 /* 图片选择弹层 */

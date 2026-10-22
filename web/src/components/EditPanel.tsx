@@ -1090,7 +1090,9 @@ export default function EditPanel({
                     <span className="meta">{shot.last_frame_url ? '已出片' : '暂无产物'}</span>
                   </div>
                   {on && (
-                    <div className="render-shot-edit" onClick={(e) => e.stopPropagation()}>
+                    <div className="render-shot-edit"
+                         onClick={(e) => { e.stopPropagation(); setActiveShot(shot.id) }}
+                         onFocusCapture={() => setActiveShot(shot.id)}>
                       <div className="shot-section">
                         <div className="shot-section-head">基础</div>
                         <div className="shot-row">
