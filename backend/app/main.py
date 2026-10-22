@@ -417,6 +417,23 @@ async def asset_detail(asset_id: str) -> dict:
     return asset
 
 
+@app.get("/api/assets/{asset_id}/duration")
+async def asset_duration(asset_id: str) -> dict:
+    asset = store.get_asset(asset_id)
+    if not asset:
+        raise HTTPException(status_code=404, detail="素材不存在")
+    target = DATA / asset["path"]
+    if not target.exists():
+        return {"duration": 0.0}
+    cached = (asset.get("meta") or {}).get("duration")
+    if cached:
+        return {"duration": float(cached)}
+    try:
+        return {"duration": round(await ffmpeg.duration_of(target), 2)}
+    except Exception:
+        return {"duration": 0.0}
+
+
 @app.get("/api/assets/{asset_id}/waveform")
 async def asset_waveform(asset_id: str, buckets: int = Query(160, ge=16, le=600)) -> dict:
     """音频波形峰值，供时间轴画波形条。结果按文件大小+修改时间缓存。"""

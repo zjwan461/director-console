@@ -411,6 +411,25 @@ export default function EditPanel({
     setBgmTracks((prev) => prev.map((t) => (t.id === id ? { ...t, ...patch } : t)))
 
   // 全片时长 = 最后一个镜头块的结束时间（转场会让块之间有重叠，不能用求和）
+  // 时间轴上的旁白轨：每镜一段，长度跟镜头块一致
+  const narrationClips = useMemo(() => timeline.map((item, index) => {
+    const edit = edits[item.shot_id]
+    const assetId = edit?.narration_on ? (edit.voice_asset || '') : ''
+    const asset = audios.find((a) => a.id === assetId)
+    const raw = asset ? Number((asset.meta || {}).duration || 0) : 0
+    // 转场会让相邻镜头块重叠，旁白块在下一镜起点处截断，避免叠在一起
+    const nextStart = timeline[index + 1]?.start
+    const visibleEnd = nextStart !== undefined ? Math.min(item.end, nextStart) : item.end
+    return {
+      shot_id: item.shot_id,
+      title: item.title,
+      start: item.start,
+      end: Math.max(visibleEnd, item.start + 0.2),
+      asset_id: assetId,
+      audio_duration: raw,
+    }
+  }), [timeline, edits, audios])
+
   const filmDuration = useMemo(() => {
     if (!timeline.length) return 0
     return timeline[timeline.length - 1].end
@@ -1500,6 +1519,8 @@ export default function EditPanel({
             duration={filmDuration}
             shots={timeline.map((t) => ({ shot_id: t.shot_id, title: t.title, duration: t.duration }))}
             tracks={bgmTracks}
+            narration={narrationClips}
+            onSelectShot={setActiveShot}
             activeId={activeTrackId}
             titles={Object.fromEntries(audios.map((a) => [a.id, audioLabel(a)]))}
             urls={Object.fromEntries(audios.map((a) => [a.id, a.url || `/media/files/${a.path}`]))}

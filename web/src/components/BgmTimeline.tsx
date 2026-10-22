@@ -18,9 +18,20 @@ interface ShotBlock {
   duration: number
 }
 
+export interface NarrationClip {
+  shot_id: string
+  title: string
+  start: number
+  end: number
+  asset_id: string
+  audio_duration: number
+}
+
 interface Props {
   duration: number
   shots: ShotBlock[]
+  narration?: NarrationClip[]
+  onSelectShot?: (shotId: string) => void
   tracks: BgmTrackView[]
   activeId: string
   titles: Record<string, string>
@@ -37,7 +48,7 @@ const ZOOMS = [1, 2, 4, 8]
 type DragMode = 'move' | 'start' | 'end' | 'playhead'
 
 export default function BgmTimeline({
-  duration, shots, tracks, activeId, titles, urls = {}, currentTime = 0,
+  duration, shots, tracks, narration = [], onSelectShot, activeId, titles, urls = {}, currentTime = 0,
   onSelect, onChange, onSeek,
 }: Props) {
   const scrollRef = useRef<HTMLDivElement | null>(null)
@@ -65,14 +76,15 @@ export default function BgmTimeline({
 
   useEffect(() => {
     let alive = true
-    for (const track of tracks) {
-      if (!track.asset_id || peaks[track.asset_id]) continue
-      api.assetWaveform(track.asset_id).then((res) => {
-        if (alive) setPeaks((prev) => ({ ...prev, [track.asset_id]: res.peaks }))
+    const ids = [...tracks.map((t) => t.asset_id), ...narration.map((n) => n.asset_id)]
+    for (const id of ids) {
+      if (!id || peaks[id]) continue
+      api.assetWaveform(id).then((res) => {
+        if (alive) setPeaks((prev) => ({ ...prev, [id]: res.peaks }))
       }).catch(() => undefined)
     }
     return () => { alive = false }
-  }, [tracks, peaks])
+  }, [tracks, narration, peaks])
 
   useEffect(() => {
     if (!drag) return
@@ -198,6 +210,7 @@ export default function BgmTimeline({
         <div className="tl-gutter">
           <div className="tl-gutter-row tl-gutter-ruler">时</div>
           <div className="tl-gutter-row">画面</div>
+          {narration.some((clip) => clip.asset_id) && <div className="tl-gutter-row">旁白</div>}
           {tracks.map((track) => (
             <div key={track.id} className="tl-gutter-row">音乐</div>
           ))}
@@ -229,6 +242,32 @@ export default function BgmTimeline({
                 )
               })}
             </div>
+
+            {narration.some((clip) => clip.asset_id) && (
+              <div className="tl-track tl-track-narration">
+                {narration.filter((clip) => clip.asset_id).map((clip) => {
+                  const left = (clip.start / total) * 100
+                  const width = Math.max(((clip.end - clip.start) / total) * 100, 1)
+                  const bars = peaks[clip.asset_id] || []
+                  return (
+                    <div key={clip.shot_id}
+                         className={`tl-clip tl-clip-narration ${clip.asset_id ? '' : 'empty'}`}
+                         style={{ left: `${left}%`, width: `${width}%`, borderColor: '#9a7bf0', background: '#9a7bf022' }}
+                         onClick={(event) => { event.stopPropagation(); onSelectShot?.(clip.shot_id) }}
+                         title={`${clip.title} · 旁白 ${clip.audio_duration.toFixed(1)}s`}>
+                      <div className="tl-wave">
+                        {bars.map((peak, i) => (
+                          <i key={i} style={{ height: `${Math.max(peak * 100, 6)}%`, background: '#b39cf5' }} />
+                        ))}
+                      </div>
+                      <span className="tl-clip-label">
+                        {clip.asset_id ? `旁白 · ${clip.title}` : '无旁白'}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
 
             {tracks.map((track, index) => {
               const start = Math.min(track.start, total)

@@ -694,3 +694,10 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
 
 /* 预览画布：按视口高度限宽，避免一屏只看到视频 */
 .ed-col > .panel-preview .canvas-box { max-height: 34vh; }
+
+
+/* 旁白轨 */
+.tl-track-narration { background: rgba(154, 123, 240, .06); }
+.tl-clip-narration { cursor: pointer; }
+.tl-clip-narration.empty { opacity: .45; border-style: dashed; }
+.tl-clip-narration:hover { filter: brightness(1.15); }
