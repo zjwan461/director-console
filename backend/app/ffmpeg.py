@@ -734,28 +734,78 @@ async def probe_size(path: Path) -> tuple[int, int]:
         return 0, 0
 
 
-def _wrap_subtitle(text: str, max_chars: int, max_lines: int = 2) -> str:
-    """把过长的字幕折成多行；优先在标点处断，其次按长度均分。"""
-    text = (text or "").strip()
-    if max_chars <= 0 or len(text) <= max_chars:
-        return text
+def _display_units(text: str) -> float:
+    """按「一个汉字宽」为 1 个单位估算显示宽度；英文/数字约 0.55。"""
+    total = 0.0
+    for ch in text:
+        total += 1.0 if ord(ch) > 0x2E7F else 0.55
+    return total
+
+
+def _has_cjk(text: str) -> bool:
+    return any(ord(ch) > 0x2E7F for ch in text)
+
+
+def _wrap_units(text: str, limit: float, max_lines: int = 2) -> list[str]:
+    """把一段文字按显示宽度切行：中文在标点处断，英文在空格处断。"""
+    if _display_units(text) <= limit:
+        return [text]
     lines: list[str] = []
     rest = text
-    for _ in range(max_lines - 1):
-        if len(rest) <= max_chars:
-            break
-        cut = -1
-        for index in range(min(max_chars, len(rest) - 1), max(2, max_chars // 2), -1):
-            if rest[index - 1] in "，。、；：！？,.!?;: ":
-                cut = index
+    while _display_units(rest) > limit and len(lines) < max_lines - 1:
+        cut = 0
+        width = 0.0
+        candidates: list[int] = []
+        cjk = _has_cjk(rest)
+        for index, ch in enumerate(rest):
+            width += 1.0 if ord(ch) > 0x2E7F else 0.55
+            if width > limit:
                 break
-        if cut == -1:
-            cut = max_chars
-        lines.append(rest[:cut].rstrip("，。、；：,.!?;: "))
-        rest = rest[cut:].lstrip("，。、；：,.!?;: ")
+            cut = index + 1
+            if cjk and ch in "，。、；：！？,.!?;: ":
+                candidates.append(cut)
+            elif not cjk and ch == " ":
+                candidates.append(cut)
+        if cut <= 0:
+            break
+        if candidates:
+            cut = candidates[-1]
+        lines.append(rest[:cut].strip("，。、；：,.!?;: "))
+        rest = rest[cut:].strip("，。、；：,.!?;: ")
     if rest:
-        lines.append(rest)
-    return "\n".join(lines)
+        lines.append(_clip_units(rest, limit))
+    return [line for line in lines if line]
+
+
+def _clip_units(text: str, limit: float) -> str:
+    """截断到指定宽度，末尾加省略号。"""
+    if _display_units(text) <= limit:
+        return text
+    clipped = ""
+    width = 0.0
+    for ch in text:
+        width += 1.0 if ord(ch) > 0x2E7F else 0.55
+        if width > limit - 1:
+            break
+        clipped += ch
+    return clipped.rstrip("，。、；：,.!?;: ") + "…"
+
+
+def _wrap_subtitle(text: str, max_chars: int, max_lines: int = 2) -> str:
+    """长字幕折行。
+
+    - 已含换行（中英双语）时：保持一段一行，超宽各行截断，不再二次折行
+    - 单段时：按显示宽度折成最多 max_lines 行
+    """
+    text = (text or "").strip()
+    if not text or max_chars <= 0:
+        return text
+
+    segments = [seg.strip() for seg in text.split("\n") if seg.strip()]
+    if len(segments) > 1:
+        return "\n".join(_clip_units(seg, float(max_chars)) for seg in segments[:max_lines])
+
+    return "\n".join(_wrap_units(segments[0], float(max_chars), max_lines))
 
 
 def write_srt(timeline: list[dict], path: Path, max_chars: int = 0) -> None:
