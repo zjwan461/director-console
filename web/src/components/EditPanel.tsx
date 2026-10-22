@@ -1191,26 +1191,30 @@ export default function EditPanel({
                               有口播
                             </label>
                           </div>
-                          {edit.lip_on && (
-                            <label>
-                              原声音量
-                              <input type="number" step={1} value={edit.volume_db}
-                                     onChange={(e) => patchEdit(shot.id, { volume_db: e.target.value })} />
-                            </label>
-                          )}
-                          {edit.narration_on && (
-                            <label>
-                              音色
-                              <select value={edit.tts_voice}
-                                      onChange={(e) => patchEdit(shot.id, { tts_voice: e.target.value })}>
-                                <option value="">跟随默认</option>
-                                {voiceOptions.map((v) => (
-                                  <option key={v.id} value={v.id}>{v.name || v.id}</option>
-                                ))}
-                              </select>
-                            </label>
-                          )}
                         </div>
+                        {(edit.narration_on || edit.lip_on) && (
+                          <div className="shot-row">
+                            {edit.narration_on && (
+                              <label>
+                                音色
+                                <select value={edit.tts_voice}
+                                        onChange={(e) => patchEdit(shot.id, { tts_voice: e.target.value })}>
+                                  <option value="">跟随默认</option>
+                                  {voiceOptions.map((v) => (
+                                    <option key={v.id} value={v.id}>{v.name || v.id}</option>
+                                  ))}
+                                </select>
+                              </label>
+                            )}
+                            {edit.lip_on && (
+                              <label>
+                                原声音量
+                                <input type="number" step={1} value={edit.volume_db}
+                                       onChange={(e) => patchEdit(shot.id, { volume_db: e.target.value })} />
+                              </label>
+                            )}
+                          </div>
+                        )}
 
                         {edit.narration_on ? (
                           <>
