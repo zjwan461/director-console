@@ -1521,7 +1521,7 @@ export default function EditPanel({
           </h2>
           <BgmTimeline
             duration={filmDuration}
-            shots={timeline.map((t) => ({ shot_id: t.shot_id, title: t.title, duration: t.duration }))}
+            shots={timeline.map((t) => ({ shot_id: t.shot_id, title: t.title, duration: t.duration, start: t.start }))}
             tracks={bgmTracks}
             narration={narrationClips}
             onSelectShot={setActiveShot}

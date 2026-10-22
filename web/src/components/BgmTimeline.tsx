@@ -16,6 +16,7 @@ interface ShotBlock {
   shot_id: string
   title: string
   duration: number
+  start?: number
 }
 
 export interface NarrationClip {
@@ -71,9 +72,11 @@ export default function BgmTimeline({
     const points: number[] = [0, total]
     let acc = 0
     for (const shot of shots) {
-      acc += shot.duration
-      points.push(acc)
+      const start = shot.start ?? acc
+      points.push(start)
+      acc = start + shot.duration
     }
+    points.push(acc)
     return points
   }, [shots, total])
 
@@ -245,7 +248,8 @@ export default function BgmTimeline({
 
             <div className="tl-shots" onClick={seekAt}>
               {shots.map((shot, index) => {
-                const left = (shots.slice(0, index).reduce((sum, s) => sum + s.duration, 0) / total) * 100
+                const cumulative = shots.slice(0, index).reduce((sum, s) => sum + s.duration, 0)
+                const left = ((shot.start ?? cumulative) / total) * 100
                 const width = (shot.duration / total) * 100
                 return (
                   <div key={shot.shot_id} className="tl-shot" style={{ left: `${left}%`, width: `${width}%` }}
