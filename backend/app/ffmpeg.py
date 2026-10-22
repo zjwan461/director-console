@@ -701,7 +701,31 @@ async def probe_size(path: Path) -> tuple[int, int]:
         return 0, 0
 
 
-def write_srt(timeline: list[dict], path: Path) -> None:
+def _wrap_subtitle(text: str, max_chars: int, max_lines: int = 2) -> str:
+    """把过长的字幕折成多行；优先在标点处断，其次按长度均分。"""
+    text = (text or "").strip()
+    if max_chars <= 0 or len(text) <= max_chars:
+        return text
+    lines: list[str] = []
+    rest = text
+    for _ in range(max_lines - 1):
+        if len(rest) <= max_chars:
+            break
+        cut = -1
+        for index in range(min(max_chars, len(rest) - 1), max(2, max_chars // 2), -1):
+            if rest[index - 1] in "，。、；：！？,.!?;: ":
+                cut = index
+                break
+        if cut == -1:
+            cut = max_chars
+        lines.append(rest[:cut].rstrip("，。、；：,.!?;: "))
+        rest = rest[cut:].lstrip("，。、；：,.!?;: ")
+    if rest:
+        lines.append(rest)
+    return "\n".join(lines)
+
+
+def write_srt(timeline: list[dict], path: Path, max_chars: int = 0) -> None:
     def fmt(sec: float) -> str:
         ms = int(round(sec * 1000))
         h, ms = divmod(ms, 3600_000)
@@ -714,6 +738,7 @@ def write_srt(timeline: list[dict], path: Path) -> None:
         text = (item.get("subtitle") or "").strip()
         if not text:
             continue
+        text = _wrap_subtitle(text, max_chars)
         # 时间轴必须写成 “start --> end” 一行；拆成两行 libass 直接判定文件无效
         blocks.append(
             f"{len(blocks) + 1}\n"
@@ -732,6 +757,8 @@ async def burn_subtitles(
     color: str = "#FFFFFF",
     outline: int = 2,
     margin_v: int = 48,
+    width: int = 0,
+    height: int = 0,
 ) -> None:
     ff = ffmpeg_path()
     if not ff:
@@ -743,6 +770,11 @@ async def burn_subtitles(
         b, g, r = color[1:3], color[3:5], color[5:7]
         style.append(f"PrimaryColour=&H00{b}{g}{r}")
     # 相对路径 + cwd 最稳：Windows 上 libass 打开带盘符的绝对路径会失败
+    # SRT 没有 PlayRes，libass 默认按 288 行高换算，720p 下字号会被放大 2.5 倍。
+    # 显式给 PlayResX/PlayResY 才能让 FontSize 等于真实像素。
+    if width and height:
+        style.append(f"PlayResX={int(width)}")
+        style.append(f"PlayResY={int(height)}")
     filt = f"subtitles={srt.name}:force_style='{','.join(style)}'"
     cmd = [
         ff, "-y", "-loglevel", "error", "-i", str(video),

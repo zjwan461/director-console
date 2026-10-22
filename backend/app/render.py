@@ -286,8 +286,12 @@ class RenderRunner:
 
         self._check(render_id)
         srt_path = work / "subtitles.srt"
+        sub_style = (sub_opt.get("style") or {})
+        sub_size = int(sub_style.get("size") or 42)
+        # 单行最多多少字：留 10% 边距，按字号估算
+        max_chars = max(8, int(width * 0.88 / max(sub_size, 1)))
         if timeline:
-            ffmpeg.write_srt(timeline, srt_path)
+            ffmpeg.write_srt(timeline, srt_path, max_chars=max_chars)
 
         if (sub_opt.get("enabled", True) and caps.get("subtitles")
                 and srt_path.exists() and srt_path.stat().st_size > 20):
@@ -297,10 +301,12 @@ class RenderRunner:
             await ffmpeg.burn_subtitles(
                 current, srt_path, subbed,
                 font=str(style.get("font") or ""),
-                size=int(style.get("size") or 42),
+                size=sub_size,
                 color=str(style.get("color") or "#FFFFFF"),
                 outline=int(style.get("outline") or 2),
                 margin_v=int(style.get("margin_v") or 48),
+                width=width,
+                height=height,
             )
             current = subbed
 
