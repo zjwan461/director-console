@@ -76,6 +76,7 @@ export default function EditPanel({
   const [aiKind, setAiKind] = useState<'both' | 'subtitle' | 'narration' | 'merge'>('both')
   const [mergeBurned, setMergeBurned] = useState(true)
   const [aiTitles, setAiTitles] = useState(true)
+  const [aiAutoSpeed, setAiAutoSpeed] = useState(true)
   const [aiTone, setAiTone] = useState('documentary')
   const [aiPerson, setAiPerson] = useState('third')
   const [aiLang, setAiLang] = useState('zh')
@@ -592,6 +593,22 @@ export default function EditPanel({
             notes.push(audio.too_long
               ? `配音 ${audio.duration}s 超镜头 ${audio.slot}s`
               : `配音 ${audio.duration}s${audio.tempo > 1 ? `（${audio.tempo.toFixed(2)}x）` : ''}`)
+
+            // 自动匹配镜头时长：旁白更长时，给画面提速（只加速，1.0~1.25x）
+            if (aiAutoSpeed && audio.duration > 0) {
+              const slot = Number(audio.slot) || durations[shot.id] || 0
+              const ratio = slot > 0.5 ? audio.duration / Math.max(slot - 0.3, 0.5) : 1
+              const steps = [1.0, 1.05, 1.1, 1.15, 1.2, 1.25]
+              const speed = steps.find((v) => v >= ratio) ?? 1.0
+              if (speed > 1.0 && slot >= 1.5) {
+                patchEdit(shot.id, { speed: String(speed) })
+                notes.push(`画面 ${speed.toFixed(2)}x 对齐旁白`)
+              } else if (ratio > 1.25) {
+                notes.push('旁白超 1.25x 仍放不下，建议缩短文案')
+              } else if (slot > 0 && slot < 1.5) {
+                notes.push('镜头太短，未自动调速')
+              }
+            }
           } catch (err) {
             ttsFailed += 1
             notes.push('配音失败：' + (err instanceof Error ? err.message : String(err)).slice(0, 50))
@@ -850,6 +867,13 @@ export default function EditPanel({
                 <label className="check" style={{ margin: 0 }}>
                   <input type="checkbox" checked={aiTtsOn} onChange={(e) => setAiTtsOn(e.target.checked)} />
                   同时配音
+                </label>
+              )}
+              {aiTtsOn && (aiKind === 'narration' || aiKind === 'both') && (
+                <label className="check" style={{ margin: 0 }}
+                       title="旁白比镜头长时，给画面提速对齐（只加速，最多 1.25x）">
+                  <input type="checkbox" checked={aiAutoSpeed} onChange={(e) => setAiAutoSpeed(e.target.checked)} />
+                  自动匹配镜头时长
                 </label>
               )}
               <label className="check" style={{ margin: 0 }}>
