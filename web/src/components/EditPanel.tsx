@@ -294,18 +294,28 @@ export default function EditPanel({
       .catch(() => setShotPreview({ url: '', duration: 0 }))
   }, [activeShot])
 
+  // 预览源是「整片预览」时，视频时间就是全片时间，不需要再叠加镜头偏移
+  const filmPreviewUrl = previewJob?.status === 'succeeded' ? (previewJob.url || '') : ''
+  const usingFilmPreview = Boolean(filmPreviewUrl)
+
   // 时间轴点击 → 换算成「第几个镜头 + 镜头内偏移」，切镜头并定位
   const filmTimeOf = useCallback((localSeconds: number) => {
+    if (usingFilmPreview) return localSeconds
     const item = timeline.find((i) => i.shot_id === activeShot)
     return (item?.start || 0) + localSeconds
-  }, [timeline, activeShot])
+  }, [timeline, activeShot, usingFilmPreview])
 
   const seekFilm = useCallback((filmSeconds: number) => {
     if (!timeline.length) return
+    setPlayhead(Math.max(0, filmSeconds))
+    if (usingFilmPreview) {
+      const video = previewVideoRef.current
+      if (video) video.currentTime = Math.max(0, filmSeconds)
+      return
+    }
     const target = timeline.find((item) => filmSeconds >= item.start && filmSeconds < item.end)
       || timeline[timeline.length - 1]
     const local = Math.max(0, Math.min(filmSeconds - target.start, Math.max(target.duration - 0.05, 0)))
-    setPlayhead(Math.max(0, filmSeconds))
     if (target.shot_id !== activeShot) {
       pendingSeek.current = local
       setActiveShot(target.shot_id)
@@ -314,7 +324,13 @@ export default function EditPanel({
       if (video) video.currentTime = local
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timeline, activeShot])
+  }, [timeline, activeShot, usingFilmPreview])
+
+  // 切换预览源（例如刚生成整片预览）后，播放头回到开头
+  useEffect(() => {
+    setPlayhead(0)
+    pendingSeek.current = null
+  }, [filmPreviewUrl])
 
   // 切镜头后（video 的 key 变了、元素重建）把待定的镜头内时间应用上去
   useEffect(() => {
