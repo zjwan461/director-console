@@ -248,11 +248,19 @@ async def title_for(project: dict, shots: list[dict], kind: str = "title") -> st
     if not api_key:
         raise ValueError("没有配置 ai.api_key")
 
+    # 片头/片尾放在同一条 system 里模型容易串味，这里再单独强调一次本次任务
+    if kind == "tail":
+        task = ("本次任务：只写【片尾】文案。形如「第一集 · 完」或「下一集，雪夜归人」。"
+                "不要写成片名，不要加解释，不要引号。")
+    else:
+        task = ("本次任务：只写【片头】片名。4~10 个汉字，有画面感。"
+                "严禁出现「完」「本集」「第一集」「下一集」这类收尾字样，不要加解释，不要引号。")
+
     payload = {
         "model": model,
         "messages": [
             {"role": "system", "content": system},
-            {"role": "user", "content": json.dumps({
+            {"role": "user", "content": task + "\n\n" + json.dumps({
                 "kind": kind,
                 "project": project.get("name", ""),
                 "shots": [
@@ -274,4 +282,24 @@ async def title_for(project: dict, shots: list[dict], kind: str = "title") -> st
         raise RuntimeError(f"片名模型返回 {resp.status_code}：{resp.text[:200]}")
     text = clean(resp.json()["choices"][0]["message"]["content"])
     text = text.strip("《》\"'“”")
-    return text[:20]
+    return tidy_title(text, kind)
+
+
+TAIL_HINTS = ("完", "下一集", "待续", "全剧终", "敬请期待")
+TAIL_NOISE = ("本集", "第一集", "第 1 集", "第1集", "下一集")
+
+
+def tidy_title(text: str, kind: str = "title") -> str:
+    """模型常把片头写成「标题 · 完」，这里按类型清理一遍。"""
+    text = (text or "").strip().strip("。.，,")
+    text = re.sub(r"\s+", " ", text)
+    if kind == "tail":
+        return text[:20]
+
+    # 片名：砍掉尾巴上的收尾词，以及「｜镜头 2」这种拼接残留
+    text = re.split(r"[|｜]", text)[0].strip()
+    text = re.sub(r"(?:[·・\-—]\s*)?(?:全剧终|敬请期待|未完待续|下一集.*|本集|完)$", "", text).strip()
+    for noise in TAIL_NOISE:
+        text = text.replace(noise, "")
+    text = text.strip(" ·・-—|｜")
+    return text[:16] or "无题"
