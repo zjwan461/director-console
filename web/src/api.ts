@@ -88,7 +88,17 @@ export const api = {
       '/api/settings/asr/test',
       { method: 'POST' },
     ),
-  aiScript: (payload: { shot_id: string; kind: 'subtitle' | 'narration'; mode?: string; narration?: string; frames?: number; style?: Record<string, string> }) =>
+  aiPromptPreview: (payload: { shot_id: string; kind: 'subtitle' | 'narration'; style?: Record<string, string> }) =>
+    request<{ kind: string; system: string; user: string; duration: number; budget: number; frames_available: boolean }>(
+      '/api/ai/prompt-preview',
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) },
+    ),
+  aiTitlePreview: (projectId: string, kind: 'title' | 'tail') =>
+    request<{ kind: string; system: string; user: string }>('/api/ai/title/preview', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ project_id: projectId, kind }),
+    }),
+  aiScript: (payload: { shot_id: string; kind: 'subtitle' | 'narration'; mode?: string; narration?: string; frames?: number; style?: Record<string, string>; system_prompt?: string; user_prompt?: string }) =>
     request<{ text: string; chars: number; budget: number; over: boolean; compressed: boolean; original_chars: number; duration: number; skip?: string; reason?: string; transcribed?: boolean; followed_narration?: boolean; narration_mismatch?: boolean }>('/api/ai/script', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -119,11 +129,14 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     }),
-  aiTitle: (projectId: string, kind: 'title' | 'tail') =>
+  aiTitle: (projectId: string, kind: 'title' | 'tail', prompts?: { system?: string; user?: string }) =>
     request<{ text: string; kind: string }>('/api/ai/title', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ project_id: projectId, kind }),
+      body: JSON.stringify({
+        project_id: projectId, kind,
+        system_prompt: prompts?.system, user_prompt: prompts?.user,
+      }),
     }),
   projectTimeline: (projectId: string) =>
     request<{

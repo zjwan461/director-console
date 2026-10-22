@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { api } from '../api'
 import type { Asset, Project, Shot } from '../types'
 import BgmTimeline from './BgmTimeline'
+import PromptDialog from './PromptDialog'
+import type { PromptDraft } from './PromptDialog'
 
 const RESOLUTIONS = [
   { key: '480p', label: '480p · 854×480', width: 854, height: 480 },
@@ -666,10 +668,10 @@ export default function EditPanel({
     }, null, 2)
   }
 
-  const aiTitle = async (kind: 'title' | 'tail') => {
+  const runAiTitle = async (kind: 'title' | 'tail', prompts?: { system?: string; user?: string }) => {
     setTitleBusy(kind)
     try {
-      const r = await api.aiTitle(projectId, kind)
+      const r = await api.aiTitle(projectId, kind, prompts)
       if (kind === 'title') setTitleText(r.text)
       else setTailText(r.text)
       notify('ok', kind === 'title' ? '片头文案已生成' : '片尾文案已生成', r.text)
@@ -834,7 +836,83 @@ export default function EditPanel({
     }
   }
 
-  const aiOne = async (shotId: string, kind: 'subtitle' | 'narration') => {
+  const [promptDraft, setPromptDraft] = useState<PromptDraft | null>(null)
+  const [promptBusy, setPromptBusy] = useState(false)
+  const pendingPrompt = useRef<
+    | { type: 'script'; shotId: string; kind: 'subtitle' | 'narration' }
+    | { type: 'title'; kind: 'title' | 'tail' }
+    | null
+  >(null)
+
+  const openScriptPrompt = async (shotId: string, kind: 'subtitle' | 'narration') => {
+    if (kind === 'subtitle' && modeOf(shotId) === 'silent') {
+      notify('ok', '纯画面镜头', '这个镜头设置为纯画面，不生成字幕')
+      return
+    }
+    setPromptBusy(true)
+    try {
+      const res = await api.aiPromptPreview({ shot_id: shotId, kind, style: stylePayload(kind) })
+      pendingPrompt.current = { type: 'script', shotId, kind }
+      setPromptDraft({
+        title: kind === 'subtitle' ? 'AI 写字幕 · 提示词' : 'AI 写旁白 · 提示词',
+        system: res.system,
+        user: res.user,
+        framesAvailable: res.frames_available,
+        frames: aiFrames,
+        withFrames: res.frames_available && aiFrames > 0,
+      })
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      notify('err', '读取提示词失败', msg.slice(0, 120))
+    } finally {
+      setPromptBusy(false)
+    }
+  }
+
+  const openTitlePrompt = async (kind: 'title' | 'tail') => {
+    setPromptBusy(true)
+    try {
+      const res = await api.aiTitlePreview(projectId, kind)
+      pendingPrompt.current = { type: 'title', kind }
+      setPromptDraft({
+        title: kind === 'title' ? 'AI 片头文案 · 提示词' : 'AI 片尾文案 · 提示词',
+        system: res.system,
+        user: res.user,
+        framesAvailable: false,
+        frames: 0,
+        withFrames: false,
+      })
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      notify('err', '读取提示词失败', msg.slice(0, 120))
+    } finally {
+      setPromptBusy(false)
+    }
+  }
+
+  const confirmPrompt = async (payload: { system: string; user: string; frames: number }) => {
+    const action = pendingPrompt.current
+    if (!action) return
+    setPromptBusy(true)
+    try {
+      if (action.type === 'script') {
+        await runAiOne(action.shotId, action.kind,
+          { system: payload.system, user: payload.user, frames: payload.frames })
+      } else {
+        await runAiTitle(action.kind, { system: payload.system, user: payload.user })
+      }
+      setPromptDraft(null)
+      pendingPrompt.current = null
+    } finally {
+      setPromptBusy(false)
+    }
+  }
+
+  const runAiOne = async (
+    shotId: string,
+    kind: 'subtitle' | 'narration',
+    prompts?: { system?: string; user?: string; frames?: number },
+  ) => {
     const key = `${shotId}:${kind}`
     if (kind === 'subtitle' && modeOf(shotId) === 'silent') {
       notify('ok', '纯画面镜头', '这个镜头设置为纯画面，不生成字幕')
@@ -846,8 +924,11 @@ export default function EditPanel({
         ? editOf(shotId).narration
         : undefined
       const r = await api.aiScript({
-        shot_id: shotId, kind, style: stylePayload(kind), frames: aiFrames,
+        shot_id: shotId, kind, style: stylePayload(kind),
+        frames: prompts?.frames ?? aiFrames,
         narration,
+        system_prompt: prompts?.system,
+        user_prompt: prompts?.user,
       })
       if (r.skip === 'silent') {
         notify('ok', '跳过字幕', r.reason || '这个镜头没有明显人声')
@@ -1028,6 +1109,15 @@ export default function EditPanel({
 
       <input ref={voiceInput} type="file" hidden accept="audio/*"
              onChange={(e) => void uploadVoice(e.target.files)} />
+
+      {promptDraft && (
+        <PromptDialog
+          draft={promptDraft}
+          busy={promptBusy}
+          onCancel={() => { setPromptDraft(null); pendingPrompt.current = null }}
+          onConfirm={(payload) => void confirmPrompt(payload)}
+        />
+      )}
 
       {aiOpen && (
         <div className="picker-overlay" onClick={() => !aiRunning && setAiOpen(false)}>
@@ -1386,7 +1476,7 @@ export default function EditPanel({
                               {!edit.narration_on && edit.lip_on && (
                                 <button className="ghost tiny" disabled={aiBusy === `${shot.id}:subtitle`}
                                         title="检测人声并转写"
-                                        onClick={() => void aiOne(shot.id, 'subtitle')}>
+                                        onClick={() => void openScriptPrompt(shot.id, 'subtitle')}>
                                   {aiBusy === `${shot.id}:subtitle` ? <><span className="spin" /> 转写中</> : '转写'}
                                 </button>
                               )}
@@ -1461,7 +1551,7 @@ export default function EditPanel({
                                     上传
                                   </button>
                                   <button className="ghost tiny" disabled={aiBusy === `${shot.id}:narration`}
-                                          onClick={() => void aiOne(shot.id, 'narration')}>
+                                          onClick={() => void openScriptPrompt(shot.id, 'narration')}>
                                     {aiBusy === `${shot.id}:narration` ? <><span className="spin" /> 生成中</> : 'AI 写'}
                                   </button>
                                   <button className="ghost tiny" disabled={!edit.narration.trim() || aiBusy === `${shot.id}:tts`}
@@ -1628,7 +1718,7 @@ export default function EditPanel({
             <div className="row" style={{ flexWrap: 'wrap', gap: 6 }}>
               <input className="grow" placeholder="片头文字，如：雪夜"
                      value={titleText} onChange={(e) => setTitleText(e.target.value)} />
-              <button className="ghost tiny" disabled={titleBusy === 'title'} onClick={() => void aiTitle('title')}>
+              <button className="ghost tiny" disabled={titleBusy === 'title'} onClick={() => void openTitlePrompt('title')}>
                 {titleBusy === 'title' ? <><span className="spin" /> 起名中</> : 'AI 起名'}
               </button>
               <select value={titleDur} onChange={(e) => setTitleDur(Number(e.target.value))}>
@@ -1658,7 +1748,7 @@ export default function EditPanel({
             <div className="row" style={{ flexWrap: 'wrap', gap: 6 }}>
               <input className="grow" placeholder="片尾文字，如：第一集 · 完"
                      value={tailText} onChange={(e) => setTailText(e.target.value)} />
-              <button className="ghost tiny" disabled={titleBusy === 'tail'} onClick={() => void aiTitle('tail')}>
+              <button className="ghost tiny" disabled={titleBusy === 'tail'} onClick={() => void openTitlePrompt('tail')}>
                 {titleBusy === 'tail' ? <><span className="spin" /> 生成中</> : 'AI 起名'}
               </button>
               <select value={tailDur} onChange={(e) => setTailDur(Number(e.target.value))}>

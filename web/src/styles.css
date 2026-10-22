@@ -710,3 +710,15 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
 .tl-pending-badge { position: relative; z-index: 2; font-size: 10px; line-height: 1;
   color: #e2a04a; padding-left: 6px; }
 .tl-clip-pending:hover { background: rgba(226, 160, 74, .14); }
+
+
+/* AI 提示词弹框 */
+.prompt-dialog { width: min(760px, 92vw); display: flex; flex-direction: column; max-height: 88vh; }
+.prompt-dialog-body { display: flex; flex-direction: column; gap: 12px; overflow-y: auto; padding-right: 4px; }
+.prompt-dialog-body .field { display: flex; flex-direction: column; gap: 6px; }
+.prompt-dialog-body .field > span { font-size: 11px; color: #939bb0; }
+.prompt-dialog-body textarea { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px; line-height: 1.6; background: #0d0f16; border: 1px solid var(--line);
+  border-radius: 8px; padding: 10px 12px; color: #cdd3e2; resize: vertical; }
+.prompt-dialog-foot { display: flex; align-items: center; gap: 8px; margin-top: 12px;
+  padding-top: 12px; border-top: 1px solid var(--line); }

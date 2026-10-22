@@ -105,12 +105,48 @@ def fit_narration(narration: str, budget: int) -> dict:
     }
 
 
-async def generate(kind: str, shot: dict, project: dict, neighbors: dict,
-                   duration: float, style: dict, images: list[Path] | None = None) -> dict:
+def build_prompt(kind: str, shot: dict, project: dict, neighbors: dict,
+                 duration: float, style: dict) -> tuple[str, str]:
+    """返回 (system, user_text)，用于「AI 提示词弹框」的预览与编辑。"""
     prompts = _prompts()
     system = prompts.get(PROMPT_KEYS[kind])
     if not system:
         raise ValueError("缺少 AI 文案提示词模板（content/ai-prompts.json）")
+    description = shot_description(shot)
+    if not description:
+        raise ValueError("这个镜头没有画面描述，AI 无法对照画面；请先在项目页填写「画面描述」")
+    budget = char_budget(kind, duration)
+    narration_style = dict(style or {})
+    if kind == "narration":
+        narration_style["language"] = "zh"
+        narration_style["narration_language"] = "zh"
+    user_text = json.dumps({
+        "kind": kind,
+        "char_budget": budget,
+        "duration_seconds": round(duration, 2),
+        "style": narration_style,
+        "language_rule": "旁白只写中文，不要出现英文单词或英文句子" if kind == "narration" else "",
+        "project": {"name": project.get("name", "")},
+        "shot": {
+            "title": shot.get("title", ""),
+            "description": description,
+            "preset": shot.get("preset_id", ""),
+            "duration_seconds": round(duration, 2),
+        },
+        "neighbors": neighbors,
+    }, ensure_ascii=False)
+    return system, user_text
+
+
+async def generate(kind: str, shot: dict, project: dict, neighbors: dict,
+                   duration: float, style: dict, images: list[Path] | None = None,
+                   system_override: str | None = None,
+                   user_override: str | None = None) -> dict:
+    system, context = build_prompt(kind, shot, project, neighbors, duration, style)
+    if system_override and system_override.strip():
+        system = system_override.strip()
+    if user_override and user_override.strip():
+        context = user_override.strip()
 
     api_key = str(settings.get("ai.api_key", "") or "")
     if not api_key:
@@ -123,32 +159,8 @@ async def generate(kind: str, shot: dict, project: dict, neighbors: dict,
             raise ValueError("要带视频截图给 AI，需要先在提示词助手配置「多模态模型」")
         model = vision_model
     proxy = str(settings.get("ai.proxy", "") or "").strip()
-
-    description = shot_description(shot)
-    if not description:
-        raise ValueError("这个镜头没有画面描述，AI 无法对照画面；请先在项目页填写「画面描述」")
-
     budget = char_budget(kind, duration)
-    # 配音只支持中文：旁白永远单语，字幕的双语设置在旁白这里不生效
-    narration_style = dict(style or {})
-    if kind == "narration":
-        narration_style["language"] = "zh"
-        narration_style["narration_language"] = "zh"
-    context = json.dumps({
-                "kind": kind,
-                "char_budget": budget,
-                "duration_seconds": round(duration, 2),
-                "style": narration_style,
-                "language_rule": "旁白只写中文，不要出现英文单词或英文句子" if kind == "narration" else "",
-                "project": {"name": project.get("name", "")},
-                "shot": {
-                    "title": shot.get("title", ""),
-                    "description": description,
-                    "preset": shot.get("preset_id", ""),
-                    "duration_seconds": round(duration, 2),
-                },
-                "neighbors": neighbors,
-            }, ensure_ascii=False)
+
     user_content: list[dict] = [{"type": "text", "text": context}]
     for image in (images or []):
         import base64
@@ -242,11 +254,38 @@ async def _compress(make_client, base: str, api_key: str, model: str,
         return text
 
 
-async def title_for(project: dict, shots: list[dict], kind: str = "title") -> str:
+def build_title_prompt(project: dict, shots: list[dict], kind: str = "title") -> tuple[str, str]:
+    """片头/片尾提示词，供弹框预览和编辑。"""
     prompts = _prompts()
     system = prompts.get("titleGen")
     if not system:
         raise ValueError("缺少片名提示词模板（content/ai-prompts.json）")
+    if kind == "tail":
+        task = ("本次任务：只写【片尾】文案。形如「第一集 · 完」或「下一集，雪夜归人」。"
+                "不要写成片名，不要加解释，不要引号。")
+    else:
+        task = ("本次任务：只写【片头】片名。4~10 个汉字，有画面感。"
+                "严禁出现「完」「本集」「第一集」「下一集」这类收尾字样，不要加解释，不要引号。")
+    user = task + "\n\n" + json.dumps({
+        "kind": kind,
+        "project": project.get("name", ""),
+        "shots": [
+            {"title": s.get("title", ""), "description": shot_description(s)[:80]}
+            for s in shots[:8]
+        ],
+    }, ensure_ascii=False)
+    return system, user
+
+
+async def title_for(project: dict, shots: list[dict], kind: str = "title",
+                    system_override: str | None = None,
+                    user_override: str | None = None) -> str:
+    system, user_text = build_title_prompt(project, shots, kind)
+    if system_override and system_override.strip():
+        system = system_override.strip()
+    if user_override and user_override.strip():
+        user_text = user_override.strip()
+
     api_key = str(settings.get("ai.api_key", "") or "")
     base = str(settings.get("ai.base_url", "")).rstrip("/")
     model = str(settings.get("ai.model", "") or "")
@@ -254,26 +293,11 @@ async def title_for(project: dict, shots: list[dict], kind: str = "title") -> st
     if not api_key:
         raise ValueError("没有配置 ai.api_key")
 
-    # 片头/片尾放在同一条 system 里模型容易串味，这里再单独强调一次本次任务
-    if kind == "tail":
-        task = ("本次任务：只写【片尾】文案。形如「第一集 · 完」或「下一集，雪夜归人」。"
-                "不要写成片名，不要加解释，不要引号。")
-    else:
-        task = ("本次任务：只写【片头】片名。4~10 个汉字，有画面感。"
-                "严禁出现「完」「本集」「第一集」「下一集」这类收尾字样，不要加解释，不要引号。")
-
     payload = {
         "model": model,
         "messages": [
             {"role": "system", "content": system},
-            {"role": "user", "content": task + "\n\n" + json.dumps({
-                "kind": kind,
-                "project": project.get("name", ""),
-                "shots": [
-                    {"title": s.get("title", ""), "description": shot_description(s)[:80]}
-                    for s in shots[:8]
-                ],
-            }, ensure_ascii=False)},
+            {"role": "user", "content": user_text},
         ],
         "temperature": 0.8,
         "stream": False,
@@ -289,23 +313,3 @@ async def title_for(project: dict, shots: list[dict], kind: str = "title") -> st
     text = clean(resp.json()["choices"][0]["message"]["content"])
     text = text.strip("《》\"'“”")
     return tidy_title(text, kind)
-
-
-TAIL_HINTS = ("完", "下一集", "待续", "全剧终", "敬请期待")
-TAIL_NOISE = ("本集", "第一集", "第 1 集", "第1集", "下一集")
-
-
-def tidy_title(text: str, kind: str = "title") -> str:
-    """模型常把片头写成「标题 · 完」，这里按类型清理一遍。"""
-    text = (text or "").strip().strip("。.，,")
-    text = re.sub(r"\s+", " ", text)
-    if kind == "tail":
-        return text[:20]
-
-    # 片名：砍掉尾巴上的收尾词，以及「｜镜头 2」这种拼接残留
-    text = re.split(r"[|｜]", text)[0].strip()
-    text = re.sub(r"(?:[·・\-—]\s*)?(?:全剧终|敬请期待|未完待续|下一集.*|本集|完)$", "", text).strip()
-    for noise in TAIL_NOISE:
-        text = text.replace(noise, "")
-    text = text.strip(" ·・-—|｜")
-    return text[:16] or "无题"

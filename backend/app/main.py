@@ -1008,6 +1008,22 @@ async def shot_frames(shot_id: str, count: int = 3) -> dict:
 class TitleRequest(BaseModel):
     project_id: str
     kind: str = "title"
+    system_prompt: str | None = None
+    user_prompt: str | None = None
+
+
+@app.post("/api/ai/title/preview")
+async def ai_title_preview(body: TitleRequest) -> dict:
+    project = store.get_project(body.project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="项目不存在")
+    shots = store.list_shots(body.project_id)
+    kind = "tail" if body.kind == "tail" else "title"
+    try:
+        system, user = ai_script.build_title_prompt(project, shots, kind)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return {"kind": kind, "system": system, "user": user}
 
 
 @app.post("/api/ai/title")
@@ -1018,7 +1034,9 @@ async def ai_title(body: TitleRequest) -> dict:
     shots = store.list_shots(body.project_id)
     kind = "tail" if body.kind == "tail" else "title"
     try:
-        text = await ai_script.title_for(project, shots, kind)
+        text = await ai_script.title_for(project, shots, kind,
+                                         system_override=body.system_prompt,
+                                         user_override=body.user_prompt)
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc))
     return {"text": text, "kind": kind}
@@ -1437,6 +1455,8 @@ class ScriptRequest(BaseModel):
     narration: str = ""
     frames: int = 0
     style: dict[str, Any] = {}
+    system_prompt: str | None = None
+    user_prompt: str | None = None
 
 
 @app.get("/api/settings/tts")
@@ -1564,6 +1584,43 @@ async def ai_tts(body: TTSRequest) -> dict:
     }
 
 
+@app.post("/api/ai/prompt-preview")
+async def ai_prompt_preview(body: ScriptRequest) -> dict:
+    """返回这次 AI 生成将要发送的完整提示词，供前端弹框展示与编辑。"""
+    shot = store.get_shot(body.shot_id)
+    if not shot:
+        raise HTTPException(status_code=404, detail="镜头不存在")
+    kind = body.kind if body.kind in {"subtitle", "narration"} else "subtitle"
+    project = store.get_project(shot["project_id"]) or {}
+    siblings = sorted(store.list_shots(shot["project_id"]), key=lambda s: s["idx"])
+    index = next((i for i, s in enumerate(siblings) if s["id"] == shot["id"]), -1)
+    neighbors = {
+        "prev": (siblings[index - 1].get("title", "") if index > 0 else ""),
+        "next": (siblings[index + 1].get("title", "") if 0 <= index < len(siblings) - 1 else ""),
+        "prev_prompt": (siblings[index - 1].get("prompt", "")[:120] if index > 0 else ""),
+        "next_prompt": (siblings[index + 1].get("prompt", "")[:120] if 0 <= index < len(siblings) - 1 else ""),
+    }
+    found = _shot_video(shot)
+    duration = 5.0
+    if found and found[1].exists():
+        try:
+            duration = await ffmpeg.duration_of(found[1]) or 5.0
+        except Exception:
+            pass
+    try:
+        system, user = ai_script.build_prompt(kind, shot, project, neighbors, duration, body.style or {})
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return {
+        "kind": kind,
+        "system": system,
+        "user": user,
+        "duration": round(duration, 2),
+        "budget": ai_script.char_budget(kind, duration),
+        "frames_available": bool(found and found[1].exists()),
+    }
+
+
 @app.post("/api/ai/script")
 async def ai_script_one(body: ScriptRequest) -> dict:
     shot = store.get_shot(body.shot_id)
@@ -1641,7 +1698,9 @@ async def ai_script_one(body: ScriptRequest) -> dict:
             images = []
     try:
         return await ai_script.generate(kind, shot, project, neighbors, duration,
-                                       body.style or {}, images=images)
+                                       body.style or {}, images=images,
+                                       system_override=body.system_prompt,
+                                       user_override=body.user_prompt)
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 
