@@ -671,19 +671,25 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
   background: #ff5c7a; border-radius: 0 0 3px 3px; }
 
 
-/* 剪辑页三段式布局：左上预览 / 左下镜头 / 右侧设置 / 底部时间轴 */
-.render-editor { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 14px; align-items: start; }
-.render-editor > .panel-preview { grid-column: 1; grid-row: 1; }
-.render-editor > .panel-shots { grid-column: 1; grid-row: 2; }
-.render-editor > .panel-side { grid-column: 2; grid-row: 1 / span 2; max-height: calc(100vh - 140px);
-  overflow-y: auto; position: sticky; top: 12px; }
-.render-editor > .span-all { grid-column: 1 / -1; grid-row: 3; position: sticky; bottom: 8px;
-  z-index: 20; background: #0f1219; box-shadow: 0 -8px 24px rgba(0,0,0,.45); }
+/* 剪辑页：左列（预览 + 镜头）滚动，右列设置吸顶，时间轴在内容流末尾 */
+.render-editor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 400px;
+  gap: 14px;
+  align-items: start;
+}
+.ed-col { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.ed-col > .panel-preview { order: -1; }
+.render-editor > .panel-side {
+  position: sticky;
+  top: 12px;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+}
+.render-editor > .panel-side::-webkit-scrollbar { width: 8px; }
+.render-editor > .panel-side::-webkit-scrollbar-thumb { background: #2c3243; border-radius: 4px; }
+.render-editor > .span-all { grid-column: 1 / -1; }
 @media (max-width: 1200px) {
   .render-editor { grid-template-columns: minmax(0, 1fr); }
-  .render-editor > .panel-preview,
-  .render-editor > .panel-shots,
-  .render-editor > .panel-side,
-  .render-editor > .span-all { grid-column: 1; grid-row: auto; }
   .render-editor > .panel-side { position: static; max-height: none; }
 }

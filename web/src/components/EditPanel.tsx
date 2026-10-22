@@ -1118,6 +1118,7 @@ export default function EditPanel({
       {error && <div className="notice err">{error}</div>}
 
       <div className="render-editor">
+        <div className="ed-col">
         <div className="panel panel-shots">
           <h2>
             <span>镜头与字幕</span>
@@ -1416,6 +1417,7 @@ export default function EditPanel({
                    value={editOf(activeShot).out_point ? Math.min(Number(editOf(activeShot).out_point), shotPreview.duration) : shotPreview.duration}
                    onChange={(e) => patchEdit(activeShot, { out_point: e.target.value })} />
           </div>
+        </div>
         </div>
 
         <div className="panel panel-side">
