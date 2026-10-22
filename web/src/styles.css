@@ -680,14 +680,7 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
 }
 .ed-col { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 .ed-col > .panel-preview { order: -1; }
-.render-editor > .panel-side {
-  position: sticky;
-  top: 12px;
-  max-height: calc(100vh - 120px);
-  overflow-y: auto;
-}
-.render-editor > .panel-side::-webkit-scrollbar { width: 8px; }
-.render-editor > .panel-side::-webkit-scrollbar-thumb { background: #2c3243; border-radius: 4px; }
+.render-editor > .panel-side { min-width: 0; }
 .render-editor > .span-all { grid-column: 1 / -1; }
 @media (max-width: 1200px) {
   .render-editor { grid-template-columns: minmax(0, 1fr); }
