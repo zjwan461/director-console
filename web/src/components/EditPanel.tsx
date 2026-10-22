@@ -704,6 +704,13 @@ export default function EditPanel({
     setPromptBusy(true)
     try {
       const res = await api.aiPromptPreview({ shot_id: first.id, kind, style: stylePayload(kind) })
+      let frameUrls: string[] = []
+      if (res.frames_available) {
+        try {
+          const frames = await api.shotFrames(first.id, 6)
+          frameUrls = frames.items.map((i) => i.url)
+        } catch { frameUrls = [] }
+      }
       pendingPrompt.current = { type: 'batch' }
       setPromptDraft({
         title: `AI 剪辑（${ordered.length} 镜）· 提示词`,
@@ -714,6 +721,7 @@ export default function EditPanel({
         withFrames: res.frames_available && aiFrames > 0,
         userReadOnly: true,
         note: '系统提示词对整批生效；下面是第 1 镜的输入样例，其余镜头会按各自画面重新生成。',
+        framesUrls: frameUrls,
       })
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
@@ -884,6 +892,13 @@ export default function EditPanel({
     setPromptBusy(true)
     try {
       const res = await api.aiPromptPreview({ shot_id: shotId, kind, style: stylePayload(kind) })
+      let frameUrls: string[] = []
+      if (res.frames_available) {
+        try {
+          const frames = await api.shotFrames(shotId, 6)
+          frameUrls = frames.items.map((i) => i.url)
+        } catch { frameUrls = [] }
+      }
       pendingPrompt.current = { type: 'script', shotId, kind }
       setPromptDraft({
         title: kind === 'subtitle' ? 'AI 写字幕 · 提示词' : 'AI 写旁白 · 提示词',
@@ -892,6 +907,7 @@ export default function EditPanel({
         framesAvailable: res.frames_available,
         frames: aiFrames,
         withFrames: res.frames_available && aiFrames > 0,
+        framesUrls: frameUrls,
       })
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)

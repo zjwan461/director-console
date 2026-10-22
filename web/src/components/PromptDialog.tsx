@@ -10,6 +10,7 @@ export interface PromptDraft {
   userReadOnly?: boolean
   note?: string
   error?: string
+  framesUrls?: string[]
 }
 
 interface Props {
@@ -72,6 +73,20 @@ export default function PromptDialog({ draft, busy, onCancel, onConfirm }: Props
             )}
             {frames > 0 && <span className="meta">本次发送 {frames} 张</span>}
           </div>
+
+          {draft.framesAvailable && (draft.framesUrls?.length || 0) > 0 && (
+            <div className={`prompt-frames ${withFrames ? '' : 'off'}`}>
+              {(draft.framesUrls || []).map((url, index) => (
+                <figure key={url} className={index < frames ? 'on' : 'off'}>
+                  <img src={url} alt={`截图 ${index + 1}`} />
+                  <figcaption>{index + 1}</figcaption>
+                </figure>
+              ))}
+            </div>
+          )}
+          {draft.framesAvailable && !(draft.framesUrls?.length || 0) && (
+            <p className="hint">截图会在点「发送给 AI」时按张数抽取。</p>
+          )}
 
           <p className="hint">
             这些就是实际发送给 AI 的内容，可以直接改。改过的提示词只影响这一次生成。
