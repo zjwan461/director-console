@@ -22,6 +22,7 @@ interface Edit {
   volume_db: string
   subtitle_lock: boolean
   burned_mode: string
+  speed: string
 }
 
 export default function EditPanel({
@@ -178,6 +179,7 @@ export default function EditPanel({
             volume_db: String(item.volume_db ?? '0'),
             subtitle_lock: Boolean(item.subtitle_lock),
             burned_mode: item.burned_subtitle === true ? 'on' : (String(item.burned_mode || 'inherit')),
+            speed: String(item.speed ?? '1'),
           }
         }
         // 有旁白且没手动锁定时，字幕以旁白为准（修正历史遗留的不一致）
@@ -224,6 +226,7 @@ export default function EditPanel({
           narration_on: editOf(s.id).narration_on,
           lip_on: editOf(s.id).lip_on,
           volume_db: Number(editOf(s.id).volume_db) || 0,
+          speed: Number(editOf(s.id).speed) || 1,
           subtitle_lock: editOf(s.id).subtitle_lock,
           burned_subtitle: isBurned(s.id),
         })),
@@ -269,7 +272,8 @@ export default function EditPanel({
         const total = Number(list[i].duration) || 0
         const startAt = Number(edit.in_point) || 0
         const endAt = edit.out_point ? Math.min(Number(edit.out_point), total || Number(edit.out_point)) : total
-        const dur = Math.max(0, endAt - startAt)
+        const shotSpeed = Math.min(Math.max(Number(edit.speed) || 1, 0.5), 2)
+        const dur = Math.max(0, endAt - startAt) / shotSpeed
         if (i && overlap) cursor = Math.max(0, cursor - overlap)
         const item = { shot_id: s.id, title: s.title || `镜头 ${i + 1}`, duration: dur, start: cursor, end: cursor + dur }
         cursor += dur
@@ -699,6 +703,8 @@ export default function EditPanel({
         out_point: editOf(s.id).out_point ? Number(editOf(s.id).out_point) : undefined,
         subtitle: editOf(s.id).subtitle || s.title || '',
         voice_asset: editOf(s.id).voice_asset || '',
+        volume_db: Number(editOf(s.id).volume_db) || 0,
+        speed: Number(editOf(s.id).speed) || 1,
         fit: editOf(s.id).fit || '',
         burned_subtitle: isBurned(s.id),
       })))
@@ -740,6 +746,8 @@ export default function EditPanel({
         out_point: editOf(s.id).out_point ? Number(editOf(s.id).out_point) : undefined,
         subtitle: editOf(s.id).subtitle || s.title || '',
         voice_asset: editOf(s.id).voice_asset || '',
+        volume_db: Number(editOf(s.id).volume_db) || 0,
+        speed: Number(editOf(s.id).speed) || 1,
         fit: editOf(s.id).fit || '',
         burned_subtitle: burnedOverride ?? isBurned(s.id),
       })))
@@ -1169,6 +1177,18 @@ export default function EditPanel({
                                    onChange={(e) => patchEdit(shot.id, { volume_db: e.target.value })} />
                           </label>
                         )}
+                        <label>
+                          速度
+                          <select value={edit.speed}
+                                  onChange={(e) => patchEdit(shot.id, { speed: e.target.value })}>
+                            <option value="1">1.0x</option>
+                            <option value="0.6">0.6x 慢</option>
+                            <option value="0.8">0.8x</option>
+                            <option value="1.2">1.2x</option>
+                            <option value="1.5">1.5x 快</option>
+                            <option value="2">2.0x</option>
+                          </select>
+                        </label>
                         {edit.narration_on && (
                           <label>
                             旁白文案

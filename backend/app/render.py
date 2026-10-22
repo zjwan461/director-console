@@ -166,6 +166,7 @@ class RenderRunner:
                 progress=0.05 + 0.55 * (idx - 1) / total,
             )
             shot_fit = str(edit.get("fit") or "") or global_fit
+            shot_speed = float(edit.get("speed") or 1.0)
             await ffmpeg.process_clip(
                 src, dst, width, height, fps,
                 in_point=float(edit.get("in_point") or 0),
@@ -173,6 +174,7 @@ class RenderRunner:
                 volume_db=float(edit.get("volume_db") or 0),
                 muted=bool(edit.get("muted")),
                 fit=shot_fit,
+                speed=shot_speed,
             )
             dur = await ffmpeg.duration_of(dst)
 

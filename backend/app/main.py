@@ -1107,7 +1107,8 @@ async def render_timeline(render_id: str) -> dict:
         end_at = float(edit["out_point"]) if edit.get("out_point") else total
         if total:
             end_at = min(end_at, total)
-        dur = max(0.0, end_at - start_at)
+        speed = min(max(float(edit.get("speed") or 1.0), 0.5), 2.0)
+        dur = max(0.0, end_at - start_at) / speed
         if index and overlap:
             cursor = max(0.0, cursor - overlap)
         items.append({

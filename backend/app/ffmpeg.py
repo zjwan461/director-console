@@ -350,16 +350,21 @@ async def process_clip(
     volume_db: float = 0.0,
     muted: bool = False,
     fit: str = "letterbox",
+    speed: float = 1.0,
 ) -> None:
-    """单镜处理：裁剪 + 画布适配 + 帧率 + 音量。
+    """单镜处理：裁剪 + 画布适配 + 帧率 + 音量 + 变速。
 
     fit: letterbox=等比缩放补黑边 / crop=裁切填满 / blur=模糊背景补边
+    speed: 1.0 表示原速；仅对画面做 setpts + 音频 atempo（0.5~2.0）
     """
     ff = ffmpeg_path()
     if not ff:
         raise FFmpegMissing("未检测到 ffmpeg")
     with_audio = await has_audio(src)
     fit = fit if fit in {"letterbox", "crop", "blur"} else "letterbox"
+    speed = min(max(float(speed or 1.0), 0.5), 2.0)
+    trimming = abs(speed - 1.0) > 0.005
+    length = (out_point - in_point) if (out_point is not None and out_point > in_point) else None
 
     if fit == "crop":
         vf = (
@@ -384,21 +389,49 @@ async def process_clip(
         graph = None
 
     cmd = [ff, "-y", "-loglevel", "error", "-ss", f"{max(in_point, 0):.3f}", "-i", str(src)]
-    if out_point is not None and out_point > in_point:
-        cmd += ["-t", f"{out_point - in_point:.3f}"]
 
-    if with_audio and not muted:
-        af = f"volume={volume_db}dB,aresample=48000"
-        if graph:
-            cmd += ["-filter_complex", graph, "-map", "[v]", "-map", "0:a:0", "-af", af]
+    if not trimming:
+        # 原速：沿用 -t 输出时长（最省事，不需要 trim 滤镜）
+        if length is not None:
+            cmd += ["-t", f"{length:.3f}"]
+        if with_audio and not muted:
+            af = f"volume={volume_db}dB,aresample=48000"
+            if graph:
+                cmd += ["-filter_complex", graph, "-map", "[v]", "-map", "0:a:0", "-af", af]
+            else:
+                cmd += ["-map", "0:v:0", "-map", "0:a:0", "-vf", vf, "-af", af]
         else:
-            cmd += ["-map", "0:v:0", "-map", "0:a:0", "-vf", vf, "-af", af]
+            cmd += ["-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=48000"]
+            if graph:
+                cmd += ["-filter_complex", graph, "-map", "[v]", "-map", "1:a:0", "-shortest"]
+            else:
+                cmd += ["-map", "0:v:0", "-map", "1:a:0", "-vf", vf, "-shortest"]
     else:
-        cmd += ["-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=48000"]
+        # 变速：-t 是输出侧限制，会把慢放截断；改用 trim + setpts 在滤镜里裁
+        trim = f"trim=duration={length:.3f}," if length is not None else ""
+        pts = f"setpts=(PTS-STARTPTS)/{speed:.4f},"
         if graph:
-            cmd += ["-filter_complex", graph, "-map", "[v]", "-map", "1:a:0", "-shortest"]
+            graph = graph.replace("[0:v]", f"[0:v]{trim}{pts}", 1)
         else:
-            cmd += ["-map", "0:v:0", "-map", "1:a:0", "-vf", vf, "-shortest"]
+            vf = trim + pts + vf
+
+        audio_chain = (
+            (f"atrim=duration={length:.3f}," if length is not None else "")
+            + f"asetpts=PTS-STARTPTS,atempo={speed:.4f},"
+            + f"volume={volume_db}dB,aresample=48000"
+        )
+        if with_audio and not muted:
+            if graph:
+                graph = graph.replace("[v]", "[vout]") + f";[0:a]{audio_chain}[a]"
+                cmd += ["-filter_complex", graph, "-map", "[vout]", "-map", "[a]"]
+            else:
+                cmd += ["-map", "0:v:0", "-map", "0:a:0", "-vf", vf, "-af", audio_chain]
+        else:
+            cmd += ["-f", "lavfi", "-i", f"anullsrc=channel_layout=stereo:sample_rate=48000"]
+            if graph:
+                cmd += ["-filter_complex", graph, "-map", "[v]", "-map", "1:a:0", "-shortest"]
+            else:
+                cmd += ["-map", "0:v:0", "-map", "1:a:0", "-vf", vf, "-shortest"]
 
     cmd += [
         "-c:v", "libx264", "-crf", _cfg("crf", "20"), "-preset", "veryfast",
