@@ -1,63 +1,84 @@
 https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/loras/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors
   dir=D:\ComfyUI\models\loras\minimax
   out=minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors
+  checksum=sha-256=2339acdf19bfe123f46b971ea35d367a84adb85de43627e1eceafa5a5b2b111e
 https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_audio_vae_fp32.safetensors
   dir=D:\ComfyUI\models\vae
   out=minimax_h3_audio_vae_fp32.safetensors
+  checksum=sha-256=8e505d95dd1561d47abd43d4238fd40d9bb1ae9e147ed0a4cba778d76ae4db48
 https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_video_vae_fp16.safetensors
   dir=D:\ComfyUI\models\vae
   out=minimax_h3_video_vae_fp16.safetensors
+  checksum=sha-256=7c1f131492e7eddacaac9069a61b81bdd39de5cc96561e677c5eab1cdce5e522
 https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/text_encoders/qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors
   dir=D:\ComfyUI\models\text_encoders
   out=qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors
+  checksum=sha-256=35a88d51044231fe332301d7a62aa81e3f2cba62febeb446e2c1e3e0ef76f2c6
 https://huggingface.co/OzzyGT/taeh3/resolve/main/taeh3.safetensors
   dir=D:\ComfyUI\models\vae_approx
   out=taeh3.safetensors
+  checksum=sha-256=4fd022bfcab08772fe0536b17ea1a3bbb5625be11e397868d1c5d891863d4c13
 https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/text_encoders/qwen3vl_32b_minimax_h3_int8_convrot.safetensors
   dir=D:\ComfyUI\models\text_encoders
   out=qwen3vl_32b_minimax_h3_int8_convrot.safetensors
+  checksum=sha-256=bc2ced0fbea64757fa9acddccfc0b3f4819d1dcf1da6c124d690d368be283923
 https://huggingface.co/Kijai/MiniMax-H3-experimental/resolve/main/minimax_h3_video_vae_int8_convrot.safetensors
   dir=D:\ComfyUI\models\vae
   out=minimax_h3_video_vae_int8_convrot.safetensors
+  checksum=sha-256=9bb2d96f218c76babd85e0611b85ca8fb330a90546c01a0005e8a58a59593410
 https://huggingface.co/t8star/Semantic-Bridge-Comfy/resolve/main/models/semantic_bridge/t8_compat/MiniMaxH3_SemanticBridge_v1_T8_Compat.safetensors
   dir=D:\ComfyUI\models\loras\t8_compat
   out=MiniMaxH3_SemanticBridge_v1_T8_Compat.safetensors
+  checksum=sha-256=896829a178e89e23f35799d403971b19b10bbacb2da00454c576770b2f58a9b1
 https://huggingface.co/JOKER141/MiniMax-H3-Combat-Base-V2/resolve/main/H3_Combat_V2.safetensors
   dir=D:\ComfyUI\models\loras\minimax
   out=H3_Combat_V2.safetensors
+  checksum=sha-256=5b3edb09e9d6029439badf9bc9db4ba4a355ae679b0810888de82c4793c0bac8
 https://huggingface.co/RunningHubAI/rh-minimax-h3-fl2v-turbo-4step-v1.2-768p-comfyui-bf16.safetensors-lora/resolve/main/minimax_h3_fl2v_turbo_4step_v1.2_768p_comfyui_bf16.safetensors
   dir=D:\ComfyUI\models\loras\minimax
   out=minimax_h3_fl2v_turbo_4step_v1.2_768p_comfyui_bf16.safetensors
+  checksum=sha-256=c8168ebc17bbacc4296103dda2fec1ba85b24392fa08cf2bfbcef0cff0dc3cc8
 https://huggingface.co/RunningHubAI/rh-minimax-h3-turbo-4step-10erosmax-test4-pruned-curveproj1025-exp-v001-t8-lora/resolve/main/minimax_h3_turbo_4step_10ErosMax_test4_pruned_curveproj1025_exp_v001-T8.safetensors
   dir=D:\ComfyUI\models\loras\minimax
   out=minimax_h3_turbo_4step_10ErosMax_test4_pruned_curveproj1025_exp_v001-T8.safetensors
+  checksum=sha-256=6c2f38d45dfa3fc282a48de3171b6946a5e6d46e13f832c43b93734f6d12edf5
 https://huggingface.co/t8star/minimax_h3_turbo_v4_step600_ema_DasiwaREF2VAHybridV1_0_curveproj1025_compat_v001/resolve/main/minimax_h3_turbo_v4_step600_ema_DasiwaREF2VAHybridV1_0_curveproj1025_compat_v001.safetensors
   dir=D:\ComfyUI\models\loras\minimax
   out=minimax_h3_turbo_v4_step600_ema_DasiwaREF2VAHybridV1_0_curveproj1025_compat_v001.safetensors
+  checksum=sha-256=a117f18682a22a0381cadd9832da0afe9912f604305b3e44310b5aa1919734cc
 https://huggingface.co/kirk86413/cinema-h3/resolve/main/Minimax%20H3%E7%9C%9F%E5%AE%9E%E7%94%B5%E5%BD%B1%E8%B4%A8%E6%84%9FV0.1%EF%BC%88%E8%A7%A3%E5%86%B3%E5%BC%A0%E9%87%8F%E6%8A%A5%E9%94%99%EF%BC%89.safetensors
   dir=D:\ComfyUI\models\loras\minimax
   out=MinimaxH3真实电影质感V0.1.safetensors
+  checksum=sha-256=cd9ef1ebb1ab9221492dc09f069de364fff1454fdcae76902754d07db6e58dcd
 https://huggingface.co/JOKER141/MiniMax-H3-General-Motion-Continuity-Repair/resolve/main/Motion_Repair.safetensors
   dir=D:\ComfyUI\models\loras\minimax
   out=Motion_Repair.safetensors
+  checksum=sha-256=a678a3657cefd5c2c2712f892da2f71be53c3f252e335557e918854f8abc579f
 https://huggingface.co/Asirus/Minimax-H3-Latent-Upscaler-BF16-MAXQUALITY/resolve/main/minimax_h3_latent_upscaler_3d_fp16.safetensors
   dir=D:\ComfyUI\models\latent_upscale_models
   out=minimax_h3_latent_upscaler_3d_fp16.safetensors
+  checksum=sha-256=043e5a48e161610ef6c3ea974645220354d06fa618abca15f76d084812eb55c2
 https://huggingface.co/Konteni2/Minimax_h3_latent_Upscaler/resolve/main/minimax_h3_latent_upscaler_3d_bf16.safetensors
   dir=D:\ComfyUI\models\latent_upscale_models
   out=minimax_h3_latent_upscaler_3d_bf16.safetensors
+  checksum=sha-256=4f57821f5837f32f7142b67d815606dbd7550f194e5c769f7d6c3f83b146a5e6
 https://huggingface.co/Alissonerdx/Minimax-H3-ComfyUI/resolve/main/latent_upscaler/h3_upscaler_lms_v0.1.safetensors
   dir=D:\ComfyUI\models\upscale_models
   out=h3_upscaler_lms_v0.1.safetensors
+  checksum=sha-256=40d4228227146245ef2b65480b647c50222465ca125de5880f192e3259e40d59
 https://huggingface.co/Comfy-Org/gemma-4/resolve/main/text_encoders/gemma4_e4b_it_fp8_scaled.safetensors
   dir=D:\ComfyUI\models\text_encoders
   out=gemma4_e4b_it_fp8_scaled.safetensors
+  checksum=sha-256=bf0b4fa2e41a25684dc9e9b256cd505564f02fed09be3da95ce024e653e2c52b
 https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/loras/minimax_h3_fl2v_turbo_4step_v1.0_768p_comfyui_bf16.safetensors
   dir=D:\ComfyUI\models\loras\minimax
   out=minimax_h3_fl2v_turbo_4step_v1.0_768p_comfyui_bf16.safetensors
+  checksum=sha-256=c396a9a06f58399e9df9754b18299818d84a2ddd371724ba48fe4a41221437dc
 https://huggingface.co/unsloth/Qwen3.8-27B-GGUF/resolve/main/Qwen3.8-27B-UD-Q4_K_M.gguf
   dir=D:\ComfyUI\models\LLM
   out=Qwen3.8-27B-Q4_K_M.gguf
+  checksum=sha-256=322e194ff79741c7baa497c240f677f54b201b0efab44ca8e50f122b39123482
 https://huggingface.co/unsloth/Qwen3.8-27B-GGUF/resolve/main/mmproj-BF16.gguf
   dir=D:\ComfyUI\models\LLM
   out=Qwen3.8-mmproj-BF16.gguf
+  checksum=sha-256=83ee4f4f205fa514161778c41df1ea14144faa0f713510893b63c2395f5c2d53

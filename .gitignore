@@ -29,6 +29,8 @@ data/*.log
 *.bak
 *.tmp
 *.log
+# 下载脚本的单实例锁（运行时文件）
+.download-models.lock
 
 # 编辑器 / 系统
 .DS_Store
