@@ -681,6 +681,19 @@ def step_extra_deps(inst: Installer) -> None:
         else:
             inst.run([py, "-m", "pip", "install", spec_str])
 
+        # 装完验证关键符号：zealman 需要 Qwen35ChatHandler，上游版没有
+        attr = str(spec.get("require_attr") or "").strip()
+        if attr and not inst.args.dry_run:
+            check = (
+                f"import importlib; mod, _, name = {attr!r}.rpartition('.'); "
+                f"importlib.import_module(mod); getattr(importlib.import_module(mod), name); "
+                f"print('{attr} OK')"
+            )
+            try:
+                inst.run([py, "-c", check])
+            except RuntimeError:
+                inst.log(f"  [warn] {name} 缺少 {attr}：本地 GGUF 卡会在加载时报「请更新后再用 Qwen3.5/3.6/3.8」")
+
 
 # --------------------------------------------------------------------------- #
 # 节点依赖：按每个包自己的清单装，且不许动基座

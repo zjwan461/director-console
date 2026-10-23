@@ -195,9 +195,11 @@
  "pip_extras": [
   {
    "name": "llama-cpp-python",
-   "spec": "llama-cpp-python",
+   "spec": "llama-cpp-python @ git+https://github.com/JamePeng/llama-cpp-python.git@main",
+   "import_name": "llama_cpp",
+   "require_attr": "llama_cpp.llama_chat_format.Qwen35ChatHandler",
    "flag": "with_llm",
-   "note": "本地 GGUF 文本模型；install.py 加 --with-llm 才装，--llama-cuda 编 CUDA 版"
+   "note": "zealman 的 Qwen3.5/3.6/3.8 必须用 Qwen35ChatHandler，只有 JamePeng fork 有；PyPI 上游版装了也报不支持"
   }
  ],
  "note": "zip 不进 git；用 tools/pack_nodes.py 生成后上传 GitHub Release，再把 URL 填到 urls（可多条，install.py 依次尝试并校验 sha256）"

@@ -2,7 +2,7 @@
 #  ComfyUI 云端镜像 —— MiniMax H3 + 导演台 custom_nodes
 #  基线: nvcr.io/nvidia/pytorch:24.09-py3 (Python 3.10.12)
 #  目标: ComfyUI v0.39.0 + torch 2.11.0+cu130 + 26 个导演台节点包
-#        + RES4LYF（git 直装）+ llama-cpp-python（上游版，CUDA 编译，纯文本）
+#        + RES4LYF（git 直装）+ llama-cpp-python（JamePeng fork，CUDA 编译）
 #  torch 2.11 是当前 cu130 上「torch / torchvision / torchaudio」三者都能对上的最高版本
 #  （torchaudio 目前只出到 2.11.0，装 2.12.1 会因依赖 torch==2.11 而回退）
 #
@@ -52,9 +52,11 @@ ARG IMAGE_TAG=dev
 # RES4LYF 不在 director-node-pack.zip 里（那个包由仓库外打包），这里直接 git 拉
 # 想完全可复现就把 main 换成某个 commit sha
 ARG RES4LYF_REF=main
-# llama-cpp-python：comfyUI-zealman 的 GGUF 加载器要用（纯文本，不做视觉）
-#   留空 = 装 PyPI 最新版
-ARG LLAMA_CPP_VERSION=
+# llama-cpp-python：comfyUI-zealman 的 GGUF 加载器要用
+#   必须用 JamePeng fork：zealman 加载 Qwen3.5/3.6/3.8 时会 new Qwen35ChatHandler，
+#   上游 abetlen 版没有这个类，装上也会报「请更新后再用 Qwen3.5/3.6/3.8」
+ARG LLAMA_CPP_REPO=https://github.com/JamePeng/llama-cpp-python.git
+ARG LLAMA_CPP_REF=main
 ARG LLAMA_CUDA_ARCH="89"
 
 
@@ -63,7 +65,7 @@ LABEL org.opencontainers.image.title="comfyui-gai" \
       org.opencontainers.image.version="${IMAGE_TAG}" \
       comfyui.ref="${COMFYUI_REF}" \
       res4lyf.ref="${RES4LYF_REF}" \
-      llama_cpp.version="${LLAMA_CPP_VERSION}" \
+      llama_cpp.ref="${LLAMA_CPP_REF}" \
       torch.version="${TORCH_VERSION}+${CUDA_CHANNEL}"
 
 WORKDIR /comfyui
@@ -160,23 +162,19 @@ RUN printf '%s\n' \
  && rm -f /tmp/nodes-requirements.txt
 
 # -----------------------------------------------------------------------------
-# llama-cpp-python（GGUF / 本地 LLM，纯文本）
-#   症状：ZealmanLLM_ModelLoader 报 "llama_cpp 未安装"，图片对口型卡不可用
+# llama-cpp-python（GGUF / 本地 LLM）
+#   症状：ZealmanLLM_ModelLoader 报
+#         「当前 llama-cpp-python 不支持 Qwen35ChatHandler，请更新后再用 Qwen3.5/3.6/3.8」
+#   原因：zealman 的 Qwen3.8-VL 家族必须用 Qwen35ChatHandler，只有 JamePeng fork 有
 #   要点：
-#     1. 用上游 abetlen 版即可 —— 这里只做文本推理，不需要视觉 handler
-#     2. 编译时开 CUDA（GGML_CUDA=on），否则 27B 模型只能跑 CPU
+#     1. 从 git 装 fork（PyPI 上的上游版没有这个类）
+#     2. 编译开 CUDA（GGML_CUDA=on），否则 27B 模型只能跑 CPU
 #     3. CMAKE_CUDA_ARCHITECTURES：89=4090 / 86=3090 / 120=5090(需 CUDA>=12.8)
-#        CUDA 版 .so 链接 libcuda.so.1，构建期没有驱动，导入检查要挂 stub 库，
-#        失败只警告（容器 --gpus 启动后才真正可用）
-#        这里没有显卡可探测，架构必须由 --build-arg 指定（默认 89）；
-#        本地安装走 install.py，那边会按本机显卡自动识别，两套互不影响
-#        这个基础镜像自带 CUDA 12.6 的 nvcc，编不了 sm_120；
-#        只编 89 时带 PTX，50 系卡会在运行时 JIT 成 sm_120，能跑但不是原生
+#        构建期没有显卡可探测，架构必须由 --build-arg 指定（默认 89）
 #   编译耗时约 8~20 分钟，是整份镜像里最慢的一步
 # -----------------------------------------------------------------------------
 RUN pip install --no-cache-dir cmake ninja scikit-build-core \
- && SPEC="llama-cpp-python"; \
-    if [ -n "${LLAMA_CPP_VERSION}" ]; then SPEC="llama-cpp-python==${LLAMA_CPP_VERSION}"; fi; \
+ && SPEC="llama-cpp-python @ git+${LLAMA_CPP_REPO}@${LLAMA_CPP_REF}"; \
     ARCHS="${LLAMA_CUDA_ARCH}"; \
     VER=$(nvcc --version 2>/dev/null | sed -n 's/.*release \([0-9]*\)\.\([0-9]*\).*/\1 \2/p' | head -1); \
     set -- $VER; CMAJ=${1:-0}; CMIN=${2:-0}; \
@@ -194,12 +192,23 @@ RUN pip install --no-cache-dir cmake ninja scikit-build-core \
 # 挂上 stub 库能验证「编译产物可加载」；加载仍失败时只警告，不中断构建
 # （真正的验证在容器 --gpus 启动后）。
 RUN export LD_LIBRARY_PATH="/usr/local/cuda/lib64/stubs:/usr/local/cuda/targets/x86_64-linux/lib/stubs:${LD_LIBRARY_PATH}"; \
-    python - <<'PY' || echo "WARN: 构建期无 GPU 驱动，跳过运行时导入检查（容器 --gpus 启动后验证）"
-import llama_cpp
+    python - <<'PY'
+import sys
+
+try:
+    import llama_cpp
+except (OSError, RuntimeError) as exc:
+    if "libcuda" in str(exc) or "libnvidia" in str(exc):
+        print("WARN: 构建期无 GPU 驱动，跳过运行时导入检查（容器 --gpus 启动后验证）")
+        sys.exit(0)
+    raise
+
+# 这一步是硬要求：zealman 加载 Qwen3.5/3.6/3.8 时必须 new Qwen35ChatHandler
+from llama_cpp.llama_chat_format import Qwen35ChatHandler, Qwen3VLChatHandler  # noqa: F401
+
 print("llama_cpp", llama_cpp.__version__)
 print("gpu offload:", llama_cpp.llama_supports_gpu_offload())
-from llama_cpp import Llama  # noqa: F401
-print("llama_cpp 可加载")
+print("Qwen35ChatHandler / Qwen3VLChatHandler 都在")
 PY
 
 # -----------------------------------------------------------------------------
@@ -228,7 +237,7 @@ RUN set -e; \
     python -c "import kornia; print('kornia', kornia.__version__)"; \
     python -c "import comfy_aimdo.control; print('comfy_aimdo OK')"; \
     python -c "import comfy_kitchen; print('comfy_kitchen OK')"; \
-    python -c "import llama_cpp; print('llama_cpp OK', llama_cpp.__version__, llama_cpp.llama_supports_gpu_offload())" || echo "WARN: llama_cpp 导入失败（构建期无驱动属正常）"; \
+    python -c "import llama_cpp; from llama_cpp.llama_chat_format import Qwen35ChatHandler; print('llama_cpp OK', llama_cpp.__version__, llama_cpp.llama_supports_gpu_offload())"; \
     if python -c "import flash_attn" 2>/dev/null; then \
         echo "FATAL: flash_attn 仍可被导入，会以 undefined symbol 拖垮 kornia"; exit 1; \
     fi; \
