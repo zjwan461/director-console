@@ -18,6 +18,7 @@ export interface PromptDraft {
   note?: string
   error?: string
   framesUrls?: string[]
+  shotsPreview?: Array<{ title: string; url: string }>
   outline?: string
   withOutline?: boolean
   outlineBusy?: boolean
@@ -47,10 +48,12 @@ export default function PromptDialog({ draft, busy, onCancel, onConfirm, onGener
     () => allFrames.slice(0, Math.max(1, draft.frames || 3)).map((_, i) => i),
   )
 
+  const [frameCount, setFrameCount] = useState(Math.max(1, draft.frames || 3))
   const [withOutline, setWithOutline] = useState(Boolean(draft.withOutline))
   const [outline, setOutline] = useState(draft.outline || '')
 
-  const frames = withFrames ? picked.length : 0
+  const batchCount = Boolean(draft.shotsPreview)
+  const frames = withFrames ? (batchCount ? frameCount : picked.length) : 0
   const edited = user !== draft.user
     || JSON.stringify(templates) !== JSON.stringify(initialTemplates)
 
@@ -88,26 +91,48 @@ export default function PromptDialog({ draft, busy, onCancel, onConfirm, onGener
           </label>
           {draft.note && <p className="hint">{draft.note}</p>}
 
+          {draft.shotsPreview && draft.shotsPreview.length > 0 && (
+            <div className="prompt-shots">
+              <span className="meta">本次处理 {draft.shotsPreview.length} 个镜头</span>
+              <div className="prompt-shots-strip">
+                {draft.shotsPreview.map((shot, index) => (
+                  <figure key={`${shot.title}-${index}`}>
+                    {shot.url ? <img src={shot.url} alt={shot.title} /> : <div className="prompt-shots-empty" />}
+                    <figcaption>{shot.title}</figcaption>
+                  </figure>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="row" style={{ alignItems: 'center', gap: 10 }}>
             <label className="check" style={{ margin: 0 }}>
               <input type="checkbox" checked={withFrames} disabled={!draft.framesAvailable}
                      onChange={(e) => setWithFrames(e.target.checked)} />
-              附带镜头截图
+              {draft.shotsPreview ? '附带截图（每镜）' : '附带镜头截图'}
             </label>
-            {draft.framesAvailable ? (
+            {draft.framesAvailable && !draft.shotsPreview && (
               <>
                 <button className="ghost tiny" disabled={!withFrames}
                         onClick={() => setPicked(allFrames.map((_, i) => i))}>全选</button>
                 <button className="ghost tiny" disabled={!withFrames || !picked.length}
                         onClick={() => setPicked([])}>清空</button>
               </>
-            ) : (
-              <span className="meta">这个镜头还没有视频，无法截图</span>
             )}
+            {draft.framesAvailable && draft.shotsPreview && (
+              <label className="inline-field">
+                <span>每镜</span>
+                <select value={frameCount} disabled={!withFrames}
+                        onChange={(e) => setFrameCount(Number(e.target.value))}>
+                  {[1, 2, 3, 4, 5, 6].map((n) => <option key={n} value={n}>{n} 张</option>)}
+                </select>
+              </label>
+            )}
+            {!draft.framesAvailable && <span className="meta">这个镜头还没有视频，无法截图</span>}
             {frames > 0 && <span className="meta">本次发送 {frames} 张</span>}
           </div>
 
-          {draft.framesAvailable && allFrames.length > 0 && (
+          {draft.framesAvailable && !batchCount && allFrames.length > 0 && (
             <div className={`prompt-frames ${withFrames ? '' : 'off'}`}>
               {allFrames.map((url, index) => {
                 const on = withFrames && picked.includes(index)
@@ -174,7 +199,9 @@ export default function PromptDialog({ draft, busy, onCancel, onConfirm, onGener
                     system,
                     systems: Object.fromEntries(templates.map((item) => [item.key, item.system])),
                     user, frames,
-                    framePicks: withFrames ? picked : [],
+                    framePicks: withFrames
+                      ? (batchCount ? Array.from({ length: frameCount }, (_, i) => i) : picked)
+                      : [],
                     outline: withOutline ? outline : '',
                   })}>
             {busy ? '生成中…' : '发送给 AI'}

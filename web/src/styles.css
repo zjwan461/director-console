@@ -742,3 +742,13 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
   background: #0d0f16; border: 1px solid var(--line); border-radius: 8px; }
 .prompt-outline textarea { font-size: 12px; line-height: 1.6; background: #0b0d13;
   border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; color: #cdd3e2; }
+
+
+/* 提示词弹框：整批镜头缩略图 */
+.prompt-shots { display: flex; flex-direction: column; gap: 6px; }
+.prompt-shots-strip { display: flex; gap: 6px; flex-wrap: wrap; }
+.prompt-shots-strip figure { margin: 0; width: 96px; }
+.prompt-shots-strip img, .prompt-shots-empty { display: block; width: 100%; height: 54px;
+  object-fit: cover; border-radius: 6px; border: 1px solid var(--line); background: #0b0d13; }
+.prompt-shots-strip figcaption { font-size: 10px; color: #939bb0; margin-top: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

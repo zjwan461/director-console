@@ -728,17 +728,37 @@ export default function EditPanel({
       }
       pendingPrompt.current = { type: 'batch' }
       setAiOpen(false)
+      const templates = [{
+        key: kind,
+        label: kind === 'subtitle' ? '字幕模板（对整批字幕生效）' : '旁白模板（对整批旁白生效）',
+        system: res.system,
+      }]
+      if (aiKind === 'both') {
+        const narr = await api.aiPromptPreview({ shot_id: first.id, kind: 'narration', style: stylePayload('narration') })
+        templates.push({ key: 'narration', label: '旁白模板（对整批旁白生效）', system: narr.system })
+      }
+      // 本次要处理的全部镜头，每镜取一张首帧做缩略图
+      const shotsPreview: Array<{ title: string; url: string }> = []
+      for (const s of ordered) {
+        try {
+          const frames = await api.shotFrames(s.id, 1)
+          shotsPreview.push({ title: s.title || `镜头 ${s.idx + 1}`, url: frames.items[0]?.url || '' })
+        } catch {
+          shotsPreview.push({ title: s.title || `镜头 ${s.idx + 1}`, url: '' })
+        }
+      }
+
       setPromptDraft({
         title: `AI 剪辑（${ordered.length} 镜）· 提示词`,
         system: res.system,
+        templates,
+        shotsPreview,
         user: res.user,
         framesAvailable: res.frames_available,
         frames: aiFrames,
         withFrames: res.frames_available && aiFrames > 0,
         userReadOnly: true,
-        note: kind === 'narration'
-          ? '系统提示词对整批旁白生效；下面是第 1 镜的输入样例，其余镜头按各自画面重新生成。'
-          : '这里是「字幕师」模板，改了对整批字幕生效；旁白仍用旁白模板（想单独调旁白请把生成内容选成「只写旁白」）。',
+        note: '模板各自作用于对应内容；截图按每镜分别抽取，输入样例取自第 1 镜，其余镜头按各自画面生成。',
         framesUrls: frameUrls,
         outline: res.outline || '',
         withOutline: Boolean(res.outline),
@@ -930,6 +950,11 @@ export default function EditPanel({
       setPromptDraft({
         title: kind === 'subtitle' ? 'AI 写字幕 · 提示词' : 'AI 写旁白 · 提示词',
         system: res.system,
+        templates: [{
+          key: kind,
+          label: kind === 'subtitle' ? '字幕模板（角色与规则）' : '旁白模板（角色与规则）',
+          system: res.system,
+        }],
         user: res.user,
         framesAvailable: res.frames_available,
         frames: aiFrames,
