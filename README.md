@@ -520,7 +520,13 @@ python install.py --with-llm --llama-cuda  # 源码编译 CUDA 版（8~20 分钟
 "pip_extras": [{ "name": "llama-cpp-python", "flag": "with_llm" }]
 ```
 
-`--skip-git-packs` 可跳过 git 节点包；`--llama-cuda-arch` 指定 CUDA 架构（默认 `89;120`）。
+`--skip-git-packs` 可跳过 git 节点包；`--llama-cuda-arch` 指定 CUDA 架构（默认 `89`）。
+
+**CUDA 架构注意**：sm_120（5090）需要 CUDA ≥ 12.8 的 nvcc，旧版会直接报
+`nvcc fatal: Unsupported gpu architecture 'compute_120'`。
+默认只编 `89`（4090）并保留 PTX，50 系卡运行时 JIT，能跑但不是原生；
+构建/安装脚本都会读 nvcc 版本自动去掉不支持的架构。
+只想锁版本时：`--build-arg LLAMA_CPP_VERSION=0.3.36`。
 
 > `Dockerfile.comfyui` 是作者自用环境的镜像构建脚本，正常部署不需要它；
 > 想复刻那套镜像才用它，参数见文件头注释。
