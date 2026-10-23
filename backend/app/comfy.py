@@ -60,7 +60,28 @@ class ComfyClient:
         return (await self._request("GET", "/experiment/models")).json()
 
     async def model_files(self, folder: str) -> list:
-        return (await self._request("GET", f"/experiment/models/{folder}")).json()
+        """列某个模型目录下的文件。
+
+        ComfyUI 有新旧两套接口：
+          /models/{folder}            —— 新，自定义目录（如 LLM）也能列，路径区分大小写
+          /experiment/models/{folder} —— 旧，部分版本对自定义目录直接返回 []
+        先走新接口，空了再回退旧接口。
+        """
+        try:
+            resp = await self._request("GET", f"/models/{folder}")
+            data = resp.json()
+            if isinstance(data, list) and data:
+                return data
+            fallback = data
+        except Exception:
+            fallback = None
+        try:
+            old = (await self._request("GET", f"/experiment/models/{folder}")).json()
+            if isinstance(old, list) and old:
+                return old
+        except Exception:
+            pass
+        return fallback if isinstance(fallback, list) else []
 
     async def userdata_list(self, dir_name: str = "workflows") -> list:
         resp = await self._request("GET", "/userdata", params={"dir": dir_name, "recurse": "true"})

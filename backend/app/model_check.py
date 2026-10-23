@@ -87,16 +87,16 @@ async def _folder_files(category: str) -> set[str]:
         return hit[1]
     names: set[str] = set()
     try:
-        # 目录名大小写可能和节点注册的不一致（SeedVR2 注册的是 models/SEEDVR2）
-        actual = category
+        # 目录名大小写可能和节点注册的不一致（SeedVR2 注册 models/SEEDVR2，
+        # LLM 甚至同时注册了 llm 和 LLM 两份，只有大写的带 .gguf 扩展名）
         registered = await _registered_folders()
-        if category not in registered:
-            for candidate in registered:
-                if candidate.lower() == category.lower():
-                    actual = candidate
-                    break
-        for item in await make_client().model_files(actual):
-            names.add(str(item.get("name") if isinstance(item, dict) else item))
+        candidates = [category]
+        candidates += [c for c in registered if c.lower() == category.lower() and c != category]
+        for candidate in candidates:
+            for item in await make_client().model_files(candidate):
+                names.add(str(item.get("name") if isinstance(item, dict) else item))
+            if names:
+                break
     except Exception:
         names = set()
     _INV_CACHE[key] = (now, names)

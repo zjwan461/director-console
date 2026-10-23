@@ -1,7 +1,8 @@
 # =============================================================================
 #  ComfyUI 云端镜像 —— MiniMax H3 + 导演台 custom_nodes
 #  基线: nvcr.io/nvidia/pytorch:24.09-py3 (Python 3.10.12)
-#  目标: ComfyUI v0.39.0 + torch 2.11.0+cu130 + 26 个导演台节点包 + RES4LYF（git 直装）
+#  目标: ComfyUI v0.39.0 + torch 2.11.0+cu130 + 26 个导演台节点包
+#        + RES4LYF（git 直装）+ llama-cpp-python（JamePeng fork，CUDA 编译）
 #  torch 2.11 是当前 cu130 上「torch / torchvision / torchaudio」三者都能对上的最高版本
 #  （torchaudio 目前只出到 2.11.0，装 2.12.1 会因依赖 torch==2.11 而回退）
 #
@@ -51,12 +52,19 @@ ARG IMAGE_TAG=dev
 # RES4LYF 不在 director-node-pack.zip 里（那个包由仓库外打包），这里直接 git 拉
 # 想完全可复现就把 main 换成某个 commit sha
 ARG RES4LYF_REF=main
+# llama-cpp-python：comfyUI-zealman 的 GGUF 加载器要用
+#   上游 abetlen 版没有 Qwen3VLChatHandler / Qwen35ChatHandler，
+#   必须用 JamePeng 的 fork，否则「图片对口型」卡里的视觉投影用不了
+ARG LLAMA_CPP_REF=main
+ARG LLAMA_CUDA_ARCH="89;120"
+
 
 LABEL org.opencontainers.image.title="comfyui-gai" \
       org.opencontainers.image.description="ComfyUI with native MiniMax H3 support + director console nodes" \
       org.opencontainers.image.version="${IMAGE_TAG}" \
       comfyui.ref="${COMFYUI_REF}" \
       res4lyf.ref="${RES4LYF_REF}" \
+      llama_cpp.ref="${LLAMA_CPP_REF}" \
       torch.version="${TORCH_VERSION}+${CUDA_CHANNEL}"
 
 WORKDIR /comfyui
@@ -153,6 +161,34 @@ RUN printf '%s\n' \
  && rm -f /tmp/nodes-requirements.txt
 
 # -----------------------------------------------------------------------------
+# llama-cpp-python（GGUF / 本地 LLM）
+#   症状：ZealmanLLM_ModelLoader 报 "llama_cpp 未安装"，图片对口型卡直接不可用
+#   要点：
+#     1. 必须用 JamePeng fork —— 上游版没有 Qwen3VLChatHandler / Qwen35ChatHandler
+#     2. 编译时开 CUDA（GGML_CUDA=on），否则 27B 模型只能跑 CPU
+#     3. CMAKE_CUDA_ARCHITECTURES 要覆盖目标卡：89=4090，120=5090
+#        只跑一种卡可以在 build 时改 --build-arg LLAMA_CUDA_ARCH=120 缩短编译时间
+#   编译耗时约 10~25 分钟，是整份镜像里最慢的一步
+# -----------------------------------------------------------------------------
+RUN pip install --no-cache-dir cmake ninja scikit-build-core \
+ && CMAKE_ARGS="-DGGML_CUDA=on -DCMAKE_CUDA_ARCHITECTURES=${LLAMA_CUDA_ARCH}" FORCE_CMAKE=1 \
+    pip install --no-cache-dir --no-build-isolation \
+      "llama-cpp-python @ git+https://github.com/JamePeng/llama-cpp-python.git@${LLAMA_CPP_REF}" \
+      "numpy<2"
+
+# 构建期验证：编译成功、CUDA 开启、视觉 handler 可用
+RUN python - <<'PY'
+import llama_cpp
+print("llama_cpp", llama_cpp.__version__)
+print("gpu offload:", llama_cpp.llama_supports_gpu_offload())
+from llama_cpp import Llama  # noqa: F401
+from llama_cpp.llama_chat_format import (  # noqa: F401
+    Qwen3VLChatHandler, Qwen35ChatHandler, Jinja2ChatFormatter,
+)
+print("Qwen3VL / Qwen3.5VL 视觉 handler 可用")
+PY
+
+# -----------------------------------------------------------------------------
 # 统一 cv2
 #   症状：AttributeError: module 'cv2.dnn' has no attribute 'DictValue'
 #   原因：基座里 cv2 被多个包反复覆盖，.so 与 typing/*.py 版本不匹配；
@@ -177,6 +213,7 @@ RUN set -e; \
     python -c "import kornia; print('kornia', kornia.__version__)"; \
     python -c "import comfy_aimdo.control; print('comfy_aimdo OK')"; \
     python -c "import comfy_kitchen; print('comfy_kitchen OK')"; \
+    python -c "import llama_cpp; from llama_cpp.llama_chat_format import Qwen3VLChatHandler; print('llama_cpp OK', llama_cpp.__version__, llama_cpp.llama_supports_gpu_offload())"; \
     if python -c "import flash_attn" 2>/dev/null; then \
         echo "FATAL: flash_attn 仍可被导入，会以 undefined symbol 拖垮 kornia"; exit 1; \
     fi; \
