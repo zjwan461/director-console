@@ -11,16 +11,22 @@ export interface PromptDraft {
   note?: string
   error?: string
   framesUrls?: string[]
+  outline?: string
+  withOutline?: boolean
+  outlineBusy?: boolean
 }
 
 interface Props {
   draft: PromptDraft
   busy?: boolean
   onCancel: () => void
-  onConfirm: (payload: { system: string; user: string; frames: number; framePicks: number[] }) => void
+  onConfirm: (payload: {
+    system: string; user: string; frames: number; framePicks: number[]; outline: string
+  }) => void
+  onGenerateOutline?: () => Promise<void>
 }
 
-export default function PromptDialog({ draft, busy, onCancel, onConfirm }: Props) {
+export default function PromptDialog({ draft, busy, onCancel, onConfirm, onGenerateOutline }: Props) {
   const [system, setSystem] = useState(draft.system)
   const [user, setUser] = useState(draft.user)
   const [withFrames, setWithFrames] = useState(draft.withFrames)
@@ -28,6 +34,9 @@ export default function PromptDialog({ draft, busy, onCancel, onConfirm }: Props
   const [picked, setPicked] = useState<number[]>(
     () => allFrames.slice(0, Math.max(1, draft.frames || 3)).map((_, i) => i),
   )
+
+  const [withOutline, setWithOutline] = useState(Boolean(draft.withOutline))
+  const [outline, setOutline] = useState(draft.outline || '')
 
   const frames = withFrames ? picked.length : 0
   const edited = system !== draft.system || user !== draft.user
@@ -100,6 +109,28 @@ export default function PromptDialog({ draft, busy, onCancel, onConfirm }: Props
             <p className="hint">截图会在点「发送给 AI」时按张数抽取。</p>
           )}
 
+          <div className="prompt-outline">
+            <div className="row" style={{ alignItems: 'center', gap: 8 }}>
+              <label className="check" style={{ margin: 0 }}>
+                <input type="checkbox" checked={withOutline}
+                       onChange={(e) => setWithOutline(e.target.checked)} />
+                带上全片大纲（更连贯）
+              </label>
+              {onGenerateOutline && (
+                <button className="ghost tiny" disabled={draft.outlineBusy}
+                        onClick={() => void onGenerateOutline()}>
+                  {draft.outlineBusy ? <><span className="spin" /> 生成中</> : outline ? '重新生成大纲' : '生成大纲'}
+                </button>
+              )}
+            </div>
+            <textarea value={outline} rows={4} spellCheck={false}
+                      placeholder="还没有大纲。点「生成大纲」让 AI 根据所有镜头写一份，也可以自己填。"
+                      onChange={(e) => setOutline(e.target.value)} />
+            {withOutline && !outline.trim() && (
+              <p className="hint" style={{ color: '#facc15' }}>勾了但大纲是空的，本次不会带上大纲。</p>
+            )}
+          </div>
+
           <p className="hint">
             这些就是实际发送给 AI 的内容，可以直接改。改过的提示词只影响这一次生成。
           </p>
@@ -113,7 +144,11 @@ export default function PromptDialog({ draft, busy, onCancel, onConfirm }: Props
           <span style={{ flex: 1 }} />
           <button className="ghost" onClick={onCancel} disabled={busy}>取消</button>
           <button className="primary" disabled={busy || !system.trim() || !user.trim()}
-                  onClick={() => onConfirm({ system, user, frames, framePicks: withFrames ? picked : [] })}>
+                  onClick={() => onConfirm({
+                    system, user, frames,
+                    framePicks: withFrames ? picked : [],
+                    outline: withOutline ? outline : '',
+                  })}>
             {busy ? '生成中…' : '发送给 AI'}
           </button>
         </div>

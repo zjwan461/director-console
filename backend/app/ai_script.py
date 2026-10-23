@@ -155,7 +155,7 @@ def fit_narration(narration: str, budget: int) -> dict:
 
 
 def build_prompt(kind: str, shot: dict, project: dict, neighbors: dict,
-                 duration: float, style: dict) -> tuple[str, str]:
+                 duration: float, style: dict, outline: str = "") -> tuple[str, str]:
     """返回 (system, user_text)，用于「AI 提示词弹框」的预览与编辑。"""
     prompts = _prompts()
     system = prompts.get(PROMPT_KEYS[kind])
@@ -170,7 +170,7 @@ def build_prompt(kind: str, shot: dict, project: dict, neighbors: dict,
     if kind == "narration":
         narration_style["language"] = "zh"
         narration_style["narration_language"] = "zh"
-    user_text = json.dumps({
+    payload = {
         "kind": kind,
         "char_budget": budget,
         "duration_seconds": round(duration, 2),
@@ -184,15 +184,21 @@ def build_prompt(kind: str, shot: dict, project: dict, neighbors: dict,
             "duration_seconds": round(duration, 2),
         },
         "neighbors": neighbors,
-    }, ensure_ascii=False)
-    return system, user_text
+    }
+    outline = (outline or "").strip()
+    if outline:
+        payload["outline"] = outline[:600]
+        payload["outline_rule"] = ("全片大纲给出主角、事件线和语气；旁白要与大纲一致，"
+                                  "不要写出大纲之外的人物或剧情。")
+    return system, json.dumps(payload, ensure_ascii=False)
 
 
 async def generate(kind: str, shot: dict, project: dict, neighbors: dict,
                    duration: float, style: dict, images: list[Path] | None = None,
                    system_override: str | None = None,
-                   user_override: str | None = None) -> dict:
-    system, context = build_prompt(kind, shot, project, neighbors, duration, style)
+                   user_override: str | None = None,
+                   outline: str = "") -> dict:
+    system, context = build_prompt(kind, shot, project, neighbors, duration, style, outline)
     if system_override and system_override.strip():
         system = system_override.strip()
     if user_override and user_override.strip():
@@ -302,6 +308,55 @@ async def _compress(make_client, base: str, api_key: str, model: str,
         return clean(body["choices"][0]["message"]["content"])
     except Exception:
         return text
+
+
+async def build_outline(project: dict, shots: list[dict]) -> str:
+    """根据所有镜头的画面描述，写一份全片大纲（主角 / 事件线 / 语气）。"""
+    prompts = _prompts()
+    system = prompts.get("outlineGen") or (
+        "你是短剧策划。根据给出的镜头描述，写一份全片大纲：\n"
+        "1) 主角是谁、什么状态；2) 事件线，3~5 句按顺序；3) 全片语气与结局走向。\n"
+        "只输出大纲正文，不要标题编号，不要解释，不超过 200 字。"
+    )
+    api_key = str(settings.get("ai.api_key", "") or "")
+    if not api_key:
+        raise ValueError("没有配置 ai.api_key")
+    base = str(settings.get("ai.base_url", "")).rstrip("/")
+    model = str(settings.get("ai.model", "") or "")
+    proxy = str(settings.get("ai.proxy", "") or "").strip()
+
+    payload_shots = []
+    for index, shot in enumerate(shots[:12], start=1):
+        raw = shot_description(shot)
+        payload_shots.append({
+            "index": index,
+            "title": shot.get("title", ""),
+            "description": compact_description(raw)[:160] if raw else "",
+        })
+    user_text = json.dumps({
+        "project": project.get("name", ""),
+        "shots": payload_shots,
+    }, ensure_ascii=False)
+
+    payload = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": system},
+            {"role": "user", "content": user_text},
+        ],
+        "temperature": 0.7,
+        "stream": False,
+    }
+    kwargs: dict = {"timeout": httpx.Timeout(connect=10, read=90, write=20, pool=20), "trust_env": False}
+    if proxy:
+        kwargs["proxy"] = proxy
+    async with httpx.AsyncClient(**kwargs) as client:
+        resp = await client.post(base + "/chat/completions",
+                                 headers={"Authorization": "Bearer " + api_key}, json=payload)
+    if resp.status_code >= 400:
+        raise RuntimeError(f"大纲模型返回 {resp.status_code}：{resp.text[:200]}")
+    text = clean(resp.json()["choices"][0]["message"]["content"])
+    return text[:600]
 
 
 def build_title_prompt(project: dict, shots: list[dict], kind: str = "title") -> tuple[str, str]:

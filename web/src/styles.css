@@ -735,3 +735,10 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
 .prompt-frames img { display: block; width: 100%; height: 61px; object-fit: cover; }
 .prompt-frames figcaption { position: absolute; left: 4px; bottom: 3px; font-size: 10px;
   color: #e8ecf7; text-shadow: 0 1px 3px rgba(0,0,0,.9); }
+
+
+/* 提示词弹框：全片大纲 */
+.prompt-outline { display: flex; flex-direction: column; gap: 6px; padding: 10px;
+  background: #0d0f16; border: 1px solid var(--line); border-radius: 8px; }
+.prompt-outline textarea { font-size: 12px; line-height: 1.6; background: #0b0d13;
+  border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; color: #cdd3e2; }

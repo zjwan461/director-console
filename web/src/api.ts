@@ -89,16 +89,21 @@ export const api = {
       { method: 'POST' },
     ),
   aiPromptPreview: (payload: { shot_id: string; kind: 'subtitle' | 'narration'; style?: Record<string, string> }) =>
-    request<{ kind: string; system: string; user: string; duration: number; budget: number; frames_available: boolean }>(
+    request<{ kind: string; system: string; user: string; duration: number; budget: number; frames_available: boolean; outline: string; shot_count: number }>(
       '/api/ai/prompt-preview',
       { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) },
     ),
+  aiOutline: (projectId: string) =>
+    request<{ outline: string }>('/api/ai/outline', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ project_id: projectId }),
+    }),
   aiTitlePreview: (projectId: string, kind: 'title' | 'tail') =>
     request<{ kind: string; system: string; user: string }>('/api/ai/title/preview', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ project_id: projectId, kind }),
     }),
-  aiScript: (payload: { shot_id: string; kind: 'subtitle' | 'narration'; mode?: string; narration?: string; frames?: number; style?: Record<string, string>; system_prompt?: string; user_prompt?: string; frame_picks?: number[] }) =>
+  aiScript: (payload: { shot_id: string; kind: 'subtitle' | 'narration'; mode?: string; narration?: string; frames?: number; style?: Record<string, string>; system_prompt?: string; user_prompt?: string; frame_picks?: number[]; outline?: string }) =>
     request<{ text: string; chars: number; budget: number; over: boolean; compressed: boolean; original_chars: number; duration: number; skip?: string; reason?: string; transcribed?: boolean; followed_narration?: boolean; narration_mismatch?: boolean }>('/api/ai/script', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

@@ -1012,6 +1012,23 @@ class TitleRequest(BaseModel):
     user_prompt: str | None = None
 
 
+@app.post("/api/ai/outline")
+async def ai_outline(body: TitleRequest) -> dict:
+    """生成/刷新全片大纲，并缓存到 settings，供后续每个镜头复用。"""
+    project = store.get_project(body.project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="项目不存在")
+    shots = store.list_shots(body.project_id)
+    if not shots:
+        raise HTTPException(status_code=400, detail="项目还没有镜头")
+    try:
+        text = await ai_script.build_outline(project, shots)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    store.set_setting(f"outline.{body.project_id}", text)
+    return {"outline": text}
+
+
 @app.post("/api/ai/title/preview")
 async def ai_title_preview(body: TitleRequest) -> dict:
     project = store.get_project(body.project_id)
@@ -1458,6 +1475,7 @@ class ScriptRequest(BaseModel):
     system_prompt: str | None = None
     user_prompt: str | None = None
     frame_picks: list[int] | None = None
+    outline: str | None = None
 
 
 @app.get("/api/settings/tts")
@@ -1646,8 +1664,11 @@ async def ai_prompt_preview(body: ScriptRequest) -> dict:
             duration = await ffmpeg.duration_of(found[1]) or 5.0
         except Exception:
             pass
+    edits = _edit_state_map(shot["project_id"])
+    saved_outline = str((store.list_settings() or {}).get(f"outline.{shot['project_id']}", "") or "")
     try:
-        system, user = ai_script.build_prompt(kind, shot, project, neighbors, duration, body.style or {})
+        system, user = ai_script.build_prompt(kind, shot, project, neighbors, duration,
+                                              body.style or {}, outline=body.outline or "")
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc))
     return {
@@ -1657,6 +1678,8 @@ async def ai_prompt_preview(body: ScriptRequest) -> dict:
         "duration": round(duration, 2),
         "budget": ai_script.char_budget(kind, duration),
         "frames_available": bool(found and found[1].exists()),
+        "outline": saved_outline,
+        "shot_count": len(edits) or len(store.list_shots(shot["project_id"])),
     }
 
 
@@ -1737,7 +1760,8 @@ async def ai_script_one(body: ScriptRequest) -> dict:
         return await ai_script.generate(kind, shot, project, neighbors, duration,
                                        body.style or {}, images=images,
                                        system_override=body.system_prompt,
-                                       user_override=body.user_prompt)
+                                       user_override=body.user_prompt,
+                                       outline=body.outline or "")
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 

@@ -696,6 +696,7 @@ export default function EditPanel({
   }
 
   const batchSystem = useRef('')
+  const batchOutlineRef = useRef('')
 
   const openBatchPrompt = async () => {
     if (!ordered.length) return
@@ -722,6 +723,9 @@ export default function EditPanel({
         userReadOnly: true,
         note: '系统提示词对整批生效；下面是第 1 镜的输入样例，其余镜头会按各自画面重新生成。',
         framesUrls: frameUrls,
+        outline: res.outline || '',
+        withOutline: Boolean(res.outline),
+        outlineBusy: false,
       })
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
@@ -731,9 +735,10 @@ export default function EditPanel({
     }
   }
 
-  const runAI = async (batchFrames = aiFrames, systemOverride = '') => {
+  const runAI = async (batchFrames = aiFrames, systemOverride = '', batchOutline = '') => {
     if (!ordered.length) return
     batchSystem.current = systemOverride
+    batchOutlineRef.current = batchOutline
     const snapshot = { ...edits }
     setAiUndo(snapshot)
     setAiRunning(true)
@@ -787,7 +792,8 @@ export default function EditPanel({
         if (needNarr) {
           try {
             const r = await api.aiScript({ shot_id: shot.id, kind: 'narration', style: stylePayload('narration'),
-              frames: batchFrames, system_prompt: batchSystem.current || undefined })
+              frames: batchFrames, system_prompt: batchSystem.current || undefined,
+              outline: batchOutlineRef.current || undefined })
             patchEdit(shot.id, { narration: r.text })
             narrationText = r.text
             done += 1
@@ -808,6 +814,7 @@ export default function EditPanel({
                 ? narrationText
                 : (editOf(shot.id).lip_on ? '' : undefined),
               frames: batchFrames, system_prompt: batchSystem.current || undefined,
+              outline: batchOutlineRef.current || undefined,
             })
             if (r.skip === 'silent') {
               notes.push('无口播，跳过字幕')
@@ -909,6 +916,9 @@ export default function EditPanel({
         frames: aiFrames,
         withFrames: res.frames_available && aiFrames > 0,
         framesUrls: frameUrls,
+        outline: res.outline || '',
+        withOutline: Boolean(res.outline),
+        outlineBusy: false,
       })
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
@@ -940,7 +950,24 @@ export default function EditPanel({
     }
   }
 
-  const confirmPrompt = async (payload: { system: string; user: string; frames: number; framePicks: number[] }) => {
+  const generateOutline = async () => {
+    setPromptDraft((prev) => (prev ? { ...prev, outlineBusy: true } : prev))
+    try {
+      const res = await api.aiOutline(projectId)
+      setPromptDraft((prev) => (prev
+        ? { ...prev, outline: res.outline, withOutline: true, outlineBusy: false }
+        : prev))
+      notify('ok', '大纲已生成', `${res.outline.length} 字`)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      notify('err', '大纲生成失败', msg.slice(0, 120))
+      setPromptDraft((prev) => (prev ? { ...prev, outlineBusy: false } : prev))
+    }
+  }
+
+  const confirmPrompt = async (payload: {
+    system: string; user: string; frames: number; framePicks: number[]; outline: string
+  }) => {
     const action = pendingPrompt.current
     if (!action) return
     setPromptBusy(true)
@@ -949,13 +976,13 @@ export default function EditPanel({
         const frames = payload.frames
         setPromptDraft(null)
         pendingPrompt.current = null
-        await runAI(frames, payload.system)
+        await runAI(frames, payload.system, payload.outline)
         return
       }
       if (action.type === 'script') {
         await runAiOne(action.shotId, action.kind,
           { system: payload.system, user: payload.user, frames: payload.frames,
-            framePicks: payload.framePicks })
+            framePicks: payload.framePicks, outline: payload.outline })
       } else {
         await runAiTitle(action.kind, { system: payload.system, user: payload.user })
       }
@@ -969,7 +996,7 @@ export default function EditPanel({
   const runAiOne = async (
     shotId: string,
     kind: 'subtitle' | 'narration',
-    prompts?: { system?: string; user?: string; frames?: number; framePicks?: number[] },
+    prompts?: { system?: string; user?: string; frames?: number; framePicks?: number[]; outline?: string },
   ) => {
     const key = `${shotId}:${kind}`
     if (kind === 'subtitle' && modeOf(shotId) === 'silent') {
@@ -985,6 +1012,7 @@ export default function EditPanel({
         shot_id: shotId, kind, style: stylePayload(kind),
         frames: prompts?.frames ?? aiFrames,
         frame_picks: prompts?.framePicks,
+        outline: prompts?.outline,
         narration,
         system_prompt: prompts?.system,
         user_prompt: prompts?.user,
@@ -1174,6 +1202,7 @@ export default function EditPanel({
           draft={promptDraft}
           busy={promptBusy}
           onCancel={() => { setPromptDraft(null); pendingPrompt.current = null }}
+          onGenerateOutline={generateOutline}
           onConfirm={(payload) => void confirmPrompt(payload)}
         />
       )}
