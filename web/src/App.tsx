@@ -62,6 +62,15 @@ export default function App() {
 
   // 角标：统计上次查看之后新完成的任务/成片
   useEffect(() => {
+    // 第一次使用（没有记录）时把“已读时间”初始化到现在，避免历史记录全变成未读
+    for (const key of ['jobs', 'renders'] as BadgeKey[]) {
+      if (!window.localStorage.getItem(badgeSeenKey(key))) {
+        writeSeen(key, Date.now() / 1000)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
     let stopped = false
     const tick = async () => {
       try {

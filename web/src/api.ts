@@ -187,6 +187,7 @@ export const api = {
     const qs = new URLSearchParams()
     if (params.kind) qs.set('kind', params.kind)
     if (params.q) qs.set('q', params.q)
+    if (params.purpose) qs.set('purpose', params.purpose)
     qs.set('limit', String(params.limit ?? 60))
     qs.set('offset', String(params.offset ?? 0))
     return request<{ items: Asset[]; total: number; limit: number; offset: number }>(`/api/assets?${qs.toString()}`)
