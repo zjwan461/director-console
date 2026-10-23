@@ -187,9 +187,14 @@ def build_prompt(kind: str, shot: dict, project: dict, neighbors: dict,
     }
     outline = (outline or "").strip()
     if outline:
-        payload["outline"] = outline[:600]
-        payload["outline_rule"] = ("全片大纲给出主角、事件线和语气；旁白要与大纲一致，"
-                                  "不要写出大纲之外的人物或剧情。")
+        payload["outline"] = outline[:800]
+        index = int((neighbors or {}).get("index") or 0)
+        role = outline_role(outline, index)
+        if role:
+            payload["this_shot_role"] = role
+        payload["outline_rule"] = (
+            "全片大纲给出主角、语气和每镜定位；旁白要与大纲一致，不要写出大纲之外的人物或剧情。"
+            "若给了 this_shot_role，要体现本镜在片中的位置（开场铺垫 / 发展推进 / 转折 / 收尾）。")
     return system, json.dumps(payload, ensure_ascii=False)
 
 
@@ -311,12 +316,19 @@ async def _compress(make_client, base: str, api_key: str, model: str,
 
 
 async def build_outline(project: dict, shots: list[dict]) -> str:
-    """根据所有镜头的画面描述，写一份全片大纲（主角 / 事件线 / 语气）。"""
+    """生成结构化全片大纲：主角 / 语气 / 每镜定位。
+
+    模型经常把结果挤成一行，所以这里先要 JSON，再由我们格式化成多行文本，
+    保证「分镜定位」每镜一行、便于后续按序号取用和人工编辑。
+    """
     prompts = _prompts()
     system = prompts.get("outlineGen") or (
-        "你是短剧策划。根据给出的镜头描述，写一份全片大纲：\n"
-        "1) 主角是谁、什么状态；2) 事件线，3~5 句按顺序；3) 全片语气与结局走向。\n"
-        "只输出大纲正文，不要标题编号，不要解释，不超过 200 字。"
+        "你是短剧策划。只输出 JSON，不要解释。格式：\n"
+        '{"protagonist": "谁、什么状态、想要什么",\n'
+        ' "tone": "整体调性",\n'
+        ' "beats": [{"index": 1, "title": "镜头标题", "role": "开场|发展|转折|收尾",'
+        ' "summary": "一句话内容"}]}\n'
+        "beats 要与给出的镜头顺序一一对应，summary 不超过 30 字。"
     )
     api_key = str(settings.get("ai.api_key", "") or "")
     if not api_key:
@@ -344,7 +356,7 @@ async def build_outline(project: dict, shots: list[dict]) -> str:
             {"role": "system", "content": system},
             {"role": "user", "content": user_text},
         ],
-        "temperature": 0.7,
+        "temperature": 0.6,
         "stream": False,
     }
     kwargs: dict = {"timeout": httpx.Timeout(connect=10, read=90, write=20, pool=20), "trust_env": False}
@@ -356,7 +368,63 @@ async def build_outline(project: dict, shots: list[dict]) -> str:
     if resp.status_code >= 400:
         raise RuntimeError(f"大纲模型返回 {resp.status_code}：{resp.text[:200]}")
     text = clean(resp.json()["choices"][0]["message"]["content"])
-    return text[:600]
+    return format_outline(text, shots)
+
+
+def _extract_json(text: str) -> dict | None:
+    start, end = text.find("{"), text.rfind("}")
+    if start < 0 or end <= start:
+        return None
+    try:
+        data = json.loads(text[start:end + 1])
+        return data if isinstance(data, dict) else None
+    except Exception:
+        return None
+
+
+def format_outline(raw: str, shots: list[dict]) -> str:
+    """把模型输出统一成「主角 / 语气 / 分镜定位（每镜一行）」的可编辑文本。"""
+    data = _extract_json(raw)
+    if not data:
+        # 不是 JSON：保留原文，但把挤在一起的编号拆成多行
+        broken = re.sub(r"\s+(?=\d+\s*[^\d:：]{1,24}[:：])", "\n", raw)
+        return broken.strip()[:900]
+
+    lines: list[str] = []
+    if data.get("protagonist"):
+        lines.append(f"主角：{str(data['protagonist']).strip()}")
+    if data.get("tone"):
+        lines.append(f"语气：{str(data['tone']).strip()}")
+    beats = data.get("beats") or []
+    if beats:
+        lines.append("分镜定位：")
+        for offset, beat in enumerate(beats, start=1):
+            if not isinstance(beat, dict):
+                continue
+            index = int(beat.get("index") or offset)
+            title = str(beat.get("title") or (shots[index - 1].get("title", "") if index - 1 < len(shots) else ""))
+            role = str(beat.get("role") or "").strip()
+            summary = str(beat.get("summary") or "").strip()
+            head = f"{index} {title}：".replace("：：", "：")
+            detail = f"{role}｜{summary}" if role and summary else (summary or role)
+            lines.append(f"{head}{detail}".strip())
+    return "\n".join(lines)[:900]
+
+
+def outline_role(outline: str, index: int) -> str:
+    """从大纲里取第 index 镜（1 起）的定位行，兼容多行与挤成一行的输出。"""
+    if not outline or index <= 0:
+        return ""
+    for line in outline.splitlines():
+        match = re.match(rf"^\s*{index}\s*[.、)）]?\s*[^：:]{{0,24}}[：:]\s*(.+)$", line.strip())
+        if match:
+            return match.group(1).strip()[:90]
+    parts = re.split(r"\s+(?=\d+\s*[^\d:：]{1,24}[:：])", outline)
+    for part in parts:
+        match = re.match(rf"^\s*{index}\s*[.、)）]?\s*[^：:]{{0,24}}[：:]\s*(.+)$", part.strip())
+        if match:
+            return match.group(1).strip()[:90]
+    return ""
 
 
 def build_title_prompt(project: dict, shots: list[dict], kind: str = "title") -> tuple[str, str]:
