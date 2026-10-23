@@ -568,6 +568,42 @@ def step_git_packs(inst: Installer) -> None:
                 inst.log(f"  [warn] {name} 依赖 {pkg} 安装失败：{exc}")
 
 
+def _nvcc_version() -> tuple[int, int]:
+    try:
+        out = subprocess.run(["nvcc", "--version"], capture_output=True, text=True, timeout=20).stdout
+        match = re.search(r"release (\d+)\.(\d+)", out)
+        if match:
+            return int(match.group(1)), int(match.group(2))
+    except Exception:
+        pass
+    return 0, 0
+
+
+def _safe_cuda_arch(arch: str) -> tuple[str, str]:
+    """按本机 nvcc 版本裁剪架构列表，返回 (架构, 说明)。
+
+    sm_120（5090）需要 CUDA >= 12.8 的 nvcc，旧版会直接报
+    `nvcc fatal: Unsupported gpu architecture 'compute_120'`；
+    只编 89 时带 PTX，50 系卡运行时会 JIT，能跑但不是原生。
+    """
+    major, minor = _nvcc_version()
+    parts = [x.strip() for x in str(arch or "").split(";") if x.strip()]
+    dropped = []
+    if (major, minor) < (12, 8):
+        kept = []
+        for item in parts:
+            if item == "120":
+                dropped.append(item)
+                continue
+            kept.append(item)
+        parts = kept
+    result = ";".join(parts) or "89"
+    note = ""
+    if dropped:
+        note = f"（nvcc {major}.{minor} 不支持 sm_120，已去掉，运行时靠 PTX JIT）"
+    return result, note
+
+
 def step_extra_deps(inst: Installer) -> None:
     """清单里的 pip 扩展（默认不装，要显式开 --with-llm 之类）。
 
@@ -590,12 +626,13 @@ def step_extra_deps(inst: Installer) -> None:
             inst.log(f"  将安装 {spec_str}")
             continue
         if name == "llama-cpp-python" and getattr(inst.args, "llama_cuda", False):
-            arch = getattr(inst.args, "llama_cuda_arch", "89;120")
-            inst.log(f"  {name}：CUDA 源码编译（arch={arch}），预计 10~25 分钟")
+            arch, note = _safe_cuda_arch(getattr(inst.args, "llama_cuda_arch", "89"))
+            inst.log(f"  {name}：CUDA 源码编译（arch={arch}）{note}，预计 8~25 分钟")
             try:
                 inst.run(
                     [py, "-m", "pip", "install", "--no-cache-dir", "--no-build-isolation", spec_str],
-                    env={"CMAKE_ARGS": f"-DGGML_CUDA=on -DCMAKE_CUDA_ARCHITECTURES={arch}",
+                    env={"CMAKE_ARGS": (f"-DGGML_CUDA=on -DGGML_NATIVE=OFF "
+                                        f"-DCMAKE_CUDA_ARCHITECTURES={arch}"),
                          "FORCE_CMAKE": "1"},
                 )
             except Exception:
@@ -1259,7 +1296,7 @@ def parse_args() -> argparse.Namespace:
                    help="额外安装 llama-cpp-python（本地 GGUF 文本模型，图片对口型等卡需要）")
     p.add_argument("--llama-cuda", action="store_true",
                    help="配合 --with-llm：源码编译 CUDA 版（10~25 分钟，CPU 版几秒）")
-    p.add_argument("--llama-cuda-arch", default="89;120",
+    p.add_argument("--llama-cuda-arch", default="89",
                    help="CUDA 架构，89=4090 / 120=5090 / 86=3090")
     p.add_argument("--skip-git-packs", action="store_true",
                    help="不 clone 清单里的 git 节点包（如 RES4LYF）")

@@ -55,7 +55,7 @@ ARG RES4LYF_REF=main
 # llama-cpp-python：comfyUI-zealman 的 GGUF 加载器要用（纯文本，不做视觉）
 #   留空 = 装 PyPI 最新版
 ARG LLAMA_CPP_VERSION=
-ARG LLAMA_CUDA_ARCH="89;120"
+ARG LLAMA_CUDA_ARCH="89"
 
 
 LABEL org.opencontainers.image.title="comfyui-gai" \
@@ -165,13 +165,22 @@ RUN printf '%s\n' \
 #   要点：
 #     1. 用上游 abetlen 版即可 —— 这里只做文本推理，不需要视觉 handler
 #     2. 编译时开 CUDA（GGML_CUDA=on），否则 27B 模型只能跑 CPU
-#     3. CMAKE_CUDA_ARCHITECTURES 覆盖目标卡：89=4090 / 120=5090 / 86=3090
+#     3. CMAKE_CUDA_ARCHITECTURES：89=4090 / 86=3090 / 120=5090(需 CUDA>=12.8)
+#        这个基础镜像自带 CUDA 12.6 的 nvcc，编不了 sm_120；
+#        只编 89 时带 PTX，50 系卡会在运行时 JIT 成 sm_120，能跑但不是原生
 #   编译耗时约 8~20 分钟，是整份镜像里最慢的一步
 # -----------------------------------------------------------------------------
 RUN pip install --no-cache-dir cmake ninja scikit-build-core \
  && SPEC="llama-cpp-python"; \
     if [ -n "${LLAMA_CPP_VERSION}" ]; then SPEC="llama-cpp-python==${LLAMA_CPP_VERSION}"; fi; \
-    CMAKE_ARGS="-DGGML_CUDA=on -DCMAKE_CUDA_ARCHITECTURES=${LLAMA_CUDA_ARCH}" FORCE_CMAKE=1 \
+    ARCHS="${LLAMA_CUDA_ARCH}"; \
+    VER=$(nvcc --version 2>/dev/null | sed -n 's/.*release \([0-9]*\)\.\([0-9]*\).*/\1 \2/p' | head -1); \
+    set -- $VER; CMAJ=${1:-0}; CMIN=${2:-0}; \
+    if [ "$CMAJ" -lt 12 ] || { [ "$CMAJ" -eq 12 ] && [ "$CMIN" -lt 8 ]; }; then \
+        ARCHS=$(echo "$ARCHS" | tr ';' '\n' | grep -v '^120$' | paste -sd';' -); \
+        echo "nvcc ${CMAJ}.${CMIN} 不支持 sm_120，编译架构改为 ${ARCHS}（PTX 运行时 JIT）"; \
+    fi; \
+    CMAKE_ARGS="-DGGML_CUDA=on -DGGML_NATIVE=OFF -DCMAKE_CUDA_ARCHITECTURES=${ARCHS}" FORCE_CMAKE=1 \
     pip install --no-cache-dir --no-build-isolation "$SPEC" \
  && python - <<'PY'
 import llama_cpp
