@@ -94,6 +94,16 @@ export const api = {
       '/api/ai/prompt-preview',
       { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) },
     ),
+  bgmPlan: (projectId: string) =>
+    request<{
+      tracks: Array<{ id: string; asset_id: string; volume_db: number; start: number; end: number | null; fade_in: number; fade_out: number; loop: boolean }>
+      segments: Array<{ role: string; start: number; end: number }>
+      notes: string[]
+      total: number
+    }>('/api/ai/bgm-plan', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ project_id: projectId }),
+    }),
   aiOutline: (projectId: string) =>
     request<{ outline: string }>('/api/ai/outline', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -194,6 +204,12 @@ export const api = {
   },
   assetUsage: (id: string) => request<AssetUsage>(`/api/assets/${id}/usage`),
   assetDuration: (id: string) => request<{ duration: number }>(`/api/assets/${id}/duration`),
+  patchAssetMeta: (id: string, payload: { mood?: string; tags?: string[] }) =>
+    request<Asset>(`/api/assets/${id}/meta`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }),
   assetWaveform: (id: string, buckets = 160) =>
     request<{ peaks: number[]; cached: boolean }>(`/api/assets/${id}/waveform?buckets=${buckets}`),
   createShotFromAsset: (

@@ -415,13 +415,15 @@ def outline_role(outline: str, index: int) -> str:
     """从大纲里取第 index 镜（1 起）的定位行，兼容多行与挤成一行的输出。"""
     if not outline or index <= 0:
         return ""
+    # 标题可能很长（如「还原 · MiniMax_H3_00001_.mp4」），宽度给足
+    line_re = re.compile(rf"^\s*{index}\s*[.、)）]?\s*[^：:]{{0,48}}[：:]\s*(.+)$")
     for line in outline.splitlines():
-        match = re.match(rf"^\s*{index}\s*[.、)）]?\s*[^：:]{{0,24}}[：:]\s*(.+)$", line.strip())
+        match = line_re.match(line.strip())
         if match:
             return match.group(1).strip()[:90]
-    parts = re.split(r"\s+(?=\d+\s*[^\d:：]{1,24}[:：])", outline)
+    parts = re.split(r"\s+(?=\d+\s*[^\d:：]{1,40}[:：])", outline)
     for part in parts:
-        match = re.match(rf"^\s*{index}\s*[.、)）]?\s*[^：:]{{0,24}}[：:]\s*(.+)$", part.strip())
+        match = line_re.match(part.strip())
         if match:
             return match.group(1).strip()[:90]
     return ""

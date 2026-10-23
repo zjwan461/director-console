@@ -243,6 +243,12 @@ def search_assets(kind: str | None = None, q: str = "", limit: int = 60, offset:
         return _rows(rows), int(total)
 
 
+def update_asset_meta(aid: str, meta: dict) -> None:
+    with _lock, connect() as conn:
+        conn.execute("UPDATE assets SET meta=? WHERE id=?",
+                     (json.dumps(meta, ensure_ascii=False), aid))
+
+
 def find_asset_by_path(path: str) -> dict | None:
     with _lock, connect() as conn:
         return _row(conn.execute("SELECT * FROM assets WHERE path=?", (path,)).fetchone())

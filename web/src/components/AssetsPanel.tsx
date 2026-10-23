@@ -4,6 +4,8 @@ import type { Asset, AssetUsage, Project, Shot } from '../types'
 
 const KIND_LABEL: Record<string, string> = { image: '图片', video: '视频', audio: '音频' }
 
+const MOODS = ['轻快', '搞笑', '燃', '史诗', '治愈', '电子', '悬念']
+
 export default function AssetsPanel({ onOpenProject }: { onOpenProject: (projectId: string, shotId?: string) => void }) {
   const [kind, setKind] = useState('')
   const [purpose, setPurpose] = useState('')
@@ -115,6 +117,16 @@ export default function AssetsPanel({ onOpenProject }: { onOpenProject: (project
       setUsage(await api.assetUsage(asset.id))
     } catch {
       setUsage({ asset, shots: [], jobs: [] })
+    }
+  }
+
+  const saveMood = async (asset: Asset, mood: string) => {
+    try {
+      const updated = await api.patchAssetMeta(asset.id, { mood })
+      setItems((prev) => prev.map((x) => (x.id === updated.id ? { ...x, meta: updated.meta } : x)))
+      setSelected((prev) => (prev && prev.id === updated.id ? { ...prev, meta: updated.meta } : prev))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
     }
   }
 
@@ -278,6 +290,20 @@ export default function AssetsPanel({ onOpenProject }: { onOpenProject: (project
               {Number(selected.width) > 0 && (<><dt>尺寸</dt><dd>{selected.width} × {selected.height}</dd></>)}
               <dt>创建</dt><dd>{new Date((selected.created_at || 0) * 1000).toLocaleString()}</dd>
             </dl>
+
+            {selected.kind === 'audio' && selected.purpose !== 'narration' && (
+              <div className="row" style={{ marginTop: 10, alignItems: 'center' }}>
+                <label className="inline-field">
+                  <span>情绪标签</span>
+                  <select value={String((selected.meta || {}).mood || '')}
+                          onChange={(e) => void saveMood(selected, e.target.value)}>
+                    <option value="">未标注</option>
+                    {MOODS.map((m) => <option key={m} value={m}>{m}</option>)}
+                  </select>
+                </label>
+                <span className="meta">用于「自动配乐」按段落选曲</span>
+              </div>
+            )}
 
             <div className="row-actions">
               <a href={selected.url} download><button>下载</button></a>

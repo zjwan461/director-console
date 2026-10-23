@@ -124,6 +124,7 @@ export default function EditPanel({
   const [aiTitles, setAiTitles] = useState(true)
   const [aiAutoSpeed, setAiAutoSpeed] = useState(true)
   const [aiBgmId, setAiBgmId] = useState('')
+  const [aiAutoBgm, setAiAutoBgm] = useState(false)
   const [framesBusy, setFramesBusy] = useState(false)
   const [aiTone, setAiTone] = useState('documentary')
   const [aiPerson, setAiPerson] = useState('third')
@@ -878,8 +879,25 @@ export default function EditPanel({
     let done = 0
     let failed = 0
     let ttsFailed = 0
+    // 自动配乐：按段落挑情绪匹配的音乐
+    if (aiAutoBgm) {
+      try {
+        const plan = await api.bgmPlan(projectId)
+        setBgmTracks(plan.tracks.map((x) => ({
+          id: x.id, asset_id: x.asset_id, volume_db: x.volume_db,
+          start: x.start, end: x.end, fade_in: x.fade_in, fade_out: x.fade_out, loop: x.loop,
+        })))
+        setDuckBgm(true)
+        notify('ok', '已按段落配乐', plan.notes.join('；').slice(0, 120))
+        done += 1
+      } catch (err) {
+        failed += 1
+        notify('err', '自动配乐失败', (err instanceof Error ? err.message : String(err)).slice(0, 120))
+      }
+    }
+
     // 用户指定的 BGM：自动写入一条轨道，参数按是否有旁白给合理默认
-    if (aiBgmId) {
+    if (!aiAutoBgm && aiBgmId) {
       const hasNarration = ordered.some((s) => editOf(s.id).narration_on || editOf(s.id).voice_asset)
       setBgmTracks([{
         id: `t${Date.now().toString(36)}`,
@@ -1427,6 +1445,10 @@ export default function EditPanel({
                   <option key={a.id} value={a.id}>{audioLabel(a)}</option>
                 ))}
               </select>
+              <label className="check" style={{ marginTop: 6 }}>
+                <input type="checkbox" checked={aiAutoBgm} onChange={(e) => setAiAutoBgm(e.target.checked)} />
+                按段落自动配乐（用素材的情绪标签，最多 3 段）
+              </label>
               {aiBgmId && (
                 <p className="hint" style={{ marginTop: 4 }}>
                   会自动写入一条铺满正片的 BGM（淡入 1s、淡出 2s、循环），

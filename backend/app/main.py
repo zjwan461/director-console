@@ -454,6 +454,29 @@ async def asset_duration(asset_id: str) -> dict:
         return {"duration": 0.0}
 
 
+class AssetMetaPatch(BaseModel):
+    mood: str | None = None
+    tags: list[str] | None = None
+
+
+@app.patch("/api/assets/{asset_id}/meta")
+async def patch_asset_meta(asset_id: str, body: AssetMetaPatch) -> dict:
+    """给素材补标签（音乐情绪等）。"""
+    asset = store.get_asset(asset_id)
+    if not asset:
+        raise HTTPException(status_code=404, detail="素材不存在")
+    meta = dict(asset.get("meta") or {})
+    if body.mood is not None:
+        meta["mood"] = body.mood.strip()
+    if body.tags is not None:
+        meta["tags"] = [str(t).strip() for t in body.tags if str(t).strip()][:8]
+    store.update_asset_meta(asset_id, meta)
+    asset = store.get_asset(asset_id) or asset
+    asset["url"] = f"/media/files/{asset['path']}"
+    asset["purpose"] = _asset_purpose(asset)
+    return asset
+
+
 @app.get("/api/assets/{asset_id}/waveform")
 async def asset_waveform(asset_id: str, buckets: int = Query(160, ge=16, le=600)) -> dict:
     """音频波形峰值，供时间轴画波形条。结果按文件大小+修改时间缓存。"""
@@ -1032,6 +1055,104 @@ class TitleRequest(BaseModel):
     kind: str = "title"
     system_prompt: str | None = None
     user_prompt: str | None = None
+
+
+MOOD_CYCLE = {
+    "开场": ["轻快", "治愈", "搞笑"],
+    "发展": ["电子", "轻快", "燃"],
+    "转折": ["燃", "悬念", "史诗"],
+    "收尾": ["治愈", "史诗", "悬念"],
+}
+
+
+@app.post("/api/ai/bgm-plan")
+async def ai_bgm_plan(body: TitleRequest) -> dict:
+    """按段落自动配乐：把正片分成最多 3 段，每段挑一首情绪合适的音乐。"""
+    project = store.get_project(body.project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="项目不存在")
+    raw_state = store.get_setting(_edit_state_key(body.project_id), "")
+    try:
+        state = json.loads(raw_state) if raw_state else {}
+    except Exception:
+        state = {}
+    options = state.get("options") or {}
+    all_shots = store.list_shots(body.project_id)
+    shots = {s["id"]: s for s in all_shots}
+    order = {s["id"]: i for i, s in enumerate(all_shots)}
+    edits = {str(e.get("shot_id")): e for e in (state.get("shot_edits") or []) if e.get("shot_id")}
+    selected = sorted([sid for sid in edits if sid in shots], key=lambda sid: order.get(sid, 0))
+    if not selected:
+        raise HTTPException(status_code=400, detail="还没有勾选镜头")
+
+    timeline = await build_timeline(shots, selected, edits, options)
+    items = timeline["items"]
+    if not items:
+        raise HTTPException(status_code=400, detail="时间轴为空")
+
+    # 段落划分：优先用大纲里的分镜定位，没有就按镜数三等分
+    outline = str(store.get_setting(f"outline.{body.project_id}", "") or "")
+    roles: list[str] = []
+    for index in range(1, len(items) + 1):
+        role = ai_script.outline_role(outline, index)
+        bucket = "发展"
+        for key in ("开场", "转折", "收尾"):
+            if key in role:
+                bucket = key
+                break
+        roles.append(bucket)
+    if not any("开场" in r for r in roles):
+        third = max(1, len(items) // 3)
+        for i in range(len(items)):
+            roles[i] = "开场" if i < third else ("收尾" if i >= len(items) - third else "发展")
+
+    # 合并成最多 3 段
+    segments: list[dict] = []
+    for item, role in zip(items, roles):
+        bucket = role
+        if segments and segments[-1]["role"] == bucket:
+            segments[-1]["end"] = item["end"]
+            continue
+        if len(segments) >= 3:
+            segments[-1]["end"] = item["end"]
+            continue
+        segments.append({"role": bucket, "start": item["start"], "end": item["end"]})
+
+    # 选曲
+    music = [a for a in store.list_assets("audio", 200) if _asset_purpose(a) == "music"]
+    if not music:
+        raise HTTPException(status_code=400, detail="素材库里还没有背景音乐（先在资产页上传或跑 fetch_music.py）")
+
+    used: set[str] = set()
+    tracks: list[dict] = []
+    notes: list[str] = []
+    for index, segment in enumerate(segments, start=1):
+        moods = MOOD_CYCLE.get(segment["role"], [])
+        pick = None
+        for mood in moods:
+            pick = next((a for a in music
+                         if str((a.get("meta") or {}).get("mood") or "") == mood and a["id"] not in used), None)
+            if pick:
+                break
+        if not pick:
+            pick = next((a for a in music if a["id"] not in used), music[0])
+        used.add(pick["id"])
+        name = pick["path"].rsplit("/", 1)[-1]
+        mood = str((pick.get("meta") or {}).get("mood") or "")
+        notes.append(f"第{index}段（{segment['role']}）→ {name}{f'（{mood}）' if mood else ''}")
+        tracks.append({
+            "id": f"auto{index}",
+            "asset_id": pick["id"],
+            "volume_db": -16 if segment["role"] != "转折" else -13,
+            "start": round(segment["start"], 2),
+            "end": round(segment["end"], 2),
+            "fade_in": 0.8,
+            "fade_out": 1.2,
+            "loop": True,
+        })
+
+    return {"tracks": tracks, "segments": segments, "notes": notes,
+            "total": timeline["total"]}
 
 
 @app.post("/api/ai/outline")
