@@ -359,7 +359,8 @@ def _image_size(path: Path) -> tuple[int, int]:
 
 
 @app.post("/api/assets/upload")
-async def upload_asset(file: UploadFile = File(...), kind: str = Form("image")) -> dict:
+async def upload_asset(file: UploadFile = File(...), kind: str = Form("image"),
+                       purpose: str = Form("")) -> dict:
     suffix = Path(file.filename or "upload").suffix.lower() or ".bin"
     name = f"{uuid.uuid4().hex}{suffix}"
     target = UPLOADS / name
@@ -370,8 +371,10 @@ async def upload_asset(file: UploadFile = File(...), kind: str = Form("image")) 
             fh.write(chunk)
     width, height = _image_size(target) if kind == "image" else (0, 0)
     rel = target.relative_to(DATA).as_posix()
-    asset = store.add_asset(kind, rel, size=size, width=width, height=height,
-                            meta={"origin_name": file.filename})
+    meta: dict = {"origin_name": file.filename}
+    if purpose:
+        meta["purpose"] = purpose
+    asset = store.add_asset(kind, rel, size=size, width=width, height=height, meta=meta)
     asset["url"] = f"/media/files/{rel}"
     return asset
 
@@ -406,6 +409,23 @@ async def cleanup_duplicate_assets() -> dict:
                 if changed != value:
                     conn.execute("UPDATE settings SET value=? WHERE key=?", (changed, key))
     return {"ok": True, "removed": len(mapping), "repointed": len(mapping)}
+
+
+def _asset_purpose(asset: dict) -> str:
+    """素材用途：narration=旁白配音，music=背景音乐，空=未分类。
+
+    老数据没有 purpose 字段，按路径推断：tts/ → 配音，music/ → 音乐。
+    """
+    meta = asset.get("meta") or {}
+    purpose = str(meta.get("purpose") or "").strip()
+    if purpose:
+        return purpose
+    path = str(asset.get("path") or "")
+    if "/tts/" in path or meta.get("origin") == "tts":
+        return "narration"
+    if "/music/" in path or meta.get("license"):
+        return "music"
+    return ""
 
 
 @app.get("/api/assets/{asset_id}")
@@ -470,6 +490,7 @@ async def assets(
     items, total = store.search_assets(kind, q, limit, offset)
     for item in items:
         item["url"] = f"/media/files/{item['path']}"
+        item["purpose"] = _asset_purpose(item)
     return {"items": items, "total": total, "limit": limit, "offset": offset}
 
 
@@ -1581,7 +1602,7 @@ async def ai_tts(body: TTSRequest) -> dict:
     rel = path.relative_to(DATA).as_posix()
     asset = store.get_asset_by_path(rel) or store.add_asset(
         "audio", rel, size=path.stat().st_size,
-        meta={"origin": "tts", "text": body.text[:120]})
+        meta={"origin": "tts", "text": body.text[:120], "purpose": "narration"})
     slot = 0.0
     if body.shot_id:
         shot = store.get_shot(body.shot_id)

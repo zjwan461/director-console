@@ -131,6 +131,7 @@ export interface Asset {
   height?: number
   size?: number
   created_at?: number
+  purpose?: string
 }
 
 export interface PromptMode {

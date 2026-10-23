@@ -581,7 +581,7 @@ export default function EditPanel({
   const uploadVoice = async (files: FileList | null) => {
     if (!files || !files.length || !uploadFor) return
     try {
-      const asset = await api.upload(files[0], 'audio')
+      const asset = await api.upload(files[0], 'audio', 'narration')
       patchEdit(uploadFor, { voice_asset: asset.id })
       await refreshAudios(asset.id)
     } catch (err) {
@@ -624,6 +624,16 @@ export default function EditPanel({
   }
 
   // 旁白固定中文（TTS 只支持中文），字幕才跟随 subLang
+  // BGM 只列音乐类素材；旁白音频只列配音类素材（互不串台）
+  const musicAssets = useMemo(
+    () => audios.filter((a) => (a.purpose || '') !== 'narration' && !a.path.includes('/tts/')),
+    [audios],
+  )
+  const voiceAssets = useMemo(
+    () => audios.filter((a) => (a.purpose || '') !== 'music' && !a.path.includes('/music/')),
+    [audios],
+  )
+
   const stylePayload = (kind?: 'subtitle' | 'narration') => ({
     tone: aiTone, person: aiPerson, language: kind === 'narration' ? 'zh' : subLang,
   })
@@ -1637,7 +1647,7 @@ export default function EditPanel({
                                   <select className="grow" value={edit.voice_asset}
                                           onChange={(e) => patchEdit(shot.id, { voice_asset: e.target.value })}>
                                     <option value="">无旁白音频</option>
-                                    {audios.map((a) => (
+                                    {voiceAssets.map((a) => (
                                       <option key={a.id} value={a.id}>{audioLabel(a)}</option>
                                     ))}
                                   </select>
@@ -1883,7 +1893,7 @@ export default function EditPanel({
               <select className="grow" value={track.asset_id}
                       onChange={(e) => updateTrack(track.id, { asset_id: e.target.value })}>
                 <option value="">选择音频</option>
-                {audios.map((a) => (
+                {musicAssets.map((a) => (
                   <option key={a.id} value={a.id}>{audioLabel(a)}</option>
                 ))}
               </select>

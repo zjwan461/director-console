@@ -49,10 +49,11 @@ export const api = {
 
   presets: () => request<{ items: Preset[] }>('/api/presets'),
 
-  upload: async (file: File, kind: string) => {
+  upload: async (file: File, kind: string, purpose?: string) => {
     const form = new FormData()
     form.append('file', file)
     form.append('kind', kind)
+    if (purpose) form.append('purpose', purpose)
     return request<Asset>('/api/assets/upload', { method: 'POST', body: form })
   },
 
