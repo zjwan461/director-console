@@ -5,3 +5,9 @@ PyYAML>=6.0
 python-multipart>=0.0.9
 SQLAlchemy>=2.0
 alembic>=1.13
+
+# 导演助手（Agent）：只装图运行时和模型适配，不装整个 langchain
+langgraph>=1.0,<2
+langchain-core>=1.0,<2
+langchain-openai>=1.0,<2
+aiosqlite>=0.20

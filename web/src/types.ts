@@ -256,3 +256,58 @@ export interface AssetUsage {
   shots: AssetUsageShot[]
   jobs: AssetUsageJob[]
 }
+
+
+/* ---------------- 导演助手 ---------------- */
+export interface AgentThread {
+  id: string
+  title: string
+  project_id: string
+  created_at: number
+  updated_at: number
+  preview?: string
+}
+
+export interface AgentPart {
+  type: string
+  [key: string]: unknown
+}
+
+export interface AgentMessage {
+  id: string
+  thread_id: string
+  run_id?: string
+  role: 'user' | 'assistant' | 'tool' | 'system'
+  content: string
+  parts: AgentPart[]
+  seq: number
+  created_at: number
+}
+
+export interface AgentRun {
+  id: string
+  thread_id: string
+  status: 'running' | 'waiting_confirm' | 'done' | 'failed' | 'canceled' | 'interrupted'
+  node: string
+  pending: Record<string, unknown>
+  error: string
+  steps: number
+  started_at: number
+  finished_at?: number | null
+}
+
+export interface AgentArtifact {
+  id: string
+  kind: string
+  ref_id: string
+  url: string
+  meta: Record<string, unknown>
+  created_at: number
+}
+
+export interface AgentEvent {
+  seq: number
+  ts: number
+  t: string
+  [key: string]: unknown
+}

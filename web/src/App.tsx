@@ -8,10 +8,11 @@ import ProjectsPanel from './components/ProjectsPanel'
 import AssetsPanel from './components/AssetsPanel'
 import RendersPanel from './components/RendersPanel'
 import EditPanel from './components/EditPanel'
+import AgentPanel from './components/agent/AgentPanel'
 
-type Tab = 'studio' | 'projects' | 'edit' | 'assets' | 'renders' | 'jobs' | 'service'
+type Tab = 'agent' | 'studio' | 'projects' | 'edit' | 'assets' | 'renders' | 'jobs' | 'service'
 
-const TAB_KEYS: Tab[] = ['studio', 'projects', 'edit', 'assets', 'renders', 'jobs', 'service']
+const TAB_KEYS: Tab[] = ['agent', 'studio', 'projects', 'edit', 'assets', 'renders', 'jobs', 'service']
 
 function initialTab(): Tab {
   const fromUrl = new URLSearchParams(window.location.search).get('tab')
@@ -190,6 +191,7 @@ export default function App() {
         </div>
 
         <nav className="nav">
+          <button className={tab === 'agent' ? 'active' : ''} onClick={() => setTab('agent')}>导演助手</button>
           <button className={tab === 'studio' ? 'active' : ''} onClick={() => setTab('studio')}>创作台</button>
           <button className={tab === 'projects' ? 'active' : ''} onClick={() => setTab('projects')}>项目</button>
           <button className={tab === 'edit' ? 'active' : ''} onClick={() => setTab('edit')}>剪辑</button>
@@ -230,6 +232,17 @@ export default function App() {
       </div>
 
       <main className="main">
+        {tab === 'agent' && (
+          <AgentPanel
+            projectId={new URLSearchParams(window.location.search).get('project') || ''}
+            onOpenProject={(projectId) => {
+              const url = new URL(window.location.href)
+              url.searchParams.set('project', projectId)
+              window.history.replaceState({}, '', url)
+              setTab('agent')
+            }}
+          />
+        )}
         {tab === 'studio' && (
           <StudioPanel
             serviceReady={ready}

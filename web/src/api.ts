@@ -1,4 +1,4 @@
-import type { Asset, AssetUsage, ComfySettings, Job, JobsPage, ModelCheckResult, ModelInventory, Preset, Project, PromptMode, Render, ServiceStatus, Shot } from './types'
+import type { AgentArtifact, AgentMessage, AgentRun, AgentThread, Asset, AssetUsage, ComfySettings, Job, JobsPage, ModelCheckResult, ModelInventory, Preset, Project, PromptMode, Render, ServiceStatus, Shot } from './types'
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const resp = await fetch(url, init)
@@ -210,6 +210,31 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     }),
+  agentThreads: (projectId: string) =>
+    request<{ items: AgentThread[] }>(`/api/agent/threads?project_id=${encodeURIComponent(projectId)}`),
+  agentCreateThread: (projectId: string, title = '新对话') =>
+    request<AgentThread>('/api/agent/threads', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ project_id: projectId, title }),
+    }),
+  agentThread: (threadId: string) =>
+    request<{ thread: AgentThread; project: { id: string; name: string }; runs: AgentRun[]; artifacts: AgentArtifact[] }>(
+      `/api/agent/threads/${threadId}`),
+  agentDeleteThread: (threadId: string) =>
+    request<{ ok: boolean }>(`/api/agent/threads/${threadId}`, { method: 'DELETE' }),
+  agentMessages: (threadId: string, afterSeq = 0) =>
+    request<{ items: AgentMessage[] }>(`/api/agent/threads/${threadId}/messages?after_seq=${afterSeq}`),
+  agentSend: (threadId: string, text: string) =>
+    request<{ run_id: string; status: string }>(`/api/agent/threads/${threadId}/messages`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+    }),
+  agentConfirm: (runId: string, approved: boolean, params?: Record<string, unknown>) =>
+    request<AgentRun>(`/api/agent/runs/${runId}/confirm`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ approved, params }),
+    }),
+  agentRun: (runId: string) => request<AgentRun>(`/api/agent/runs/${runId}`),
   assetWaveform: (id: string, buckets = 160) =>
     request<{ peaks: number[]; cached: boolean }>(`/api/assets/${id}/waveform?buckets=${buckets}`),
   createShotFromAsset: (
@@ -457,4 +482,47 @@ export async function rewriteStream(
     if (done) break
   }
   handlers.onDone(formatPrompt(acc))
+}
+
+
+/** 订阅导演助手事件流；返回取消函数 */
+export function agentStream(
+  threadId: string,
+  onEvent: (event: Record<string, unknown>) => void,
+  onError?: (message: string) => void,
+): () => void {
+  const controller = new AbortController()
+  ;(async () => {
+    try {
+      const resp = await fetch(`/api/agent/threads/${threadId}/stream`, { signal: controller.signal })
+      if (!resp.ok || !resp.body) {
+        onError?.('事件流连接失败')
+        return
+      }
+      const reader = resp.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+      while (true) {
+        const { value, done } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+        let idx = buffer.indexOf('\n\n')
+        while (idx !== -1) {
+          const block = buffer.slice(0, idx)
+          buffer = buffer.slice(idx + 2)
+          const data = block.split('\n')
+            .filter((line) => line.startsWith('data:'))
+            .map((line) => line.slice(5).trim())
+            .join('\n')
+          if (data) {
+            try { onEvent(JSON.parse(data)) } catch { /* 忽略坏帧 */ }
+          }
+          idx = buffer.indexOf('\n\n')
+        }
+      }
+    } catch (err) {
+      if (!controller.signal.aborted) onError?.(String(err))
+    }
+  })()
+  return () => controller.abort()
 }
