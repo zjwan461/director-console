@@ -273,13 +273,24 @@ def _enum_options(object_info: dict, class_type: str, field: str) -> list[str]:
 
 MODEL_EXTS = (".safetensors", ".ckpt", ".pt", ".pth", ".bin", ".gguf", ".sft")
 
-# 枚举值也可能因节点包版本不同而对不上（例如 RES4LYF 的 res_2s_ode）
+# 枚举值也可能因节点包版本不同而对不上（例如 RES4LYF 的采样器改名）
 # 这里给出安全的降级候选，按优先级取第一个本机存在的
 ENUM_FALLBACKS = {
     "sampler_name": ["res_multistep", "euler", "dpmpp_2m", "ddim"],
     "scheduler": ["normal", "simple", "karras"],
     # KJNodes 预览用的小 VAE：本机没有对应文件时用 none（只影响实时预览）
     "tiny_vae": ["none"],
+}
+
+
+# 旧版 RES4LYF 的采样器名在 2025 版被加上了族前缀，且个别名字改了
+SAMPLER_ALIASES = {
+    "res_2s_ode": "exponential/res_2s",
+    "res_2s": "exponential/res_2s",
+    "res_3s": "exponential/res_3s",
+    "res_2m": "multistep/res_2m",
+    "res_3m": "multistep/res_3m",
+    "res_multistep": "multistep/res_2m",
 }
 
 
@@ -336,6 +347,24 @@ def adapt_workflow_models(workflow: dict, object_info: dict) -> tuple[dict, list
 
             if value in options:
                 continue
+
+            # RES4LYF 这类节点把采样器按族分组（exponential/res_2s），
+            # 老工作流里写的是不带前缀的名字，按「后缀唯一匹配」纠正
+            if field == "sampler_name":
+                suffix = "/" + value
+                hinted = [o for o in options if o.endswith(suffix)]
+                if len(hinted) == 1:
+                    inputs[field] = hinted[0]
+                    changes.append({"good": value, "actual": hinted[0],
+                                    "node": class_type, "field": field})
+                    continue
+                alias = SAMPLER_ALIASES.get(value)
+                if alias and alias in options:
+                    inputs[field] = alias
+                    changes.append({"good": value, "actual": alias,
+                                    "node": class_type, "field": field})
+                    continue
+
             for candidate in ENUM_FALLBACKS.get(field, []):
                 if candidate in options:
                     inputs[field] = candidate
