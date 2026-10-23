@@ -166,6 +166,8 @@ RUN printf '%s\n' \
 #     1. 用上游 abetlen 版即可 —— 这里只做文本推理，不需要视觉 handler
 #     2. 编译时开 CUDA（GGML_CUDA=on），否则 27B 模型只能跑 CPU
 #     3. CMAKE_CUDA_ARCHITECTURES：89=4090 / 86=3090 / 120=5090(需 CUDA>=12.8)
+#        这里没有显卡可探测，架构必须由 --build-arg 指定（默认 89）；
+#        本地安装走 install.py，那边会按本机显卡自动识别，两套互不影响
 #        这个基础镜像自带 CUDA 12.6 的 nvcc，编不了 sm_120；
 #        只编 89 时带 PTX，50 系卡会在运行时 JIT 成 sm_120，能跑但不是原生
 #   编译耗时约 8~20 分钟，是整份镜像里最慢的一步

@@ -579,29 +579,69 @@ def _nvcc_version() -> tuple[int, int]:
     return 0, 0
 
 
-def _safe_cuda_arch(arch: str) -> tuple[str, str]:
-    """按本机 nvcc 版本裁剪架构列表，返回 (架构, 说明)。
+def _gpu_archs() -> str:
+    """读本机显卡算力，返回 CMAKE 用的架构串（如 "89"、"120"、"89;120"）。
 
-    sm_120（5090）需要 CUDA >= 12.8 的 nvcc，旧版会直接报
-    `nvcc fatal: Unsupported gpu architecture 'compute_120'`；
-    只编 89 时带 PTX，50 系卡运行时会 JIT，能跑但不是原生。
+    优先 nvidia-smi 的 compute_cap（40 系=8.9、50 系=12.0、30 系=8.6），
+    读不到就返回空串，由调用方兜底。
     """
+    try:
+        out = subprocess.run(
+            ["nvidia-smi", "--query-gpu=compute_cap", "--format=csv,noheader"],
+            capture_output=True, text=True, timeout=20,
+        ).stdout
+    except Exception:
+        return ""
+    caps: list[str] = []
+    for line in out.splitlines():
+        value = line.strip()
+        if not value or "." not in value:
+            continue
+        major, minor = value.split(".", 1)
+        if not (major.isdigit() and minor.isdigit()):
+            continue
+        arch = f"{major}{minor}"
+        if arch not in caps:
+            caps.append(arch)
+    return ";".join(caps)
+
+
+def _safe_cuda_arch(arch: str) -> tuple[str, str]:
+    """决定编译哪些 CUDA 架构，返回 (架构, 说明)。
+
+    顺序：
+      1. 没显式指定就按本机显卡自动识别（40 系 89 / 50 系 120 / 30 系 86）
+      2. 再按本机 nvcc 版本裁剪：sm_120 需要 CUDA >= 12.8，旧版直接报
+         `nvcc fatal: Unsupported gpu architecture 'compute_120'`；
+         去掉后保留 PTX，50 系卡运行时会 JIT，能跑但不是原生
+      3. 都拿不到就退回 89（最通用的安培/霍珀架构）
+    """
+    notes: list[str] = []
+    explicit = str(arch or "").strip()
+    if explicit:
+        base = explicit
+    else:
+        detected = _gpu_archs()
+        base = detected or "89"
+        if detected:
+            notes.append(f"检测到显卡算力 {detected}")
+        else:
+            notes.append("未识别到显卡，退回 89")
+
     major, minor = _nvcc_version()
-    parts = [x.strip() for x in str(arch or "").split(";") if x.strip()]
-    dropped = []
-    if (major, minor) < (12, 8):
-        kept = []
-        for item in parts:
-            if item == "120":
-                dropped.append(item)
-                continue
-            kept.append(item)
-        parts = kept
-    result = ";".join(parts) or "89"
-    note = ""
+    parts = [x.strip() for x in base.split(";") if x.strip()]
+    kept: list[str] = []
+    dropped: list[str] = []
+    for item in parts:
+        # 120 需要 CUDA >= 12.8；nvcc 读不到（0.0）也按不支持处理
+        if item == "120" and (major, minor) < (12, 8):
+            dropped.append(item)
+            continue
+        kept.append(item)
+    result = ";".join(kept) or "89"
     if dropped:
-        note = f"（nvcc {major}.{minor} 不支持 sm_120，已去掉，运行时靠 PTX JIT）"
-    return result, note
+        notes.append(f"nvcc {major}.{minor} 不支持 sm_120，已去掉（运行时靠 PTX JIT）")
+    return result, ("（" + "；".join(notes) + "）") if notes else ""
 
 
 def step_extra_deps(inst: Installer) -> None:
@@ -1296,8 +1336,8 @@ def parse_args() -> argparse.Namespace:
                    help="额外安装 llama-cpp-python（本地 GGUF 文本模型，图片对口型等卡需要）")
     p.add_argument("--llama-cuda", action="store_true",
                    help="配合 --with-llm：源码编译 CUDA 版（10~25 分钟，CPU 版几秒）")
-    p.add_argument("--llama-cuda-arch", default="89",
-                   help="CUDA 架构，89=4090 / 120=5090 / 86=3090")
+    p.add_argument("--llama-cuda-arch", default="",
+                   help="CUDA 架构，留空按本机显卡自动识别（40系 89 / 50系 120 / 30系 86）")
     p.add_argument("--skip-git-packs", action="store_true",
                    help="不 clone 清单里的 git 节点包（如 RES4LYF）")
     p.add_argument("--with-build", action="store_true",

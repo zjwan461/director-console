@@ -522,11 +522,18 @@ python install.py --with-llm --llama-cuda  # 源码编译 CUDA 版（8~20 分钟
 
 `--skip-git-packs` 可跳过 git 节点包；`--llama-cuda-arch` 指定 CUDA 架构（默认 `89`）。
 
-**CUDA 架构注意**：sm_120（5090）需要 CUDA ≥ 12.8 的 nvcc，旧版会直接报
+**CUDA 架构**（两个脚本分工不同）：
+
+| 脚本 | 架构怎么来 |
+|---|---|
+| `install.py`（本地安装） | 用 `nvidia-smi --query-gpu=compute_cap` **自动识别本机显卡**，40 系→89、50 系→120、30 系→86；识别不到退回 89；再按本机 nvcc 版本裁剪 |
+| `Dockerfile.comfyui`（构建镜像） | 构建期没有显卡可探测，必须 `--build-arg LLAMA_CUDA_ARCH=89` 指定（默认 89） |
+
+sm_120（5090）需要 CUDA ≥ 12.8 的 nvcc，旧版会直接报
 `nvcc fatal: Unsupported gpu architecture 'compute_120'`。
-默认只编 `89`（4090）并保留 PTX，50 系卡运行时 JIT，能跑但不是原生；
-构建/安装脚本都会读 nvcc 版本自动去掉不支持的架构。
-只想锁版本时：`--build-arg LLAMA_CPP_VERSION=0.3.36`。
+被裁剪掉 120 时会保留 PTX，50 系卡运行时 JIT，能跑但不是原生。
+想手动覆盖识别结果：`install.py --with-llm --llama-cuda --llama-cuda-arch 120`。
+锁版本：`--build-arg LLAMA_CPP_VERSION=0.3.36`。
 
 > `Dockerfile.comfyui` 是作者自用环境的镜像构建脚本，正常部署不需要它；
 > 想复刻那套镜像才用它，参数见文件头注释。
