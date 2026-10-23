@@ -177,6 +177,9 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     }),
+  newCounts: (jobsSince: number, rendersSince: number) =>
+    request<{ jobs: number; renders: number }>(
+      `/api/activity/new-counts?jobs_since=${jobsSince}&renders_since=${rendersSince}`),
   allRenders: (limit = 50, status?: string, projectId?: string) =>
     request<{ items: Render[] }>(`/api/renders?limit=${limit}${status ? `&status=${status}` : ''}${projectId ? `&project_id=${projectId}` : ''}`),
   startRender: (id: string) => request<Render>(`/api/renders/${id}/start`, { method: 'POST' }),

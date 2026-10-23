@@ -28,12 +28,29 @@ interface Toast {
 
 const TERMINAL = new Set(['succeeded', 'failed'])
 
+// 侧边栏角标：记录每个 tab 上次“看过”的时间点
+type BadgeKey = 'jobs' | 'renders'
+const badgeSeenKey = (key: BadgeKey) => `dsh.seen.${key}`
+
+function readSeen(key: BadgeKey): number {
+  const raw = window.localStorage.getItem(badgeSeenKey(key))
+  const value = Number(raw || 0)
+  return Number.isFinite(value) ? value : 0
+}
+
+function writeSeen(key: BadgeKey, at: number) {
+  window.localStorage.setItem(badgeSeenKey(key), String(at))
+}
+
+
+
 export default function App() {
   const [tab, setTabState] = useState<Tab>(initialTab)
   const [status, setStatus] = useState<ServiceStatus | null>(null)
   const [jobsRefresh, setJobsRefresh] = useState(0)
   const [toasts, setToasts] = useState<Toast[]>([])
   const known = useRef<Map<string, string> | null>(null)
+  const [badges, setBadges] = useState<{ jobs: number; renders: number }>({ jobs: 0, renders: 0 })
 
   const setTab = (next: Tab) => {
     setTabState(next)
@@ -42,6 +59,32 @@ export default function App() {
     else url.searchParams.set('tab', next)
     window.history.replaceState({}, '', url)
   }
+
+  // 角标：统计上次查看之后新完成的任务/成片
+  useEffect(() => {
+    let stopped = false
+    const tick = async () => {
+      try {
+        const res = await api.newCounts(readSeen('jobs'), readSeen('renders'))
+        if (!stopped) setBadges(res)
+      } catch { /* 忽略网络抖动 */ }
+    }
+    void tick()
+    const timer = window.setInterval(tick, 5000)
+    return () => { stopped = true; window.clearInterval(timer) }
+  }, [])
+
+  // 进入任务/成片页即视为已读
+  useEffect(() => {
+    if (tab === 'jobs') {
+      writeSeen('jobs', Date.now() / 1000 + 1)
+      setBadges((prev) => ({ ...prev, jobs: 0 }))
+    }
+    if (tab === 'renders') {
+      writeSeen('renders', Date.now() / 1000 + 1)
+      setBadges((prev) => ({ ...prev, renders: 0 }))
+    }
+  }, [tab])
 
   const refreshStatus = useCallback(() => {
     api.serviceStatus().then(setStatus).catch(() => setStatus(null))
@@ -142,8 +185,14 @@ export default function App() {
           <button className={tab === 'projects' ? 'active' : ''} onClick={() => setTab('projects')}>项目</button>
           <button className={tab === 'edit' ? 'active' : ''} onClick={() => setTab('edit')}>剪辑</button>
           <button className={tab === 'assets' ? 'active' : ''} onClick={() => setTab('assets')}>资产</button>
-          <button className={tab === 'renders' ? 'active' : ''} onClick={() => setTab('renders')}>成片</button>
-          <button className={tab === 'jobs' ? 'active' : ''} onClick={() => setTab('jobs')}>任务</button>
+          <button className={tab === 'renders' ? 'active' : ''} onClick={() => setTab('renders')}>
+            成片
+            {badges.renders > 0 && <span className="nav-badge">{badges.renders > 99 ? '99+' : badges.renders}</span>}
+          </button>
+          <button className={tab === 'jobs' ? 'active' : ''} onClick={() => setTab('jobs')}>
+            任务
+            {badges.jobs > 0 && <span className="nav-badge">{badges.jobs > 99 ? '99+' : badges.jobs}</span>}
+          </button>
           <button className={tab === 'service' ? 'active' : ''} onClick={() => setTab('service')}>服务管家</button>
         </nav>
 

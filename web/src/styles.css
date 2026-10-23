@@ -756,3 +756,11 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
 
 /* AI 断点续跑提示 */
 .resume-banner { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+
+
+/* 侧边栏未读角标 */
+.nav button { position: relative; }
+.nav-badge { display: inline-flex; align-items: center; justify-content: center;
+  min-width: 18px; height: 18px; padding: 0 5px; margin-left: 6px;
+  border-radius: 9px; background: #e5484d; color: #fff; font-size: 11px;
+  font-weight: 600; line-height: 1; vertical-align: 1px; }

@@ -1809,6 +1809,23 @@ async def _backfill_durations(items: list[dict], budget: int = 20) -> None:
         done += 1
 
 
+@app.get("/api/activity/new-counts")
+async def activity_new_counts(jobs_since: float = 0, renders_since: float = 0) -> dict:
+    """给侧边栏角标用：分别统计「此后新完成」的任务数与成片数。"""
+    def count(sql: str, since: float) -> int:
+        with store.connect() as conn:
+            row = conn.execute(sql, (since,)).fetchone()
+            return int(row[0] or 0) if row else 0
+
+    jobs = count(
+        "SELECT COUNT(*) FROM jobs WHERE status IN ('succeeded','failed') "
+        "AND COALESCE(finished_at, created_at) > ?", jobs_since)
+    renders = count(
+        "SELECT COUNT(*) FROM renders WHERE status = 'succeeded' "
+        "AND COALESCE(finished_at, created_at) > ?", renders_since)
+    return {"jobs": jobs, "renders": renders}
+
+
 @app.get("/api/renders")
 async def list_all_renders(limit: int = 50, status: str | None = None,
                            project_id: str | None = None) -> dict:
