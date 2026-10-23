@@ -711,6 +711,7 @@ export default function EditPanel({
 
   const batchSystem = useRef('')
   const batchOutlineRef = useRef('')
+  const batchKindRef = useRef<'subtitle' | 'narration'>('subtitle')
 
   const openBatchPrompt = async () => {
     if (!ordered.length) return
@@ -719,6 +720,7 @@ export default function EditPanel({
     setPromptBusy(true)
     try {
       const res = await api.aiPromptPreview({ shot_id: first.id, kind, style: stylePayload(kind) })
+      batchKindRef.current = kind
       let frameUrls: string[] = []
       if (res.frames_available) {
         try {
@@ -736,7 +738,9 @@ export default function EditPanel({
         frames: aiFrames,
         withFrames: res.frames_available && aiFrames > 0,
         userReadOnly: true,
-        note: '系统提示词对整批生效；下面是第 1 镜的输入样例，其余镜头会按各自画面重新生成。',
+        note: kind === 'narration'
+          ? '系统提示词对整批旁白生效；下面是第 1 镜的输入样例，其余镜头按各自画面重新生成。'
+          : '这里是「字幕师」模板，改了对整批字幕生效；旁白仍用旁白模板（想单独调旁白请把生成内容选成「只写旁白」）。',
         framesUrls: frameUrls,
         outline: res.outline || '',
         withOutline: Boolean(res.outline),
@@ -807,7 +811,8 @@ export default function EditPanel({
         if (needNarr) {
           try {
             const r = await api.aiScript({ shot_id: shot.id, kind: 'narration', style: stylePayload('narration'),
-              frames: batchFrames, system_prompt: batchSystem.current || undefined,
+              frames: batchFrames,
+              system_prompt: batchKindRef.current === 'narration' ? (batchSystem.current || undefined) : undefined,
               outline: batchOutlineRef.current || undefined })
             patchEdit(shot.id, { narration: r.text })
             narrationText = r.text
@@ -828,7 +833,8 @@ export default function EditPanel({
               narration: editOf(shot.id).narration_on
                 ? narrationText
                 : (editOf(shot.id).lip_on ? '' : undefined),
-              frames: batchFrames, system_prompt: batchSystem.current || undefined,
+              frames: batchFrames,
+              system_prompt: batchKindRef.current === 'subtitle' ? (batchSystem.current || undefined) : undefined,
               outline: batchOutlineRef.current || undefined,
             })
             if (r.skip === 'silent') {
