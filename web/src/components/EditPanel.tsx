@@ -112,8 +112,8 @@ export default function EditPanel({
   const [showPrompt, setShowPrompt] = useState(false)
   const voiceInput = useRef<HTMLInputElement | null>(null)
   const previewVideoRef = useRef<HTMLVideoElement | null>(null)
-  const pendingSeek = useRef<number | null>(null)
-  const [shotPreview, setShotPreview] = useState<{ url: string; duration: number }>({ url: '', duration: 0 })
+  const pendingSeek = useRef<{ shotId: string; local: number } | null>(null)
+  const [shotPreview, setShotPreview] = useState<{ url: string; duration: number; shotId: string }>({ url: '', duration: 0, shotId: '' })
   const [previewJob, setPreviewJob] = useState<{ id: string; status: string; message: string; url?: string } | null>(null)
   const [dims, setDims] = useState<Record<string, { w: number; h: number }>>({})
   const [timeline, setTimeline] = useState<Array<{ shot_id: string; title: string; duration: number; start: number; end: number }>>([])
@@ -319,9 +319,10 @@ export default function EditPanel({
 
   useEffect(() => {
     if (!activeShot) return
-    api.shotPreview(activeShot)
-      .then((res) => setShotPreview({ url: res.url, duration: res.duration }))
-      .catch(() => setShotPreview({ url: '', duration: 0 }))
+    const requested = activeShot
+    api.shotPreview(requested)
+      .then((res) => setShotPreview({ url: res.url, duration: res.duration, shotId: requested }))
+      .catch(() => setShotPreview({ url: '', duration: 0, shotId: requested }))
   }, [activeShot])
 
   // 预览源是「整片预览」时，视频时间 = 片头 + 正片时间
@@ -357,7 +358,7 @@ export default function EditPanel({
       || timeline[timeline.length - 1]
     const local = Math.max(0, Math.min(filmSeconds - target.start, Math.max(target.duration - 0.05, 0)))
     if (target.shot_id !== activeShot) {
-      pendingSeek.current = local
+      pendingSeek.current = { shotId: target.shot_id, local }
       setActiveShot(target.shot_id)
     } else {
       const video = previewVideoRef.current
@@ -372,23 +373,26 @@ export default function EditPanel({
     pendingSeek.current = null
   }, [filmPreviewUrl])
 
-  // 切镜头后（video 的 key 变了、元素重建）把待定的镜头内时间应用上去
+  // 切镜头后，等新视频加载完再定位；只有目标镜头和当前镜头一致时才应用
   useEffect(() => {
-    const local = pendingSeek.current
-    if (local === null) return
+    const pending = pendingSeek.current
+    if (!pending || pending.shotId !== activeShot) return
+    // 视频还是上一个镜头的，等它换过来再说
+    if (shotPreview.shotId !== activeShot) return
     const video = previewVideoRef.current
     if (!video) return
     const apply = () => {
-      try { video.currentTime = local } catch { /* 忽略 */ }
+      if (pendingSeek.current !== pending) return
+      try { video.currentTime = pending.local } catch { /* 忽略 */ }
       pendingSeek.current = null
-      setPlayhead(filmTimeOf(local))
+      setPlayhead(filmTimeOf(pending.local))
     }
     if (video.readyState >= 1) apply()
     else {
       video.addEventListener('loadedmetadata', apply, { once: true })
       return () => video.removeEventListener('loadedmetadata', apply)
     }
-  }, [shotPreview.url, previewJob?.url, filmTimeOf])
+  }, [shotPreview.url, shotPreview.shotId, previewJob?.url, activeShot, filmTimeOf])
 
   useEffect(() => () => {
     if (pollTimer.current) window.clearTimeout(pollTimer.current)

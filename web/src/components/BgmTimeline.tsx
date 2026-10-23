@@ -174,8 +174,9 @@ export default function BgmTimeline({
     }
   }
 
+  // 试听整首：循环类素材从 0 播，非循环从片段起点播，一直放到文件结尾
   const auditionTrack = (track: BgmTrackView) =>
-    playSegment(track.id, track.asset_id, track.start, track.end ?? total,
+    playSegment(track.id, track.asset_id, track.loop ? 0 : track.start, Number.POSITIVE_INFINITY,
       Math.pow(10, track.volume_db / 20))
 
   // 旁白：从 0 播到镜头区间结束
@@ -198,7 +199,7 @@ export default function BgmTimeline({
     const timer = window.setInterval(() => {
       const audio = audioRef.current
       if (!audio || audio.paused) return
-      if (audio.currentTime >= auditionEnd.current - 0.02) {
+      if (Number.isFinite(auditionEnd.current) && audio.currentTime >= auditionEnd.current - 0.02) {
         audio.pause()
         setAudition('')
       }
