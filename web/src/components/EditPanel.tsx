@@ -709,9 +709,8 @@ export default function EditPanel({
     }
   }
 
-  const batchSystem = useRef('')
+  const batchSystems = useRef<Record<string, string>>({})
   const batchOutlineRef = useRef('')
-  const batchKindRef = useRef<'subtitle' | 'narration'>('subtitle')
 
   const openBatchPrompt = async () => {
     if (!ordered.length) return
@@ -720,7 +719,6 @@ export default function EditPanel({
     setPromptBusy(true)
     try {
       const res = await api.aiPromptPreview({ shot_id: first.id, kind, style: stylePayload(kind) })
-      batchKindRef.current = kind
       let frameUrls: string[] = []
       if (res.frames_available) {
         try {
@@ -754,9 +752,9 @@ export default function EditPanel({
     }
   }
 
-  const runAI = async (batchFrames = aiFrames, systemOverride = '', batchOutline = '') => {
+  const runAI = async (batchFrames = aiFrames, systems: Record<string, string> = {}, batchOutline = '') => {
     if (!ordered.length) return
-    batchSystem.current = systemOverride
+    batchSystems.current = systems
     batchOutlineRef.current = batchOutline
     const snapshot = { ...edits }
     setAiUndo(snapshot)
@@ -812,7 +810,7 @@ export default function EditPanel({
           try {
             const r = await api.aiScript({ shot_id: shot.id, kind: 'narration', style: stylePayload('narration'),
               frames: batchFrames,
-              system_prompt: batchKindRef.current === 'narration' ? (batchSystem.current || undefined) : undefined,
+              system_prompt: batchSystems.current.narration || undefined,
               outline: batchOutlineRef.current || undefined })
             patchEdit(shot.id, { narration: r.text })
             narrationText = r.text
@@ -834,7 +832,7 @@ export default function EditPanel({
                 ? narrationText
                 : (editOf(shot.id).lip_on ? '' : undefined),
               frames: batchFrames,
-              system_prompt: batchKindRef.current === 'subtitle' ? (batchSystem.current || undefined) : undefined,
+              system_prompt: batchSystems.current.subtitle || undefined,
               outline: batchOutlineRef.current || undefined,
             })
             if (r.skip === 'silent') {
@@ -987,7 +985,8 @@ export default function EditPanel({
   }
 
   const confirmPrompt = async (payload: {
-    system: string; user: string; frames: number; framePicks: number[]; outline: string
+    system: string; systems: Record<string, string>
+    user: string; frames: number; framePicks: number[]; outline: string
   }) => {
     const action = pendingPrompt.current
     if (!action) return
@@ -998,7 +997,7 @@ export default function EditPanel({
         setPromptDraft(null)
         pendingPrompt.current = null
         setAiOpen(true)
-        await runAI(frames, payload.system, payload.outline)
+        await runAI(frames, payload.systems, payload.outline)
         return
       }
       if (action.type === 'script') {

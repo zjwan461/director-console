@@ -1,8 +1,15 @@
 import { useState } from 'react'
 
+export interface PromptTemplate {
+  key: string
+  label: string
+  system: string
+}
+
 export interface PromptDraft {
   title: string
   system: string
+  templates?: PromptTemplate[]
   user: string
   framesAvailable: boolean
   frames: number
@@ -21,13 +28,18 @@ interface Props {
   busy?: boolean
   onCancel: () => void
   onConfirm: (payload: {
-    system: string; user: string; frames: number; framePicks: number[]; outline: string
+    system: string; systems: Record<string, string>
+    user: string; frames: number; framePicks: number[]; outline: string
   }) => void
   onGenerateOutline?: () => Promise<void>
 }
 
 export default function PromptDialog({ draft, busy, onCancel, onConfirm, onGenerateOutline }: Props) {
-  const [system, setSystem] = useState(draft.system)
+  const initialTemplates = draft.templates && draft.templates.length
+    ? draft.templates
+    : [{ key: 'default', label: '系统提示词（角色与规则）', system: draft.system }]
+  const [templates, setTemplates] = useState<PromptTemplate[]>(initialTemplates)
+  const system = templates.map((item) => item.system).join('\n\n')
   const [user, setUser] = useState(draft.user)
   const [withFrames, setWithFrames] = useState(draft.withFrames)
   const allFrames = draft.framesUrls || []
@@ -39,7 +51,8 @@ export default function PromptDialog({ draft, busy, onCancel, onConfirm, onGener
   const [outline, setOutline] = useState(draft.outline || '')
 
   const frames = withFrames ? picked.length : 0
-  const edited = system !== draft.system || user !== draft.user
+  const edited = user !== draft.user
+    || JSON.stringify(templates) !== JSON.stringify(initialTemplates)
 
   return (
     <div className="picker-overlay" onClick={() => !busy && onCancel()}>
@@ -52,10 +65,19 @@ export default function PromptDialog({ draft, busy, onCancel, onConfirm, onGener
         <div className="prompt-dialog-body">
           {draft.error && <div className="notice err">{draft.error}</div>}
 
-          <label className="field">
-            <span>系统提示词（角色与规则）</span>
-            <textarea value={system} onChange={(e) => setSystem(e.target.value)} rows={4} spellCheck={false} />
-          </label>
+          {templates.map((item, index) => (
+            <label className="field" key={item.key}>
+              <span>{item.label}</span>
+              <textarea
+                value={item.system}
+                rows={4}
+                spellCheck={false}
+                onChange={(e) => setTemplates((prev) => prev.map((tpl, i) => (
+                  i === index ? { ...tpl, system: e.target.value } : tpl
+                )))}
+              />
+            </label>
+          ))}
 
           <label className="field">
             <span>本次输入（镜头信息 / 字数预算）</span>
@@ -137,7 +159,11 @@ export default function PromptDialog({ draft, busy, onCancel, onConfirm, onGener
         </div>
 
         <div className="prompt-dialog-foot">
-          <button className="ghost" onClick={() => { setSystem(draft.system); setUser(draft.user); setWithFrames(draft.withFrames) }}
+          <button className="ghost" onClick={() => {
+            setTemplates(initialTemplates)
+            setUser(draft.user)
+            setWithFrames(draft.withFrames)
+          }}
                   disabled={busy || !edited}>
             恢复默认
           </button>
@@ -145,7 +171,9 @@ export default function PromptDialog({ draft, busy, onCancel, onConfirm, onGener
           <button className="ghost" onClick={onCancel} disabled={busy}>取消</button>
           <button className="primary" disabled={busy || !system.trim() || !user.trim()}
                   onClick={() => onConfirm({
-                    system, user, frames,
+                    system,
+                    systems: Object.fromEntries(templates.map((item) => [item.key, item.system])),
+                    user, frames,
                     framePicks: withFrames ? picked : [],
                     outline: withOutline ? outline : '',
                   })}>
