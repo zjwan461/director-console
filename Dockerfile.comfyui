@@ -1,7 +1,7 @@
 # =============================================================================
 #  ComfyUI 云端镜像 —— MiniMax H3 + 导演台 custom_nodes
 #  基线: nvcr.io/nvidia/pytorch:24.09-py3 (Python 3.10.12)
-#  目标: ComfyUI v0.39.0 + torch 2.11.0+cu130 + 26 个导演台节点包
+#  目标: ComfyUI v0.39.0 + torch 2.11.0+cu130 + 26 个导演台节点包 + RES4LYF（git 直装）
 #  torch 2.11 是当前 cu130 上「torch / torchvision / torchaudio」三者都能对上的最高版本
 #  （torchaudio 目前只出到 2.11.0，装 2.12.1 会因依赖 torch==2.11 而回退）
 #
@@ -48,11 +48,15 @@ ARG TORCH_VERSION=2.11.0
 ARG TORCHVISION_VERSION=0.26.0
 ARG CUDA_CHANNEL=cu130
 ARG IMAGE_TAG=dev
+# RES4LYF 不在 director-node-pack.zip 里（那个包由仓库外打包），这里直接 git 拉
+# 想完全可复现就把 main 换成某个 commit sha
+ARG RES4LYF_REF=main
 
 LABEL org.opencontainers.image.title="comfyui-gai" \
       org.opencontainers.image.description="ComfyUI with native MiniMax H3 support + director console nodes" \
       org.opencontainers.image.version="${IMAGE_TAG}" \
       comfyui.ref="${COMFYUI_REF}" \
+      res4lyf.ref="${RES4LYF_REF}" \
       torch.version="${TORCH_VERSION}+${CUDA_CHANNEL}"
 
 WORKDIR /comfyui
@@ -112,6 +116,22 @@ RUN mkdir -p /tmp/nodepack \
  && rm -rf /comfyui/custom_nodes/ComfyUI-FeiHou-Toolbox \
  && rm -rf /tmp/nodepack /tmp/director-node-pack.zip \
  && echo "custom_nodes: $(ls /comfyui/custom_nodes | wc -l) packs"
+
+# -----------------------------------------------------------------------------
+# RES4LYF（采样器来源）
+#   症状：sampler_name 'res_2s_ode' not in list
+#   原因：导演台节点包没有带这个扩展，而工作流里用了它的采样器
+#   处理：直接 clone，跳过它自带的 requirements.txt（会装 opencv-python，
+#         和下面统一钉的 opencv-contrib-headless 冲突），只补真正缺的包
+#   注意：RES4LYF 更新很快，若与 ComfyUI ${COMFYUI_REF} 不兼容（导入报错），
+#         用 --build-arg RES4LYF_REF=<旧 commit> 退回可用版本
+# -----------------------------------------------------------------------------
+RUN git clone --depth 1 --branch ${RES4LYF_REF} \
+      https://github.com/ClownsharkBatwing/RES4LYF.git \
+      /comfyui/custom_nodes/RES4LYF \
+ && test -d /comfyui/custom_nodes/RES4LYF \
+ && pip install --no-cache-dir "pywavelets" "numpy<2" \
+ && echo "RES4LYF: $(ls /comfyui/custom_nodes/RES4LYF | head -3 | tr '\n' ' ')"
 
 # -----------------------------------------------------------------------------
 # 节点包依赖
@@ -190,11 +210,34 @@ need = [
 missing = [n for n in need if n not in mapping]
 print("NODE-CHECK total registered:", len(mapping))
 print("NODE-CHECK missing:", missing)
+
+# RES4LYF 是否真的提供了 res_2s_ode 采样器
+clown = [k for k in mapping if k.lower().startswith("clown")]
+print("NODE-CHECK RES4LYF classes:", len(clown))
+found = ""
+for name in clown:
+    try:
+        spec = mapping[name].INPUT_TYPES()
+    except Exception:
+        continue
+    required = spec.get("required") or {}
+    options = required.get("sampler_name") or required.get("sampler") or []
+    if options and isinstance(options[0], (list, tuple)):
+        if any("res_2s_ode" in str(x) for x in options[0]):
+            found = name
+            break
+print("NODE-CHECK res_2s_ode available:", bool(found), found)
 PY
 
 # -----------------------------------------------------------------------------
 # 目录预建（--base-directory /comfyui 决定 models/output/input/user 的根）
 # -----------------------------------------------------------------------------
+RUN test -d /comfyui/custom_nodes/RES4LYF \
+      || { echo "FATAL: RES4LYF 未克隆成功"; exit 1; } \
+ && (grep -rl "res_2s_ode" /comfyui/custom_nodes/RES4LYF >/dev/null \
+      && echo "RES4LYF: res_2s_ode 已包含" \
+      || echo "WARN: RES4LYF 里没搜到 res_2s_ode，可能是版本改名，看 NODE-CHECK 输出")
+
 RUN mkdir -p /comfyui/models /comfyui/output /comfyui/input /comfyui/user/__manager
 
 # 清理构建期代理
