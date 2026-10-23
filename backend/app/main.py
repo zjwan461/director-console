@@ -484,10 +484,11 @@ async def asset_waveform(asset_id: str, buckets: int = Query(160, ge=16, le=600)
 async def assets(
     kind: str | None = None,
     q: str = "",
+    purpose: str | None = None,
     limit: int = Query(60, ge=1, le=200),
     offset: int = Query(0, ge=0),
 ) -> dict:
-    items, total = store.search_assets(kind, q, limit, offset)
+    items, total = store.search_assets(kind, q, limit, offset, purpose)
     for item in items:
         item["url"] = f"/media/files/{item['path']}"
         item["purpose"] = _asset_purpose(item)

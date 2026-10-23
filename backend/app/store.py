@@ -219,12 +219,17 @@ def list_assets(kind: str | None = None, limit: int = 100, offset: int = 0, q: s
     return items
 
 
-def search_assets(kind: str | None = None, q: str = "", limit: int = 60, offset: int = 0) -> tuple[list[dict], int]:
+def search_assets(kind: str | None = None, q: str = "", limit: int = 60, offset: int = 0,
+                  purpose: str | None = None) -> tuple[list[dict], int]:
     where = []
     params: list = []
     if kind:
         where.append("kind=?")
         params.append(kind)
+    if purpose:
+        # meta 是 JSON 文本，用 LIKE 匹配 "purpose": "xxx"
+        where.append("meta LIKE ?")
+        params.append(f'%"purpose": "{purpose}"%')
     if q:
         where.append("path LIKE ?")
         params.append(f"%{q}%")

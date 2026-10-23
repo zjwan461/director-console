@@ -6,6 +6,7 @@ const KIND_LABEL: Record<string, string> = { image: '图片', video: '视频', a
 
 export default function AssetsPanel({ onOpenProject }: { onOpenProject: (projectId: string, shotId?: string) => void }) {
   const [kind, setKind] = useState('')
+  const [purpose, setPurpose] = useState('')
   const [q, setQ] = useState('')
   const [items, setItems] = useState<Asset[]>([])
   const [total, setTotal] = useState(0)
@@ -30,7 +31,11 @@ export default function AssetsPanel({ onOpenProject }: { onOpenProject: (project
     setLoading(true)
     setError('')
     try {
-      const res = await api.assets({ kind: kind || undefined, q: q || undefined, limit: PAGE, offset: nextOffset })
+      const res = await api.assets({
+        kind: kind || undefined, q: q || undefined,
+        purpose: kind === 'audio' && purpose ? purpose : undefined,
+        limit: PAGE, offset: nextOffset,
+      })
       setItems((prev) => (append ? [...prev, ...res.items] : res.items))
       setTotal(res.total)
       setOffset(nextOffset)
@@ -39,7 +44,7 @@ export default function AssetsPanel({ onOpenProject }: { onOpenProject: (project
     } finally {
       setLoading(false)
     }
-  }, [kind, q])
+  }, [kind, q, purpose])
 
   useEffect(() => { void load(0, false) }, [load])
 
@@ -189,6 +194,15 @@ export default function AssetsPanel({ onOpenProject }: { onOpenProject: (project
             {label}
           </button>
         ))}
+        {kind === 'audio' && [['', '全部音频'], ['music', '音乐'], ['narration', '配音']].map(([value, label]) => (
+          <button
+            key={value}
+            className={`chip ${purpose === value ? 'active' : ''}`}
+            onClick={() => setPurpose(value)}
+          >
+            {label}
+          </button>
+        ))}
         <input
           className="grow"
           style={{ maxWidth: 260 }}
@@ -225,8 +239,16 @@ export default function AssetsPanel({ onOpenProject }: { onOpenProject: (project
                     <span className="asset-play">▶</span>
                   </>
                 )}
-                {asset.kind === 'audio' && <span className="asset-icon">音频</span>}
-                <span className="asset-kind">{KIND_LABEL[asset.kind] || asset.kind}</span>
+                {asset.kind === 'audio' && (
+                  <span className="asset-icon">
+                    {asset.purpose === 'music' ? '音乐' : asset.purpose === 'narration' ? '配音' : '音频'}
+                  </span>
+                )}
+                <span className="asset-kind">
+                  {asset.kind === 'audio' && asset.purpose === 'music' ? '背景音乐'
+                    : asset.kind === 'audio' && asset.purpose === 'narration' ? '旁白配音'
+                    : KIND_LABEL[asset.kind] || asset.kind}
+                </span>
               </div>
               <div className="asset-meta">
                 <b title={asset.path}>{asset.path.split('/').pop()}</b>

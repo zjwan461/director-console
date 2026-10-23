@@ -180,7 +180,7 @@ export const api = {
   allRenders: (limit = 50, status?: string) =>
     request<{ items: Render[] }>(`/api/renders?limit=${limit}${status ? `&status=${status}` : ''}`),
   startRender: (id: string) => request<Render>(`/api/renders/${id}/start`, { method: 'POST' }),
-  assets: (params: { kind?: string; q?: string; limit?: number; offset?: number } = {}) => {
+  assets: (params: { kind?: string; q?: string; purpose?: string; limit?: number; offset?: number } = {}) => {
     const qs = new URLSearchParams()
     if (params.kind) qs.set('kind', params.kind)
     if (params.q) qs.set('q', params.q)
