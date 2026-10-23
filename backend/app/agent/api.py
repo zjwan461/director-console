@@ -105,8 +105,11 @@ async def stream(thread_id: str, after_seq: int = 0) -> StreamingResponse:
     async def gen():
         queue = bus.subscribe(thread_id)
         try:
-            for event in bus.replay(thread_id, after_seq):
-                yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
+            # after_seq=0 视为首次连接：历史由 /messages 恢复，不重放旧事件，
+            # 否则刷新后会把上一轮的步骤再播一遍
+            if after_seq > 0:
+                for event in bus.replay(thread_id, after_seq):
+                    yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
             while True:
                 try:
                     event = await asyncio.wait_for(queue.get(), timeout=15)

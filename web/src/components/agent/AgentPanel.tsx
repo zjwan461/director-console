@@ -109,6 +109,8 @@ export default function AgentPanel({ projectId, onOpenProject }: {
         : s)))
     } else if (event.t === 'need_confirm') {
       const params = (event.params || {}) as Record<string, unknown>
+      // 这一轮已经停下来等确认，必须解除 busy，否则按钮是禁用的
+      setBusy(false)
       setRun((prev) => prev ? { ...prev, status: 'waiting_confirm', pending: event as unknown as Record<string, unknown> } : prev)
       setConfirmDraft({ prompt: String(params.prompt || ''), aspect: String(params.aspect || '9:16') })
       api.agentThread(threadId).then((res) => setRun((res.runs || [])[0] || null)).catch(() => undefined)
@@ -138,6 +140,7 @@ export default function AgentPanel({ projectId, onOpenProject }: {
       }, ...prev])
     } else if (event.t === 'run_end') {
       setBusy(false)
+      if (event.status === 'waiting_confirm') setBusy(false)
       setRun((prev) => prev ? { ...prev, status: (event.status as AgentRun['status']) || 'done' } : prev)
       // 用服务端记录覆盖本地乐观消息，避免重复
       api.agentMessages(threadId).then((res) => setMessages(res.items)).catch(() => undefined)
@@ -165,13 +168,24 @@ export default function AgentPanel({ projectId, onOpenProject }: {
   }
 
   async function decide(approved: boolean) {
-    if (!run) return
+    let target = run
+    if (!target?.id) {
+      try {
+        const res = await api.agentThread(threadId)
+        target = (res.runs || [])[0] || null
+        if (target) setRun(target)
+      } catch { /* 忽略 */ }
+    }
+    if (!target?.id) {
+      setError('没有找到待确认的任务，可能已超时；重新发一次消息吧。')
+      return
+    }
     const params = approved && confirmDraft
-      ? { ...(run.pending.params as Record<string, unknown> || {}), prompt: confirmDraft.prompt, aspect: confirmDraft.aspect }
+      ? { ...(target.pending.params as Record<string, unknown> || {}), prompt: confirmDraft.prompt, aspect: confirmDraft.aspect }
       : undefined
     setBusy(true)
     try {
-      await api.agentConfirm(run.id, approved, params)
+      await api.agentConfirm(target.id, approved, params)
       setConfirmDraft(null)
       setSteps([])
     } catch (err) {
@@ -212,7 +226,7 @@ export default function AgentPanel({ projectId, onOpenProject }: {
             <h1>导演助手</h1>
             <p className="meta">{currentProject?.name || projectId} · 用聊天出图</p>
           </div>
-          <div className="row" style={{ gap: 8 }}>
+          <div className="agent-head-actions">
             <select value={threadId} onChange={(e) => setThreadId(e.target.value)}>
               {threads.map((t) => <option key={t.id} value={t.id}>{t.title}</option>)}
             </select>
@@ -223,11 +237,15 @@ export default function AgentPanel({ projectId, onOpenProject }: {
         <div className="agent-feed">
           {messages.length === 0 && !steps.length && (
             <div className="agent-hint">
-              <b>试试说：</b>
+              <span className="agent-hint-title">说句话就能出图</span>
               <ul>
-                <li>画一只黑猫蹲在雪地里，竖屏，电影感</li>
-                <li>素材库里有哪些猫的图？</li>
-                <li>你能帮我做什么？</li>
+                {[
+                  '画一只黑猫蹲在雪地里，竖屏，电影感',
+                  '素材库里有哪些猫的图？',
+                  '你能帮我做什么？',
+                ].map((sample) => (
+                  <li key={sample} onClick={() => setText(sample)}>{sample}</li>
+                ))}
               </ul>
             </div>
           )}
@@ -305,7 +323,7 @@ export default function AgentPanel({ projectId, onOpenProject }: {
                   <span className="meta">{String(pending.params.width)} × {String(pending.params.height)}</span>
                 )}
               </div>
-              <div className="row" style={{ gap: 8, marginTop: 8 }}>
+              <div className="agent-confirm-actions">
                 <button className="primary" disabled={busy} onClick={() => void decide(true)}>执行</button>
                 <button className="ghost" disabled={busy} onClick={() => void decide(false)}>取消</button>
               </div>
@@ -318,21 +336,27 @@ export default function AgentPanel({ projectId, onOpenProject }: {
         </div>
 
         <div className="agent-composer">
-          <textarea
-            rows={2}
-            value={text}
-            placeholder="说点什么，例如：画一只黑猫蹲在雪地里，竖屏"
-            onChange={(e) => setText(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void send() }
-            }}
-          />
+          <div className="agent-composer-box">
+            <textarea
+              rows={2}
+              value={text}
+              placeholder="说点什么，例如：画一只黑猫蹲在雪地里，竖屏"
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void send() }
+              }}
+            />
+            <span className="agent-composer-hint">Enter 发送 · Shift + Enter 换行</span>
+          </div>
           <button className="primary" disabled={busy || !text.trim()} onClick={() => void send()}>发送</button>
         </div>
       </div>
 
       <aside className="agent-canvas">
-        <h2>画布</h2>
+        <div className="agent-canvas-head">
+          <h2>画布</h2>
+          <span>{artifacts.length ? `${artifacts.length} 个产物` : '实时进度'}</span>
+        </div>
         <div className="agent-run-card">
           <span className="meta">当前任务</span>
           <b>{run ? statusLabel(run.status) : '空闲'}</b>
@@ -340,7 +364,7 @@ export default function AgentPanel({ projectId, onOpenProject }: {
           {run?.error && <div className="notice err">{run.error.slice(0, 120)}</div>}
         </div>
         <div className="agent-artifacts">
-          {artifacts.length === 0 && <p className="meta">还没有产物</p>}
+          {artifacts.length === 0 && <div className="agent-empty-mini">出图后会出现在这里</div>}
           {artifacts.map((item) => (
             <a key={item.id} className="agent-artifact-card" href={item.url || '#'} target="_blank" rel="noreferrer">
               {item.url ? <img src={item.url} alt="" loading="lazy" /> : <div className="agent-artifact-empty">排队中</div>}
