@@ -509,15 +509,24 @@ ffmpeg:
 **llama-cpp-python**（本地 GGUF 文本模型，图片对口型等卡用）默认不装：
 
 ```bash
-python install.py --with-llm               # 装 PyPI 轮子（CPU，几秒）
+python install.py --with-llm               # 装 fork 的 CPU 轮子
 python install.py --with-llm --llama-cuda  # 源码编译 CUDA 版（8~20 分钟）
 ```
+
+**必须用 JamePeng fork**：zealman 加载 Qwen3.5/3.6/3.8 时会 `new Qwen35ChatHandler()`，
+上游 abetlen 版没有这个类，装了也会报「当前 llama-cpp-python 不支持 Qwen35ChatHandler」。
+装完 `install.py` 会显式校验这个符号，缺了会打印警告。
 
 两者的来源都记在 `content/node-pack.json`：
 
 ```json
 "git_packs":  [{ "name": "RES4LYF", "repo": "https://github.com/...", "ref": "main", "pip": ["pywavelets"] }],
-"pip_extras": [{ "name": "llama-cpp-python", "flag": "with_llm" }]
+"pip_extras": [{
+  "name": "llama-cpp-python",
+  "spec": "llama-cpp-python @ git+https://github.com/JamePeng/llama-cpp-python.git@main",
+  "require_attr": "llama_cpp.llama_chat_format.Qwen35ChatHandler",
+  "flag": "with_llm"
+}]
 ```
 
 `--skip-git-packs` 可跳过 git 节点包；`--llama-cuda-arch` 指定 CUDA 架构（默认 `89`）。
