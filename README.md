@@ -502,22 +502,28 @@ ffmpeg:
 > 现在部署用 `python install.py --from-comfy <已有ComfyUI>` 或 `--node-pack <本地zip>`；
 > `content/node-pack.json` 的 `urls` 留空，等 GitHub Release 建好再填。
 
-**RES4LYF**（提供 `res_2s_ode` 等采样器）不进 zip，改由 `Dockerfile.comfyui` 构建时
-从 GitHub 直接 clone 到 `custom_nodes/RES4LYF`。原因：它只通过「注册枚举值」生效，
-节点类扫描找不到它，放进 zip 也容易被漏掉；构建时直装最稳。
+**RES4LYF**（提供 `res_2s_ode` 等采样器）不进 zip，由 `install.py` 从 Git 直接 clone
+到 `custom_nodes/RES4LYF`。原因：它只通过「注册枚举值」生效，节点类扫描找不到，
+放进 zip 也容易漏；单独 clone 最稳。
 
-重新构建镜像：
+**llama-cpp-python**（本地 GGUF 文本模型，图片对口型等卡用）默认不装：
 
 ```bash
-docker build -t comfyui-h3:cu130 \
-  --build-arg HTTP_PROXY=http://你的代理:端口 \
-  --build-arg HTTPS_PROXY=http://你的代理:端口 \
-  -f Dockerfile.comfyui .
+python install.py --with-llm               # 装 PyPI 轮子（CPU，几秒）
+python install.py --with-llm --llama-cuda  # 源码编译 CUDA 版（8~20 分钟）
 ```
 
-- 版本不兼容时用 `--build-arg RES4LYF_REF=<commit>` 回退
-- 构建日志里搜 `NODE-CHECK`：会打印缺哪些节点类、`res_2s_ode` 是否可用
-- 装好后 `/object_info` 里应能看到该采样器，工作流不再降级到 `res_multistep`
+两者的来源都记在 `content/node-pack.json`：
+
+```json
+"git_packs":  [{ "name": "RES4LYF", "repo": "https://github.com/...", "ref": "main", "pip": ["pywavelets"] }],
+"pip_extras": [{ "name": "llama-cpp-python", "flag": "with_llm" }]
+```
+
+`--skip-git-packs` 可跳过 git 节点包；`--llama-cuda-arch` 指定 CUDA 架构（默认 `89;120`）。
+
+> `Dockerfile.comfyui` 是作者自用环境的镜像构建脚本，正常部署不需要它；
+> 想复刻那套镜像才用它，参数见文件头注释。
 
 
 

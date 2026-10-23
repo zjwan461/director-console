@@ -180,5 +180,25 @@
    ]
   }
  },
+"git_packs": [
+  {
+   "name": "RES4LYF",
+   "dir": "RES4LYF",
+   "repo": "https://github.com/ClownsharkBatwing/RES4LYF.git",
+   "ref": "main",
+   "pip": [
+    "pywavelets"
+   ],
+   "note": "提供 res_2s_ode 等采样器；只注册枚举值，不会被节点类扫描命中，所以单独 clone"
+  }
+ ],
+ "pip_extras": [
+  {
+   "name": "llama-cpp-python",
+   "spec": "llama-cpp-python",
+   "flag": "with_llm",
+   "note": "本地 GGUF 文本模型；install.py 加 --with-llm 才装，--llama-cuda 编 CUDA 版"
+  }
+ ],
  "note": "zip 不进 git；用 tools/pack_nodes.py 生成后上传 GitHub Release，再把 URL 填到 urls（可多条，install.py 依次尝试并校验 sha256）"
 }

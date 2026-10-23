@@ -186,7 +186,7 @@ class Installer:
 
     # -- 步骤包装 --------------------------------------------------------- #
     COMFY_STEPS = {"comfy_clone", "comfy_venv", "comfy_torch", "comfy_deps",
-                   "comfy_nodes", "node_deps", "models"}
+                   "comfy_nodes", "git_packs", "node_deps", "extra_deps", "models"}
 
     def step(self, sid: str, title: str, fn, payload=None) -> None:
         if self.args.skip_comfy and sid in self.COMFY_STEPS:
@@ -442,6 +442,16 @@ def _copy_from_comfy(inst: Installer, source: Path, pack_names: list[str]) -> in
     return copied
 
 
+def _manifest() -> dict:
+    path = ROOT / "content" / "node-pack.json"
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
 def step_comfy_nodes(inst: Installer) -> None:
     manifest_path = ROOT / "content" / "node-pack.json"
     manifest = {}
@@ -509,6 +519,90 @@ def step_comfy_nodes(inst: Installer) -> None:
             count += 1
     shutil.rmtree(tmp, ignore_errors=True)
     inst.log(f"  复制 {count} 个节点包")
+
+
+def step_git_packs(inst: Installer) -> None:
+    """清单里点名的 git 节点包（如 RES4LYF）直接 clone 进 custom_nodes。
+
+    zip 里没有这些包：它们只通过「注册枚举值」生效（采样器等），
+    节点类扫描找不到，塞进 zip 也容易被漏掉。
+    """
+    if getattr(inst.args, "skip_git_packs", False):
+        inst.log("  --skip-git-packs，跳过 git 节点包")
+        return
+    manifest = _manifest()
+    packs = manifest.get("git_packs") or []
+    if not packs:
+        inst.log("  清单里没有 git_packs，跳过")
+        return
+    target = inst.comfy_dir / "custom_nodes"
+    target.mkdir(parents=True, exist_ok=True)
+    py = inst.python_of(inst.comfy_venv)
+
+    for spec in packs:
+        name = str(spec.get("dir") or spec.get("name") or "").strip()
+        repo = str(spec.get("repo") or "").strip()
+        if not name or not repo:
+            continue
+        dest = target / name
+        if dest.exists() and any(dest.iterdir()):
+            inst.log(f"  {name} 已存在，跳过 clone")
+        elif inst.args.dry_run:
+            inst.log(f"  将 clone {repo} -> {dest}")
+            continue
+        else:
+            ref = str(spec.get("ref") or "main")
+            inst.log(f"  clone {name}（{ref}）")
+            try:
+                inst.run(["git", "clone", "--depth", "1", "--branch", ref, repo, str(dest)])
+            except RuntimeError as exc:
+                inst.log(f"  [warn] {name} clone 失败：{exc}；工作流用到它的节点时会降级")
+                continue
+        for pkg in spec.get("pip") or []:
+            if inst.args.dry_run:
+                inst.log(f"  将安装依赖 {pkg}")
+                continue
+            try:
+                inst.run([py, "-m", "pip", "install", pkg])
+            except RuntimeError as exc:
+                inst.log(f"  [warn] {name} 依赖 {pkg} 安装失败：{exc}")
+
+
+def step_extra_deps(inst: Installer) -> None:
+    """清单里的 pip 扩展（默认不装，要显式开 --with-llm 之类）。
+
+    目前只有 llama-cpp-python：本地 GGUF 文本模型用。
+    默认装 PyPI 轮子（CPU，几秒完成）；加 --llama-cuda 才源码编译 CUDA 版（10 分钟起）。
+    """
+    manifest = _manifest()
+    extras = manifest.get("pip_extras") or []
+    if not extras:
+        return
+    py = inst.python_of(inst.comfy_venv)
+    for spec in extras:
+        name = str(spec.get("name") or "").strip()
+        flag = str(spec.get("flag") or "").strip()
+        if flag and not getattr(inst.args, flag, False):
+            inst.log(f"  {name} 未启用（加 --{flag.replace('_', '-')} 才装）：{spec.get('note', '')}")
+            continue
+        spec_str = str(spec.get("spec") or name)
+        if inst.args.dry_run:
+            inst.log(f"  将安装 {spec_str}")
+            continue
+        if name == "llama-cpp-python" and getattr(inst.args, "llama_cuda", False):
+            arch = getattr(inst.args, "llama_cuda_arch", "89;120")
+            inst.log(f"  {name}：CUDA 源码编译（arch={arch}），预计 10~25 分钟")
+            try:
+                inst.run(
+                    [py, "-m", "pip", "install", "--no-cache-dir", "--no-build-isolation", spec_str],
+                    env={"CMAKE_ARGS": f"-DGGML_CUDA=on -DCMAKE_CUDA_ARCHITECTURES={arch}",
+                         "FORCE_CMAKE": "1"},
+                )
+            except Exception:
+                inst.log(f"  [warn] {name} CUDA 编译失败，改回 CPU 轮子")
+                inst.run([py, "-m", "pip", "install", spec_str])
+        else:
+            inst.run([py, "-m", "pip", "install", spec_str])
 
 
 # --------------------------------------------------------------------------- #
@@ -1161,6 +1255,14 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--ffmpeg-url", default="", help="自定义 full 版下载地址（zip/tar.xz）")
     p.add_argument("--with-heavy", action="store_true",
                    help="额外安装 demucs / whisper / voxcpm / clip-interrogator / modelscope 等重依赖")
+    p.add_argument("--with-llm", action="store_true",
+                   help="额外安装 llama-cpp-python（本地 GGUF 文本模型，图片对口型等卡需要）")
+    p.add_argument("--llama-cuda", action="store_true",
+                   help="配合 --with-llm：源码编译 CUDA 版（10~25 分钟，CPU 版几秒）")
+    p.add_argument("--llama-cuda-arch", default="89;120",
+                   help="CUDA 架构，89=4090 / 120=5090 / 86=3090")
+    p.add_argument("--skip-git-packs", action="store_true",
+                   help="不 clone 清单里的 git 节点包（如 RES4LYF）")
     p.add_argument("--with-build", action="store_true",
                    help="额外安装需要编译的（llama-cpp-python / xformers / bitsandbytes / insightface 等）")
     p.add_argument("--skip-node-check", action="store_true",
@@ -1207,7 +1309,9 @@ def main() -> int:
         ("comfy_torch", "PyTorch", step_comfy_torch),
         ("comfy_deps", "ComfyUI 依赖", step_comfy_deps),
         ("comfy_nodes", "custom_nodes", step_comfy_nodes),
+        ("git_packs", "git 节点包", step_git_packs),
         ("node_deps", "节点依赖", step_node_deps),
+        ("extra_deps", "扩展依赖", step_extra_deps),
         ("ffmpeg", "FFmpeg", step_ffmpeg),
         ("config", "写配置", step_config),
         ("models", "模型目录", step_models),
