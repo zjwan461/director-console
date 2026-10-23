@@ -22,6 +22,37 @@ interface BgmTrack {
   loop: boolean
 }
 
+interface BatchSnap {
+  kind: string
+  at: number
+  ids: string[]
+  done: string[]
+  total: number
+}
+
+const batchSnapKey = (projectId: string) => `dsh.aiBatch.${projectId}`
+
+function readBatchSnap(projectId: string): BatchSnap | null {
+  try {
+    const raw = window.localStorage.getItem(batchSnapKey(projectId))
+    if (!raw) return null
+    const data = JSON.parse(raw) as BatchSnap
+    if (!data?.ids?.length) return null
+    // 超过 24 小时视为过期
+    if (Date.now() - (data.at || 0) > 24 * 3600 * 1000) return null
+    return data
+  } catch {
+    return null
+  }
+}
+
+function writeBatchSnap(projectId: string, snap: BatchSnap | null) {
+  try {
+    if (!snap) window.localStorage.removeItem(batchSnapKey(projectId))
+    else window.localStorage.setItem(batchSnapKey(projectId), JSON.stringify(snap))
+  } catch { /* 隐私模式下忽略 */ }
+}
+
 interface Edit {
   in_point: string
   out_point: string
@@ -69,6 +100,8 @@ export default function EditPanel({
   const [bgmTracks, setBgmTracks] = useState<BgmTrack[]>([])
   const [duckBgm, setDuckBgm] = useState(true)
   const [activeTrackId, setActiveTrackId] = useState('')
+  const [resumeSnap, setResumeSnap] = useState<BatchSnap | null>(null)
+  const [resumeIds, setResumeIds] = useState<string[]>([])
   const [playhead, setPlayhead] = useState(0)
   const [subsEnabled, setSubsEnabled] = useState(true)
   const [subSize, setSubSize] = useState(42)
@@ -316,6 +349,40 @@ export default function EditPanel({
   }, [loaded, projectId, resKey, fps, bgmTracks, duckBgm,
       subsEnabled, subSize, subMargin, subAutoFit, subLang, burnedDefault, loudness, fitMode, contentMode, transType, transDur, titleOn, titleText, titleDur, titleBg, titleImage,
       tailOn, tailText, tailDur, tailBg, tailImage, edits, selected, shots])
+
+  // B) 读取上次中断的 AI 剪辑快照，给出「继续未完成」的入口
+  useEffect(() => {
+    if (!projectId) return
+    setResumeSnap(readBatchSnap(projectId))
+    setResumeIds([])
+  }, [projectId])
+
+  // A) 刷新/切页回来后，恢复本项目最近一次预览任务（后端可能已跑完）
+  useEffect(() => {
+    if (!projectId) return
+    let cancelled = false
+    api.allRenders(8, undefined, projectId).then((res) => {
+      if (cancelled) return
+      const latest = res.items.find((r) => r.is_preview)
+      if (!latest) return
+      if (['queued', 'preparing', 'rendering'].includes(latest.status)) {
+        setPreviewJob({ id: latest.id, status: latest.status, message: latest.message || '继续渲染' })
+        const poll = async (id: string) => {
+          const r = await api.render(id)
+          setPreviewJob({ id: r.id, status: r.status, message: r.message || '', url: r.output_url })
+          if (r.status === 'succeeded' || r.status === 'failed') {
+            if (r.status === 'failed') setError(r.error || '预览失败')
+            return
+          }
+          pollTimer.current = window.setTimeout(() => void poll(id), 2000)
+        }
+        void poll(latest.id)
+      } else if (latest.status === 'succeeded' && latest.output_url) {
+        setPreviewJob({ id: latest.id, status: 'succeeded', message: '', url: latest.output_url })
+      }
+    }).catch(() => undefined)
+    return () => { cancelled = true }
+  }, [projectId])
 
   useEffect(() => {
     if (!activeShot) return
@@ -712,9 +779,13 @@ export default function EditPanel({
   const batchSystems = useRef<Record<string, string>>({})
   const batchOutlineRef = useRef('')
 
+  const aiTargets = resumeIds.length
+    ? ordered.filter((s) => resumeIds.includes(s.id))
+    : ordered
+
   const openBatchPrompt = async () => {
     if (!ordered.length) return
-    const first = ordered[0]
+    const first = aiTargets[0] || ordered[0]
     const kind: 'subtitle' | 'narration' = aiKind === 'narration' ? 'narration' : 'subtitle'
     setPromptBusy(true)
     try {
@@ -739,7 +810,7 @@ export default function EditPanel({
       }
       // 本次要处理的全部镜头，每镜取一张首帧做缩略图
       const shotsPreview: Array<{ title: string; url: string }> = []
-      for (const s of ordered) {
+      for (const s of aiTargets) {
         try {
           const frames = await api.shotFrames(s.id, 1)
           shotsPreview.push({ title: s.title || `镜头 ${s.idx + 1}`, url: frames.items[0]?.url || '' })
@@ -749,7 +820,7 @@ export default function EditPanel({
       }
 
       setPromptDraft({
-        title: `AI 剪辑（${ordered.length} 镜）· 提示词`,
+        title: `AI 剪辑（${aiTargets.length} 镜）· 提示词`,
         system: res.system,
         templates,
         shotsPreview,
@@ -774,6 +845,8 @@ export default function EditPanel({
 
   const runAI = async (batchFrames = aiFrames, systems: Record<string, string> = {}, batchOutline = '') => {
     if (!ordered.length) return
+    const targets = resumeIds.length ? ordered.filter((s) => resumeIds.includes(s.id)) : ordered
+    if (!targets.length) return
     batchSystems.current = systems
     batchOutlineRef.current = batchOutline
     const snapshot = { ...edits }
@@ -789,12 +862,19 @@ export default function EditPanel({
       return
     }
     setAiRows({})
-    setAiProgress({ done: 0, total: ordered.length })
+    setAiProgress({ done: 0, total: targets.length })
     if (contentMode === 'silent') {
       notify('ok', '纯画面模式', '当前设置为纯画面，不生成字幕/旁白')
       setAiRunning(false)
       return
     }
+    const snap: BatchSnap = {
+      kind: aiKind, at: Date.now(),
+      ids: targets.map((s) => s.id), done: [], total: targets.length,
+    }
+    writeBatchSnap(projectId, snap)
+    setResumeSnap(snap)
+
     let done = 0
     let failed = 0
     let ttsFailed = 0
@@ -815,7 +895,7 @@ export default function EditPanel({
       done += 1
     }
     try {
-      for (const [index, shot] of ordered.entries()) {
+      for (const [index, shot] of targets.entries()) {
         const title = shot.title || `镜头 ${shot.idx + 1}`
         const startedAt = Date.now()
         setRow(shot.id, title, 'running')
@@ -904,7 +984,13 @@ export default function EditPanel({
         const ok = !notes.some((n) => n.includes('失败'))
         const seconds = ((Date.now() - startedAt) / 1000).toFixed(1)
         setRow(shot.id, title, ok ? 'done' : 'error', `${notes.join(' · ')} · ${seconds}s`)
-        setAiProgress({ done: index + 1, total: ordered.length })
+        if (ok) {
+          snap.done.push(shot.id)
+          snap.at = Date.now()
+          writeBatchSnap(projectId, snap)
+          setResumeSnap({ ...snap, done: [...snap.done] })
+        }
+        setAiProgress({ done: index + 1, total: targets.length })
       }
       if (aiTitles) {
         try {
@@ -916,8 +1002,15 @@ export default function EditPanel({
       const summary = `成功 ${done} 项${failed ? `，失败 ${failed} 项` : ''}${ttsFailed ? `，配音失败 ${ttsFailed} 项` : ''}`
       setAiMessage(summary)
       notify(failed || ttsFailed ? 'err' : 'ok', 'AI 生成完成', summary)
+      // 全部镜头都处理过就清掉断点快照
+      const remaining = snap.ids.filter((id) => !snap.done.includes(id))
+      if (!remaining.length) {
+        writeBatchSnap(projectId, null)
+        setResumeSnap(null)
+      }
     } finally {
       setAiRunning(false)
+      setResumeIds([])
     }
   }
 
@@ -1476,6 +1569,24 @@ export default function EditPanel({
         </div>
       )}
       {error && <div className="notice err">{error}</div>}
+
+      {resumeSnap && resumeSnap.ids.length > resumeSnap.done.length && !aiRunning && (
+        <div className="notice resume-banner">
+          <span>
+            上次 AI 剪辑中断在第 {resumeSnap.done.length}/{resumeSnap.ids.length} 镜，
+            已完成的内容已保存
+          </span>
+          <span style={{ flex: 1 }} />
+          <button className="ghost tiny"
+                  onClick={() => { setResumeIds(resumeSnap.ids.filter((id) => !resumeSnap.done.includes(id))); setAiOpen(true) }}>
+            继续未完成的 {resumeSnap.ids.length - resumeSnap.done.length} 镜
+          </button>
+          <button className="ghost tiny"
+                  onClick={() => { writeBatchSnap(projectId, null); setResumeSnap(null) }}>
+            忽略
+          </button>
+        </div>
+      )}
 
       <div className="render-editor">
         <div className="ed-col">

@@ -87,6 +87,23 @@ export default function StudioPanel({ onJobCreated, onGoJobs, serviceReady }: Pr
     }).catch((err) => setError(String(err)))
   }, [])
 
+  // 刷新/切页回来后，恢复正在进行（或刚完成）的生成任务
+  useEffect(() => {
+    const saved = window.localStorage.getItem('dsh.activeJob')
+    if (!saved) return
+    api.job(saved).then((job) => {
+      if (job.status === 'succeeded' || ['queued', 'running', 'preparing'].includes(job.status)) {
+        setActiveJob(job)
+      } else {
+        window.localStorage.removeItem('dsh.activeJob')
+      }
+    }).catch(() => window.localStorage.removeItem('dsh.activeJob'))
+  }, [])
+
+  useEffect(() => {
+    if (activeJob) window.localStorage.setItem('dsh.activeJob', activeJob.id)
+  }, [activeJob?.id])
+
   useEffect(() => {
     if (!activeJob) return
     if (['succeeded', 'failed', 'canceled'].includes(activeJob.status)) return

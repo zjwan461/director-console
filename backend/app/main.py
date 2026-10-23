@@ -1810,8 +1810,11 @@ async def _backfill_durations(items: list[dict], budget: int = 20) -> None:
 
 
 @app.get("/api/renders")
-async def list_all_renders(limit: int = 50, status: str | None = None) -> dict:
-    items = store.list_renders_all(limit, status)
+async def list_all_renders(limit: int = 50, status: str | None = None,
+                           project_id: str | None = None) -> dict:
+    items = store.list_renders_all(limit * 4 if project_id else limit, status)
+    if project_id:
+        items = [r for r in items if r.get("project_id") == project_id][:limit]
     enriched = [_enrich_render(r) for r in items]
     await _backfill_durations(enriched)
     return {"items": enriched}

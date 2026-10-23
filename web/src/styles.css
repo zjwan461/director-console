@@ -752,3 +752,7 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
   object-fit: cover; border-radius: 6px; border: 1px solid var(--line); background: #0b0d13; }
 .prompt-shots-strip figcaption { font-size: 10px; color: #939bb0; margin-top: 2px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+
+/* AI 断点续跑提示 */
+.resume-banner { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }

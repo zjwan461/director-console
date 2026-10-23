@@ -177,8 +177,8 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     }),
-  allRenders: (limit = 50, status?: string) =>
-    request<{ items: Render[] }>(`/api/renders?limit=${limit}${status ? `&status=${status}` : ''}`),
+  allRenders: (limit = 50, status?: string, projectId?: string) =>
+    request<{ items: Render[] }>(`/api/renders?limit=${limit}${status ? `&status=${status}` : ''}${projectId ? `&project_id=${projectId}` : ''}`),
   startRender: (id: string) => request<Render>(`/api/renders/${id}/start`, { method: 'POST' }),
   assets: (params: { kind?: string; q?: string; purpose?: string; limit?: number; offset?: number } = {}) => {
     const qs = new URLSearchParams()
