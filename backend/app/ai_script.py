@@ -58,6 +58,55 @@ def shot_description(shot: dict) -> str:
     return ""
 
 
+SHOT_SECTION_RE = re.compile(
+    r"^\s*\[Shot\s*\d+\]\s*(.+?)(?=^\s*\[Shot\s*\d+\]|^\s*[a-z][a-z_]{3,}\s*:|\Z)",
+    re.S | re.M,
+)
+SUMMARY_RE = re.compile(
+    r"^\s*summary\s*[:：]\s*(.+?)(?=^\s*[a-z][a-z_]{3,}\s*:|\Z)", re.S | re.M,
+)
+MARKUP_RE = re.compile(r"</?(?:Picture|Subject|Video|Image)\s*\d*>", re.I)
+
+# 压缩后的描述上限（字符）
+COMPACT_LIMIT = 320
+
+
+def compact_description(raw: str) -> str:
+    """把「视频生成提示词」压成给人看的画面说明。
+
+    这类 prompt 常带 subject_definitions / retention_analysis /
+    overall_soundscape 等工程字段，对写旁白没帮助，还会稀释信息。
+    优先取 [Shot N] 正文段落，其次 summary，最后退回清洗后的正文。
+    """
+    if not (raw or "").strip():
+        return ""
+    # 占位符换成可读词，避免“framing , in a ...”这种残缺
+    text = re.sub(r"</?Picture\s*\d*>", "首帧", raw, flags=re.I)
+    text = re.sub(r"</?Subject\s*\d*>", "主角", text, flags=re.I)
+    text = MARKUP_RE.sub("", text).replace("\r", "")
+
+    candidates: list[str] = []
+    for match in SHOT_SECTION_RE.finditer(text):
+        candidates.append(match.group(1))
+    summary = SUMMARY_RE.search(text)
+    if summary:
+        candidates.append(summary.group(1))
+    # 兜底：去掉工程字段标题，保留正文
+    stripped = re.sub(r"^\s*[a-z][a-z_]{3,}\s*:\s*$", "", text, flags=re.M | re.I)
+    candidates.append(stripped)
+
+    for chunk in candidates:
+        cleaned = re.sub(r"\s+", " ", chunk).strip(" \n:：-")
+        cleaned = re.sub(r"^(?:keyframe completion|continues from)\s*", "", cleaned, flags=re.I)
+        # 明显是工程术语的整段跳过
+        if re.search(r"fully_preserved|partially_preserved|not_preserved", cleaned[:80]):
+            continue
+        if len(cleaned) >= 12:
+            return cleaned[:COMPACT_LIMIT].rstrip(" ,，。")
+
+    return re.sub(r"\s+", " ", text).strip()[:COMPACT_LIMIT]
+
+
 async def narration_matches(narration: str, description: str) -> bool:
     """让模型判断旁白和画面描述是否在说同一件事（跨语言）。"""
     api_key = str(settings.get("ai.api_key", "") or "")
@@ -112,9 +161,10 @@ def build_prompt(kind: str, shot: dict, project: dict, neighbors: dict,
     system = prompts.get(PROMPT_KEYS[kind])
     if not system:
         raise ValueError("缺少 AI 文案提示词模板（content/ai-prompts.json）")
-    description = shot_description(shot)
-    if not description:
+    raw_description = shot_description(shot)
+    if not raw_description:
         raise ValueError("这个镜头没有画面描述，AI 无法对照画面；请先在项目页填写「画面描述」")
+    description = compact_description(raw_description)
     budget = char_budget(kind, duration)
     narration_style = dict(style or {})
     if kind == "narration":
