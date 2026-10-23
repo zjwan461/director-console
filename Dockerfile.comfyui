@@ -166,6 +166,8 @@ RUN printf '%s\n' \
 #     1. 用上游 abetlen 版即可 —— 这里只做文本推理，不需要视觉 handler
 #     2. 编译时开 CUDA（GGML_CUDA=on），否则 27B 模型只能跑 CPU
 #     3. CMAKE_CUDA_ARCHITECTURES：89=4090 / 86=3090 / 120=5090(需 CUDA>=12.8)
+#        CUDA 版 .so 链接 libcuda.so.1，构建期没有驱动，导入检查要挂 stub 库，
+#        失败只警告（容器 --gpus 启动后才真正可用）
 #        这里没有显卡可探测，架构必须由 --build-arg 指定（默认 89）；
 #        本地安装走 install.py，那边会按本机显卡自动识别，两套互不影响
 #        这个基础镜像自带 CUDA 12.6 的 nvcc，编不了 sm_120；
@@ -184,11 +186,20 @@ RUN pip install --no-cache-dir cmake ninja scikit-build-core \
     fi; \
     CMAKE_ARGS="-DGGML_CUDA=on -DGGML_NATIVE=OFF -DCMAKE_CUDA_ARCHITECTURES=${ARCHS}" FORCE_CMAKE=1 \
     pip install --no-cache-dir --no-build-isolation "$SPEC" \
- && python - <<'PY'
+ && echo "llama_cpp wheel 已安装" \
+ && test -f /usr/local/lib/python3.10/dist-packages/llama_cpp/lib/libllama.so \
+ && echo "libllama.so OK"
+
+# CUDA 版 libllama.so 链接 libcuda.so.1，构建期没有驱动，直接 import 会失败。
+# 挂上 stub 库能验证「编译产物可加载」；加载仍失败时只警告，不中断构建
+# （真正的验证在容器 --gpus 启动后）。
+RUN export LD_LIBRARY_PATH="/usr/local/cuda/lib64/stubs:/usr/local/cuda/targets/x86_64-linux/lib/stubs:${LD_LIBRARY_PATH}"; \
+    python - <<'PY' || echo "WARN: 构建期无 GPU 驱动，跳过运行时导入检查（容器 --gpus 启动后验证）"
 import llama_cpp
 print("llama_cpp", llama_cpp.__version__)
 print("gpu offload:", llama_cpp.llama_supports_gpu_offload())
 from llama_cpp import Llama  # noqa: F401
+print("llama_cpp 可加载")
 PY
 
 # -----------------------------------------------------------------------------
@@ -211,12 +222,13 @@ RUN pip uninstall -y opencv-python opencv-python-headless \
 # 依赖自检：构建期把踩过的坑全部断言掉
 # -----------------------------------------------------------------------------
 RUN set -e; \
+    export LD_LIBRARY_PATH="/usr/local/cuda/lib64/stubs:/usr/local/cuda/targets/x86_64-linux/lib/stubs:${LD_LIBRARY_PATH}"; \
     python -c "import numpy, scipy; print('numpy', numpy.__version__, '| scipy', scipy.__version__)"; \
     python -c "import cv2, numpy; print('cv2', cv2.__version__, 'vs numpy', numpy.__version__); assert hasattr(cv2.dnn, 'DictValue')"; \
     python -c "import kornia; print('kornia', kornia.__version__)"; \
     python -c "import comfy_aimdo.control; print('comfy_aimdo OK')"; \
     python -c "import comfy_kitchen; print('comfy_kitchen OK')"; \
-    python -c "import llama_cpp; print('llama_cpp OK', llama_cpp.__version__, llama_cpp.llama_supports_gpu_offload())"; \
+    python -c "import llama_cpp; print('llama_cpp OK', llama_cpp.__version__, llama_cpp.llama_supports_gpu_offload())" || echo "WARN: llama_cpp 导入失败（构建期无驱动属正常）"; \
     if python -c "import flash_attn" 2>/dev/null; then \
         echo "FATAL: flash_attn 仍可被导入，会以 undefined symbol 拖垮 kornia"; exit 1; \
     fi; \
