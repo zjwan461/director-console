@@ -1585,6 +1585,51 @@ async def ai_tts(body: TTSRequest) -> dict:
     }
 
 
+def _edit_state_map(project_id: str) -> dict[str, dict]:
+    raw = store.get_setting(_edit_state_key(project_id), "")
+    if not raw:
+        return {}
+    try:
+        data = json.loads(raw)
+    except Exception:
+        return {}
+    return {str(e.get("shot_id")): e for e in (data.get("shot_edits") or []) if e.get("shot_id")}
+
+
+def _neighbors_for(project_id: str, shot_id: str) -> dict:
+    """前后镜上下文：标题 + 压缩描述 + 已有旁白，供模型保持连贯、避免重复。"""
+    siblings = sorted(store.list_shots(project_id), key=lambda s: s["idx"])
+    index = next((i for i, s in enumerate(siblings) if s["id"] == shot_id), -1)
+    edits = _edit_state_map(project_id)
+
+    def pack(item: dict | None) -> dict:
+        if not item:
+            return {"title": "", "description": "", "narration": ""}
+        edit = edits.get(item["id"]) or {}
+        narration = str(edit.get("narration") or "").strip()
+        raw = ai_script.shot_description(item)
+        return {
+            "title": item.get("title", ""),
+            "description": ai_script.compact_description(raw)[:120] if raw else "",
+            "narration": narration[:60],
+        }
+
+    prev_item = siblings[index - 1] if index > 0 else None
+    next_item = siblings[index + 1] if 0 <= index < len(siblings) - 1 else None
+    prev_pack = pack(prev_item)
+    next_pack = pack(next_item)
+    return {
+        "prev": prev_pack["title"],
+        "next": next_pack["title"],
+        "prev_prompt": prev_pack["description"],
+        "next_prompt": next_pack["description"],
+        "prev_narration": prev_pack["narration"],
+        "next_narration": next_pack["narration"],
+        "index": index + 1 if index >= 0 else 0,
+        "total": len(siblings),
+    }
+
+
 @app.post("/api/ai/prompt-preview")
 async def ai_prompt_preview(body: ScriptRequest) -> dict:
     """返回这次 AI 生成将要发送的完整提示词，供前端弹框展示与编辑。"""
@@ -1593,14 +1638,7 @@ async def ai_prompt_preview(body: ScriptRequest) -> dict:
         raise HTTPException(status_code=404, detail="镜头不存在")
     kind = body.kind if body.kind in {"subtitle", "narration"} else "subtitle"
     project = store.get_project(shot["project_id"]) or {}
-    siblings = sorted(store.list_shots(shot["project_id"]), key=lambda s: s["idx"])
-    index = next((i for i, s in enumerate(siblings) if s["id"] == shot["id"]), -1)
-    neighbors = {
-        "prev": (siblings[index - 1].get("title", "") if index > 0 else ""),
-        "next": (siblings[index + 1].get("title", "") if 0 <= index < len(siblings) - 1 else ""),
-        "prev_prompt": (siblings[index - 1].get("prompt", "")[:120] if index > 0 else ""),
-        "next_prompt": (siblings[index + 1].get("prompt", "")[:120] if 0 <= index < len(siblings) - 1 else ""),
-    }
+    neighbors = _neighbors_for(shot["project_id"], shot["id"])
     found = _shot_video(shot)
     duration = 5.0
     if found and found[1].exists():
@@ -1629,14 +1667,7 @@ async def ai_script_one(body: ScriptRequest) -> dict:
         raise HTTPException(status_code=404, detail="镜头不存在")
     kind = body.kind if body.kind in {"subtitle", "narration"} else "subtitle"
     project = store.get_project(shot["project_id"]) or {}
-    siblings = sorted(store.list_shots(shot["project_id"]), key=lambda s: s["idx"])
-    index = next((i for i, s in enumerate(siblings) if s["id"] == shot["id"]), -1)
-    neighbors = {
-        "prev": (siblings[index - 1].get("title", "") if index > 0 else ""),
-        "next": (siblings[index + 1].get("title", "") if 0 <= index < len(siblings) - 1 else ""),
-        "prev_prompt": (siblings[index - 1].get("prompt", "")[:120] if index > 0 else ""),
-        "next_prompt": (siblings[index + 1].get("prompt", "")[:120] if 0 <= index < len(siblings) - 1 else ""),
-    }
+    neighbors = _neighbors_for(shot["project_id"], shot["id"])
 
     found = _shot_video(shot)
     duration = 5.0
