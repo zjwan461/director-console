@@ -186,29 +186,26 @@ RUN pip install --no-cache-dir cmake ninja scikit-build-core \
     pip install --no-cache-dir --no-build-isolation "$SPEC" \
  && echo "llama_cpp wheel 已安装" \
  && test -f /usr/local/lib/python3.10/dist-packages/llama_cpp/lib/libllama.so \
- && echo "libllama.so OK"
+ && test -f /usr/local/lib/python3.10/dist-packages/llama_cpp/lib/libggml-cuda.so \
+ && echo "libllama.so / libggml-cuda.so 就位"
 
-# CUDA 版 libllama.so 链接 libcuda.so.1，构建期没有驱动，直接 import 会失败。
-# 挂上 stub 库能验证「编译产物可加载」；加载仍失败时只警告，不中断构建
-# （真正的验证在容器 --gpus 启动后）。
-RUN export LD_LIBRARY_PATH="/usr/local/cuda/lib64/stubs:/usr/local/cuda/targets/x86_64-linux/lib/stubs:${LD_LIBRARY_PATH}"; \
-    python - <<'PY'
+# CUDA 版 .so 链接 libcuda.so.1，构建期没有驱动，import 必然失败，
+# 所以这里只解析源文件做静态校验：确认 Qwen35ChatHandler 这个类真的在包里
+# （上游 abetlen 版没有它，zealman 加载 Qwen3.5/3.6/3.8 会直接报错）。
+# 真正的运行时验证放到容器 --gpus 启动后：
+#   docker run --rm --gpus all comfyui-h3:cu130 python -c \
+#     "import llama_cpp; print(llama_cpp.llama_supports_gpu_offload())"
+RUN python - <<'PY'
+import pathlib
 import sys
 
-try:
-    import llama_cpp
-except (OSError, RuntimeError) as exc:
-    if "libcuda" in str(exc) or "libnvidia" in str(exc):
-        print("WARN: 构建期无 GPU 驱动，跳过运行时导入检查（容器 --gpus 启动后验证）")
-        sys.exit(0)
-    raise
-
-# 这一步是硬要求：zealman 加载 Qwen3.5/3.6/3.8 时必须 new Qwen35ChatHandler
-from llama_cpp.llama_chat_format import Qwen35ChatHandler, Qwen3VLChatHandler  # noqa: F401
-
-print("llama_cpp", llama_cpp.__version__)
-print("gpu offload:", llama_cpp.llama_supports_gpu_offload())
-print("Qwen35ChatHandler / Qwen3VLChatHandler 都在")
+root = pathlib.Path("/usr/local/lib/python3.10/dist-packages/llama_cpp")
+hits = [p for p in root.rglob("*.py")
+        if "class Qwen35ChatHandler" in p.read_text(encoding="utf-8", errors="ignore")]
+if not hits:
+    print("FATAL: 包里没有 Qwen35ChatHandler —— 装的不是 JamePeng fork")
+    sys.exit(1)
+print("Qwen35ChatHandler 定义于:", hits[0].relative_to(root))
 PY
 
 # -----------------------------------------------------------------------------
@@ -231,13 +228,13 @@ RUN pip uninstall -y opencv-python opencv-python-headless \
 # 依赖自检：构建期把踩过的坑全部断言掉
 # -----------------------------------------------------------------------------
 RUN set -e; \
-    export LD_LIBRARY_PATH="/usr/local/cuda/lib64/stubs:/usr/local/cuda/targets/x86_64-linux/lib/stubs:${LD_LIBRARY_PATH}"; \
     python -c "import numpy, scipy; print('numpy', numpy.__version__, '| scipy', scipy.__version__)"; \
     python -c "import cv2, numpy; print('cv2', cv2.__version__, 'vs numpy', numpy.__version__); assert hasattr(cv2.dnn, 'DictValue')"; \
     python -c "import kornia; print('kornia', kornia.__version__)"; \
     python -c "import comfy_aimdo.control; print('comfy_aimdo OK')"; \
     python -c "import comfy_kitchen; print('comfy_kitchen OK')"; \
-    python -c "import llama_cpp; from llama_cpp.llama_chat_format import Qwen35ChatHandler; print('llama_cpp OK', llama_cpp.__version__, llama_cpp.llama_supports_gpu_offload())"; \
+    test -f /usr/local/lib/python3.10/dist-packages/llama_cpp/lib/libggml-cuda.so; \
+    echo "llama_cpp 静态检查通过（CUDA 后端已编译，运行时需 --gpus）"; \
     if python -c "import flash_attn" 2>/dev/null; then \
         echo "FATAL: flash_attn 仍可被导入，会以 undefined symbol 拖垮 kornia"; exit 1; \
     fi; \
