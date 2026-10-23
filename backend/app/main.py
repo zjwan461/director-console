@@ -1457,6 +1457,7 @@ class ScriptRequest(BaseModel):
     style: dict[str, Any] = {}
     system_prompt: str | None = None
     user_prompt: str | None = None
+    frame_picks: list[int] | None = None
 
 
 @app.get("/api/settings/tts")
@@ -1691,11 +1692,16 @@ async def ai_script_one(body: ScriptRequest) -> dict:
     images: list[Path] = []
     if body.frames > 0 and found and found[1].exists():
         frame_dir = DATA / "thumbs" / "frames"
+        picks = body.frame_picks
+        count = max(body.frames, (max(picks) + 1) if picks else 0)
         try:
-            images = await ffmpeg.extract_frames(found[1], frame_dir, body.frames,
+            images = await ffmpeg.extract_frames(found[1], frame_dir, count,
                                                  prefix=f"shot_{shot['id']}")
         except Exception:
             images = []
+        if picks and images:
+            # 前端勾了具体哪几张，就按序号取
+            images = [images[i] for i in picks if 0 <= i < len(images)]
     try:
         return await ai_script.generate(kind, shot, project, neighbors, duration,
                                        body.style or {}, images=images,

@@ -890,6 +890,7 @@ export default function EditPanel({
       return
     }
     setPromptBusy(true)
+    setAiBusy(`${shotId}:${kind}:prompt`)
     try {
       const res = await api.aiPromptPreview({ shot_id: shotId, kind, style: stylePayload(kind) })
       let frameUrls: string[] = []
@@ -914,6 +915,7 @@ export default function EditPanel({
       notify('err', '读取提示词失败', msg.slice(0, 120))
     } finally {
       setPromptBusy(false)
+      setAiBusy('')
     }
   }
 
@@ -938,7 +940,7 @@ export default function EditPanel({
     }
   }
 
-  const confirmPrompt = async (payload: { system: string; user: string; frames: number }) => {
+  const confirmPrompt = async (payload: { system: string; user: string; frames: number; framePicks: number[] }) => {
     const action = pendingPrompt.current
     if (!action) return
     setPromptBusy(true)
@@ -952,7 +954,8 @@ export default function EditPanel({
       }
       if (action.type === 'script') {
         await runAiOne(action.shotId, action.kind,
-          { system: payload.system, user: payload.user, frames: payload.frames })
+          { system: payload.system, user: payload.user, frames: payload.frames,
+            framePicks: payload.framePicks })
       } else {
         await runAiTitle(action.kind, { system: payload.system, user: payload.user })
       }
@@ -966,7 +969,7 @@ export default function EditPanel({
   const runAiOne = async (
     shotId: string,
     kind: 'subtitle' | 'narration',
-    prompts?: { system?: string; user?: string; frames?: number },
+    prompts?: { system?: string; user?: string; frames?: number; framePicks?: number[] },
   ) => {
     const key = `${shotId}:${kind}`
     if (kind === 'subtitle' && modeOf(shotId) === 'silent') {
@@ -981,6 +984,7 @@ export default function EditPanel({
       const r = await api.aiScript({
         shot_id: shotId, kind, style: stylePayload(kind),
         frames: prompts?.frames ?? aiFrames,
+        frame_picks: prompts?.framePicks,
         narration,
         system_prompt: prompts?.system,
         user_prompt: prompts?.user,
@@ -1533,7 +1537,9 @@ export default function EditPanel({
                                 <button className="ghost tiny" disabled={aiBusy === `${shot.id}:subtitle`}
                                         title="检测人声并转写"
                                         onClick={() => void openScriptPrompt(shot.id, 'subtitle')}>
-                                  {aiBusy === `${shot.id}:subtitle` ? <><span className="spin" /> 转写中</> : '转写'}
+                                  {aiBusy === `${shot.id}:subtitle` ? <><span className="spin" /> 转写中</>
+                                    : aiBusy === `${shot.id}:subtitle:prompt` ? <><span className="spin" /> 准备中</>
+                                    : '转写'}
                                 </button>
                               )}
                             </div>
@@ -1608,7 +1614,9 @@ export default function EditPanel({
                                   </button>
                                   <button className="ghost tiny" disabled={aiBusy === `${shot.id}:narration`}
                                           onClick={() => void openScriptPrompt(shot.id, 'narration')}>
-                                    {aiBusy === `${shot.id}:narration` ? <><span className="spin" /> 生成中</> : 'AI 写'}
+                                    {aiBusy === `${shot.id}:narration` ? <><span className="spin" /> 生成中</>
+                                      : aiBusy === `${shot.id}:narration:prompt` ? <><span className="spin" /> 准备中</>
+                                      : 'AI 写'}
                                   </button>
                                   <button className="ghost tiny" disabled={!edit.narration.trim() || aiBusy === `${shot.id}:tts`}
                                           title={edit.narration.trim() ? '合成配音' : '先写旁白文案'}

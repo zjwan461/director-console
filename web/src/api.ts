@@ -98,7 +98,7 @@ export const api = {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ project_id: projectId, kind }),
     }),
-  aiScript: (payload: { shot_id: string; kind: 'subtitle' | 'narration'; mode?: string; narration?: string; frames?: number; style?: Record<string, string>; system_prompt?: string; user_prompt?: string }) =>
+  aiScript: (payload: { shot_id: string; kind: 'subtitle' | 'narration'; mode?: string; narration?: string; frames?: number; style?: Record<string, string>; system_prompt?: string; user_prompt?: string; frame_picks?: number[] }) =>
     request<{ text: string; chars: number; budget: number; over: boolean; compressed: boolean; original_chars: number; duration: number; skip?: string; reason?: string; transcribed?: boolean; followed_narration?: boolean; narration_mismatch?: boolean }>('/api/ai/script', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

@@ -728,7 +728,9 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
 .prompt-frames { display: flex; gap: 6px; flex-wrap: wrap; }
 .prompt-frames.off { opacity: .35; }
 .prompt-frames figure { position: relative; margin: 0; width: 108px; border-radius: 6px;
-  overflow: hidden; border: 1px solid var(--line); }
+  overflow: hidden; border: 1px solid var(--line); cursor: pointer; transition: border-color .15s, transform .15s; }
+.prompt-frames figure.on { border-color: #7c6cf0; }
+.prompt-frames figure:hover { transform: translateY(-1px); }
 .prompt-frames figure.off { filter: grayscale(1); opacity: .35; }
 .prompt-frames img { display: block; width: 100%; height: 61px; object-fit: cover; }
 .prompt-frames figcaption { position: absolute; left: 4px; bottom: 3px; font-size: 10px;
