@@ -727,6 +727,7 @@ export default function EditPanel({
         } catch { frameUrls = [] }
       }
       pendingPrompt.current = { type: 'batch' }
+      setAiOpen(false)
       setPromptDraft({
         title: `AI 剪辑（${ordered.length} 镜）· 提示词`,
         system: res.system,
@@ -990,6 +991,7 @@ export default function EditPanel({
         const frames = payload.frames
         setPromptDraft(null)
         pendingPrompt.current = null
+        setAiOpen(true)
         await runAI(frames, payload.system, payload.outline)
         return
       }
@@ -1215,7 +1217,12 @@ export default function EditPanel({
         <PromptDialog
           draft={promptDraft}
           busy={promptBusy}
-          onCancel={() => { setPromptDraft(null); pendingPrompt.current = null }}
+          onCancel={() => {
+            const action = pendingPrompt.current
+            setPromptDraft(null)
+            pendingPrompt.current = null
+            if (action?.type === 'batch') setAiOpen(true)
+          }}
           onGenerateOutline={generateOutline}
           onConfirm={(payload) => void confirmPrompt(payload)}
         />
@@ -1394,9 +1401,12 @@ export default function EditPanel({
             {aiMessage && <div className="notice">{aiMessage}</div>}
             </div>
             <div className="row-actions">
-              <button className="primary" disabled={aiRunning || !ordered.length}
+              <button className="primary" disabled={aiRunning || promptBusy || !ordered.length}
                       onClick={() => (aiKind === 'merge' ? void runAI() : void openBatchPrompt())}>
-                {aiRunning ? '处理中…' : aiKind === 'merge' ? '合并导出' : `开始（${ordered.length} 镜）`}
+                {aiRunning ? '处理中…'
+                  : promptBusy ? <><span className="spin" /> 准备中</>
+                  : aiKind === 'merge' ? '合并导出'
+                  : `开始（${ordered.length} 镜）`}
               </button>
               {aiUndo && (
                 <button className="ghost" disabled={aiRunning}
