@@ -82,6 +82,59 @@ KEY_NODES = [
 ]
 
 
+def _longpath_error(err: Exception) -> bool:
+    """git 在 Windows 上因路径超过 MAX_PATH（260）创建文件失败的典型报错。"""
+    text = str(err)
+    return "Filename too long" in text or "unable to create file" in text
+
+
+def _apply_git_longpaths(env: dict) -> None:
+    """Windows：给 git 子进程注入 core.longpaths=true，绕开 MAX_PATH 260。
+
+    pip 装 git+ 包时会自己调 `git clone` / `git submodule update --init --recursive`，
+    我们没法给它的命令行加参数，只能通过 GIT_CONFIG_COUNT 环境变量传（git >= 2.31）。
+    否则 vendor/llama.cpp 里 tools/ui/src/lib/components/... 这类深层路径会报
+    "Filename too long"，整个子模块 checkout 直接失败。
+    """
+    if not HOST:
+        return
+    raw = str(env.get("GIT_CONFIG_COUNT") or "").strip()
+    try:
+        index = int(raw) if raw else 0
+    except ValueError:
+        index = 0
+    env["GIT_CONFIG_COUNT"] = str(index + 1)
+    env[f"GIT_CONFIG_KEY_{index}"] = "core.longpaths"
+    env[f"GIT_CONFIG_VALUE_{index}"] = "true"
+
+
+def _pip_install_ext(inst, py: str, spec_str: str) -> None:
+    """安装扩展包（可能是 git+ 源码，需要 clone + 递归 checkout 子模块）。
+
+    Windows 上若仍撞上 MAX_PATH 导致子模块 checkout 失败，就写一次 git 全局
+    core.longpaths 再重试；还是不行就给出开启系统长路径支持的具体命令。
+    """
+    try:
+        inst.run([py, "-m", "pip", "install", spec_str])
+        return
+    except RuntimeError as exc:
+        if not _longpath_error(exc):
+            raise
+        inst.log("  [warn] 路径超过 MAX_PATH(260)，git 子模块 checkout 失败；"
+                 "开启 core.longpaths 后重试")
+        try:
+            inst.run(["git", "config", "--global", "core.longpaths", "true"], quiet=True)
+        except RuntimeError as cfg_exc:
+            inst.log(f"  [warn] 写 git 全局配置失败：{cfg_exc}")
+        try:
+            inst.run([py, "-m", "pip", "install", spec_str])
+        except RuntimeError:
+            inst.log("  [warn] 仍然失败：请以管理员身份开启系统长路径后重跑（改完需重启）：\n"
+                     "         reg add HKLM\\SYSTEM\\CurrentControlSet\\Control\\FileSystem "
+                     "/v LongPathsEnabled /t REG_DWORD /d 1 /f")
+            raise
+
+
 # --------------------------------------------------------------------------- #
 # 基础设施
 # --------------------------------------------------------------------------- #
@@ -151,6 +204,9 @@ class Installer:
         full_env.setdefault("PIP_RETRIES", "2")
         if env:
             full_env.update(env)
+        # Windows：pip 装 git+ 包时是 pip 自己去 clone/checkout 子模块的，
+        # 命令行改不了，只能靠环境变量把 core.longpaths 灌给它的 git 子进程
+        _apply_git_longpaths(full_env)
 
         # 边跑边把输出写进日志（以前是跑完才写，pip 一慢就看起来像卡死）
         proc = subprocess.Popen(
@@ -677,9 +733,9 @@ def step_extra_deps(inst: Installer) -> None:
                 )
             except Exception:
                 inst.log(f"  [warn] {name} CUDA 编译失败，改回 CPU 轮子")
-                inst.run([py, "-m", "pip", "install", spec_str])
+                _pip_install_ext(inst, py, spec_str)
         else:
-            inst.run([py, "-m", "pip", "install", spec_str])
+            _pip_install_ext(inst, py, spec_str)
 
         # 装完验证关键符号：zealman 需要 Qwen35ChatHandler，上游版没有
         attr = str(spec.get("require_attr") or "").strip()
