@@ -14,6 +14,7 @@ from .events import bus
 from .graph import build_graph
 
 _graph = None
+PROCESS_START = time.time()
 
 
 def graph():
@@ -115,6 +116,12 @@ async def confirm_run(run_id: str, approved: bool, params: dict | None = None) -
     run = agent_store.get_run(run_id)
     if not run:
         raise ValueError("run 不存在")
+    # 中断状态只存在进程内存里（MemorySaver）：服务重启后旧确认点不了，
+    # 直接告诉用户「重新发一次」，不要静默成功
+    if float(run.get("started_at") or 0) < PROCESS_START:
+        agent_store.update_run(run_id, status="interrupted",
+                               error="服务重启后确认已失效")
+        raise ValueError("这个确认已经失效（服务重启过），重新发一次消息就好")
     thread_id = run["thread_id"]
     config = {"configurable": {"thread_id": run_id, "emit": _sink(thread_id)}}
     payload: dict = {"approved": approved}
@@ -301,3 +308,14 @@ def _rel_from_url(url: str) -> str:
             rest = url[len(prefix):]
             return f"{root}{rest}" if root else rest
     return ""
+
+
+async def mark_stale_runs() -> int:
+    """服务启动时，把上次进程留下的 running / waiting_confirm 标成 interrupted。"""
+    from .store import connect
+
+    with connect() as conn:
+        cur = conn.execute(
+            "UPDATE agent_runs SET status='interrupted', error='服务重启导致中断',"
+            " finished_at=? WHERE status IN ('running','waiting_confirm')", (time.time(),))
+        return cur.rowcount

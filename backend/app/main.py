@@ -78,6 +78,12 @@ app.mount("/media/files", StaticFiles(directory=str(DATA)), name="files")
 async def _startup() -> None:
     store.recover_jobs()
     store.recover_renders()
+    try:
+        from .agent.runtime import mark_stale_runs
+
+        await mark_stale_runs()
+    except Exception:
+        pass
     runner.start()
     render_runner.start()
 

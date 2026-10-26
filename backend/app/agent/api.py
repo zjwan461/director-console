@@ -191,7 +191,7 @@ async def confirm(run_id: str, body: ConfirmIn) -> dict:
     try:
         return await runtime.confirm_run(run_id, body.approved, body.params)
     except ValueError as exc:
-        raise HTTPException(status_code=404, detail=str(exc))
+        raise HTTPException(status_code=409, detail=str(exc))
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 
