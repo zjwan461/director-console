@@ -1143,3 +1143,21 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
 
 /* 产物失败态 */
 .agent-artifact-empty.bad { border-color: #5a2a2e; color: #d98a8a; background: #1a1214; }
+
+
+/* 确认卡：栅格参数区 */
+.agent-confirm-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 10px;
+}
+.agent-confirm-field { display: flex; flex-direction: column; gap: 5px; font-size: 11.5px; color: #8b97ae; }
+.agent-confirm-field select {
+  height: 32px; padding: 0 8px; font-size: 12.5px;
+  background: #0d1220; border: 1px solid #2a3450; border-radius: 8px; color: var(--text);
+}
+.agent-confirm-hint {
+  margin: 2px 0 0; font-size: 11.5px; color: #77849c;
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+}
+.agent-confirm-hint .dot { color: #3d465c; }

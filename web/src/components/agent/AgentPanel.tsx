@@ -438,7 +438,7 @@ export default function AgentPanel({ projectId, onOpenProject }: {
           {pending && confirmDraft && (
             <div className="agent-confirm">
               <div className="agent-confirm-head">
-                <b>{String(pending.summary || '确认执行')}</b>
+                <b>{confirmSummary(pending, confirmDraft)}</b>
                 <span className="meta">确认后才会提交</span>
               </div>
 
@@ -449,8 +449,8 @@ export default function AgentPanel({ projectId, onOpenProject }: {
                     <textarea rows={3} value={confirmDraft.prompt}
                               onChange={(e) => setConfirmDraft({ ...confirmDraft, prompt: e.target.value })} />
                   </label>
-                  <div className="agent-confirm-row">
-                    <label className="inline-field">
+                  <div className="agent-confirm-grid">
+                    <label className="agent-confirm-field">
                       <span>画幅</span>
                       <select value={confirmDraft.aspect}
                               onChange={(e) => setConfirmDraft({ ...confirmDraft, aspect: e.target.value })}>
@@ -458,7 +458,7 @@ export default function AgentPanel({ projectId, onOpenProject }: {
                       </select>
                     </label>
                     {actionOf(pending) === 'video' && (
-                      <label className="inline-field">
+                      <label className="agent-confirm-field">
                         <span>时长</span>
                         <select value={confirmDraft.duration}
                                 onChange={(e) => setConfirmDraft({ ...confirmDraft, duration: Number(e.target.value) })}>
@@ -466,7 +466,7 @@ export default function AgentPanel({ projectId, onOpenProject }: {
                         </select>
                       </label>
                     )}
-                    <label className="inline-field">
+                    <label className="agent-confirm-field">
                       <span>清晰度</span>
                       <select value={confirmDraft.megapixels}
                               onChange={(e) => setConfirmDraft({ ...confirmDraft, megapixels: Number(e.target.value) })}>
@@ -475,10 +475,16 @@ export default function AgentPanel({ projectId, onOpenProject }: {
                         ))}
                       </select>
                     </label>
-                    <span className="meta">
-                      {pixelLabel(confirmDraft.aspect, confirmDraft.megapixels)}
-                    </span>
                   </div>
+                  <p className="agent-confirm-hint">
+                    输出 {pixelLabel(confirmDraft.aspect, confirmDraft.megapixels)}
+                    <span className="dot">·</span>
+                    {actionOf(pending) === 'video' ? `${confirmDraft.duration} 秒` : '单张'}
+                    <span className="dot">·</span>
+                    预计 {actionOf(pending) === 'video'
+                      ? `${Math.max(60, confirmDraft.duration * 40)} 秒`
+                      : '40 秒'}
+                  </p>
                 </>
               )}
 
@@ -600,6 +606,17 @@ export default function AgentPanel({ projectId, onOpenProject }: {
   )
 }
 
+function confirmSummary(pending: { action?: unknown; summary?: string }, draft: {
+  aspect: string; megapixels: number; duration: number
+}): string {
+  const action = actionOf(pending)
+  if (action === 'image' || action === 'video') {
+    const size = pixelLabel(draft.aspect, draft.megapixels)
+    return action === 'video' ? `${size} · ${draft.duration} 秒` : `${size} · 单张图片`
+  }
+  return String(pending.summary || '确认执行')
+}
+
 function megapixelOptions(pending: { params?: Record<string, unknown> }): number[] {
   const raw = pending?.params?.megapixels_options
   const list = Array.isArray(raw) ? raw.map(Number).filter((n) => n > 0) : []
@@ -607,7 +624,7 @@ function megapixelOptions(pending: { params?: Record<string, unknown> }): number
 }
 
 function formatMegapixels(mp: number): string {
-  return `${mp} MP`
+  return `${Number(mp)} MP`
 }
 
 /** 与后端 presets.size_from 同算法：按 32 对齐 */
