@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { api } from '../api'
+import { api, sseSubscribe } from '../api'
 import type { Asset, Project, Shot } from '../types'
 import BgmTimeline from './BgmTimeline'
 import PromptDialog from './PromptDialog'
@@ -20,37 +20,6 @@ interface BgmTrack {
   fade_in: number
   fade_out: number
   loop: boolean
-}
-
-interface BatchSnap {
-  kind: string
-  at: number
-  ids: string[]
-  done: string[]
-  total: number
-}
-
-const batchSnapKey = (projectId: string) => `dsh.aiBatch.${projectId}`
-
-function readBatchSnap(projectId: string): BatchSnap | null {
-  try {
-    const raw = window.localStorage.getItem(batchSnapKey(projectId))
-    if (!raw) return null
-    const data = JSON.parse(raw) as BatchSnap
-    if (!data?.ids?.length) return null
-    // 超过 24 小时视为过期
-    if (Date.now() - (data.at || 0) > 24 * 3600 * 1000) return null
-    return data
-  } catch {
-    return null
-  }
-}
-
-function writeBatchSnap(projectId: string, snap: BatchSnap | null) {
-  try {
-    if (!snap) window.localStorage.removeItem(batchSnapKey(projectId))
-    else window.localStorage.setItem(batchSnapKey(projectId), JSON.stringify(snap))
-  } catch { /* 隐私模式下忽略 */ }
 }
 
 interface Edit {
@@ -100,7 +69,6 @@ export default function EditPanel({
   const [bgmTracks, setBgmTracks] = useState<BgmTrack[]>([])
   const [duckBgm, setDuckBgm] = useState(true)
   const [activeTrackId, setActiveTrackId] = useState('')
-  const [resumeSnap, setResumeSnap] = useState<BatchSnap | null>(null)
   const [resumeIds, setResumeIds] = useState<string[]>([])
   const [playhead, setPlayhead] = useState(0)
   const [subsEnabled, setSubsEnabled] = useState(true)
@@ -132,6 +100,8 @@ export default function EditPanel({
   const [aiMode, setAiMode] = useState<'fill' | 'rewrite'>('fill')
   const [aiTtsOn, setAiTtsOn] = useState(false)
   const [aiRunning, setAiRunning] = useState(false)
+  const [activeAiRun, setActiveAiRun] = useState('')
+  const streamStops = useRef<Array<() => void>>([])
   const [aiMessage, setAiMessage] = useState('')
   const [aiUndo, setAiUndo] = useState<Record<string, Edit> | null>(null)
   const [aiProgress, setAiProgress] = useState({ done: 0, total: 0 })
@@ -354,8 +324,13 @@ export default function EditPanel({
   // B) 读取上次中断的 AI 剪辑快照，给出「继续未完成」的入口
   useEffect(() => {
     if (!projectId) return
-    setResumeSnap(readBatchSnap(projectId))
     setResumeIds([])
+    // 刷新/切页回来：服务端还在跑就继续订阅，别让进度看起来丢了
+    api.aiEditActive(projectId).then((res) => {
+      const active = res.items[0]
+      if (active) attachAiRun(active.id)
+    }).catch(() => undefined)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId])
 
   // A) 刷新/切页回来后，恢复本项目最近一次预览任务（后端可能已跑完）
@@ -706,9 +681,6 @@ export default function EditPanel({
     tone: aiTone, person: aiPerson, language: kind === 'narration' ? 'zh' : subLang,
   })
 
-  const setRow = (shotId: string, title: string, status: string, note = '') =>
-    setAiRows((prev) => ({ ...prev, [shotId]: { title, status, note } }))
-
   const loadFrames = async () => {
     if (!ordered.length) return
     setFramesBusy(true)
@@ -777,8 +749,6 @@ export default function EditPanel({
     }
   }
 
-  const batchSystems = useRef<Record<string, string>>({})
-  const batchOutlineRef = useRef('')
 
   const aiTargets = resumeIds.length
     ? ordered.filter((s) => resumeIds.includes(s.id))
@@ -844,16 +814,71 @@ export default function EditPanel({
     }
   }
 
-  const runAI = async (batchFrames = aiFrames, systems: Record<string, string> = {}, batchOutline = '') => {
+  // 订阅一个服务端 AI 剪辑任务：首次启动和刷新恢复都走这里
+  const attachAiRun = (runId: string) => {
+    setActiveAiRun(runId)
+    setAiRunning(true)
+    const stop = sseSubscribe(`/api/ai-edit/runs/${runId}/stream`, (raw) => {
+      const event = raw as Record<string, unknown>
+      if (event.t === 'row') {
+        const shotId = String(event.shot_id || '')
+        const status = String(event.status || 'running')
+        setAiRows((prev) => ({
+          ...prev,
+          [shotId]: {
+            title: String(event.title || ''),
+            status: status === 'running' ? 'running' : status === 'error' ? 'error' : 'done',
+            note: String(event.note || ''),
+          },
+        }))
+      } else if (event.t === 'progress') {
+        setAiProgress({ done: Number(event.done || 0), total: Number(event.total || 0) })
+      } else if (event.t === 'bgm') {
+        const tracks = (event.tracks || []) as Array<Record<string, unknown>>
+        setBgmTracks(tracks.map((x) => ({
+          id: String(x.id), asset_id: String(x.asset_id), volume_db: Number(x.volume_db ?? -16),
+          start: Number(x.start ?? 0), end: x.end == null ? null : Number(x.end),
+          fade_in: Number(x.fade_in ?? 0), fade_out: Number(x.fade_out ?? 0),
+          loop: Boolean(x.loop),
+        })))
+        setDuckBgm(true)
+        if (event.mode === 'auto' && Array.isArray(event.notes)) {
+          notify('ok', '已按段落配乐', (event.notes as string[]).join('；').slice(0, 120))
+        }
+      } else if (event.t === 'titles') {
+        if (event.title) { setTitleText(String(event.title)); setTitleOn(true) }
+        if (event.tail) { setTailText(String(event.tail)); setTailOn(true) }
+      } else if (event.t === 'notice') {
+        notify(String(event.level) === 'err' ? 'err' : 'ok', 'AI 剪辑', String(event.text || ''))
+      } else if (event.t === 'done' || event.t === 'error') {
+        const summary = String(event.summary || event.text || '完成')
+        setAiMessage(summary)
+        notify(event.t === 'error' ? 'err' : 'ok', 'AI 生成完成', summary)
+        setAiRunning(false)
+        setActiveAiRun('')
+        setResumeIds([])
+        stop()
+        void syncFromServer()
+      }
+    }, (msg: string) => {
+      notify('err', '进度连接失败', msg.slice(0, 120))
+      setAiRunning(false)
+    })
+    streamStops.current.push(stop)
+  }
+
+  // 批量 AI 剪辑：服务端执行（刷新、切页都不影响）
+  const runAI = async (batchFrames = aiFrames, systems: Record<string, string> = {},
+                       batchOutline = '') => {
     if (!ordered.length) return
     const targets = resumeIds.length ? ordered.filter((s) => resumeIds.includes(s.id)) : ordered
     if (!targets.length) return
-    batchSystems.current = systems
-    batchOutlineRef.current = batchOutline
-    const snapshot = { ...edits }
-    setAiUndo(snapshot)
+    setAiUndo({ ...edits })
     setAiRunning(true)
     setAiMessage('')
+    setAiRows({})
+    setAiProgress({ done: 0, total: targets.length })
+
     if (aiKind === 'merge') {
       setBurnedDefault(mergeBurned)
       await exportRender(mergeBurned)
@@ -862,175 +887,64 @@ export default function EditPanel({
       notify('ok', '仅合并', mergeBurned ? '已提交导出（按视频自带字幕，不烧录）' : '已提交导出（不生成字幕/旁白）')
       return
     }
-    setAiRows({})
-    setAiProgress({ done: 0, total: targets.length })
     if (contentMode === 'silent') {
       notify('ok', '纯画面模式', '当前设置为纯画面，不生成字幕/旁白')
       setAiRunning(false)
       return
     }
-    const snap: BatchSnap = {
-      kind: aiKind, at: Date.now(),
-      ids: targets.map((s) => s.id), done: [], total: targets.length,
-    }
-    writeBatchSnap(projectId, snap)
-    setResumeSnap(snap)
 
-    let done = 0
-    let failed = 0
-    let ttsFailed = 0
-    // 自动配乐：按段落挑情绪匹配的音乐
-    if (aiAutoBgm) {
-      try {
-        const plan = await api.bgmPlan(projectId)
-        setBgmTracks(plan.tracks.map((x) => ({
-          id: x.id, asset_id: x.asset_id, volume_db: x.volume_db,
-          start: x.start, end: x.end, fade_in: x.fade_in, fade_out: x.fade_out, loop: x.loop,
-        })))
-        setDuckBgm(true)
-        notify('ok', '已按段落配乐', plan.notes.join('；').slice(0, 120))
-        done += 1
-      } catch (err) {
-        failed += 1
-        notify('err', '自动配乐失败', (err instanceof Error ? err.message : String(err)).slice(0, 120))
-      }
-    }
-
-    // 用户指定的 BGM：自动写入一条轨道，参数按是否有旁白给合理默认
-    if (!aiAutoBgm && aiBgmId) {
-      const hasNarration = ordered.some((s) => editOf(s.id).narration_on || editOf(s.id).voice_asset)
-      setBgmTracks([{
-        id: `t${Date.now().toString(36)}`,
-        asset_id: aiBgmId,
-        volume_db: hasNarration ? -18 : -12,
-        start: 0,
-        end: null,
-        fade_in: 1,
-        fade_out: 2,
-        loop: true,
-      }])
-      setDuckBgm(true)
-      done += 1
-    }
     try {
-      for (const [index, shot] of targets.entries()) {
-        const title = shot.title || `镜头 ${shot.idx + 1}`
-        const startedAt = Date.now()
-        setRow(shot.id, title, 'running')
-        const current = editOf(shot.id)
-        const shotMode = modeOf(shot.id)
-        const wantSub = !isBurned(shot.id) && (editOf(shot.id).narration_on || editOf(shot.id).lip_on) && aiKind !== 'narration'
-        const wantNarr = shotMode === 'narration' && (aiKind === 'both' || aiKind === 'narration')
-        let narrationText = current.narration
-        const needNarr = wantNarr && (aiMode === 'rewrite' || !current.narration)
-        const notes: string[] = []
-        if (needNarr) {
-          try {
-            const r = await api.aiScript({ shot_id: shot.id, kind: 'narration', style: stylePayload('narration'),
-              frames: batchFrames,
-              system_prompt: batchSystems.current.narration || undefined,
-              outline: batchOutlineRef.current || undefined })
-            patchEdit(shot.id, { narration: r.text })
-            narrationText = r.text
-            done += 1
-            notes.push(`旁白 ${r.chars}/${r.budget} 字${r.compressed ? '（已压缩）' : r.over ? '（超预算）' : ''}`)
-          } catch (err) {
-            failed += 1
-            const msg = err instanceof Error ? err.message : String(err)
-            notes.push('旁白失败：' + msg.slice(0, 60))
-            notify('err', `${title} 旁白生成失败`, msg.slice(0, 120))
-          }
-        }
-        const needSub = wantSub && (aiMode === 'rewrite' || !current.subtitle)
-        if (needSub) {
-          try {
-            const r = await api.aiScript({
-              shot_id: shot.id, kind: 'subtitle', style: stylePayload('subtitle'),
-              narration: editOf(shot.id).narration_on
-                ? narrationText
-                : (editOf(shot.id).lip_on ? '' : undefined),
-              frames: batchFrames,
-              system_prompt: batchSystems.current.subtitle || undefined,
-              outline: batchOutlineRef.current || undefined,
-            })
-            if (r.skip === 'silent') {
-              notes.push('无口播，跳过字幕')
-            } else {
-              patchEdit(shot.id, { subtitle: r.text })
-              done += 1
-              notes.push(r.narration_mismatch
-                ? `字幕按画面重写（旁白与画面不符）`
-                : `字幕 ${r.chars}/${r.budget} 字${r.followed_narration ? '（跟随旁白）' : r.transcribed ? '（口播转写）' : r.compressed ? '（已压缩）' : r.over ? '（超预算）' : ''}`)
-            }
-          } catch (err) {
-            failed += 1
-            const msg = err instanceof Error ? err.message : String(err)
-            notes.push('字幕失败：' + msg.slice(0, 60))
-            notify('err', `${title} 字幕生成失败`, msg.slice(0, 120))
-          }
-        }
-        if (needNarr && aiTtsOn && narrationText) {
-          try {
-            const audio = await api.aiTts({ text: narrationText, shot_id: shot.id, voice: editOf(shot.id).tts_voice || undefined })
-            patchEdit(shot.id, { voice_asset: audio.asset_id })
-            await refreshAudios(audio.asset_id)
-            notes.push(audio.too_long
-              ? `配音 ${audio.duration}s 超镜头 ${audio.slot}s`
-              : `配音 ${audio.duration}s${audio.tempo > 1 ? `（${audio.tempo.toFixed(2)}x）` : ''}`)
-
-            // 自动匹配镜头时长：旁白更长时，给画面提速（只加速，1.0~1.25x）
-            if (aiAutoSpeed && audio.duration > 0) {
-              const slot = Number(audio.slot) || durations[shot.id] || 0
-              const ratio = slot > 0.5 ? audio.duration / Math.max(slot - 0.3, 0.5) : 1
-              const steps = [1.0, 1.05, 1.1, 1.15, 1.2, 1.25]
-              const speed = steps.find((v) => v >= ratio) ?? 1.0
-              if (speed > 1.0 && slot >= 1.5) {
-                patchEdit(shot.id, { speed: String(speed) })
-                notes.push(`画面 ${speed.toFixed(2)}x 对齐旁白`)
-              } else if (ratio > 1.25) {
-                notes.push('旁白超 1.25x 仍放不下，建议缩短文案')
-              } else if (slot > 0 && slot < 1.5) {
-                notes.push('镜头太短，未自动调速')
-              }
-            }
-          } catch (err) {
-            ttsFailed += 1
-            notes.push('配音失败：' + (err instanceof Error ? err.message : String(err)).slice(0, 50))
-          }
-        }
-        if (!needSub && !needNarr) notes.push('已有内容，跳过')
-        const ok = !notes.some((n) => n.includes('失败'))
-        const seconds = ((Date.now() - startedAt) / 1000).toFixed(1)
-        setRow(shot.id, title, ok ? 'done' : 'error', `${notes.join(' · ')} · ${seconds}s`)
-        if (ok) {
-          snap.done.push(shot.id)
-          snap.at = Date.now()
-          writeBatchSnap(projectId, snap)
-          setResumeSnap({ ...snap, done: [...snap.done] })
-        }
-        setAiProgress({ done: index + 1, total: targets.length })
-      }
-      if (aiTitles) {
-        try {
-          if (aiMode === 'rewrite' || !titleText.trim()) setTitleText((await api.aiTitle(projectId, 'title')).text)
-          if (aiMode === 'rewrite' || !tailText.trim()) setTailText((await api.aiTitle(projectId, 'tail')).text)
-          done += 1
-        } catch { failed += 1 }
-      }
-      const summary = `成功 ${done} 项${failed ? `，失败 ${failed} 项` : ''}${ttsFailed ? `，配音失败 ${ttsFailed} 项` : ''}`
-      setAiMessage(summary)
-      notify(failed || ttsFailed ? 'err' : 'ok', 'AI 生成完成', summary)
-      // 全部镜头都处理过就清掉断点快照
-      const remaining = snap.ids.filter((id) => !snap.done.includes(id))
-      if (!remaining.length) {
-        writeBatchSnap(projectId, null)
-        setResumeSnap(null)
-      }
-    } finally {
+      const run = await api.aiEditStart(projectId, targets.map((s) => s.id), {
+        kind: aiKind,
+        mode: aiMode,
+        tts: aiTtsOn,
+        auto_speed: aiAutoSpeed,
+        titles: aiTitles,
+        frames: batchFrames,
+        systems,
+        outline: batchOutline,
+        auto_bgm: aiAutoBgm,
+        bgm_asset_id: aiAutoBgm ? '' : aiBgmId,
+        styles: { subtitle: stylePayload('subtitle'), narration: stylePayload('narration') },
+      })
+      attachAiRun(run.id)
+    } catch (err) {
       setAiRunning(false)
-      setResumeIds([])
+      notify('err', 'AI 剪辑启动失败', (err instanceof Error ? err.message : String(err)).slice(0, 120))
     }
   }
+
+  // 服务端已经改好了 edit-state，拉回来覆盖本地视图
+  const syncFromServer = async () => {
+    try {
+      const state = await api.editState(projectId)
+      const next: Record<string, Edit> = {}
+      for (const item of state.shot_edits || []) {
+        const sid = String((item as Record<string, unknown>).shot_id || '')
+        if (!sid) continue
+        next[sid] = { ...(editOf(sid) as Edit), ...(item as Partial<Edit>) }
+      }
+      setEdits((prev) => ({ ...prev, ...next }))
+      const options = state.options || {}
+      if (typeof options.title === 'object' && options.title) {
+        const title = options.title as Record<string, unknown>
+        if (typeof title.text === 'string') setTitleText(title.text)
+        if (typeof title.enabled === 'boolean') setTitleOn(title.enabled)
+      }
+      if (typeof options.tail === 'object' && options.tail) {
+        const tail = options.tail as Record<string, unknown>
+        if (typeof tail.text === 'string') setTailText(tail.text)
+        if (typeof tail.enabled === 'boolean') setTailOn(tail.enabled)
+      }
+      await refreshAudios()
+      refreshTimeline()
+    } catch { /* 忽略同步失败 */ }
+  }
+
+  useEffect(() => () => {
+    streamStops.current.forEach((stop) => stop())
+    streamStops.current = []
+  }, [])
 
   const [promptDraft, setPromptDraft] = useState<PromptDraft | null>(null)
   const [promptBusy, setPromptBusy] = useState(false)
@@ -1544,6 +1458,11 @@ export default function EditPanel({
               </div>
             )}
             {aiMessage && <div className="notice">{aiMessage}</div>}
+        {activeAiRun && (
+          <p className="hint" style={{ marginTop: 6 }}>
+            服务端执行中（{activeAiRun.slice(-6)}），可以切页面，回来还在跑
+          </p>
+        )}
             </div>
             <div className="row-actions">
               <button className="primary" disabled={aiRunning || promptBusy || !ordered.length}
@@ -1591,24 +1510,6 @@ export default function EditPanel({
         </div>
       )}
       {error && <div className="notice err">{error}</div>}
-
-      {resumeSnap && resumeSnap.ids.length > resumeSnap.done.length && !aiRunning && (
-        <div className="notice resume-banner">
-          <span>
-            上次 AI 剪辑中断在第 {resumeSnap.done.length}/{resumeSnap.ids.length} 镜，
-            已完成的内容已保存
-          </span>
-          <span style={{ flex: 1 }} />
-          <button className="ghost tiny"
-                  onClick={() => { setResumeIds(resumeSnap.ids.filter((id) => !resumeSnap.done.includes(id))); setAiOpen(true) }}>
-            继续未完成的 {resumeSnap.ids.length - resumeSnap.done.length} 镜
-          </button>
-          <button className="ghost tiny"
-                  onClick={() => { writeBatchSnap(projectId, null); setResumeSnap(null) }}>
-            忽略
-          </button>
-        </div>
-      )}
 
       <div className="render-editor">
         <div className="ed-col">

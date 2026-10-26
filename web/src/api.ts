@@ -94,6 +94,17 @@ export const api = {
       '/api/ai/prompt-preview',
       { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) },
     ),
+  aiEditStart: (projectId: string, shotIds: string[], options: Record<string, unknown>) =>
+    request<{ id: string; status: string }>('/api/ai-edit/runs', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ project_id: projectId, shot_ids: shotIds, options }),
+    }),
+  aiEditRun: (runId: string) => request<{
+    id: string; status: string; state: { rows?: Record<string, unknown>; done?: number; total?: number }
+  }>(`/api/ai-edit/runs/${runId}`),
+  aiEditActive: (projectId: string) =>
+    request<{ items: Array<{ id: string; status: string; state: { done?: number; total?: number } }> }>(
+      `/api/ai-edit/runs?project_id=${encodeURIComponent(projectId)}&active=true&limit=1`),
   bgmPlan: (projectId: string) =>
     request<{
       tracks: Array<{ id: string; asset_id: string; volume_db: number; start: number; end: number | null; fade_in: number; fade_out: number; loop: boolean }>
@@ -495,6 +506,49 @@ export function agentStream(
   ;(async () => {
     try {
       const resp = await fetch(`/api/agent/threads/${threadId}/stream`, { signal: controller.signal })
+      if (!resp.ok || !resp.body) {
+        onError?.('事件流连接失败')
+        return
+      }
+      const reader = resp.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+      while (true) {
+        const { value, done } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+        let idx = buffer.indexOf('\n\n')
+        while (idx !== -1) {
+          const block = buffer.slice(0, idx)
+          buffer = buffer.slice(idx + 2)
+          const data = block.split('\n')
+            .filter((line) => line.startsWith('data:'))
+            .map((line) => line.slice(5).trim())
+            .join('\n')
+          if (data) {
+            try { onEvent(JSON.parse(data)) } catch { /* 忽略坏帧 */ }
+          }
+          idx = buffer.indexOf('\n\n')
+        }
+      }
+    } catch (err) {
+      if (!controller.signal.aborted) onError?.(String(err))
+    }
+  })()
+  return () => controller.abort()
+}
+
+
+/** 订阅任意事件流；返回取消函数 */
+export function sseSubscribe(
+  url: string,
+  onEvent: (event: Record<string, unknown>) => void,
+  onError?: (message: string) => void,
+): () => void {
+  const controller = new AbortController()
+  ;(async () => {
+    try {
+      const resp = await fetch(url, { signal: controller.signal })
       if (!resp.ok || !resp.body) {
         onError?.('事件流连接失败')
         return
