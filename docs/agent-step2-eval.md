@@ -104,7 +104,28 @@ plan: [{tool, args}, ...]        # 一次给出多个动作
 
 ---
 
-## 五、附带需要修的两个小缺口（可并入 Step 2）
+## 五、Step 1 收尾时发现的一个真 bug（已修）
+
+`route_after_prepare` 新增了 `quick_reply` 返回值，但 `prepare` 这一条条件边的映射表漏了它：
+
+```python
+graph.add_conditional_edges("prepare", route_after_prepare,
+                            {"chat": "chat", "confirm": "confirm"})   # 少了 quick_reply
+```
+
+后果：ComfyUI 连不上时，`node_prepare` 会返回 `intent=chat` 的提示，路由却没有对应的边，
+直接把整轮打成 `failed: 'quick_reply'`——用户看到的是「出错了：'quick_reply'」。
+
+修掉后同样场景的回复变成：
+
+```
+ComfyUI 现在连不上（TimeoutError），先去看服务管家把它启起来，再让我干活。
+```
+
+这类「新增路由返回值但漏改映射」的问题，靠人盯很容易漏。Step 2 引入工具循环前，
+建议加一条静态自检：`route_after_*` 的所有返回值必须出现在对应 `add_conditional_edges` 的映射里。
+
+## 六、附带需要修的两个小缺口（可并入 Step 2）
 
 1. 亮度词表补 `太暗了 / 太亮了 / 曝光`
 2. `第 N 个镜头` 应优先解析成镜头，而不是产物

@@ -1046,7 +1046,8 @@ def build_graph(checkpointer=None):
                                  "prepare_revise": "prepare_revise"})
     graph.add_edge("lookup", END)
     graph.add_conditional_edges("prepare", route_after_prepare,
-                                {"chat": "chat", "confirm": "confirm"})
+                                {"chat": "chat", "confirm": "confirm",
+                                 "quick_reply": "quick_reply"})
     for name in ("prepare_export", "prepare_save", "prepare_polish", "prepare_bgm",
                  "prepare_film", "prepare_new_project", "prepare_revise", "prepare_add_shot"):
         graph.add_conditional_edges(name, route_after_prepare,
