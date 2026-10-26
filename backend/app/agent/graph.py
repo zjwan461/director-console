@@ -327,20 +327,20 @@ async def node_confirm(state: AgentState) -> dict:
     if kind == "export":
         summary = (f"{params.get('width')}×{params.get('height')} · {params.get('shots')} 镜 · "
                    f"约 {params.get('approx_seconds')} 秒 · 预计 {params.get('eta')} 秒出片")
-        payload = {"kind": "confirm", "title": "导出成片", "summary": summary,
-                   "params": params, "preset_id": "", "mode": ""}
+        payload = {"kind": "confirm", "action": "export", "title": "导出成片",
+                   "summary": summary, "params": params, "preset_id": "", "mode": ""}
     elif kind == "save_shot":
-        payload = {"kind": "confirm", "title": "存为镜头",
+        payload = {"kind": "confirm", "action": "save_shot", "title": "存为镜头",
                    "summary": params.get("title") or "写入当前项目",
                    "params": params, "preset_id": "", "mode": ""}
     elif kind == "video":
         eta = max(60, int(float(params.get("duration") or 5) * 40))
-        payload = {"kind": "confirm", "title": "生成视频",
+        payload = {"kind": "confirm", "action": "video", "title": "生成视频",
                    "summary": f"{params.get('width')}×{params.get('height')} · {params.get('duration')} 秒 · 约 {eta} 秒",
                    "params": params, "mode": plan.get("mode", ""),
                    "preset_id": plan.get("preset_id")}
     else:
-        payload = {"kind": "confirm", "title": "生成图片",
+        payload = {"kind": "confirm", "action": "image", "title": "生成图片",
                    "summary": f"{params.get('width')}×{params.get('height')} · 约 40 秒",
                    "params": params, "mode": "", "preset_id": plan.get("preset_id")}
 

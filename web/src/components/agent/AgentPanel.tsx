@@ -31,7 +31,9 @@ export default function AgentPanel({ projectId, onOpenProject }: {
   const [streamText, setStreamText] = useState('')
   const [error, setError] = useState('')
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
-  const [confirmDraft, setConfirmDraft] = useState<{ prompt: string; aspect: string } | null>(null)
+  const [confirmDraft, setConfirmDraft] = useState<{
+    prompt: string; aspect: string; quality: string; title: string; duration: number
+  } | null>(null)
   const streamStop = useRef<(() => void) | null>(null)
   const bottomRef = useRef<HTMLDivElement | null>(null)
 
@@ -81,7 +83,7 @@ export default function AgentPanel({ projectId, onOpenProject }: {
       if (active) setRun(active)
       if (active?.pending && Object.keys(active.pending).length) {
         const params = (active.pending.params || {}) as Record<string, unknown>
-        setConfirmDraft({ prompt: String(params.prompt || ''), aspect: String(params.aspect || '9:16') })
+        setConfirmDraft(draftFrom(params))
       }
     }).catch(() => undefined)
 
@@ -117,7 +119,7 @@ export default function AgentPanel({ projectId, onOpenProject }: {
       // 这一轮已经停下来等确认，必须解除 busy，否则按钮是禁用的
       setBusy(false)
       setRun((prev) => prev ? { ...prev, status: 'waiting_confirm', pending: event as unknown as Record<string, unknown> } : prev)
-      setConfirmDraft({ prompt: String(params.prompt || ''), aspect: String(params.aspect || '9:16') })
+      setConfirmDraft(draftFrom(params))
       api.agentThread(threadId).then((res) => setRun((res.runs || [])[0] || null)).catch(() => undefined)
     } else if (event.t === 'message_delta') {
       setStreamText((prev) => prev + String(event.text || ''))
@@ -210,9 +212,21 @@ export default function AgentPanel({ projectId, onOpenProject }: {
       setError('没有找到待确认的任务，可能已超时；重新发一次消息吧。')
       return
     }
-    const params = approved && confirmDraft
-      ? { ...(target.pending.params as Record<string, unknown> || {}), prompt: confirmDraft.prompt, aspect: confirmDraft.aspect }
-      : undefined
+    const action = String((target.pending as Record<string, unknown>).action || 'image')
+    let params: Record<string, unknown> | undefined
+    if (approved && confirmDraft) {
+      const base = { ...((target.pending.params as Record<string, unknown>) || {}) }
+      if (action === 'image' || action === 'video') {
+        params = { ...base, prompt: confirmDraft.prompt, aspect: confirmDraft.aspect }
+        if (action === 'video') params.duration = confirmDraft.duration
+      } else if (action === 'export') {
+        params = { ...base, quality: confirmDraft.quality }
+      } else if (action === 'save_shot') {
+        params = { ...base, title: confirmDraft.title }
+      } else {
+        params = base
+      }
+    }
     setBusy(true)
     try {
       await api.agentConfirm(target.id, approved, params)
@@ -246,7 +260,7 @@ export default function AgentPanel({ projectId, onOpenProject }: {
   }
 
   const pending = (run?.status === 'waiting_confirm' ? run.pending : null) as
-    { summary?: string; params?: Record<string, unknown> } | null
+    { summary?: string; action?: unknown; params?: Record<string, unknown> } | null
 
   return (
     <div className="agent-page">
@@ -350,26 +364,67 @@ export default function AgentPanel({ projectId, onOpenProject }: {
                 <b>{String(pending.summary || '确认执行')}</b>
                 <span className="meta">确认后才会提交</span>
               </div>
-              <label className="field">
-                <span>画面描述</span>
-                <textarea rows={3} value={confirmDraft.prompt}
-                          onChange={(e) => setConfirmDraft({ ...confirmDraft, prompt: e.target.value })} />
-              </label>
-              <div className="row" style={{ gap: 8 }}>
-                <label className="inline-field">
-                  <span>画幅</span>
-                  <select value={confirmDraft.aspect}
-                          onChange={(e) => setConfirmDraft({ ...confirmDraft, aspect: e.target.value })}>
-                    {ASPECTS.map((a) => <option key={a} value={a}>{a}</option>)}
-                  </select>
+
+              {(actionOf(pending) === 'image' || actionOf(pending) === 'video') && (
+                <>
+                  <label className="field">
+                    <span>画面描述</span>
+                    <textarea rows={3} value={confirmDraft.prompt}
+                              onChange={(e) => setConfirmDraft({ ...confirmDraft, prompt: e.target.value })} />
+                  </label>
+                  <div className="agent-confirm-row">
+                    <label className="inline-field">
+                      <span>画幅</span>
+                      <select value={confirmDraft.aspect}
+                              onChange={(e) => setConfirmDraft({ ...confirmDraft, aspect: e.target.value })}>
+                        {ASPECTS.map((a) => <option key={a} value={a}>{a}</option>)}
+                      </select>
+                    </label>
+                    {actionOf(pending) === 'video' && (
+                      <label className="inline-field">
+                        <span>时长</span>
+                        <select value={confirmDraft.duration}
+                                onChange={(e) => setConfirmDraft({ ...confirmDraft, duration: Number(e.target.value) })}>
+                          {[3, 4, 5, 6, 8, 10, 12, 15].map((n) => <option key={n} value={n}>{n} 秒</option>)}
+                        </select>
+                      </label>
+                    )}
+                    {typeof pending.params?.width === 'number' && (
+                      <span className="meta">{String(pending.params.width)} × {String(pending.params.height)}</span>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {actionOf(pending) === 'export' && (
+                <div className="agent-confirm-row">
+                  <label className="inline-field">
+                    <span>分辨率</span>
+                    <select value={confirmDraft.quality}
+                            onChange={(e) => setConfirmDraft({ ...confirmDraft, quality: e.target.value })}>
+                      <option value="1080p">1080p · 横屏</option>
+                      <option value="720p">720p · 横屏</option>
+                      <option value="竖屏1080">1080p · 竖屏</option>
+                      <option value="竖屏720">720p · 竖屏</option>
+                    </select>
+                  </label>
+                  <span className="meta">
+                    {String(pending.params?.shots ?? '?')} 个镜头 ·
+                    约 {String(pending.params?.approx_seconds ?? '?')} 秒
+                    {pending.params?.subtitles ? ' · 烧字幕' : ''}
+                    {Number(pending.params?.bgm ?? 0) > 0 ? ` · ${String(pending.params?.bgm)} 条 BGM` : ''}
+                  </span>
+                </div>
+              )}
+
+              {actionOf(pending) === 'save_shot' && (
+                <label className="field">
+                  <span>镜头标题</span>
+                  <input value={confirmDraft.title}
+                         onChange={(e) => setConfirmDraft({ ...confirmDraft, title: e.target.value })} />
                 </label>
-                {typeof pending.params?.width === 'number' && (
-                  <span className="meta">{String(pending.params.width)} × {String(pending.params.height)}</span>
-                )}
-                {typeof pending.params?.duration === 'number' && (
-                  <span className="meta">{String(pending.params.duration)} 秒</span>
-                )}
-              </div>
+              )}
+
               <div className="agent-confirm-actions">
                 <button className="primary" disabled={busy} onClick={() => void decide(true)}>执行</button>
                 <button className="ghost" disabled={busy} onClick={() => void decide(false)}>取消</button>
@@ -453,6 +508,20 @@ export default function AgentPanel({ projectId, onOpenProject }: {
       </aside>
     </div>
   )
+}
+
+function actionOf(pending: { action?: unknown }): string {
+  return String(pending?.action || 'image')
+}
+
+function draftFrom(params: Record<string, unknown>) {
+  return {
+    prompt: String(params.prompt || ''),
+    aspect: String(params.aspect || '9:16'),
+    quality: String(params.quality || '1080p'),
+    title: String(params.title || ''),
+    duration: Number(params.duration || 5),
+  }
 }
 
 function statusLabel(status: string): string {
