@@ -1073,3 +1073,14 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
   color: #a9b6cf;
   text-align: center;
 }
+
+
+/* 附件区 */
+.agent-attach-row { display: flex; gap: 8px; flex-wrap: wrap; padding-bottom: 4px; }
+.agent-attach { position: relative; width: 64px; height: 64px; }
+.agent-attach img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px;
+  border: 1px solid #2a3145; }
+.agent-attach button { position: absolute; top: -6px; right: -6px; width: 18px; height: 18px;
+  border-radius: 50%; border: 1px solid #2a3145; background: #1b2130; color: #c9d2e3;
+  font-size: 12px; line-height: 1; cursor: pointer; padding: 0; }
+.agent-composer-tools { display: flex; align-items: center; gap: 10px; }

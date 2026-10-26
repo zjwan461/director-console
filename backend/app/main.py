@@ -25,7 +25,7 @@ from .comfy import ComfyError, make_client, probe
 from .config import settings
 from .jobs import runner
 from .launcher import LaunchError, get_launcher
-from .presets import default_values, get_card, load_cards, public_card, validate
+from .presets import default_values, get_card, is_video_card, load_cards, public_card, validate
 from .prompt_stream import router as prompt_stream_router
 from .agent.api import router as agent_router
 from .model_check import check_models
@@ -636,6 +636,10 @@ async def asset_create_shot(asset_id: str, body: AssetShotCreate) -> dict:
         job = _source_job_for_asset(asset)
         if not job:
             raise HTTPException(status_code=400, detail="这个素材没有可追溯的生成任务，请改用「用作首帧/参考」")
+        restore_card = get_card(job.get("preset_id") or "")
+        if restore_card and not is_video_card(restore_card):
+            raise HTTPException(status_code=400,
+                                detail="这张图是图片卡生成的，不能还原成镜头；请用「用作首帧」配视频卡")
         preset_id = job["preset_id"]
         values = dict(job.get("inputs") or {})
         title = title or f"还原 · {asset['path'].rsplit('/', 1)[-1]}"
@@ -834,6 +838,11 @@ async def save_job_as_shot(job_id: str, body: JobSaveAsShot) -> dict:
     project = store.get_project(body.project_id)
     if not project:
         raise HTTPException(status_code=404, detail="项目不存在")
+    job_card = get_card(job.get("preset_id") or "")
+    if job_card and not is_video_card(job_card):
+        raise HTTPException(status_code=400,
+                            detail="这是图片卡生成的结果，不能直接存成镜头；"
+                                   "可以在视频卡里把它当首帧")
 
     shot = store.create_shot(
         project["id"],
@@ -916,6 +925,10 @@ async def reorder_shots(project_id: str, body: ShotReorder) -> dict:
 async def create_shot(body: ShotCreate) -> dict:
     if not store.get_project(body.project_id):
         raise HTTPException(status_code=404, detail="项目不存在")
+    card = get_card(body.preset_id) if body.preset_id else None
+    if card and not is_video_card(card):
+        raise HTTPException(status_code=400,
+                            detail="图片能力卡不能单独作为镜头；请用视频卡，或在视频卡里把它当首帧")
     shot = store.create_shot(body.project_id, body.title, body.preset_id, body.prompt)
     if body.values:
         store.update_shot(shot["id"], values=body.values)

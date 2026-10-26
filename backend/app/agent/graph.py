@@ -33,6 +33,7 @@ class AgentState(TypedDict, total=False):
     args: dict
     plan: dict
     decision: str
+    attachments: list
     error: str
 
 
@@ -104,6 +105,14 @@ async def node_decide(state: AgentState) -> dict:
     project = store.get_project(state.get("project_id", "")) or {}
     shots = store.list_shots(state.get("project_id", "")) if project else []
     project_ctx = {**project, "shot_count": len(shots)} if project else None
+
+    attachments = state.get("attachments") or []
+    if attachments:
+        lines = [f"- asset_id={a['id']}，文件 {a['path'].rsplit('/', 1)[-1]}"
+                 for a in attachments if a.get("kind") == "image"]
+        if lines:
+            project_ctx = dict(project_ctx or {})
+            project_ctx["用户随消息上传的图片"] = lines
 
     llm = _llm()
     if llm is None:

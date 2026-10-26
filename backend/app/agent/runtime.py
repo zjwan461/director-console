@@ -61,17 +61,21 @@ def _watch_artifact(thread_id: str, run_id: str) -> None:
         asyncio.create_task(watch_job(artifact["ref_id"], run_id, thread_id))
 
 
-async def start_run(thread: dict, text: str) -> dict:
+async def start_run(thread: dict, text: str, attachments: list[dict] | None = None) -> dict:
     """新建一轮：写入用户消息，后台跑图，返回 run。"""
     thread_id = thread["id"]
+    attachments = attachments or []
     run = agent_store.create_run(thread_id)
-    agent_store.add_message(thread_id, "user", text)
+    parts = [{"type": "image", "url": a["url"], "asset_id": a["id"], "name": a["path"].rsplit("/", 1)[-1]}
+             for a in attachments if a.get("kind") == "image"]
+    agent_store.add_message(thread_id, "user", text, parts)
     bus.publish(thread_id, {"t": "run_start", "run_id": run["id"]})
-    asyncio.create_task(_run(thread, run["id"], text))
+    asyncio.create_task(_run(thread, run["id"], text, attachments))
     return run
 
 
-async def _run(thread: dict, run_id: str, text: str) -> None:
+async def _run(thread: dict, run_id: str, text: str,
+               attachments: list[dict] | None = None) -> None:
     thread_id = thread["id"]
     config = {"configurable": {"thread_id": run_id, "emit": _sink(thread_id)}}
     state = {
@@ -79,6 +83,7 @@ async def _run(thread: dict, run_id: str, text: str) -> None:
         "project_id": thread.get("project_id", ""),
         "run_id": run_id,
         "text": text,
+        "attachments": attachments or [],
         "messages": [HumanMessage(content=text)],
     }
     try:

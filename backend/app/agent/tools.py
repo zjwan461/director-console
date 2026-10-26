@@ -16,7 +16,8 @@ from typing import Any
 from .. import store
 from ..jobs import runner
 from ..render import runner as render_runner
-from ..presets import build_bindings, get_card, load_cards, public_card, size_from, validate
+from ..presets import (build_bindings, get_card, is_video_card, load_cards, public_card,
+                       size_from, validate)
 
 IMAGE_CARD_ID = "image.c16"
 
@@ -347,6 +348,10 @@ async def save_as_shot(job_id: str, project_id: str, title: str = "") -> str:
                        "hint": f"这个任务已经是镜头 {job['shot_id']} 了"})
     if not store.get_project(project_id):
         return _dumps({"ok": False, "error": "project_missing", "hint": "项目不存在"})
+    card = get_card(job.get("preset_id") or "")
+    if card and not is_video_card(card):
+        return _dumps({"ok": False, "error": "image_card",
+                       "hint": "这是图片卡生成的结果，不能直接存成镜头；可以把它当视频卡的首帧"})
 
     shot = store.create_shot(project_id, title or f"镜头 {len(store.list_shots(project_id)) + 1}",
                              job.get("preset_id") or "")

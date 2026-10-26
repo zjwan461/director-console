@@ -149,6 +149,15 @@ def public_card(card: dict) -> dict:
     }
 
 
+def is_video_card(card: dict) -> bool:
+    """能力卡产出的是不是视频。
+
+    图片卡（剧照/角色图）不能单独作为项目里的镜头——镜头是影片的一段，
+    必须有动态画面；图片只能当首帧/参考图。
+    """
+    return str(card.get("output_kind") or "video") != "image"
+
+
 def default_values(card: dict) -> dict:
     values: dict[str, Any] = {}
     for f in card.get("fields", []):

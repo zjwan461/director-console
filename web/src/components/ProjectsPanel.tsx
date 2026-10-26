@@ -41,7 +41,10 @@ export default function ProjectsPanel({ onEdit }: { onEdit?: (projectId: string)
 
   useEffect(() => {
     void loadProjects()
-    api.presets().then((res) => setCards(res.items)).catch(() => undefined)
+    // 镜头必须有动态画面：图片卡（剧照/角色图）不能单独成镜，只能当首帧
+    api.presets().then((res) => {
+      setCards(res.items.filter((c) => c.output_kind !== 'image'))
+    }).catch(() => undefined)
   }, [])
 
   useEffect(() => {

@@ -24,6 +24,9 @@ export default function AgentPanel({ projectId, onOpenProject }: {
   const [steps, setSteps] = useState<Step[]>([])
   const [artifacts, setArtifacts] = useState<AgentArtifact[]>([])
   const [text, setText] = useState('')
+  const [attachments, setAttachments] = useState<Array<{ id: string; url: string; name: string }>>([])
+  const [uploading, setUploading] = useState(false)
+  const fileRef = useRef<HTMLInputElement | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
@@ -149,21 +152,41 @@ export default function AgentPanel({ projectId, onOpenProject }: {
 
   async function send() {
     const value = text.trim()
-    if (!value || !threadId || busy) return
+    if ((!value && !attachments.length) || !threadId || busy) return
     setBusy(true)
     setError('')
     setText('')
     setSteps([])
     try {
-      const res = await api.agentSend(threadId, value)
+      const res = await api.agentSend(threadId, value, attachments.map((a) => a.id))
       setRun({ id: res.run_id, thread_id: threadId, status: 'running', node: '', pending: {}, error: '', steps: 0, started_at: Date.now() / 1000 })
       setMessages((prev) => [...prev, {
         id: `local_${Date.now()}`, thread_id: threadId, role: 'user', content: value,
-        parts: [], seq: prev.length + 1, created_at: Date.now() / 1000,
+        parts: attachments.map((a) => ({ type: 'image', url: a.url, asset_id: a.id, name: a.name })),
+        seq: prev.length + 1, created_at: Date.now() / 1000,
       }])
+      setAttachments([])
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
       setBusy(false)
+    }
+  }
+
+  async function pickFiles(files: FileList | null) {
+    if (!files?.length) return
+    setUploading(true)
+    try {
+      const next: Array<{ id: string; url: string; name: string }> = []
+      for (const file of Array.from(files).slice(0, 4)) {
+        const asset = await api.upload(file, 'image')
+        next.push({ id: asset.id, url: asset.url || `/media/files/${asset.path}`, name: asset.path.split('/').pop() || 'image' })
+      }
+      setAttachments((prev) => [...prev, ...next].slice(0, 4))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setUploading(false)
+      if (fileRef.current) fileRef.current.value = ''
     }
   }
 
@@ -345,6 +368,16 @@ export default function AgentPanel({ projectId, onOpenProject }: {
 
         <div className="agent-composer">
           <div className="agent-composer-box">
+            {attachments.length > 0 && (
+              <div className="agent-attach-row">
+                {attachments.map((item) => (
+                  <div className="agent-attach" key={item.id}>
+                    <img src={item.url} alt={item.name} />
+                    <button title="移除" onClick={() => setAttachments((prev) => prev.filter((x) => x.id !== item.id))}>×</button>
+                  </div>
+                ))}
+              </div>
+            )}
             <textarea
               rows={2}
               value={text}
@@ -355,8 +388,15 @@ export default function AgentPanel({ projectId, onOpenProject }: {
               }}
             />
             <div className="agent-composer-foot">
-              <span className="agent-composer-hint">Enter 发送 · Shift + Enter 换行</span>
-              <button className="primary" disabled={busy || !text.trim()} onClick={() => void send()}>发送</button>
+              <div className="agent-composer-tools">
+                <button className="ghost tiny" disabled={uploading} onClick={() => fileRef.current?.click()}>
+                  {uploading ? '上传中…' : '＋ 图片'}
+                </button>
+                <input ref={fileRef} type="file" accept="image/*" multiple hidden
+                       onChange={(e) => void pickFiles(e.target.files)} />
+                <span className="agent-composer-hint">Enter 发送 · Shift + Enter 换行</span>
+              </div>
+              <button className="primary" disabled={busy || (!text.trim() && !attachments.length)} onClick={() => void send()}>发送</button>
             </div>
           </div>
         </div>

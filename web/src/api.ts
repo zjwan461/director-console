@@ -224,10 +224,10 @@ export const api = {
     request<{ ok: boolean }>(`/api/agent/threads/${threadId}`, { method: 'DELETE' }),
   agentMessages: (threadId: string, afterSeq = 0) =>
     request<{ items: AgentMessage[] }>(`/api/agent/threads/${threadId}/messages?after_seq=${afterSeq}`),
-  agentSend: (threadId: string, text: string) =>
+  agentSend: (threadId: string, text: string, attachments: string[] = []) =>
     request<{ run_id: string; status: string }>(`/api/agent/threads/${threadId}/messages`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({ text, attachments }),
     }),
   agentConfirm: (runId: string, approved: boolean, params?: Record<string, unknown>) =>
     request<AgentRun>(`/api/agent/runs/${runId}/confirm`, {

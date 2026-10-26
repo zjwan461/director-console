@@ -94,9 +94,21 @@ async def post_message(thread_id: str, body: MessageIn) -> dict:
     if not thread:
         raise HTTPException(status_code=404, detail="会话不存在")
     text = (body.text or "").strip()
-    if not text:
+    if not text and not body.attachments:
         raise HTTPException(status_code=400, detail="消息不能为空")
-    run = await runtime.start_run(thread, text)
+
+    attachments: list[dict] = []
+    for asset_id in body.attachments[:4]:
+        asset = store.get_asset(asset_id)
+        if not asset:
+            continue
+        attachments.append({
+            "id": asset["id"],
+            "kind": asset["kind"],
+            "path": asset["path"],
+            "url": f"/media/files/{asset['path']}",
+        })
+    run = await runtime.start_run(thread, text, attachments)
     return {"run_id": run["id"], "status": run["status"]}
 
 
