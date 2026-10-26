@@ -1161,3 +1161,18 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
   display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
 }
 .agent-confirm-hint .dot { color: #3d465c; }
+
+
+/* 助手错误卡片 */
+.agent-error-card {
+  max-width: 82%;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: #1c1215;
+  border: 1px solid #5a2a2e;
+  color: #e29292;
+  font-size: 12.5px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}

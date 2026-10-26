@@ -134,8 +134,17 @@ async def confirm_run(run_id: str, approved: bool, params: dict | None = None) -
 
 
 def _fail(thread_id: str, run_id: str, exc: Exception) -> None:
+    message = f"出错了：{str(exc)[:200]}"
     agent_store.update_run(run_id, status="failed", error=str(exc)[:500],
                            finished_at=time.time())
+    # 失败也要在对话里留一条，用户才知道发生了什么
+    try:
+        agent_store.add_message(thread_id, "assistant", message,
+                                [{"type": "error", "text": str(exc)[:400]}], run_id)
+    except Exception:
+        pass
+    bus.publish(thread_id, {"t": "message", "role": "assistant", "content": message,
+                            "parts": [{"type": "error", "text": str(exc)[:400]}]})
     bus.publish(thread_id, {"t": "run_end", "run_id": run_id, "status": "failed",
                             "error": str(exc)[:300]})
 

@@ -72,6 +72,7 @@ def image_inputs_preview(prompt: str, aspect: str = "9:16", megapixels: float | 
     if not card:
         return {"preset_id": IMAGE_CARD_ID, "params": {}, "binds": {},
                 "errors": ["图片能力卡不存在"]}
+    size_field = _card_field(card, "size")
     values = build_values(card, prompt=prompt, aspect=aspect, megapixels=megapixels, seed=seed)
     errors = validate(card, values)
     binds = build_bindings(card, values, {}) if not errors else {}

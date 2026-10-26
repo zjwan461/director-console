@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import time
 
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import StreamingResponse
@@ -134,6 +135,14 @@ async def post_message(thread_id: str, body: MessageIn) -> dict:
     text = (body.text or "").strip()
     if not text and not body.attachments:
         raise HTTPException(status_code=400, detail="消息不能为空")
+
+    # 连点两次「发送」会重复起两轮，这里做一次 5 秒去抖
+    recent = agent_store.list_messages(thread_id, 0, 200)
+    if recent:
+        last = recent[-1]
+        if last["role"] == "user" and last["content"].strip() == text \
+                and time.time() - float(last["created_at"] or 0) < 5:
+            return {"run_id": "", "status": "duplicate"}
 
     attachments: list[dict] = []
     for asset_id in body.attachments[:4]:

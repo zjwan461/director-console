@@ -390,6 +390,9 @@ export default function AgentPanel({ projectId, onOpenProject }: {
                     </div>
                   )
                 }
+                if (part.type === 'error') {
+                  return <div className="agent-error-card" key={index}>{String(part.text || '出错了')}</div>
+                }
                 if (part.type === 'image' || part.type === 'video') {
                   const url = String(part.url || '')
                   const isVideo = part.type === 'video'
