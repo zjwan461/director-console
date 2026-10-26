@@ -41,6 +41,14 @@ async def get_run(run_id: str) -> dict:
     return run
 
 
+@router.post("/runs/{run_id}/retry")
+async def retry(run_id: str) -> dict:
+    try:
+        return await ai_edit.retry_failed(run_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
 @router.get("/runs/{run_id}/stream")
 async def stream(run_id: str, after_seq: int = 0) -> StreamingResponse:
     async def gen():

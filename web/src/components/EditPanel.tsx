@@ -101,6 +101,7 @@ export default function EditPanel({
   const [aiTtsOn, setAiTtsOn] = useState(false)
   const [aiRunning, setAiRunning] = useState(false)
   const [activeAiRun, setActiveAiRun] = useState('')
+  const [lastAiRun, setLastAiRun] = useState('')
   const streamStops = useRef<Array<() => void>>([])
   const [aiMessage, setAiMessage] = useState('')
   const [aiUndo, setAiUndo] = useState<Record<string, Edit> | null>(null)
@@ -817,6 +818,7 @@ export default function EditPanel({
   // 订阅一个服务端 AI 剪辑任务：首次启动和刷新恢复都走这里
   const attachAiRun = (runId: string) => {
     setActiveAiRun(runId)
+    setLastAiRun(runId)
     setAiRunning(true)
     const stop = sseSubscribe(`/api/ai-edit/runs/${runId}/stream`, (raw) => {
       const event = raw as Record<string, unknown>
@@ -865,6 +867,22 @@ export default function EditPanel({
       setAiRunning(false)
     })
     streamStops.current.push(stop)
+  }
+
+  const failedRowCount = Object.values(aiRows).filter((row) => row.status === 'error').length
+  const hasFailedRows = failedRowCount > 0
+
+  const retryFailedShots = async () => {
+    if (!lastAiRun) return
+    try {
+      const run = await api.aiEditRetry(lastAiRun)
+      setAiMessage('')
+      setAiRows({})
+      attachAiRun(run.id)
+      notify('ok', '重试已开始', '只重跑上次失败的镜头')
+    } catch (err) {
+      notify('err', '重试失败', (err instanceof Error ? err.message : String(err)).slice(0, 120))
+    }
   }
 
   // 批量 AI 剪辑：服务端执行（刷新、切页都不影响）
@@ -1458,11 +1476,18 @@ export default function EditPanel({
               </div>
             )}
             {aiMessage && <div className="notice">{aiMessage}</div>}
-        {activeAiRun && (
-          <p className="hint" style={{ marginTop: 6 }}>
-            服务端执行中（{activeAiRun.slice(-6)}），可以切页面，回来还在跑
-          </p>
-        )}
+            {activeAiRun && (
+              <p className="hint" style={{ marginTop: 6 }}>
+                服务端执行中（{activeAiRun.slice(-6)}），可以切页面，回来还在跑
+              </p>
+            )}
+            {!aiRunning && hasFailedRows && lastAiRun && (
+              <div className="row" style={{ marginTop: 8 }}>
+                <button className="ghost" onClick={() => void retryFailedShots()}>
+                  重试失败的 {failedRowCount} 镜
+                </button>
+              </div>
+            )}
             </div>
             <div className="row-actions">
               <button className="primary" disabled={aiRunning || promptBusy || !ordered.length}

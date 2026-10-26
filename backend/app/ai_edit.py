@@ -325,3 +325,17 @@ async def _execute(run_id: str, project_id: str, shot_ids: list[str], options: d
     update_run(run_id, status="done",
                state_json={"rows": rows, "done": len(shot_ids), "total": len(shot_ids)})
     emit({"t": "done", "summary": summary, "failed": failed, "tts_failed": tts_failed})
+
+
+async def retry_failed(run_id: str) -> dict:
+    """把上次失败的镜头挑出来，用 rewrite 模式再跑一遍。"""
+    run = get_run(run_id)
+    if not run:
+        raise ValueError("任务不存在")
+    rows = (run.get("state") or {}).get("rows") or {}
+    failed = [sid for sid, row in rows.items() if row.get("status") == "error"]
+    if not failed:
+        raise ValueError("没有失败的镜头")
+    options = dict(run.get("options") or {})
+    options["mode"] = "rewrite"
+    return await start(run["project_id"], failed, options)

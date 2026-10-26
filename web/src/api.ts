@@ -102,6 +102,8 @@ export const api = {
   aiEditRun: (runId: string) => request<{
     id: string; status: string; state: { rows?: Record<string, unknown>; done?: number; total?: number }
   }>(`/api/ai-edit/runs/${runId}`),
+  aiEditRetry: (runId: string) =>
+    request<{ id: string; status: string }>(`/api/ai-edit/runs/${runId}/retry`, { method: 'POST' }),
   aiEditActive: (projectId: string) =>
     request<{ items: Array<{ id: string; status: string; state: { done?: number; total?: number } }> }>(
       `/api/ai-edit/runs?project_id=${encodeURIComponent(projectId)}&active=true&limit=1`),
