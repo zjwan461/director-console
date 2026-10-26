@@ -303,6 +303,9 @@ export interface AgentArtifact {
   url: string
   meta: Record<string, unknown>
   created_at: number
+  ref?: number
+  parent_ref?: number | null
+  note?: string
 }
 
 export interface AgentEvent {

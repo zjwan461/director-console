@@ -716,6 +716,8 @@ export default function AgentPanel({ projectId, onOpenProject }: {
               : rawStatus === 'canceled' ? '已取消' : '排队中')
             return (
               <a key={item.id} className="agent-artifact-card" href={item.url || '#'} target="_blank" rel="noreferrer">
+                {item.ref ? <span className="agent-artifact-ref">#{item.ref}</span> : null}
+                {item.parent_ref ? <span className="agent-artifact-parent">改自 #{item.parent_ref}</span> : null}
                 {item.kind === 'shot'
                   ? <div className="agent-shot-card">{String(item.meta?.title || '镜头')}</div>
                   : item.url

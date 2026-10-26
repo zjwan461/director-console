@@ -170,6 +170,11 @@ def _fast_intent(state: AgentState) -> dict | None:
         return {"intent": "export", "args": {}, "reply": "好，我按项目设置导出成片。"}
     if SAVE_RE.search(text):
         return {"intent": "save_shot", "args": {}, "reply": "好，把刚才的产物存成镜头。"}
+    REVISE_RE = re.compile(r"(再\S{0,3}(亮|暗|快|慢)|更(亮|暗|快|慢)|改成|换成|调成|调整成|"
+                           r"改一?下?|换一?下?|调整|慢一点|快一点|放慢|加快|时长.*秒|清晰度)")
+    if REVISE_RE.search(text):
+        return {"intent": "revise", "args": {"raw": text},
+                "reply": "好，我在上一版基础上改。"}
     if VIDEO_RE.search(text) and IMPERATIVE_RE.search(text):
         mode = "i2v" if (last_asset and "首帧" in text) else "t2v"
         args = {"prompt": text, "mode": mode, "duration": duration, "aspect": "16:9"}
@@ -247,6 +252,15 @@ def _short_circuit(state: AgentState) -> dict | None:
 
 
 async def node_decide(state: AgentState) -> dict:
+    # 疑问句先走问答：否则「你有哪些视频工作流」会被视频+最近产物短路成生成
+    text_now = str(state.get("text") or "")
+    asking = bool(re.search(r"(？|\?|怎么|如何|为什么|哪些|什么|支持|是否|能否|可以吗|吗[？?]?$)",
+                            text_now))
+    if asking and not re.match(r"^(帮我|给我|替我|劳驾)", text_now):
+        fast_q = _fast_intent(state)
+        if fast_q:
+            return fast_q
+
     # 肯定回复优先于关键词：否则「可以，就用这张图」会被 图 字带走，重新出图
     shortcut = _short_circuit(state)
     if shortcut:
@@ -360,6 +374,14 @@ FAQ = [
         "说「加三个镜头：雪夜山门，蓝衣女子推门，她回身望向红灯」，\n"
         "我会按逗号拆成镜头并写好每镜的画面描述。")),
 ]
+
+
+async def node_quick_reply(state: AgentState) -> dict:
+    """本地已经算好的回复（提示/澄清），不调模型，秒回。"""
+    reply = str(state.get("reply") or "").strip()
+    _emit({"t": "step", "id": "decide", "node": "decide", "title": "需要确认一下",
+           "status": "done", "detail": {"reply": reply[:80]}})
+    return {"reply": reply or "我没太听懂，换个说法？", "streamed": False}
 
 
 async def node_reply_capability(state: AgentState) -> dict:
@@ -572,6 +594,19 @@ async def node_prepare_save(state: AgentState) -> dict:
     return {"plan": plan}
 
 
+async def node_prepare_revise(state: AgentState) -> dict:
+    args = state.get("args") or {}
+    text = str(args.get("raw") or state.get("text") or "")
+    preview = tools.revise_preview(state.get("thread_id", ""), state.get("project_id", ""), text)
+    _emit({"t": "tool_call", "id": "prep_revise", "name": "revise.preview",
+           "args": {"text": text}})
+    if not preview.get("ok"):
+        _emit({"t": "tool_result", "id": "prep_revise", "ok": False, "data": preview})
+        return {"intent": "chat", "reply": preview.get("hint") or "没找到要改的那一版"}
+    _emit({"t": "tool_result", "id": "prep_revise", "ok": True, "data": preview})
+    return {"plan": {"kind": "revise", "params": preview}}
+
+
 async def node_prepare_new_project(state: AgentState) -> dict:
     args = state.get("args") or {}
     name = str(args.get("name") or "未命名项目").strip()[:40]
@@ -673,6 +708,10 @@ async def node_confirm(state: AgentState) -> dict:
                    f"约 {params.get('approx_seconds')} 秒 · {' · '.join(extras)} · 预计 {params.get('eta')} 秒")
         payload = {"kind": "confirm", "action": "export", "title": "导出成片",
                    "summary": summary, "params": params, "preset_id": "", "mode": ""}
+    elif kind == "revise":
+        payload = {"kind": "confirm", "action": "revise", "title": "修改上一版",
+                   "summary": f"基于 #{params.get('base_ref')} · {params.get('summary')}",
+                   "params": params, "preset_id": "", "mode": params.get("base_kind", "")}
     elif kind == "create_project":
         payload = {"kind": "confirm", "action": "create_project", "title": "新建项目",
                    "summary": f"项目名《{params.get('name')}》，并新开一个会话",
@@ -790,6 +829,28 @@ async def node_dispatch(state: AgentState) -> dict:
                "artifact_id": artifact["id"], "url": ""})
         return {"reply": f"开始导出 {params.get('shots')} 个镜头，好了我把片子发过来。"}
 
+    if kind == "revise":
+        base = params or {}
+        _emit({"t": "tool_call", "id": "gen", "name": "make_revision",
+               "args": {"base_ref": base.get("base_ref"), "patch": base.get("patch")}})
+        raw = await tools.make_revision(thread_id, state.get("project_id", ""),
+                                        str(state.get("text") or ""))
+        data = json.loads(raw)
+        _emit({"t": "tool_result", "id": "gen", "ok": bool(data.get("ok")), "data": data})
+        if not data.get("ok"):
+            return {"reply": f"改不了：{data.get('hint') or data.get('error')}"}
+        revision = data.get("revision") or {}
+        rev_params = data.get("params") or {}
+        rev_kind = "video" if revision.get("base_kind") == "video" else "image"
+        artifact = agent_store.add_artifact(
+            run_id, thread_id, rev_kind, data["job_id"], "",
+            {"params": rev_params, "status": "queued",
+             "parent_ref": revision.get("base_ref"), "note": revision.get("note", "")})
+        _emit({"t": "artifact", "kind": rev_kind, "ref_id": data["job_id"],
+               "artifact_id": artifact["id"], "url": ""})
+        return {"reply": f"基于 #{revision.get('base_ref')} 改了一版："
+                         f"{revision.get('summary')}。出片后我把结果发过来。"}
+
     if kind == "create_project":
         _emit({"t": "tool_call", "id": "gen", "name": "create_project",
                "args": {"name": params.get("name")}})
@@ -898,7 +959,9 @@ async def node_dispatch(state: AgentState) -> dict:
         return {"reply": f"提交失败了：{data.get('hint') or data.get('error')}"}
     kind = "video" if is_video else "image"
     artifact = agent_store.add_artifact(run_id, thread_id, kind, data["job_id"], "",
-                                  {"params": params, "status": "queued"})
+                                  {"params": params, "status": "queued",
+                                   "parent_ref": params.get("parent_ref"),
+                                   "note": params.get("note", "")})
     _emit({"t": "artifact", "kind": kind, "ref_id": data["job_id"],
                    "artifact_id": artifact["id"], "url": ""})
     return {"reply": f"已提交，任务 id {data['job_id']}。出图后我会把结果发过来。"}
@@ -922,6 +985,8 @@ def route_after_decide(state: AgentState) -> str:
         return "prepare_bgm"
     if intent == "film_options":
         return "prepare_film"
+    if intent == "revise":
+        return "prepare_revise"
     if intent == "create_project":
         return "prepare_new_project"
     if intent == "add_shot":
@@ -930,7 +995,10 @@ def route_after_decide(state: AgentState) -> str:
 
 
 def route_after_prepare(state: AgentState) -> str:
-    return "chat" if state.get("intent") == "chat" else "confirm"
+    if state.get("intent") == "chat":
+        # 节点里已经写好了提示（比如「没听出要改什么」），直接回，不用再等模型
+        return "quick_reply" if str(state.get("reply") or "").strip() else "chat"
+    return "confirm"
 
 
 def route_after_confirm(state: AgentState) -> str:
@@ -949,6 +1017,7 @@ def build_graph(checkpointer=None):
     graph.add_node("decide", node_decide)
     graph.add_node("chat", node_chat)
     graph.add_node("reply_capability", node_reply_capability)
+    graph.add_node("quick_reply", node_quick_reply)
     graph.add_node("lookup", node_lookup)
     graph.add_node("prepare", node_prepare)
     graph.add_node("prepare_export", node_prepare_export)
@@ -957,6 +1026,7 @@ def build_graph(checkpointer=None):
     graph.add_node("prepare_bgm", node_prepare_bgm)
     graph.add_node("prepare_film", node_prepare_film)
     graph.add_node("prepare_new_project", node_prepare_new_project)
+    graph.add_node("prepare_revise", node_prepare_revise)
     graph.add_node("prepare_add_shot", node_prepare_add_shot)
     graph.add_node("confirm", node_confirm)
     graph.add_node("dispatch", node_dispatch)
@@ -972,20 +1042,20 @@ def build_graph(checkpointer=None):
                                  "prepare_film": "prepare_film",
                                  "prepare_new_project": "prepare_new_project",
                                  "prepare_add_shot": "prepare_add_shot",
-                                 "reply_capability": "reply_capability"})
+                                 "reply_capability": "reply_capability",
+                                 "prepare_revise": "prepare_revise"})
     graph.add_edge("lookup", END)
     graph.add_conditional_edges("prepare", route_after_prepare,
                                 {"chat": "chat", "confirm": "confirm"})
-    graph.add_edge("prepare_export", "confirm")
-    graph.add_edge("prepare_save", "confirm")
-    graph.add_edge("prepare_polish", "confirm")
-    graph.add_edge("prepare_bgm", "confirm")
-    graph.add_edge("prepare_film", "confirm")
-    graph.add_edge("prepare_new_project", "confirm")
-    graph.add_edge("prepare_add_shot", "confirm")
+    for name in ("prepare_export", "prepare_save", "prepare_polish", "prepare_bgm",
+                 "prepare_film", "prepare_new_project", "prepare_revise", "prepare_add_shot"):
+        graph.add_conditional_edges(name, route_after_prepare,
+                                    {"confirm": "confirm", "chat": "chat",
+                                     "quick_reply": "quick_reply"})
     graph.add_conditional_edges("confirm", route_after_confirm,
                                 {"dispatch": "dispatch", "chat": "chat"})
     graph.add_edge("dispatch", END)
     graph.add_edge("chat", END)
     graph.add_edge("reply_capability", END)
+    graph.add_edge("quick_reply", END)
     return graph.compile(checkpointer=checkpointer)

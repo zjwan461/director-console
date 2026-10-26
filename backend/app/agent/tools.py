@@ -585,3 +585,77 @@ async def add_shots(project_id: str, prompts: list[str]) -> str:
                                               "duration": 5})
         created.append({"id": shot["id"], "title": f"镜头 {base + index}", "prompt": prompt})
     return _dumps({"ok": True, "created": created, "count": len(created)})
+
+
+# --------------------------------------------------------------------------- #
+# 修订：在上一版基础上改参数（Step 1）
+# --------------------------------------------------------------------------- #
+def _revision_params(target: dict, patch: dict) -> dict:
+    base = dict(target.get("params") or {})
+    prompt = str(base.get("prompt") or target.get("prompt") or "")
+    suffix = str(patch.get("prompt_suffix") or "")
+    if suffix:
+        prompt = f"{prompt}，{suffix}" if prompt else suffix
+    params = {
+        "prompt": prompt,
+        "aspect": patch.get("aspect") or base.get("aspect") or "9:16",
+        "megapixels": patch.get("megapixels") or base.get("megapixels"),
+        "duration": patch.get("duration") or base.get("duration") or 5,
+        "mode": base.get("mode") or "t2v",
+        "image_asset_id": base.get("image_asset_id") or "",
+        "seed": base.get("seed", -1),
+        "parent_ref": target.get("ref"),
+        "note": f"基于 #{target.get('ref')}：{patch.get('prompt_suffix') or '参数调整'}",
+    }
+    return params
+
+
+def revise_preview(thread_id: str, project_id: str, text: str) -> dict:
+    from . import state as agent_state
+
+    resolved = agent_state.resolve(text, thread_id, project_id)
+    if resolved.get("ambiguous"):
+        names = "、".join(f"#{a['ref']}" for a in resolved["ambiguous"][:4])
+        return {"ok": False, "hint": f"你说的可能是 {names}，告诉我是第几个"}
+    target = resolved.get("target")
+    if not target:
+        return {"ok": False, "hint": resolved.get("error") or "没找到要改的那一版"}
+
+    if target.get("type") == "shot":
+        return {"ok": False, "hint": "镜头不能直接改，先让我按这个镜头出一版，再改那一版"}
+
+    patch = agent_state.build_patch(text)
+    if not patch:
+        return {"ok": False, "hint": "没听出要改什么，可以说「再亮一点」「时长改成 8 秒」「换成竖屏」"}
+
+    params = _revision_params(target, patch)
+    kind = target.get("kind") or "image"
+    return {
+        "ok": True,
+        "base_ref": target["ref"],
+        "base_kind": kind,
+        "base_url": target.get("url") or "",
+        "patch": patch,
+        "params": params,
+        "summary": agent_state.describe_patch(patch, target),
+        "how": resolved.get("how") or "",
+        "eta": 200 if kind == "video" else 40,
+    }
+
+
+async def make_revision(thread_id: str, project_id: str, text: str) -> str:
+    preview = revise_preview(thread_id, project_id, text)
+    if not preview.get("ok"):
+        return _dumps(preview)
+    params = preview["params"]
+    if preview["base_kind"] == "video":
+        raw = await make_video(params["prompt"], params["mode"], params["aspect"],
+                               params["duration"], params.get("image_asset_id") or "",
+                               params.get("megapixels"))
+    else:
+        raw = await make_image(params["prompt"], params["aspect"], params.get("megapixels"),
+                               int(params.get("seed") or -1))
+    data = json.loads(raw)
+    data["revision"] = preview
+    data["params"] = params
+    return _dumps(data)

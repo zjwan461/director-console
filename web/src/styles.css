@@ -1280,3 +1280,29 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
   color: #77849c;
   font-family: inherit;
 }
+
+/* 产物编号 / 血缘 */
+.agent-artifact-card { position: relative; }
+.agent-artifact-ref {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 2;
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: rgba(10, 14, 22, .78);
+  color: #cbd6ea;
+  font-size: 10.5px;
+  font-family: ui-monospace, monospace;
+}
+.agent-artifact-parent {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 2;
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: rgba(42, 34, 51, .85);
+  color: #c9a9e8;
+  font-size: 10px;
+}

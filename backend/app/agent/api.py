@@ -79,6 +79,14 @@ async def get_thread(thread_id: str) -> dict:
     # 早期版本对同一个 job 会插两条（占位 + 完成），这里顺手清一下
     agent_store.dedupe_artifacts(thread_id)
     artifacts = _heal_artifacts(agent_store.list_artifacts(thread_id, limit=12))
+    # 给产物编号（只算有 url 的），前端显示 #1 #2，修订时也按这个号指代
+    with_url = sorted([a for a in artifacts if a.get("url")],
+                      key=lambda a: float(a.get("created_at") or 0))
+    ref_of = {a["id"]: index for index, a in enumerate(with_url, start=1)}
+    for item in artifacts:
+        item["ref"] = ref_of.get(item["id"], 0)
+        item["parent_ref"] = (item.get("meta") or {}).get("parent_ref")
+        item["note"] = (item.get("meta") or {}).get("note") or ""
     return {"thread": thread, "project": {"id": project.get("id"), "name": project.get("name")},
             "runs": agent_store.list_active_runs(thread_id),
             "artifacts": artifacts}
