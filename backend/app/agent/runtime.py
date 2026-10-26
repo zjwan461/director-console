@@ -187,9 +187,14 @@ async def watch_job(job_id: str, run_id: str, thread_id: str,
                 kind = out_kind
         if url.lower().endswith((".mp4", ".webm", ".mov")):
             kind = "video"
-        artifact = agent_store.add_artifact(
-            run_id, thread_id, kind, job_id, url,
-            {"status": status, "error": job.get("error", "")})
+        existing = agent_store.find_artifact(thread_id, job_id)
+        meta = {"status": status, "error": job.get("error", "")}
+        if existing:
+            artifact = agent_store.update_artifact(
+                existing["id"], url=url, kind=kind,
+                meta={**(existing.get("meta") or {}), **meta}) or existing
+        else:
+            artifact = agent_store.add_artifact(run_id, thread_id, kind, job_id, url, meta)
         if status == "succeeded":
             _remember_output(thread_id, job, kind, url)
         text = ("视频出来了" if kind == "video" else "图出来了") \
@@ -218,9 +223,14 @@ async def watch_render(render_id: str, run_id: str, thread_id: str,
         if status not in {"succeeded", "failed", "canceled"}:
             continue
         url = f"/media/files/renders/{render_id}/final.mp4" if status == "succeeded" else ""
-        artifact = agent_store.add_artifact(
-            run_id, thread_id, "video", render_id, url,
-            {"status": status, "error": render.get("error", ""), "source": "render"})
+        existing = agent_store.find_artifact(thread_id, render_id)
+        meta = {"status": status, "error": render.get("error", ""), "source": "render"}
+        if existing:
+            artifact = agent_store.update_artifact(
+                existing["id"], url=url, kind="video",
+                meta={**(existing.get("meta") or {}), **meta}) or existing
+        else:
+            artifact = agent_store.add_artifact(run_id, thread_id, "video", render_id, url, meta)
         text = "成片出来了" if status == "succeeded" else f"导出失败：{render.get('error') or status}"
         parts = [{"type": "video", "url": url, "render_id": render_id,
                   "artifact_id": artifact["id"], "status": status}]

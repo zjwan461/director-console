@@ -144,6 +144,20 @@ export default function AgentPanel({ projectId, onOpenProject }: {
       setBusy(false)
       setStreamText('')
     } else if (event.t === 'artifact') {
+      const refId = String(event.ref_id || '')
+      const url = String(event.url || '')
+      const kind = String(event.kind || 'image')
+      const artifactId = String(event.artifact_id || '')
+      setArtifacts((prev) => {
+        const idx = prev.findIndex((x) => (refId && x.ref_id === refId) || (artifactId && x.id === artifactId))
+        if (idx >= 0) {
+          const next = [...prev]
+          next[idx] = { ...next[idx], url: url || next[idx].url, kind, meta: { ...next[idx].meta, status: event.status } }
+          return next
+        }
+        return [{ id: artifactId || Math.random().toString(36), kind, ref_id: refId, url,
+                  meta: { status: event.status }, created_at: Date.now() / 1000 }, ...prev]
+      })
       api.agentThread(threadId).then((res) => setArtifacts(res.artifacts || [])).catch(() => undefined)
       setArtifacts((prev) => [{
         id: String(event.artifact_id || Math.random()),
@@ -544,11 +558,13 @@ export default function AgentPanel({ projectId, onOpenProject }: {
         </div>
         <div className="agent-artifacts">
           {artifacts.length === 0 && <div className="agent-empty-mini">出图后会出现在这里</div>}
-          {artifacts.map((item) => {
+          {uniqueArtifacts(artifacts).map((item) => {
             const label = item.kind === 'shot' ? '已存为镜头'
               : item.kind === 'render' ? '成片'
                 : item.kind === 'video' ? '视频' : '图片'
-            const status = item.url ? '' : String(item.meta?.status || '排队中')
+            const rawStatus = String(item.meta?.status || '')
+            const status = item.url ? '' : (rawStatus === 'failed' ? '失败'
+              : rawStatus === 'canceled' ? '已取消' : '排队中')
             return (
               <a key={item.id} className="agent-artifact-card" href={item.url || '#'} target="_blank" rel="noreferrer">
                 {item.kind === 'shot'
@@ -557,7 +573,9 @@ export default function AgentPanel({ projectId, onOpenProject }: {
                     ? (item.kind === 'video' || item.kind === 'render'
                       ? <video src={item.url} muted playsInline preload="metadata" />
                       : <img src={item.url} alt="" loading="lazy" />)
-                    : <div className="agent-artifact-empty">排队中</div>}
+                    : <div className={`agent-artifact-empty ${failedState(item)}`}>
+                        {failedState(item) ? '生成失败' : '排队中'}
+                      </div>}
                 <span>{label}{status ? ` · ${status}` : ''}</span>
               </a>
             )
@@ -566,6 +584,24 @@ export default function AgentPanel({ projectId, onOpenProject }: {
       </aside>
     </div>
   )
+}
+
+function failedState(item: AgentArtifact): string {
+  const status = String(item.meta?.status || '')
+  return status === 'failed' || status === 'canceled' ? 'bad' : ''
+}
+
+function uniqueArtifacts(items: AgentArtifact[]): AgentArtifact[] {
+  const best = new Map<string, AgentArtifact>()
+  for (const item of items) {
+    const key = item.ref_id || item.id
+    const current = best.get(key)
+    if (!current) { best.set(key, item); continue }
+    // 优先保留已经有 url 的（完成的），其次时间更新的
+    const better = (item.url && !current.url) || (!!item.url === !!current.url && item.created_at > current.created_at)
+    if (better) best.set(key, item)
+  }
+  return [...best.values()].sort((a, b) => b.created_at - a.created_at)
 }
 
 function actionOf(pending: { action?: unknown }): string {

@@ -75,14 +75,52 @@ async def get_thread(thread_id: str) -> dict:
     if not thread:
         raise HTTPException(status_code=404, detail="会话不存在")
     project = store.get_project(thread["project_id"]) or {}
+    # 早期版本对同一个 job 会插两条（占位 + 完成），这里顺手清一下
+    agent_store.dedupe_artifacts(thread_id)
+    artifacts = _heal_artifacts(agent_store.list_artifacts(thread_id, limit=12))
     return {"thread": thread, "project": {"id": project.get("id"), "name": project.get("name")},
             "runs": agent_store.list_active_runs(thread_id),
-            "artifacts": agent_store.list_artifacts(thread_id, limit=12)}
+            "artifacts": artifacts}
 
 
-# --------------------------------------------------------------------------- #
-# 消息
-# --------------------------------------------------------------------------- #
+def _heal_artifacts(items: list[dict]) -> list[dict]:
+    """占位产物：去查真实任务/成片状态，完成或失败就地更新，别一直挂「排队中」。"""
+    healed: list[dict] = []
+    for item in items:
+        status = str((item.get("meta") or {}).get("status") or "")
+        if item.get("url") or (status and status not in ("queued", "running")):
+            healed.append(item)
+            continue
+
+        ref = item.get("ref_id") or ""
+        url, final, error = "", "", ""
+        if ref.startswith("job_"):
+            job = store.get_job(ref)
+            if job:
+                final = str(job.get("status") or "")
+                outputs = job.get("outputs") or []
+                if outputs and isinstance(outputs[0], dict):
+                    url = str(outputs[0].get("url") or "")
+                error = str(job.get("error") or "")
+            else:
+                final, error = "failed", "任务已不存在"
+        elif ref.startswith("rnd_"):
+            render = store.get_render(ref)
+            if render:
+                final = str(render.get("status") or "")
+                if final == "succeeded":
+                    url = f"/media/files/renders/{ref}/final.mp4"
+                error = str(render.get("error") or "")
+            else:
+                final, error = "failed", "成片记录已不存在"
+
+        if final in ("succeeded", "failed", "canceled"):
+            meta = {**(item.get("meta") or {}), "status": final, "error": error}
+            item = agent_store.update_artifact(item["id"], url=url or None, meta=meta) or item
+        healed.append(item)
+    return healed
+
+
 @router.get("/threads/{thread_id}/messages")
 async def list_messages(thread_id: str, after_seq: int = Query(0, ge=0), limit: int = 200) -> dict:
     return {"items": agent_store.list_messages(thread_id, after_seq, limit)}

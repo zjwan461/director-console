@@ -286,6 +286,55 @@ def get_artifact(artifact_id: str) -> dict | None:
     return _artifact_row(row)
 
 
+def find_artifact(thread_id: str, ref_id: str) -> dict | None:
+    """同一个 job/render 只保留一条产物记录。"""
+    with _lock, connect() as conn:
+        row = conn.execute(
+            "SELECT * FROM agent_artifacts WHERE thread_id=? AND ref_id=?"
+            " ORDER BY created_at DESC LIMIT 1", (thread_id, ref_id)).fetchone()
+    return _artifact_row(row)
+
+
+def update_artifact(artifact_id: str, url: str | None = None,
+                    meta: dict | None = None, kind: str | None = None) -> dict | None:
+    sets, params = [], []
+    if url is not None:
+        sets.append("url=?")
+        params.append(url)
+    if kind:
+        sets.append("kind=?")
+        params.append(kind)
+    if meta is not None:
+        sets.append("meta_json=?")
+        params.append(json.dumps(meta, ensure_ascii=False))
+    if not sets:
+        return get_artifact(artifact_id)
+    params.append(artifact_id)
+    with _lock, connect() as conn:
+        conn.execute(f"UPDATE agent_artifacts SET {', '.join(sets)} WHERE id=?", params)
+    return get_artifact(artifact_id)
+
+
+def dedupe_artifacts(thread_id: str) -> int:
+    """清掉同 ref_id 的重复占位记录（保留最新一条）。"""
+    removed = 0
+    with _lock, connect() as conn:
+        rows = conn.execute(
+            "SELECT id, ref_id FROM agent_artifacts WHERE thread_id=?"
+            " ORDER BY created_at DESC", (thread_id,)).fetchall()
+        seen: set[str] = set()
+        for row in rows:
+            ref = row["ref_id"] or ""
+            if not ref:
+                continue
+            if ref in seen:
+                conn.execute("DELETE FROM agent_artifacts WHERE id=?", (row["id"],))
+                removed += 1
+            else:
+                seen.add(ref)
+    return removed
+
+
 def list_artifacts(thread_id: str, limit: int = 50) -> list[dict]:
     with _lock, connect() as conn:
         rows = conn.execute(
