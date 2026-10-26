@@ -124,7 +124,7 @@ def _fast_intent(state: AgentState) -> dict | None:
 
     POLISH_RE = re.compile(r"(字幕|旁白|配音|口播|解说|AI ?剪辑|一键剪辑)")
     BGM_RE = re.compile(r"(配乐|背景音乐|BGM|加.*音乐|音乐.*换|来点音乐)", re.IGNORECASE)
-    FILM_RE = re.compile(r"(转场|片头|片尾|画幅|竖屏|横屏)")
+    FILM_RE = re.compile(r"(转场|片头|片尾|画幅|比例)")
 
     if POLISH_RE.search(text):
         kinds = "narration" if "旁白" in text and "字幕" not in text else (
@@ -136,9 +136,6 @@ def _fast_intent(state: AgentState) -> dict | None:
             "asset" if ("这首" in text or "那首" in text or "用" in text) else "auto")
         return {"intent": "bgm", "args": {"mode": mode, "query": text},
                 "reply": "好，我来配乐。"}
-    if FILM_RE.search(text) and ("导出" not in text):
-        return {"intent": "film_options", "args": {"raw": text},
-                "reply": "好，我改一下成片设置。"}
     if EXPORT_RE.search(text):
         return {"intent": "export", "args": {}, "reply": "好，我按项目设置导出成片。"}
     if SAVE_RE.search(text):
@@ -156,6 +153,9 @@ def _fast_intent(state: AgentState) -> dict | None:
     if IMAGE_RE.search(text):
         return {"intent": "generate", "args": {"prompt": text, "aspect": "9:16"},
                 "reply": "好，我来出图。"}
+    if FILM_RE.search(text):
+        return {"intent": "film_options", "args": {"raw": text},
+                "reply": "好，我改一下成片设置。"}
     return None
 
 
@@ -186,6 +186,16 @@ def _short_circuit(state: AgentState) -> dict | None:
     ctx = agent_store.get_context(thread_id)
     asset_id = str(ctx.get("last_asset_id") or "")
     if not asset_id:
+        # 产物可能比上下文早落库（watcher 还在轮询），从最近产物兜底
+        for artifact in agent_store.list_artifacts(thread_id, limit=10):
+            if artifact["kind"] == "image" and artifact["url"]:
+                asset_id = tools.asset_from_url(artifact["url"], artifact["ref_id"])
+                if asset_id:
+                    agent_store.set_context(thread_id, {
+                        "last_asset_id": asset_id, "last_kind": "image",
+                        "last_job_id": artifact["ref_id"], "last_url": artifact["url"]})
+                    break
+    if not asset_id:
         return None
 
     video_intent = any(word in text for word in VIDEO_WORDS)
@@ -210,19 +220,20 @@ def _short_circuit(state: AgentState) -> dict | None:
 
 
 async def node_decide(state: AgentState) -> dict:
-    fast = _fast_intent(state)
-    if fast:
-        _emit({"t": "step", "id": "decide", "node": "decide", "title": "理解需求",
-               "status": "done", "detail": {"intent": fast["intent"], "fast": True,
-                                             "args": fast.get("args")}})
-        return fast
-
+    # 肯定回复优先于关键词：否则「可以，就用这张图」会被 图 字带走，重新出图
     shortcut = _short_circuit(state)
     if shortcut:
         _emit({"t": "step", "id": "decide", "node": "decide", "title": "接着上一步",
                "status": "done", "detail": {"intent": shortcut["intent"],
                                              "reason": "肯定回复 + 最近有产物"}})
         return {**shortcut, "decision": ""}
+
+    fast = _fast_intent(state)
+    if fast:
+        _emit({"t": "step", "id": "decide", "node": "decide", "title": "理解需求",
+               "status": "done", "detail": {"intent": fast["intent"], "fast": True,
+                                             "args": fast.get("args")}})
+        return fast
 
     env = json.loads(tools.env_check())
     env.pop("presets", None)  # 提示词里只留必要信息

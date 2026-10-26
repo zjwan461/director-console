@@ -290,15 +290,11 @@ def _remember_output(thread_id: str, job: dict, kind: str, url: str) -> None:
         "last_preset": job.get("preset_id", ""),
     }
     if kind == "image" and url:
-        rel = _rel_from_url(url)
-        if rel:
-            try:
-                asset = store.get_asset_by_path(rel) or store.add_asset(
-                    "image", rel, meta={"origin": "agent", "job_id": job.get("id", "")})
-                if asset:
-                    patch["last_asset_id"] = asset["id"]
-            except Exception:
-                pass
+        from . import tools as tools_module
+
+        asset_id = tools_module.asset_from_url(url, job.get("id", ""))
+        if asset_id:
+            patch["last_asset_id"] = asset_id
     agent_store.set_context(thread_id, patch)
 
 

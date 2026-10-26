@@ -520,3 +520,27 @@ async def set_film_options(project_id: str, transition: str = "", title: str = "
 
     _save_edit_options(project_id, state, options)
     return _dumps({"ok": True, "changed": changed})
+
+
+def rel_from_url(url: str) -> str:
+    """把 /media/xxx/yyy 转成相对 data 的路径（三段前缀显式处理）。"""
+    url = (url or "").strip()
+    for prefix, root in (("/media/files/", ""), ("/media/outputs/", "outputs/"),
+                         ("/media/uploads/", "uploads/")):
+        if url.startswith(prefix):
+            rest = url[len(prefix):]
+            return f"{root}{rest}" if root else rest
+    return ""
+
+
+def asset_from_url(url: str, job_id: str = "") -> str:
+    """把产物 URL 登记成素材，返回 asset_id（失败返回空串）。"""
+    rel = rel_from_url(url)
+    if not rel:
+        return ""
+    try:
+        asset = store.get_asset_by_path(rel) or store.add_asset(
+            "image", rel, meta={"origin": "agent", "job_id": job_id})
+        return asset["id"] if asset else ""
+    except Exception:
+        return ""
