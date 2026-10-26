@@ -269,11 +269,16 @@ export default function AgentPanel({ projectId, onOpenProject }: {
                     </div>
                   )
                 }
-                if (part.type === 'image') {
+                if (part.type === 'image' || part.type === 'video') {
                   const url = String(part.url || '')
+                  const isVideo = part.type === 'video'
                   return (
                     <div className="agent-artifact" key={index}>
-                      {url ? <img src={url} alt="" /> : <div className="agent-artifact-empty">生成中…</div>}
+                      {url
+                        ? (isVideo
+                          ? <video src={url} controls playsInline className="agent-artifact-video" />
+                          : <img src={url} alt="" />)
+                        : <div className="agent-artifact-empty">{isVideo ? '视频生成中…' : '生成中…'}</div>}
                       {url && <a href={url} download><button className="ghost tiny">下载</button></a>}
                     </div>
                   )
@@ -322,6 +327,9 @@ export default function AgentPanel({ projectId, onOpenProject }: {
                 {typeof pending.params?.width === 'number' && (
                   <span className="meta">{String(pending.params.width)} × {String(pending.params.height)}</span>
                 )}
+                {typeof pending.params?.duration === 'number' && (
+                  <span className="meta">{String(pending.params.duration)} 秒</span>
+                )}
               </div>
               <div className="agent-confirm-actions">
                 <button className="primary" disabled={busy} onClick={() => void decide(true)}>执行</button>
@@ -367,7 +375,11 @@ export default function AgentPanel({ projectId, onOpenProject }: {
           {artifacts.length === 0 && <div className="agent-empty-mini">出图后会出现在这里</div>}
           {artifacts.map((item) => (
             <a key={item.id} className="agent-artifact-card" href={item.url || '#'} target="_blank" rel="noreferrer">
-              {item.url ? <img src={item.url} alt="" loading="lazy" /> : <div className="agent-artifact-empty">排队中</div>}
+              {item.url
+                ? (item.kind === 'video'
+                  ? <video src={item.url} muted playsInline preload="metadata" />
+                  : <img src={item.url} alt="" loading="lazy" />)
+                : <div className="agent-artifact-empty">排队中</div>}
               <span>{item.kind} · {(item.meta?.status as string) || ''}</span>
             </a>
           ))}

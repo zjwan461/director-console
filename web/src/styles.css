@@ -1029,3 +1029,9 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
 .agent-empty h2 { margin: 0; font-size: 17px; }
 .agent-empty p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.7; }
 .agent-empty select { height: 34px; font-size: 13px; }
+
+
+/* 视频产物 */
+.agent-artifact-video { max-width: 320px; border-radius: 10px; border: 1px solid #242a38;
+  box-shadow: 0 8px 22px rgba(0,0,0,.35); display: block; }
+.agent-artifact-card video { width: 100%; border-radius: 7px; display: block; }

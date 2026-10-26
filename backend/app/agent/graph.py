@@ -32,6 +32,7 @@ class AgentState(TypedDict, total=False):
     reply: str
     args: dict
     plan: dict
+    decision: str
     error: str
 
 
@@ -119,7 +120,7 @@ async def node_decide(state: AgentState) -> dict:
         return {"intent": "chat", "reply": f"我这边调用模型失败了：{exc}", "args": {}}
 
     intent = str(data.get("intent") or "chat").strip()
-    if intent not in {"chat", "lookup", "generate"}:
+    if intent not in {"chat", "lookup", "generate", "generate_video"}:
         intent = "chat"
     reply = str(data.get("reply") or "").strip()
     args = data.get("args") or {}
@@ -173,40 +174,89 @@ async def node_prepare(state: AgentState) -> dict:
     except Exception as exc:
         hint = str(exc)[:80] or type(exc).__name__
         return {"intent": "chat",
-                "reply": f"ComfyUI 现在连不上（{hint}），先去看服务管家把它启起来，再让我出图。"}
+                "reply": f"ComfyUI 现在连不上（{hint}），先去看服务管家把它启起来，再让我干活。"}
 
     args = state.get("args") or {}
+    intent = state.get("intent") or "generate"
     prompt = str(args.get("prompt") or "").strip()
-    aspect = str(args.get("aspect") or "")
-    mp = args.get("megapixels")
-    preview = tools.image_inputs_preview(prompt, aspect or "9:16",
-                                        float(mp) if mp else None)
+    if not prompt:
+        return {"intent": "chat", "reply": "能再说清楚一点画面内容吗？我好照着画。"}
+
+    if intent == "generate_video":
+        mode = str(args.get("mode") or "t2v").strip()
+        if mode not in tools.VIDEO_CARDS:
+            mode = "t2v"
+        asset_id = str(args.get("image_asset_id") or "").strip()
+
+        # i2v / r2v 需要图：先从素材库按关键词找一张
+        if mode in {"i2v", "r2v"} and not asset_id:
+            query = str(args.get("image_query") or "").strip() or prompt[:12]
+            found = json.loads(tools.list_assets(kind="image", q=query, limit=3))
+            items = found.get("items") or []
+            if not items:
+                found = json.loads(tools.list_assets(kind="image", limit=3))
+                items = found.get("items") or []
+            if not items:
+                return {"intent": "chat",
+                        "reply": "素材库里还没有图片，先把一张图放进资产，再让我做图生视频。"}
+            asset_id = str(items[0]["id"])
+            _emit({"t": "step", "id": "pick_image", "node": "prepare",
+                   "title": "挑选参考图", "status": "done",
+                   "detail": {"asset": items[0].get("path"), "matched": bool(found.get("items"))}})
+
+        preview = tools.video_inputs_preview(
+            prompt, mode, str(args.get("aspect") or ""),
+            float(args["duration"]) if args.get("duration") else None, asset_id)
+        _emit({"t": "tool_call", "id": "prep", "name": "make_video.preview",
+               "args": {"prompt": prompt, "mode": mode, "duration": preview.get("params", {}).get("duration"),
+                        "asset_id": asset_id}})
+        if preview["errors"]:
+            _emit({"t": "tool_result", "id": "prep", "ok": False,
+                   "data": {"errors": preview["errors"]}})
+            return {"intent": "chat",
+                    "reply": "参数有问题：" + "；".join(preview["errors"]), "args": {}}
+        _emit({"t": "tool_result", "id": "prep", "ok": True, "data": preview["params"]})
+        return {"plan": {"kind": "video", **preview}}
+
+    preview = tools.image_inputs_preview(
+        prompt, str(args.get("aspect") or "9:16"),
+        float(args["megapixels"]) if args.get("megapixels") else None,
+        int(args.get("seed") or -1))
     _emit({"t": "tool_call", "id": "prep", "name": "make_image.preview",
-                   "args": {"prompt": prompt, "aspect": aspect, "megapixels": mp}})
+           "args": {"prompt": prompt, "aspect": args.get("aspect"), "megapixels": args.get("megapixels")}})
     if preview["errors"]:
         _emit({"t": "tool_result", "id": "prep", "ok": False,
-                       "data": {"errors": preview["errors"]}})
+               "data": {"errors": preview["errors"]}})
         return {"reply": "参数有问题：" + "；".join(preview["errors"]),
                 "intent": "chat", "args": {}}
     _emit({"t": "tool_result", "id": "prep", "ok": True, "data": preview["params"]})
-    return {"plan": preview}
+    return {"plan": {"kind": "image", **preview}}
 
 
 async def node_confirm(state: AgentState) -> dict:
     plan = state.get("plan") or {}
     params = plan.get("params") or {}
+    is_video = plan.get("kind") == "video"
+    if is_video:
+        eta = max(60, int(float(params.get("duration") or 5) * 40))
+        summary = f"{params.get('width')}×{params.get('height')} · {params.get('duration')} 秒 · 约 {eta} 秒"
+        title = "生成视频"
+    else:
+        summary = f"{params.get('width')}×{params.get('height')} · 约 40 秒"
+        title = "生成图片"
     payload = {
         "kind": "confirm",
-        "title": "生成图片",
-        "summary": f"{params.get('width')}×{params.get('height')} · 约 40 秒",
+        "title": title,
+        "summary": summary,
         "params": params,
+        "mode": plan.get("mode", ""),
         "preset_id": plan.get("preset_id"),
     }
     decision = interrupt(payload)
     approved = bool((decision or {}).get("approved"))
     if not approved:
-        return {"reply": "好，这次不生成。想改哪里直接说。", "intent": "chat"}
-    return {}
+        return {"decision": "cancelled", "reply": "好，这次不生成。想改哪里直接说。", "intent": "chat"}
+    return {"decision": "approved"}
 
 
 async def node_dispatch(state: AgentState) -> dict:
@@ -214,19 +264,31 @@ async def node_dispatch(state: AgentState) -> dict:
     params = plan.get("params") or {}
     thread_id = state.get("thread_id", "")
     run_id = state.get("run_id", "")
-    _emit({"t": "tool_call", "id": "gen", "name": "make_image",
-                   "args": {"prompt": params.get("prompt"), "aspect": params.get("aspect")}})
-    raw = await tools.make_image(
-        params.get("prompt", ""), params.get("aspect", "9:16"),
-        params.get("megapixels"), int(params.get("seed") or -1))
+    is_video = plan.get("kind") == "video"
+    if is_video:
+        _emit({"t": "tool_call", "id": "gen", "name": "make_video",
+               "args": {"prompt": params.get("prompt"), "mode": plan.get("mode"),
+                        "duration": params.get("duration")}})
+        raw = await tools.make_video(
+            params.get("prompt", ""), plan.get("mode", "t2v"),
+            params.get("aspect", "16:9"),
+            float(params["duration"]) if params.get("duration") else None,
+            str(params.get("image_asset_id") or ""))
+    else:
+        _emit({"t": "tool_call", "id": "gen", "name": "make_image",
+               "args": {"prompt": params.get("prompt"), "aspect": params.get("aspect")}})
+        raw = await tools.make_image(
+            params.get("prompt", ""), params.get("aspect", "9:16"),
+            params.get("megapixels"), int(params.get("seed") or -1))
     data = json.loads(raw)
     _emit({"t": "tool_result", "id": "gen", "ok": bool(data.get("ok")),
                    "data": {"job_id": data.get("job_id")}})
     if not data.get("ok"):
         return {"reply": f"提交失败了：{data.get('hint') or data.get('error')}"}
-    artifact = agent_store.add_artifact(run_id, thread_id, "image", data["job_id"], "",
+    kind = "video" if is_video else "image"
+    artifact = agent_store.add_artifact(run_id, thread_id, kind, data["job_id"], "",
                                   {"params": params, "status": "queued"})
-    _emit({"t": "artifact", "kind": "image", "ref_id": data["job_id"],
+    _emit({"t": "artifact", "kind": kind, "ref_id": data["job_id"],
                    "artifact_id": artifact["id"], "url": ""})
     return {"reply": f"已提交，任务 id {data['job_id']}。出图后我会把结果发过来。"}
 
@@ -235,13 +297,17 @@ def route_after_decide(state: AgentState) -> str:
     intent = state.get("intent") or "chat"
     if intent == "lookup":
         return "lookup"
-    if intent == "generate":
+    if intent in {"generate", "generate_video"}:
         return "prepare"
     return "chat"
 
 
 def route_after_prepare(state: AgentState) -> str:
     return "chat" if state.get("intent") == "chat" else "confirm"
+
+
+def route_after_confirm(state: AgentState) -> str:
+    return "dispatch" if state.get("decision") == "approved" else "chat"
 
 
 def build_graph():
@@ -261,7 +327,8 @@ def build_graph():
     graph.add_edge("lookup", END)
     graph.add_conditional_edges("prepare", route_after_prepare,
                                 {"chat": "chat", "confirm": "confirm"})
-    graph.add_edge("confirm", "dispatch")
+    graph.add_conditional_edges("confirm", route_after_confirm,
+                                {"dispatch": "dispatch", "chat": "chat"})
     graph.add_edge("dispatch", END)
     graph.add_edge("chat", END)
     return graph.compile(checkpointer=MemorySaver())

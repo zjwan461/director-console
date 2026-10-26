@@ -140,7 +140,7 @@ def _append_assistant(thread_id: str, run_id: str, reply: str, result: dict) -> 
 
 
 async def watch_job(job_id: str, run_id: str, thread_id: str,
-                    interval: float = 2.0, timeout: float = 900.0) -> None:
+                    interval: float = 3.0, timeout: float = 2400.0) -> None:
     """任务完成/失败后，把结果作为一条新消息追加。"""
     deadline = time.time() + timeout
     while time.time() < deadline:
@@ -153,16 +153,23 @@ async def watch_job(job_id: str, run_id: str, thread_id: str,
             continue
         outputs = job.get("outputs") or []
         url = ""
+        kind = "image"
         if outputs and isinstance(outputs[0], dict):
             url = str(outputs[0].get("url") or "")
+            out_kind = str(outputs[0].get("kind") or "")
+            if out_kind in {"video", "image", "audio"}:
+                kind = out_kind
+        if url.lower().endswith((".mp4", ".webm", ".mov")):
+            kind = "video"
         artifact = agent_store.add_artifact(
-            run_id, thread_id, "image", job_id, url,
+            run_id, thread_id, kind, job_id, url,
             {"status": status, "error": job.get("error", "")})
-        text = "图出来了" if status == "succeeded" else f"生成失败：{job.get('error') or status}"
-        parts = [{"type": "image", "url": url, "job_id": job_id,
+        text = ("视频出来了" if kind == "video" else "图出来了") \
+            if status == "succeeded" else f"生成失败：{job.get('error') or status}"
+        parts = [{"type": kind, "url": url, "job_id": job_id,
                   "artifact_id": artifact["id"], "status": status}]
         agent_store.add_message(thread_id, "assistant", text, parts, run_id)
-        bus.publish(thread_id, {"t": "artifact", "kind": "image", "ref_id": job_id,
+        bus.publish(thread_id, {"t": "artifact", "kind": kind, "ref_id": job_id,
                                 "artifact_id": artifact["id"], "url": url,
                                 "status": status})
         bus.publish(thread_id, {"t": "message", "role": "assistant", "content": text,

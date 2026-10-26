@@ -19,6 +19,14 @@ from ..presets import build_bindings, get_card, load_cards, public_card, size_fr
 
 IMAGE_CARD_ID = "image.c16"
 
+# 视频模式 -> (能力卡, 必填的图片槽位)
+VIDEO_CARDS = {
+    "t2v": ("h3.t2v", ""),
+    "i2v": ("h3.i2v", "first_frame"),
+    "r2v": ("h3.r2v", "ref_1"),
+}
+VIDEO_MAX_DURATION = 15
+
 ASPECT_RATIO: dict[str, tuple[int, int]] = {
     "16:9": (16, 9), "9:16": (9, 16), "1:1": (1, 1),
     "4:3": (4, 3), "3:4": (3, 4), "21:9": (21, 9), "3:2": (3, 2), "2:3": (2, 3),
@@ -172,3 +180,71 @@ async def make_image(prompt: str, aspect: str = "9:16", megapixels: float | None
         "preset_id": IMAGE_CARD_ID,
         "params": preview["params"],
     })
+
+
+# --------------------------------------------------------------------------- #
+# 视频（M2）
+# --------------------------------------------------------------------------- #
+def _card_default(card: dict, key: str, fallback=None):
+    field = _card_field(card, key)
+    return field.get("default", fallback)
+
+
+def video_inputs_preview(prompt: str, mode: str = "t2v", aspect: str = "16:9",
+                         duration: float | None = None,
+                         image_asset_id: str = "") -> dict:
+    """给确认卡用：算视频参数，不提交。"""
+    card_id, image_slot = VIDEO_CARDS.get(mode, VIDEO_CARDS["t2v"])
+    card = get_card(card_id)
+    if not card:
+        return {"preset_id": card_id, "errors": [f"能力卡 {card_id} 不存在"]}
+
+    size_field = _card_field(card, "size")
+    aspect = aspect if aspect in ASPECT_RATIO else str(size_field.get("default_aspect") or "16:9")
+    mp = float(size_field.get("default_megapixels") or 0.4)
+    seconds = float(duration or _card_default(card, "duration", 5))
+    lo = float(_card_field(card, "duration").get("min", 1))
+    hi = float(_card_field(card, "duration").get("max", VIDEO_MAX_DURATION))
+    seconds = max(lo, min(hi, seconds))
+
+    values: dict[str, Any] = {
+        "prompt": str(prompt or "").strip(),
+        "size": {"aspect": aspect, "megapixels": mp},
+        "duration": seconds,
+    }
+    if image_slot:
+        values[image_slot] = image_asset_id or ""
+
+    errors = validate(card, values)
+    width, height = size_from(aspect, mp) if aspect else (0, 0)
+    return {
+        "preset_id": card_id,
+        "mode": mode,
+        "params": {
+            "prompt": values["prompt"],
+            "aspect": aspect,
+            "duration": seconds,
+            "width": width,
+            "height": height,
+            "image_asset_id": image_asset_id,
+        },
+        "values": values,
+        "errors": errors,
+    }
+
+
+async def make_video(prompt: str, mode: str = "t2v", aspect: str = "16:9",
+                     duration: float | None = None, image_asset_id: str = "") -> str:
+    preview = video_inputs_preview(prompt, mode, aspect, duration, image_asset_id)
+    if preview["errors"]:
+        return _dumps({"ok": False, "error": "invalid_params",
+                       "hint": "；".join(preview["errors"])})
+    card_id = preview["preset_id"]
+    job = store.create_job(card_id, preview["values"], "", "")
+    try:
+        await runner.enqueue(job["id"])
+    except Exception as exc:
+        return _dumps({"ok": False, "error": "enqueue_failed", "hint": str(exc),
+                       "job_id": job["id"]})
+    return _dumps({"ok": True, "job_id": job["id"], "preset_id": card_id,
+                   "params": preview["params"]})
