@@ -56,3 +56,5 @@ tools/ffprobe
 tools/ffprobe.exe
 director-node-pack*.zip
 start-all.bat
+# 运行时数据库（含 checkpoint），不入库
+data/*.db*

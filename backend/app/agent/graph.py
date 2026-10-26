@@ -10,7 +10,6 @@ import re
 from typing import Annotated, Any, TypedDict
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
-from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import add_messages
 from langgraph.config import get_config
@@ -305,9 +304,8 @@ async def node_chat(state: AgentState) -> dict:
 
     history = [m for m in state.get("messages", []) if isinstance(m, (HumanMessage, AIMessage))]
     msgs = [
-        SystemMessage(content=prompts.system_prompt(env, project_ctx)),
+        SystemMessage(content=prompts.chat_system_prompt(env, project_ctx)),
         *history[-12:],
-        SystemMessage(content="现在用一段自然口语回答用户，不要输出 JSON，不要罗列工具名。"),
     ]
 
     text = ""
@@ -322,7 +320,12 @@ async def node_chat(state: AgentState) -> dict:
         if not text:
             return {"reply": fallback or f"我这边调用模型失败了：{exc}"}
 
-    return {"reply": text.strip() or fallback or "我在。", "streamed": True}
+    cleaned = text.strip()
+    # 个别模型会照着系统提示里的 JSON 例子输出，兜底剥掉
+    if cleaned.startswith("{") and '"intent"' in cleaned:
+        parsed = _parse_json(cleaned)
+        cleaned = str(parsed.get("reply") or "").strip() or fallback or "我在。"
+    return {"reply": cleaned or fallback or "我在。", "streamed": True}
 
 
 async def node_lookup(state: AgentState) -> dict:
@@ -772,7 +775,13 @@ def route_after_confirm(state: AgentState) -> str:
     return "dispatch" if state.get("decision") == "approved" else "chat"
 
 
-def build_graph():
+def build_graph(checkpointer=None):
+    """checkpointer 由 runtime 注入（持久化到 SQLite）；不传则退化为内存版。"""
+    if checkpointer is None:
+        from langgraph.checkpoint.memory import MemorySaver
+
+        checkpointer = MemorySaver()
+
     graph = StateGraph(AgentState)
     graph.add_node("intake", node_intake)
     graph.add_node("decide", node_decide)
@@ -808,4 +817,4 @@ def build_graph():
                                 {"dispatch": "dispatch", "chat": "chat"})
     graph.add_edge("dispatch", END)
     graph.add_edge("chat", END)
-    return graph.compile(checkpointer=MemorySaver())
+    return graph.compile(checkpointer=checkpointer)

@@ -79,9 +79,11 @@ async def _startup() -> None:
     store.recover_jobs()
     store.recover_renders()
     try:
+        from .agent.checkpoint import ensure_graph
         from .agent.runtime import mark_stale_runs
 
         await mark_stale_runs()
+        await ensure_graph()
     except Exception:
         pass
     runner.start()

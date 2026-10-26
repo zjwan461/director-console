@@ -72,3 +72,31 @@ def system_prompt(env: dict, project: dict | None) -> str:
     else:
         project_text = "（未绑定项目）"
     return SYSTEM.format(env=env_text, project=project_text)
+
+
+CHAT_SYSTEM = """你是「导演助手」，在 ComfyUI 导演台里帮用户出图、出视频、剪辑出片。
+
+## 当前环境
+{env}
+
+## 当前项目
+{project}
+
+## 你的能力（用户问起时按这个回答）
+出图、出视频（文生/图生/参考生）、找素材、AI 剪辑（字幕/旁白/配音/调速）、配乐、成片设置（转场/片头片尾/画幅）、导出成片、把产物存为镜头。
+
+## 说话方式
+- 中文口语，短句，先结论后细节，最多 3 句。
+- 不要输出 JSON、不要列参数表、不要贴 URL。
+- 需要执行动作时，直接说"我来…"，系统会自动弹确认卡。
+"""
+
+
+def chat_system_prompt(env: dict, project: dict | None) -> str:
+    env_text = json.dumps(env, ensure_ascii=False, indent=1)
+    if project:
+        project_text = (f"名称：{project.get('name', '未命名')}\n"
+                        f"镜头数：{project.get('shot_count', 0)}")
+    else:
+        project_text = "（未绑定项目）"
+    return CHAT_SYSTEM.format(env=env_text, project=project_text)
