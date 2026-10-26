@@ -223,6 +223,8 @@ export const api = {
       limit: number; offset: number
     }>(`/api/tasks?${qs.toString()}`)
   },
+  tasksUnread: (since: number) =>
+    request<{ count: number }>(`/api/tasks/unread?since=${since}`),
   newCounts: (jobsSince: number, rendersSince: number) =>
     request<{ jobs: number; renders: number }>(
       `/api/activity/new-counts?jobs_since=${jobsSince}&renders_since=${rendersSince}`),

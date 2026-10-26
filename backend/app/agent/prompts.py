@@ -100,3 +100,16 @@ def chat_system_prompt(env: dict, project: dict | None) -> str:
     else:
         project_text = "（未绑定项目）"
     return CHAT_SYSTEM.format(env=env_text, project=project_text)
+
+
+CAPABILITY_TEXT = """我能帮你做这些：
+· 出图：画一张雪夜剑客，竖屏
+· 出视频：做一个 5 秒的雪地奔跑视频；也可以先出图，说「可以，就用这张图」把图做成视频（文生 / 图生 / 参考生）
+· 找素材：素材库里有什么猫的图
+· AI 剪辑：帮我补字幕和旁白（字幕/旁白/配音/调速/片头片尾）
+· 配乐：配点背景音乐，或者指定某一首
+· 成片设置：片头写《…》，用淡入转场
+· 导出：导出成片
+· 建项目/加镜头：新建一个项目叫《…》、加三个镜头：A，B，C
+
+要不要我直接开始？"""

@@ -30,7 +30,7 @@ interface Toast {
 const TERMINAL = new Set(['succeeded', 'failed'])
 
 // 侧边栏角标：记录每个 tab 上次“看过”的时间点
-type BadgeKey = 'jobs' | 'renders'
+type BadgeKey = 'tasks'
 const badgeSeenKey = (key: BadgeKey) => `dsh.seen.${key}`
 
 function readSeen(key: BadgeKey): number {
@@ -50,7 +50,7 @@ export default function App() {
   const [status, setStatus] = useState<ServiceStatus | null>(null)
   const [toasts, setToasts] = useState<Toast[]>([])
   const known = useRef<Map<string, string> | null>(null)
-  const [badges, setBadges] = useState<{ jobs: number; renders: number }>({ jobs: 0, renders: 0 })
+  const [badges, setBadges] = useState<{ tasks: number }>({ tasks: 0 })
 
   const navigate = (next: Tab, params?: Record<string, string>) => {
     const url = new URL(window.location.href)
@@ -73,18 +73,16 @@ export default function App() {
   // 角标：统计上次查看之后新完成的任务/成片
   useEffect(() => {
     // 第一次使用（没有记录）时把“已读时间”初始化到现在，避免历史记录全变成未读
-    for (const key of ['jobs', 'renders'] as BadgeKey[]) {
-      if (!window.localStorage.getItem(badgeSeenKey(key))) {
-        writeSeen(key, Date.now() / 1000)
-      }
+    if (!window.localStorage.getItem(badgeSeenKey('tasks'))) {
+      writeSeen('tasks', Date.now() / 1000)
     }
   }, [])
 
   useEffect(() => {
     const tick = async () => {
       try {
-        const res = await api.newCounts(readSeen('jobs'), readSeen('renders'))
-        setBadges(res)
+        const res = await api.tasksUnread(readSeen('tasks'))
+        setBadges({ tasks: res.count })
       } catch { /* 忽略网络抖动 */ }
     }
     void tick()
@@ -94,13 +92,9 @@ export default function App() {
 
   // 进入任务/成片页即视为已读
   useEffect(() => {
-    if (tab === 'jobs') {
-      writeSeen('jobs', Date.now() / 1000 + 1)
-      setBadges((prev) => ({ ...prev, jobs: 0 }))
-    }
-    if (tab === 'renders') {
-      writeSeen('renders', Date.now() / 1000 + 1)
-      setBadges((prev) => ({ ...prev, renders: 0 }))
+    if (tab === 'jobs' || tab === 'renders') {
+      writeSeen('tasks', Date.now() / 1000 + 1)
+      setBadges({ tasks: 0 })
     }
   }, [tab])
 
@@ -203,11 +197,10 @@ export default function App() {
           <button className={tab === 'assets' ? 'active' : ''} onClick={() => setTab('assets')}>资产</button>
           <button className={tab === 'renders' ? 'active' : ''} onClick={() => setTab('renders')}>
             成片
-            {badges.renders > 0 && <span className="nav-badge">{badges.renders > 99 ? '99+' : badges.renders}</span>}
           </button>
           <button className={tab === 'jobs' ? 'active' : ''} onClick={() => setTab('jobs')}>
             任务
-            {badges.jobs > 0 && <span className="nav-badge">{badges.jobs > 99 ? '99+' : badges.jobs}</span>}
+            {badges.tasks > 0 && <span className="nav-badge">{badges.tasks > 99 ? '99+' : badges.tasks}</span>}
           </button>
           <button className={tab === 'service' ? 'active' : ''} onClick={() => setTab('service')}>服务管家</button>
         </nav>

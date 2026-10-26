@@ -99,6 +99,25 @@ async def node_intake(state: AgentState) -> dict:
     return {"error": ""}
 
 
+QUESTION_RE = re.compile(
+    r"(你能|你会|你可以|有哪些|有什么|哪个|哪些|怎么|如何|为什么|是否|支持|"
+    r"能不能|可不可以|可以吗|吗\?|流程|步骤|区别|介绍|说明)")
+IMPERATIVE_RE = re.compile(
+    r"(帮我|给我|替我|来(一|个|段|张)?|做(一|个|段)?|生成|画(一|张)?|拍(一|段)?|"
+    r"出(一|个|张|段)?|导出|合成|加(一|个|些)?|配(一|点|个)?|存(成|为)?|新建|建(一|个)?|创建)")
+CAPABILITY_TEXT = (
+    "我能帮你做这些：\n"
+    "· 出图：画一张雪夜剑客，竖屏\n"
+    "· 出视频：做一个 5 秒的雪地奔跑视频（文生/图生/参考生都行）\n"
+    "· 找素材：素材库里有什么猫的图\n"
+    "· AI 剪辑：帮我补字幕和旁白（字幕/旁白/配音/调速/片头片尾）\n"
+    "· 配乐：配点背景音乐，或者指定某一首\n"
+    "· 成片设置：片头写《…》，用淡入转场\n"
+    "· 导出：导出成片\n"
+    "· 建项目/加镜头：新建一个项目叫《…》、加三个镜头：A，B，C"
+)
+
+
 VIDEO_RE = re.compile(r"(视频|动起来|动一下|动画|运镜|几秒|秒的片|短片|出片)")
 IMAGE_RE = re.compile(r"(画|图|海报|剧照|插画|立绘|封面|定妆照)")
 LOOKUP_RE = re.compile(r"(素材|找一?张|有没有.*图|看看.*图)")
@@ -128,6 +147,19 @@ def _fast_intent(state: AgentState) -> dict | None:
     NEWPROJECT_RE = re.compile(r"(新建|建个|开个|创建).{0,4}项目|新项目")
     ADDSHOT_RE = re.compile(r"(加|添加|补|建).{0,3}(镜头|几镜|分镜)")
 
+    # 找素材优先：问句里也常带「有什么猫的图」
+    if LOOKUP_RE.search(text):
+        return {"intent": "lookup", "args": {"q": "", "kind": "image"},
+                "reply": "我去素材库里翻一下。"}
+
+    # 问「有哪些/能不能/怎么做/…吗？」这类问题，不要当成生成任务
+    asking = bool(re.search(r"(？|\?|怎么|如何|为什么|哪些|什么|支持|是否|能否|可以吗|吗[？?]?$)", text))
+    command_hint = bool(re.match(r"^(帮我|给我|替我|劳驾)", text))
+    if asking and not command_hint:
+        if re.search(r"(工作流|能力卡|卡片|预设|模型|节点)", text):
+            return {"intent": "list_presets", "args": {}, "reply": ""}
+        return {"intent": "capability", "args": {}, "reply": CAPABILITY_TEXT}
+
     if NEWPROJECT_RE.search(text):
         name_match = re.search(r"[叫名称为是]\s*[「《\"]([^」》\"]{1,20})", text)
         name = name_match.group(1) if name_match else text.strip()[:16]
@@ -150,17 +182,14 @@ def _fast_intent(state: AgentState) -> dict | None:
         return {"intent": "export", "args": {}, "reply": "好，我按项目设置导出成片。"}
     if SAVE_RE.search(text):
         return {"intent": "save_shot", "args": {}, "reply": "好，把刚才的产物存成镜头。"}
-    if LOOKUP_RE.search(text):
-        return {"intent": "lookup", "args": {"q": "", "kind": "image"},
-                "reply": "我去素材库里翻一下。"}
-    if VIDEO_RE.search(text):
+    if VIDEO_RE.search(text) and IMPERATIVE_RE.search(text):
         mode = "i2v" if (last_asset and "首帧" in text) else "t2v"
         args = {"prompt": text, "mode": mode, "duration": duration, "aspect": "16:9"}
         if mode == "i2v":
             args["image_asset_id"] = last_asset
         return {"intent": "generate_video", "args": args,
                 "reply": "好，我来生成这段视频。"}
-    if IMAGE_RE.search(text):
+    if IMAGE_RE.search(text) and IMPERATIVE_RE.search(text):
         return {"intent": "generate", "args": {"prompt": text, "aspect": "9:16"},
                 "reply": "好，我来出图。"}
     if FILM_RE.search(text):
@@ -298,6 +327,62 @@ async def node_decide(state: AgentState) -> dict:
     _emit({"t": "step", "id": "decide", "node": "decide", "title": "理解需求",
                    "status": "done", "detail": {"intent": intent, "args": args}})
     return {"intent": intent, "reply": reply, "args": args}
+
+
+FAQ = [
+    (r"(图生视频|图做视频|图片.*视频|首帧|用这张图)", (
+        "图生视频两步：\n"
+        "1. 先说「画一张…」出图（或者上传一张图）\n"
+        "2. 说「可以，就用这张图」——我会拿它当首帧生成视频\n"
+        "也可以在确认卡里调时长和清晰度。")),
+    (r"(文生视频|直接.*视频|t2v)", (
+        "说一句画面就行：「做一个 5 秒的雪地奔跑视频，横屏」。\n"
+        "我会先弹确认卡，确认后才提交。")),
+    (r"(参考|r2v|多图)", (
+        "参考生视频：先在创作台上传参考图，然后说「参考这张图做一个视频」，\n"
+        "最多可以给我 9 张参考图。")),
+    (r"(字幕|旁白|口播|配音)", (
+        "说「帮我补字幕和旁白」，我会按每镜的画面写文案，\n"
+        "有旁白的话字幕会跟着旁白走，还能自动配音和调速。")),
+    (r"(配乐|音乐|bgm)", (
+        "说「配点背景音乐」我会按开场/发展/收尾自动配；\n"
+        "想指定就说「用那首治愈的」，想关掉说「把音乐去掉」。")),
+    (r"(导出|成片|渲染)", (
+        "说「导出成片」或「导出 720p」，确认卡会列出镜数、是否烧字幕、几条 BGM、片头片尾时长。")),
+    (r"(建项目|新项目|新建)", (
+        "说「新建一个项目叫《雪夜归人》」，我会建项目并自动开一个新会话。")),
+    (r"(分辨率|清晰度|多少像素|多大尺寸)", (
+        "分辨率在确认卡里选：图片 0.8~2.0 MP，视频 0.4/0.8 MP，\n"
+        "画幅决定形状（9:16 竖屏 / 16:9 横屏），旁边会实时显示换算后的像素。")),
+    (r"(时长|几秒|多长)", (
+        "视频时长在确认卡里选（3~15 秒），实际会按 24fps 取 4n+1 帧，\n"
+        "所以 5 秒实际是 5.17 秒左右。")),
+    (r"(加.*镜头|分镜|三镜|几个镜头)", (
+        "说「加三个镜头：雪夜山门，蓝衣女子推门，她回身望向红灯」，\n"
+        "我会按逗号拆成镜头并写好每镜的画面描述。")),
+]
+
+
+async def node_reply_capability(state: AgentState) -> dict:
+    """能力介绍、工作流清单这类问题，直接用本地数据回答，不再等模型。"""
+    if state.get("intent") == "list_presets":
+        cards = [c for c in tools.load_cards() if c.get("_workflow_exists")]
+        lines = []
+        for card in cards:
+            public = tools.public_card(card)
+            kind = {"video": "视频", "image": "图片"}.get(public.get("output_kind"), "其他")
+            lines.append(f"· {public.get('name')}（{kind}）")
+        reply = "当前可用工作流：\n" + "\n".join(lines) + "\n\n想用哪个直接说画面内容就行。"
+    else:
+        text = str(state.get("text") or "")
+        reply = prompts.CAPABILITY_TEXT
+        for pattern, answer in FAQ:
+            if re.search(pattern, text):
+                reply = answer
+                break
+    _emit({"t": "step", "id": "decide", "node": "decide", "title": "理解需求",
+           "status": "done", "detail": {"intent": state.get("intent"), "fast": True}})
+    return {"reply": reply}
 
 
 async def node_chat(state: AgentState) -> dict:
@@ -819,6 +904,8 @@ def route_after_decide(state: AgentState) -> str:
     intent = state.get("intent") or "chat"
     if intent == "lookup":
         return "lookup"
+    if intent in {"capability", "list_presets"}:
+        return "reply_capability"
     if intent in {"generate", "generate_video"}:
         return "prepare"
     if intent == "export":
@@ -857,6 +944,7 @@ def build_graph(checkpointer=None):
     graph.add_node("intake", node_intake)
     graph.add_node("decide", node_decide)
     graph.add_node("chat", node_chat)
+    graph.add_node("reply_capability", node_reply_capability)
     graph.add_node("lookup", node_lookup)
     graph.add_node("prepare", node_prepare)
     graph.add_node("prepare_export", node_prepare_export)
@@ -879,7 +967,8 @@ def build_graph(checkpointer=None):
                                  "prepare_bgm": "prepare_bgm",
                                  "prepare_film": "prepare_film",
                                  "prepare_new_project": "prepare_new_project",
-                                 "prepare_add_shot": "prepare_add_shot"})
+                                 "prepare_add_shot": "prepare_add_shot",
+                                 "reply_capability": "reply_capability"})
     graph.add_edge("lookup", END)
     graph.add_conditional_edges("prepare", route_after_prepare,
                                 {"chat": "chat", "confirm": "confirm"})
@@ -894,4 +983,5 @@ def build_graph(checkpointer=None):
                                 {"dispatch": "dispatch", "chat": "chat"})
     graph.add_edge("dispatch", END)
     graph.add_edge("chat", END)
+    graph.add_edge("reply_capability", END)
     return graph.compile(checkpointer=checkpointer)

@@ -39,6 +39,7 @@ def _collect_all(scan: int = 200) -> list[dict]:
             "status": job["status"], "progress": job.get("progress") or 0,
             "message": job.get("message") or "", "error": job.get("error") or "",
             "created_at": job.get("created_at") or 0,
+            "finished_at": job.get("finished_at") or 0,
             "project_id": job.get("project_id") or "",
             "shot_id": job.get("shot_id") or "",
             "outputs": job.get("outputs") or [],
@@ -52,6 +53,7 @@ def _collect_all(scan: int = 200) -> list[dict]:
             "status": render["status"], "progress": render.get("progress") or 0,
             "message": render.get("message") or "", "error": render.get("error") or "",
             "created_at": render.get("created_at") or 0,
+            "finished_at": render.get("finished_at") or 0,
             "project_id": render.get("project_id") or "",
             "shot_id": "",
             "outputs": ([{"kind": "video", "url": f"/media/files/renders/{render['id']}/final.mp4"}]
@@ -69,6 +71,7 @@ def _collect_all(scan: int = 200) -> list[dict]:
             "progress": done / max(1, total),
             "message": f"{done}/{total} 镜", "error": edit_run.get("error") or "",
             "created_at": edit_run.get("created_at") or 0,
+            "finished_at": edit_run.get("finished_at") or 0,
             "project_id": edit_run.get("project_id") or "",
             "shot_id": "",
             "outputs": [],
@@ -83,6 +86,7 @@ def _collect_all(scan: int = 200) -> list[dict]:
             "status": run["status"], "progress": 0,
             "message": run.get("node") or "", "error": run.get("error") or "",
             "created_at": run.get("started_at") or 0,
+            "finished_at": run.get("finished_at") or 0,
             "project_id": thread.get("project_id") or "",
             "shot_id": "",
             "thread_id": run["thread_id"],
@@ -93,6 +97,18 @@ def _collect_all(scan: int = 200) -> list[dict]:
 
     items.sort(key=lambda i: i["created_at"], reverse=True)
     return items
+
+
+TERMINAL = ("succeeded", "done", "failed", "canceled", "interrupted")
+
+
+@router.get("/unread")
+async def unread_tasks(since: float = 0.0) -> dict:
+    """since 之后结束的任务数（四类合计），用于侧边栏角标。"""
+    items = _collect_all()
+    count = sum(1 for i in items
+                if i["status"] in TERMINAL and (i.get("finished_at") or 0) > since)
+    return {"count": count}
 
 
 @router.get("")
