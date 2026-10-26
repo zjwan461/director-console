@@ -59,6 +59,10 @@ def _watch_artifact(thread_id: str, run_id: str) -> None:
         return
     if artifact["kind"] == "render":
         asyncio.create_task(watch_render(artifact["ref_id"], run_id, thread_id))
+    elif artifact["kind"] == "ai_edit":
+        from .. import ai_edit as ai_edit_module
+
+        asyncio.create_task(watch_ai_edit(artifact["ref_id"], run_id, thread_id))
     elif artifact["ref_id"].startswith("job_"):
         asyncio.create_task(watch_job(artifact["ref_id"], run_id, thread_id))
 
@@ -342,3 +346,40 @@ async def cancel_run(run_id: str, reason: str = "用户取消") -> dict:
                             [{"type": "notice", "text": reason}], run_id)
     bus.publish(thread_id, {"t": "run_end", "run_id": run_id, "status": "canceled"})
     return agent_store.get_run(run_id) or {}
+
+
+async def watch_ai_edit(edit_run_id: str, run_id: str, thread_id: str,
+                        interval: float = 4.0, timeout: float = 3600.0) -> None:
+    """AI 剪辑跑完后把结果写回对话，并把逐镜进度转发成 step 事件。"""
+    from .. import ai_edit as ai_edit_module
+
+    deadline = time.time() + timeout
+    seen_rows: set[str] = set()
+    while time.time() < deadline:
+        run = ai_edit_module.get_run(edit_run_id)
+        if not run:
+            return
+        for sid, row in (run.get("state") or {}).get("rows", {}).items():
+            if sid in seen_rows:
+                continue
+            seen_rows.add(sid)
+            bus.publish(thread_id, {"t": "step", "id": f"aied_{sid}",
+                                    "node": "ai_edit", "title": row.get("title", ""),
+                                    "status": "done" if row.get("status") == "done" else "error",
+                                    "detail": {"note": row.get("note", "")}})
+        if run["status"] in ("done", "failed", "canceled"):
+            state = run.get("state") or {}
+            done = state.get("done", 0)
+            total = state.get("total", 0)
+            if run["status"] == "done":
+                text = f"AI 剪辑完成：{done}/{total} 镜（字幕/旁白/配音已写入项目）"
+            elif run["status"] == "canceled":
+                text = "AI 剪辑已取消"
+            else:
+                text = f"AI 剪辑失败：{run.get('error') or ''}"
+            agent_store.add_message(thread_id, "assistant", text,
+                                    [{"type": "notice", "text": text}], run_id)
+            bus.publish(thread_id, {"t": "message", "role": "assistant",
+                                    "content": text, "parts": [{"type": "notice", "text": text}]})
+            return
+        await asyncio.sleep(interval)

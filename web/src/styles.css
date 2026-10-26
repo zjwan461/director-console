@@ -1188,3 +1188,16 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
 
 /* 思考中 + 取消 */
 .agent-typing { display: flex; align-items: center; gap: 10px; }
+
+
+/* 助手提示行（AI 剪辑结果等） */
+.agent-notice-line {
+  max-width: 82%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #131a22;
+  border: 1px solid #263041;
+  color: #9fb0c8;
+  font-size: 12.5px;
+  line-height: 1.6;
+}

@@ -377,3 +377,146 @@ async def save_as_shot(job_id: str, project_id: str, title: str = "") -> str:
             pass
     return _dumps({"ok": True, "shot_id": shot["id"],
                    "title": title or "新镜头", "project_id": project_id})
+
+
+# --------------------------------------------------------------------------- #
+# 剪辑侧（P1）：AI 剪辑 / 配乐 / 成片设置
+# --------------------------------------------------------------------------- #
+def polish_preview(project_id: str, kinds: str = "both", tts: bool = True,
+                   titles: bool = True) -> dict:
+    shots = store.list_shots(project_id)
+    return {
+        "ok": True,
+        "project_id": project_id,
+        "shots": len(shots),
+        "kinds": kinds,
+        "tts": bool(tts),
+        "titles": bool(titles),
+        "eta": max(30, len(shots) * 25),
+    }
+
+
+async def polish_film(project_id: str, kinds: str = "both", tts: bool = True,
+                      titles: bool = True, rewrite: bool = False) -> str:
+    """调服务端 AI 剪辑：写旁白 / 字幕 / 配音 / 调速 / 片头片尾。"""
+    from .. import ai_edit
+
+    if not store.list_shots(project_id):
+        return _dumps({"ok": False, "error": "no_shots", "hint": "项目里还没有镜头"})
+    run = await ai_edit.start(project_id, [], {
+        "kind": kinds,
+        "mode": "rewrite" if rewrite else "fill",
+        "tts": tts,
+        "auto_speed": tts,
+        "titles": titles,
+        "frames": 0,
+    })
+    return _dumps({"ok": True, "edit_run_id": run["id"],
+                   "preview": polish_preview(project_id, kinds, tts, titles)})
+
+
+def bgm_preview(project_id: str, mode: str = "auto", query: str = "") -> dict:
+    """配乐预演：auto=按段落自动挑；asset=按关键词找一首；off=关闭。"""
+    music = [a for a in store.list_assets("audio", 200)
+             if str((a.get("meta") or {}).get("purpose") or "") == "music"
+             or "/music/" in str(a.get("path") or "")]
+    picked = None
+    if mode == "asset":
+        if query:
+            picked = next((a for a in music
+                           if query.lower() in str(a.get("path", "")).lower()), None)
+        picked = picked or (music[0] if music else None)
+    return {
+        "ok": bool(music) or mode == "off",
+        "project_id": project_id,
+        "mode": mode,
+        "query": query,
+        "music_count": len(music),
+        "picked": ({"id": picked["id"], "name": str(picked["path"]).rsplit("/", 1)[-1]}
+                   if picked else None),
+        "errors": [] if (music or mode == "off") else ["素材库里还没有背景音乐"],
+    }
+
+
+async def set_bgm(project_id: str, mode: str = "auto", query: str = "") -> str:
+    """写入 bgm_tracks：auto 走按段落配乐，asset 选一首，off 清空。"""
+    state = _edit_state(project_id)
+    options = dict(state.get("options") or {})
+
+    if mode == "off":
+        options["bgm_tracks"] = []
+        _save_edit_options(project_id, state, options)
+        return _dumps({"ok": True, "mode": "off", "tracks": 0})
+
+    if mode == "asset":
+        preview = bgm_preview(project_id, "asset", query)
+        if not preview.get("ok") or not preview.get("picked"):
+            return _dumps({"ok": False, "error": "no_music",
+                           "hint": "；".join(preview.get("errors") or ["没有可用音乐"])})
+        has_narration = any(bool((e or {}).get("narration_on"))
+                            for e in (state.get("shot_edits") or []))
+        track = {
+            "id": f"t{int(__import__('time').time())}",
+            "asset_id": preview["picked"]["id"],
+            "volume_db": -18 if has_narration else -12,
+            "start": 0, "end": None, "fade_in": 1, "fade_out": 2, "loop": True,
+        }
+        options["bgm_tracks"] = [track]
+        _save_edit_options(project_id, state, options)
+        return _dumps({"ok": True, "mode": "asset", "track": track,
+                       "name": preview["picked"]["name"]})
+
+    # auto：复用 /api/ai/bgm-plan 的选曲逻辑
+    from ..main import TitleRequest, ai_bgm_plan
+
+    plan = await ai_bgm_plan(TitleRequest(project_id=project_id))
+    options["bgm_tracks"] = plan.get("tracks") or []
+    _save_edit_options(project_id, state, options)
+    return _dumps({"ok": True, "mode": "auto", "tracks": len(options["bgm_tracks"]),
+                   "notes": plan.get("notes") or []})
+
+
+def _save_edit_options(project_id: str, state: dict, options: dict) -> None:
+    state = dict(state)
+    state["options"] = options
+    store.set_setting(f"edit_state.{project_id}", __import__("json").dumps(state, ensure_ascii=False))
+
+
+def film_options_preview(project_id: str, transition: str = "", title: str = "",
+                         tail: str = "", aspect: str = "") -> dict:
+    state = _edit_state(project_id)
+    options = dict(state.get("options") or {})
+    current_transition = (options.get("transition") or {}).get("type") or "dissolve"
+    return {
+        "ok": True,
+        "project_id": project_id,
+        "transition": transition or current_transition,
+        "title": title,
+        "tail": tail,
+        "aspect": aspect,
+    }
+
+
+async def set_film_options(project_id: str, transition: str = "", title: str = "",
+                           tail: str = "", aspect: str = "") -> str:
+    state = _edit_state(project_id)
+    options = dict(state.get("options") or {})
+    changed = []
+
+    if transition:
+        options["transition"] = {"type": transition,
+                                 "duration": (options.get("transition") or {}).get("duration", 0.4)}
+        changed.append(f"转场 {transition}")
+    if title:
+        options["title"] = {**(options.get("title") or {}), "text": title, "enabled": True}
+        changed.append(f"片头《{title}》")
+    if tail:
+        options["tail"] = {**(options.get("tail") or {}), "text": tail, "enabled": True}
+        changed.append(f"片尾《{tail}》")
+    if aspect:
+        width, height = (1080, 1920) if aspect.startswith("9:16") else (1920, 1080)
+        options["width"], options["height"] = width, height
+        changed.append(f"画幅 {aspect}")
+
+    _save_edit_options(project_id, state, options)
+    return _dumps({"ok": True, "changed": changed})

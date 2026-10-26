@@ -122,6 +122,23 @@ def _fast_intent(state: AgentState) -> dict | None:
     duration_match = DURATION_RE.search(text)
     duration = int(duration_match.group(1)) if duration_match else 5
 
+    POLISH_RE = re.compile(r"(字幕|旁白|配音|口播|解说|AI ?剪辑|一键剪辑)")
+    BGM_RE = re.compile(r"(配乐|背景音乐|BGM|加.*音乐|音乐.*换|来点音乐)", re.IGNORECASE)
+    FILM_RE = re.compile(r"(转场|片头|片尾|画幅|竖屏|横屏)")
+
+    if POLISH_RE.search(text):
+        kinds = "narration" if "旁白" in text and "字幕" not in text else (
+            "subtitle" if "字幕" in text and "旁白" not in text else "both")
+        return {"intent": "polish", "args": {"kinds": kinds, "tts": "配音" in text or kinds != "subtitle"},
+                "reply": "好，我来补文案和配音。"}
+    if BGM_RE.search(text):
+        mode = "off" if ("关掉" in text or "去掉" in text) else (
+            "asset" if ("这首" in text or "那首" in text or "用" in text) else "auto")
+        return {"intent": "bgm", "args": {"mode": mode, "query": text},
+                "reply": "好，我来配乐。"}
+    if FILM_RE.search(text) and ("导出" not in text):
+        return {"intent": "film_options", "args": {"raw": text},
+                "reply": "好，我改一下成片设置。"}
     if EXPORT_RE.search(text):
         return {"intent": "export", "args": {}, "reply": "好，我按项目设置导出成片。"}
     if SAVE_RE.search(text):
@@ -441,6 +458,64 @@ async def node_prepare_save(state: AgentState) -> dict:
     return {"plan": plan}
 
 
+async def node_prepare_polish(state: AgentState) -> dict:
+    args = state.get("args") or {}
+    project_id = state.get("project_id", "")
+    kinds = str(args.get("kinds") or "both")
+    tts = bool(args.get("tts", True))
+    preview = tools.polish_preview(project_id, kinds, tts, True)
+    if not preview.get("shots"):
+        return {"intent": "chat", "reply": "项目里还没有镜头，先出几镜再让我补文案。"}
+    _emit({"t": "tool_call", "id": "prep_polish", "name": "polish_film.preview",
+           "args": {"kinds": kinds, "tts": tts}})
+    _emit({"t": "tool_result", "id": "prep_polish", "ok": True, "data": preview})
+    return {"plan": {"kind": "polish", "params": preview}}
+
+
+async def node_prepare_bgm(state: AgentState) -> dict:
+    args = state.get("args") or {}
+    project_id = state.get("project_id", "")
+    mode = str(args.get("mode") or "auto")
+    query = str(args.get("query") or "")
+    preview = tools.bgm_preview(project_id, mode, query)
+    _emit({"t": "tool_call", "id": "prep_bgm", "name": "set_bgm.preview",
+           "args": {"mode": mode, "query": query}})
+    if not preview.get("ok"):
+        _emit({"t": "tool_result", "id": "prep_bgm", "ok": False, "data": preview})
+        return {"intent": "chat", "reply": "；".join(preview.get("errors") or ["配乐不可用"])}
+    _emit({"t": "tool_result", "id": "prep_bgm", "ok": True, "data": preview})
+    return {"plan": {"kind": "bgm", "params": preview}}
+
+
+async def node_prepare_film(state: AgentState) -> dict:
+    args = state.get("args") or {}
+    project_id = state.get("project_id", "")
+    raw = str(args.get("raw") or "")
+    transition, title, tail, aspect = "", "", "", ""
+    if "淡入" in raw or "fade" in raw.lower():
+        transition = "fade"
+    elif "溶解" in raw or "交叉" in raw:
+        transition = "dissolve"
+    elif "硬切" in raw:
+        transition = "none"
+    if "竖屏" in raw:
+        aspect = "9:16"
+    elif "横屏" in raw:
+        aspect = "16:9"
+    title_match = re.search(r"片头[^「《\"]*[「《\"]([^」》\"]{1,20})", raw)
+    if title_match:
+        title = title_match.group(1)
+    tail_match = re.search(r"片尾[^「《\"]*[「《\"]([^」》\"]{1,20})", raw)
+    if tail_match:
+        tail = tail_match.group(1)
+
+    preview = tools.film_options_preview(project_id, transition, title, tail, aspect)
+    _emit({"t": "tool_call", "id": "prep_film", "name": "set_film_options.preview",
+           "args": {"transition": transition, "title": title, "tail": tail, "aspect": aspect}})
+    _emit({"t": "tool_result", "id": "prep_film", "ok": True, "data": preview})
+    return {"plan": {"kind": "film_options", "params": preview}}
+
+
 async def node_confirm(state: AgentState) -> dict:
     plan = state.get("plan") or {}
     params = plan.get("params") or {}
@@ -459,6 +534,41 @@ async def node_confirm(state: AgentState) -> dict:
                    f"约 {params.get('approx_seconds')} 秒 · {' · '.join(extras)} · 预计 {params.get('eta')} 秒")
         payload = {"kind": "confirm", "action": "export", "title": "导出成片",
                    "summary": summary, "params": params, "preset_id": "", "mode": ""}
+    elif kind == "polish":
+        kinds_label = {"both": "字幕 + 旁白", "subtitle": "只写字幕", "narration": "只写旁白"}.get(
+            str(params.get("kinds")), "字幕 + 旁白")
+        extras = [kinds_label]
+        if params.get("tts"):
+            extras.append("配音")
+        if params.get("titles"):
+            extras.append("片头片尾")
+        payload = {"kind": "confirm", "action": "polish", "title": "AI 剪辑",
+                   "summary": f"{params.get('shots')} 镜 · {' · '.join(extras)} · 预计 {params.get('eta')} 秒",
+                   "params": params, "preset_id": "", "mode": ""}
+    elif kind == "bgm":
+        mode = str(params.get("mode") or "auto")
+        if mode == "off":
+            summary = "关掉背景音乐"
+        elif mode == "asset":
+            picked = params.get("picked") or {}
+            summary = f"用这一首：{picked.get('name') or '素材库第一首'}"
+        else:
+            summary = "按段落自动配乐（开场/发展/收尾各一首）"
+        payload = {"kind": "confirm", "action": "bgm", "title": "配乐",
+                   "summary": summary, "params": params, "preset_id": "", "mode": mode}
+    elif kind == "film_options":
+        bits = []
+        if params.get("transition"):
+            bits.append(f"转场 {params['transition']}")
+        if params.get("title"):
+            bits.append(f"片头《{params['title']}》")
+        if params.get("tail"):
+            bits.append(f"片尾《{params['tail']}》")
+        if params.get("aspect"):
+            bits.append(f"画幅 {params['aspect']}")
+        payload = {"kind": "confirm", "action": "film_options", "title": "成片设置",
+                   "summary": " · ".join(bits) or "保持当前设置",
+                   "params": params, "preset_id": "", "mode": ""}
     elif kind == "save_shot":
         payload = {"kind": "confirm", "action": "save_shot", "title": "存为镜头",
                    "summary": params.get("title") or "写入当前项目",
@@ -533,6 +643,52 @@ async def node_dispatch(state: AgentState) -> dict:
                "artifact_id": artifact["id"], "url": ""})
         return {"reply": f"开始导出 {params.get('shots')} 个镜头，好了我把片子发过来。"}
 
+    if kind == "polish":
+        _emit({"t": "tool_call", "id": "gen", "name": "polish_film",
+               "args": {"kinds": params.get("kinds"), "tts": params.get("tts")}})
+        raw = await tools.polish_film(state.get("project_id", ""),
+                                      str(params.get("kinds") or "both"),
+                                      bool(params.get("tts", True)),
+                                      bool(params.get("titles", True)))
+        data = json.loads(raw)
+        _emit({"t": "tool_result", "id": "gen", "ok": bool(data.get("ok")), "data": data})
+        if not data.get("ok"):
+            return {"reply": f"AI 剪辑没启动：{data.get('hint') or data.get('error')}"}
+        artifact = agent_store.add_artifact(run_id, thread_id, "ai_edit",
+                                            data["edit_run_id"], "", {"status": "running"})
+        _emit({"t": "artifact", "kind": "ai_edit", "ref_id": data["edit_run_id"],
+               "artifact_id": artifact["id"], "url": ""})
+        return {"reply": f"AI 剪辑已开始（{params.get('shots')} 镜），跑完我把结果告诉你。"}
+
+    if kind == "bgm":
+        _emit({"t": "tool_call", "id": "gen", "name": "set_bgm",
+               "args": {"mode": params.get("mode")}})
+        raw = await tools.set_bgm(state.get("project_id", ""),
+                                  str(params.get("mode") or "auto"),
+                                  str(params.get("query") or ""))
+        data = json.loads(raw)
+        _emit({"t": "tool_result", "id": "gen", "ok": bool(data.get("ok")), "data": data})
+        if not data.get("ok"):
+            return {"reply": f"配乐没成功：{data.get('hint') or data.get('error')}"}
+        if data.get("mode") == "asset":
+            return {"reply": f"已配上《{data.get('name')}》，去剪辑页试听一下。"}
+        if data.get("mode") == "off":
+            return {"reply": "已经把背景音乐关掉了。"}
+        return {"reply": f"已按段落配好 {data.get('tracks')} 段音乐。"}
+
+    if kind == "film_options":
+        _emit({"t": "tool_call", "id": "gen", "name": "set_film_options",
+               "args": {"transition": params.get("transition"), "title": params.get("title")}})
+        raw = await tools.set_film_options(state.get("project_id", ""),
+                                           str(params.get("transition") or ""),
+                                           str(params.get("title") or ""),
+                                           str(params.get("tail") or ""),
+                                           str(params.get("aspect") or ""))
+        data = json.loads(raw)
+        _emit({"t": "tool_result", "id": "gen", "ok": bool(data.get("ok")), "data": data})
+        changed = "、".join(data.get("changed") or [])
+        return {"reply": f"改好了：{changed}。" if changed else "没识别出要改哪一项。"}
+
     if kind == "save_shot":
         _emit({"t": "tool_call", "id": "gen", "name": "save_as_shot",
                "args": {"job_id": params.get("job_id"), "title": params.get("title")}})
@@ -588,6 +744,12 @@ def route_after_decide(state: AgentState) -> str:
         return "prepare_export"
     if intent == "save_shot":
         return "prepare_save"
+    if intent == "polish":
+        return "prepare_polish"
+    if intent == "bgm":
+        return "prepare_bgm"
+    if intent == "film_options":
+        return "prepare_film"
     return "chat"
 
 
@@ -608,6 +770,9 @@ def build_graph():
     graph.add_node("prepare", node_prepare)
     graph.add_node("prepare_export", node_prepare_export)
     graph.add_node("prepare_save", node_prepare_save)
+    graph.add_node("prepare_polish", node_prepare_polish)
+    graph.add_node("prepare_bgm", node_prepare_bgm)
+    graph.add_node("prepare_film", node_prepare_film)
     graph.add_node("confirm", node_confirm)
     graph.add_node("dispatch", node_dispatch)
 
@@ -616,12 +781,18 @@ def build_graph():
     graph.add_conditional_edges("decide", route_after_decide,
                                 {"chat": "chat", "lookup": "lookup", "prepare": "prepare",
                                  "prepare_export": "prepare_export",
-                                 "prepare_save": "prepare_save"})
+                                 "prepare_save": "prepare_save",
+                                 "prepare_polish": "prepare_polish",
+                                 "prepare_bgm": "prepare_bgm",
+                                 "prepare_film": "prepare_film"})
     graph.add_edge("lookup", END)
     graph.add_conditional_edges("prepare", route_after_prepare,
                                 {"chat": "chat", "confirm": "confirm"})
     graph.add_edge("prepare_export", "confirm")
     graph.add_edge("prepare_save", "confirm")
+    graph.add_edge("prepare_polish", "confirm")
+    graph.add_edge("prepare_bgm", "confirm")
+    graph.add_edge("prepare_film", "confirm")
     graph.add_conditional_edges("confirm", route_after_confirm,
                                 {"dispatch": "dispatch", "chat": "chat"})
     graph.add_edge("dispatch", END)

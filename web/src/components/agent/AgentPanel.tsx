@@ -453,6 +453,9 @@ export default function AgentPanel({ projectId, onOpenProject }: {
                     </div>
                   )
                 }
+                if (part.type === 'notice') {
+                  return <div className="agent-notice-line" key={index}>{String(part.text || '')}</div>
+                }
                 if (part.type === 'error') {
                   return (
                     <div className="agent-error-card" key={index}>
@@ -520,6 +523,11 @@ export default function AgentPanel({ projectId, onOpenProject }: {
                 <b>{confirmSummary(pending, confirmDraft)}</b>
                 <span className="meta">确认后才会提交</span>
               </div>
+
+              {(actionOf(pending) === 'polish' || actionOf(pending) === 'bgm'
+                || actionOf(pending) === 'film_options') && (
+                <p className="agent-confirm-hint">执行后会直接写入项目设置，可在剪辑页复查。</p>
+              )}
 
               {(actionOf(pending) === 'image' || actionOf(pending) === 'video') && (
                 <>
