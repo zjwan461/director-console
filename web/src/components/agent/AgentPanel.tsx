@@ -34,7 +34,7 @@ export default function AgentPanel({ projectId, onOpenProject }: {
   const [error, setError] = useState('')
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const [confirmDraft, setConfirmDraft] = useState<{
-    prompt: string; aspect: string; quality: string; title: string; duration: number
+    prompt: string; aspect: string; quality: string; title: string; duration: number; megapixels: number
   } | null>(null)
   const streamStop = useRef<(() => void) | null>(null)
   const bottomRef = useRef<HTMLDivElement | null>(null)
@@ -241,7 +241,12 @@ export default function AgentPanel({ projectId, onOpenProject }: {
     if (approved && confirmDraft) {
       const base = { ...((target.pending.params as Record<string, unknown>) || {}) }
       if (action === 'image' || action === 'video') {
-        params = { ...base, prompt: confirmDraft.prompt, aspect: confirmDraft.aspect }
+        params = {
+          ...base,
+          prompt: confirmDraft.prompt,
+          aspect: confirmDraft.aspect,
+          megapixels: confirmDraft.megapixels || base.megapixels,
+        }
         if (action === 'video') params.duration = confirmDraft.duration
       } else if (action === 'export') {
         params = { ...base, quality: confirmDraft.quality }
@@ -461,9 +466,18 @@ export default function AgentPanel({ projectId, onOpenProject }: {
                         </select>
                       </label>
                     )}
-                    {typeof pending.params?.width === 'number' && (
-                      <span className="meta">{String(pending.params.width)} × {String(pending.params.height)}</span>
-                    )}
+                    <label className="inline-field">
+                      <span>清晰度</span>
+                      <select value={confirmDraft.megapixels}
+                              onChange={(e) => setConfirmDraft({ ...confirmDraft, megapixels: Number(e.target.value) })}>
+                        {(megapixelOptions(pending) as number[]).map((mp) => (
+                          <option key={mp} value={mp}>{formatMegapixels(mp)}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <span className="meta">
+                      {pixelLabel(confirmDraft.aspect, confirmDraft.megapixels)}
+                    </span>
                   </div>
                 </>
               )}
@@ -586,6 +600,31 @@ export default function AgentPanel({ projectId, onOpenProject }: {
   )
 }
 
+function megapixelOptions(pending: { params?: Record<string, unknown> }): number[] {
+  const raw = pending?.params?.megapixels_options
+  const list = Array.isArray(raw) ? raw.map(Number).filter((n) => n > 0) : []
+  return list.length ? list : [0.4, 0.8, 1.0, 2.0]
+}
+
+function formatMegapixels(mp: number): string {
+  return `${mp} MP`
+}
+
+/** 与后端 presets.size_from 同算法：按 32 对齐 */
+function pixelLabel(aspect: string, megapixels: number): string {
+  const ratio: Record<string, [number, number]> = {
+    '16:9': [16, 9], '9:16': [9, 16], '1:1': [1, 1],
+    '4:3': [4, 3], '3:4': [3, 4], '21:9': [21, 9],
+  }
+  const [aw, ah] = ratio[aspect] || [16, 9]
+  const mp = megapixels > 0 ? megapixels : 1
+  const total = mp * 1_000_000
+  const w = Math.sqrt((total * aw) / ah)
+  const h = (w * ah) / aw
+  const align = (v: number) => Math.max(32, Math.round(v / 32) * 32)
+  return `${align(w)} × ${align(h)}`
+}
+
 function failedState(item: AgentArtifact): string {
   const status = String(item.meta?.status || '')
   return status === 'failed' || status === 'canceled' ? 'bad' : ''
@@ -615,6 +654,7 @@ function draftFrom(params: Record<string, unknown>) {
     quality: String(params.quality || '1080p'),
     title: String(params.title || ''),
     duration: Number(params.duration || 5),
+    megapixels: Number(params.megapixels || 0),
   }
 }
 

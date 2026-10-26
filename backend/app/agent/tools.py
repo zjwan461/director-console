@@ -88,6 +88,7 @@ def image_inputs_preview(prompt: str, aspect: str = "9:16", megapixels: float | 
             "height": height,
             "seed": values.get("seed", seed),
         },
+        "megapixels_options": size_field.get("megapixels_options") or [1.0, 2.0],
         "binds": binds,
         "errors": errors,
     }
@@ -194,7 +195,8 @@ def _card_default(card: dict, key: str, fallback=None):
 
 def video_inputs_preview(prompt: str, mode: str = "t2v", aspect: str = "16:9",
                          duration: float | None = None,
-                         image_asset_id: str = "") -> dict:
+                         image_asset_id: str = "",
+                         megapixels: float | None = None) -> dict:
     """给确认卡用：算视频参数，不提交。"""
     card_id, image_slot = VIDEO_CARDS.get(mode, VIDEO_CARDS["t2v"])
     card = get_card(card_id)
@@ -203,7 +205,7 @@ def video_inputs_preview(prompt: str, mode: str = "t2v", aspect: str = "16:9",
 
     size_field = _card_field(card, "size")
     aspect = aspect if aspect in ASPECT_RATIO else str(size_field.get("default_aspect") or "16:9")
-    mp = float(size_field.get("default_megapixels") or 0.4)
+    mp = float(megapixels or size_field.get("default_megapixels") or 0.4)
     seconds = float(duration or _card_default(card, "duration", 5))
     lo = float(_card_field(card, "duration").get("min", 1))
     hi = float(_card_field(card, "duration").get("max", VIDEO_MAX_DURATION))
@@ -226,18 +228,21 @@ def video_inputs_preview(prompt: str, mode: str = "t2v", aspect: str = "16:9",
             "prompt": values["prompt"],
             "aspect": aspect,
             "duration": seconds,
+            "megapixels": mp,
             "width": width,
             "height": height,
             "image_asset_id": image_asset_id,
         },
+        "megapixels_options": size_field.get("megapixels_options") or [0.4, 0.8],
         "values": values,
         "errors": errors,
     }
 
 
 async def make_video(prompt: str, mode: str = "t2v", aspect: str = "16:9",
-                     duration: float | None = None, image_asset_id: str = "") -> str:
-    preview = video_inputs_preview(prompt, mode, aspect, duration, image_asset_id)
+                     duration: float | None = None, image_asset_id: str = "",
+                     megapixels: float | None = None) -> str:
+    preview = video_inputs_preview(prompt, mode, aspect, duration, image_asset_id, megapixels)
     if preview["errors"]:
         return _dumps({"ok": False, "error": "invalid_params",
                        "hint": "；".join(preview["errors"])})

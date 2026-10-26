@@ -391,6 +391,8 @@ async def node_confirm(state: AgentState) -> dict:
     plan = state.get("plan") or {}
     params = plan.get("params") or {}
     kind = plan.get("kind") or "image"
+    mp_options = plan.get("megapixels_options") or []
+
     if kind == "export":
         summary = (f"{params.get('width')}×{params.get('height')} · {params.get('shots')} 镜 · "
                    f"约 {params.get('approx_seconds')} 秒 · 预计 {params.get('eta')} 秒出片")
@@ -404,19 +406,48 @@ async def node_confirm(state: AgentState) -> dict:
         eta = max(60, int(float(params.get("duration") or 5) * 40))
         payload = {"kind": "confirm", "action": "video", "title": "生成视频",
                    "summary": f"{params.get('width')}×{params.get('height')} · {params.get('duration')} 秒 · 约 {eta} 秒",
-                   "params": params, "mode": plan.get("mode", ""),
+                   "params": {**params, "megapixels_options": mp_options},
+                   "mode": plan.get("mode", ""),
                    "preset_id": plan.get("preset_id")}
     else:
         payload = {"kind": "confirm", "action": "image", "title": "生成图片",
                    "summary": f"{params.get('width')}×{params.get('height')} · 约 40 秒",
-                   "params": params, "mode": "", "preset_id": plan.get("preset_id")}
+                   "params": {**params, "megapixels_options": mp_options},
+                   "mode": "", "preset_id": plan.get("preset_id")}
 
 
-    decision = interrupt(payload)
-    approved = bool((decision or {}).get("approved"))
+    decision = interrupt(payload) or {}
+    approved = bool(decision.get("approved"))
     if not approved:
         return {"decision": "cancelled", "reply": "好，这次不生成。想改哪里直接说。", "intent": "chat"}
-    return {"decision": "approved"}
+
+    # 确认卡上改过的参数（提示词 / 画幅 / 清晰度 / 时长）要真正生效
+    edited = decision.get("params") or {}
+    if isinstance(edited, dict) and edited:
+        kind = plan.get("kind") or "image"
+        merged = {**params, **edited}
+        if kind == "video":
+            fixed = tools.video_inputs_preview(
+                str(merged.get("prompt") or ""), plan.get("mode", "t2v"),
+                str(merged.get("aspect") or "16:9"),
+                float(merged["duration"]) if merged.get("duration") else None,
+                str(merged.get("image_asset_id") or ""),
+                float(merged["megapixels"]) if merged.get("megapixels") else None)
+        elif kind == "image":
+            fixed = tools.image_inputs_preview(
+                str(merged.get("prompt") or ""),
+                str(merged.get("aspect") or "9:16"),
+                float(merged["megapixels"]) if merged.get("megapixels") else None,
+                int(merged.get("seed") or -1))
+        else:
+            fixed = {"params": merged}
+
+        if fixed.get("errors"):
+            return {"decision": "cancelled", "intent": "chat",
+                    "reply": "这些参数不行：" + "；".join(fixed["errors"])}
+        plan = {**plan, "params": {**merged, **fixed["params"]}}
+
+    return {"decision": "approved", "plan": plan}
 
 
 async def node_dispatch(state: AgentState) -> dict:
@@ -465,7 +496,8 @@ async def node_dispatch(state: AgentState) -> dict:
             params.get("prompt", ""), plan.get("mode", "t2v"),
             params.get("aspect", "16:9"),
             float(params["duration"]) if params.get("duration") else None,
-            str(params.get("image_asset_id") or ""))
+            str(params.get("image_asset_id") or ""),
+            float(params["megapixels"]) if params.get("megapixels") else None)
     else:
         _emit({"t": "tool_call", "id": "gen", "name": "make_image",
                "args": {"prompt": params.get("prompt"), "aspect": params.get("aspect")}})
