@@ -962,21 +962,47 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
 
 /* ---------- 输入框 ---------- */
 .agent-composer {
-  display: flex; align-items: flex-end; gap: 10px;
   padding: 12px 20px 14px;
   border-top: 1px solid var(--line);
   background: #141822;
 }
-.agent-composer-box { flex: 1; display: flex; flex-direction: column; gap: 4px; }
-.agent-composer textarea {
-  width: 100%; resize: none; min-height: 44px; max-height: 140px;
-  padding: 11px 13px; font-size: 13px; line-height: 1.6;
-  background: #0e121a; border: 1px solid #242a38; border-radius: 10px;
+.agent-composer-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px 8px;
+  background: #0e121a;
+  border: 1px solid #242a38;
+  border-radius: 12px;
+  transition: border-color .15s;
 }
-.agent-composer textarea:focus { outline: none; border-color: #3d4a6b; }
-.agent-composer .agent-composer-hint { font-size: 10.5px; color: #5f6a80; padding-left: 2px; }
-.agent-composer > button {
-  height: 44px; padding: 0 22px; border-radius: 10px; font-size: 13px; font-weight: 600;
+.agent-composer-box:focus-within { border-color: #3d4a6b; }
+.agent-composer textarea {
+  width: 100%;
+  min-height: 46px;
+  max-height: 160px;
+  padding: 4px 2px;
+  font-size: 13px;
+  line-height: 1.65;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  resize: none;
+}
+.agent-composer textarea:focus { outline: none; border: 0; }
+.agent-composer-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.agent-composer-hint { font-size: 10.5px; color: #5f6a80; }
+.agent-composer-foot button {
+  height: 30px;
+  padding: 0 18px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
 }
 
 /* ---------- 右栏画布 ---------- */
@@ -1035,3 +1061,15 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
 .agent-artifact-video { max-width: 320px; border-radius: 10px; border: 1px solid #242a38;
   box-shadow: 0 8px 22px rgba(0,0,0,.35); display: block; }
 .agent-artifact-card video { width: 100%; border-radius: 7px; display: block; }
+
+
+/* 存为镜头的产物卡 */
+.agent-shot-card {
+  padding: 14px 10px;
+  border-radius: 7px;
+  background: #131a26;
+  border: 1px dashed #2c3550;
+  font-size: 12px;
+  color: #a9b6cf;
+  text-align: center;
+}

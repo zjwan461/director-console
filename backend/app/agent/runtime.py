@@ -44,11 +44,21 @@ def _interrupt_payload(result: dict) -> dict | None:
         return {"title": "需要确认", "summary": str(value)[:200]}
 
 
-def _job_id_of_run(thread_id: str, run_id: str) -> str:
+def _latest_artifact(thread_id: str, run_id: str) -> dict | None:
     for artifact in agent_store.list_artifacts(thread_id, limit=20):
-        if artifact["run_id"] == run_id and artifact["ref_id"].startswith("job_"):
-            return artifact["ref_id"]
-    return ""
+        if artifact["run_id"] == run_id:
+            return artifact
+    return None
+
+
+def _watch_artifact(thread_id: str, run_id: str) -> None:
+    artifact = _latest_artifact(thread_id, run_id)
+    if not artifact:
+        return
+    if artifact["kind"] == "render":
+        asyncio.create_task(watch_render(artifact["ref_id"], run_id, thread_id))
+    elif artifact["ref_id"].startswith("job_"):
+        asyncio.create_task(watch_job(artifact["ref_id"], run_id, thread_id))
 
 
 async def start_run(thread: dict, text: str) -> dict:
@@ -105,9 +115,8 @@ async def confirm_run(run_id: str, approved: bool, params: dict | None = None) -
 
     _finish(thread_id, run_id, result)
 
-    job_id = _job_id_of_run(thread_id, run_id)
-    if approved and job_id:
-        asyncio.create_task(watch_job(job_id, run_id, thread_id))
+    if approved:
+        _watch_artifact(thread_id, run_id)
     return agent_store.get_run(run_id) or {}
 
 
@@ -172,6 +181,33 @@ async def watch_job(job_id: str, run_id: str, thread_id: str,
         bus.publish(thread_id, {"t": "artifact", "kind": kind, "ref_id": job_id,
                                 "artifact_id": artifact["id"], "url": url,
                                 "status": status})
+        bus.publish(thread_id, {"t": "message", "role": "assistant", "content": text,
+                                "parts": parts})
+        return
+
+
+async def watch_render(render_id: str, run_id: str, thread_id: str,
+                       interval: float = 3.0, timeout: float = 3600.0) -> None:
+    """成片导出完成后把结果作为新消息追加。"""
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        await asyncio.sleep(interval)
+        render = store.get_render(render_id)
+        if not render:
+            return
+        status = render.get("status")
+        if status not in {"succeeded", "failed", "canceled"}:
+            continue
+        url = f"/media/files/renders/{render_id}/final.mp4" if status == "succeeded" else ""
+        artifact = agent_store.add_artifact(
+            run_id, thread_id, "video", render_id, url,
+            {"status": status, "error": render.get("error", ""), "source": "render"})
+        text = "成片出来了" if status == "succeeded" else f"导出失败：{render.get('error') or status}"
+        parts = [{"type": "video", "url": url, "render_id": render_id,
+                  "artifact_id": artifact["id"], "status": status}]
+        agent_store.add_message(thread_id, "assistant", text, parts, run_id)
+        bus.publish(thread_id, {"t": "artifact", "kind": "video", "ref_id": render_id,
+                                "artifact_id": artifact["id"], "url": url, "status": status})
         bus.publish(thread_id, {"t": "message", "role": "assistant", "content": text,
                                 "parts": parts})
         return

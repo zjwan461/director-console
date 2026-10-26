@@ -354,9 +354,11 @@ export default function AgentPanel({ projectId, onOpenProject }: {
                 if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void send() }
               }}
             />
-            <span className="agent-composer-hint">Enter 发送 · Shift + Enter 换行</span>
+            <div className="agent-composer-foot">
+              <span className="agent-composer-hint">Enter 发送 · Shift + Enter 换行</span>
+              <button className="primary" disabled={busy || !text.trim()} onClick={() => void send()}>发送</button>
+            </div>
           </div>
-          <button className="primary" disabled={busy || !text.trim()} onClick={() => void send()}>发送</button>
         </div>
       </div>
 
@@ -373,16 +375,24 @@ export default function AgentPanel({ projectId, onOpenProject }: {
         </div>
         <div className="agent-artifacts">
           {artifacts.length === 0 && <div className="agent-empty-mini">出图后会出现在这里</div>}
-          {artifacts.map((item) => (
-            <a key={item.id} className="agent-artifact-card" href={item.url || '#'} target="_blank" rel="noreferrer">
-              {item.url
-                ? (item.kind === 'video'
-                  ? <video src={item.url} muted playsInline preload="metadata" />
-                  : <img src={item.url} alt="" loading="lazy" />)
-                : <div className="agent-artifact-empty">排队中</div>}
-              <span>{item.kind} · {(item.meta?.status as string) || ''}</span>
-            </a>
-          ))}
+          {artifacts.map((item) => {
+            const label = item.kind === 'shot' ? '已存为镜头'
+              : item.kind === 'render' ? '成片'
+                : item.kind === 'video' ? '视频' : '图片'
+            const status = item.url ? '' : String(item.meta?.status || '排队中')
+            return (
+              <a key={item.id} className="agent-artifact-card" href={item.url || '#'} target="_blank" rel="noreferrer">
+                {item.kind === 'shot'
+                  ? <div className="agent-shot-card">{String(item.meta?.title || '镜头')}</div>
+                  : item.url
+                    ? (item.kind === 'video' || item.kind === 'render'
+                      ? <video src={item.url} muted playsInline preload="metadata" />
+                      : <img src={item.url} alt="" loading="lazy" />)
+                    : <div className="agent-artifact-empty">排队中</div>}
+                <span>{label}{status ? ` · ${status}` : ''}</span>
+              </a>
+            )
+          })}
         </div>
       </aside>
     </div>

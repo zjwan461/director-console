@@ -120,7 +120,7 @@ async def node_decide(state: AgentState) -> dict:
         return {"intent": "chat", "reply": f"我这边调用模型失败了：{exc}", "args": {}}
 
     intent = str(data.get("intent") or "chat").strip()
-    if intent not in {"chat", "lookup", "generate", "generate_video"}:
+    if intent not in {"chat", "lookup", "generate", "generate_video", "export", "save_shot"}:
         intent = "chat"
     reply = str(data.get("reply") or "").strip()
     args = data.get("args") or {}
@@ -233,25 +233,77 @@ async def node_prepare(state: AgentState) -> dict:
     return {"plan": {"kind": "image", **preview}}
 
 
+async def node_prepare_export(state: AgentState) -> dict:
+    args = state.get("args") or {}
+    project_id = state.get("project_id", "")
+    quality = str(args.get("quality") or "1080p")
+    if quality not in tools.QUALITY:
+        quality = "1080p"
+    preview = tools.export_preview(project_id, quality)
+    _emit({"t": "tool_call", "id": "prep_export", "name": "make_film.preview",
+           "args": {"quality": quality}})
+    if not preview.get("ok"):
+        _emit({"t": "tool_result", "id": "prep_export", "ok": False, "data": preview})
+        return {"intent": "chat", "reply": "导不了：项目里还没有镜头。"}
+    _emit({"t": "tool_result", "id": "prep_export", "ok": True, "data": preview})
+    return {"plan": {"kind": "export", "params": preview}}
+
+
+async def node_prepare_save(state: AgentState) -> dict:
+    args = state.get("args") or {}
+    thread_id = state.get("thread_id", "")
+    job_id = str(args.get("job_id") or "").strip()
+    if not job_id:
+        for artifact in agent_store.list_artifacts(thread_id, limit=10):
+            if artifact["ref_id"].startswith("job_"):
+                job_id = artifact["ref_id"]
+                break
+    if not job_id:
+        return {"intent": "chat", "reply": "还没生成过东西，先让我出一张图或一段视频吧。"}
+
+    job = store.get_job(job_id)
+    if not job:
+        return {"intent": "chat", "reply": "找不到那个任务，可能已经被删了。"}
+    if job.get("shot_id"):
+        return {"intent": "chat", "reply": "这个任务已经是镜头了，去剪辑页能看到。"}
+    if job.get("status") != "succeeded":
+        return {"intent": "chat", "reply": "它还没生成完，等成功了再存成镜头。"}
+
+    title = str(args.get("title") or "").strip()
+    plan = {"kind": "save_shot", "params": {"job_id": job_id, "title": title}}
+    _emit({"t": "tool_call", "id": "prep_save", "name": "save_as_shot.preview",
+           "args": {"job_id": job_id, "title": title}})
+    _emit({"t": "tool_result", "id": "prep_save", "ok": True,
+           "data": {"job_id": job_id, "title": title,
+                    "preset": job.get("preset_id")}})
+    return {"plan": plan}
+
+
 async def node_confirm(state: AgentState) -> dict:
     plan = state.get("plan") or {}
     params = plan.get("params") or {}
-    is_video = plan.get("kind") == "video"
-    if is_video:
+    kind = plan.get("kind") or "image"
+    if kind == "export":
+        summary = (f"{params.get('width')}×{params.get('height')} · {params.get('shots')} 镜 · "
+                   f"约 {params.get('approx_seconds')} 秒 · 预计 {params.get('eta')} 秒出片")
+        payload = {"kind": "confirm", "title": "导出成片", "summary": summary,
+                   "params": params, "preset_id": "", "mode": ""}
+    elif kind == "save_shot":
+        payload = {"kind": "confirm", "title": "存为镜头",
+                   "summary": params.get("title") or "写入当前项目",
+                   "params": params, "preset_id": "", "mode": ""}
+    elif kind == "video":
         eta = max(60, int(float(params.get("duration") or 5) * 40))
-        summary = f"{params.get('width')}×{params.get('height')} · {params.get('duration')} 秒 · 约 {eta} 秒"
-        title = "生成视频"
+        payload = {"kind": "confirm", "title": "生成视频",
+                   "summary": f"{params.get('width')}×{params.get('height')} · {params.get('duration')} 秒 · 约 {eta} 秒",
+                   "params": params, "mode": plan.get("mode", ""),
+                   "preset_id": plan.get("preset_id")}
     else:
-        summary = f"{params.get('width')}×{params.get('height')} · 约 40 秒"
-        title = "生成图片"
-    payload = {
-        "kind": "confirm",
-        "title": title,
-        "summary": summary,
-        "params": params,
-        "mode": plan.get("mode", ""),
-        "preset_id": plan.get("preset_id"),
-    }
+        payload = {"kind": "confirm", "title": "生成图片",
+                   "summary": f"{params.get('width')}×{params.get('height')} · 约 40 秒",
+                   "params": params, "mode": "", "preset_id": plan.get("preset_id")}
+
+
     decision = interrupt(payload)
     approved = bool((decision or {}).get("approved"))
     if not approved:
@@ -264,7 +316,39 @@ async def node_dispatch(state: AgentState) -> dict:
     params = plan.get("params") or {}
     thread_id = state.get("thread_id", "")
     run_id = state.get("run_id", "")
-    is_video = plan.get("kind") == "video"
+    kind = plan.get("kind") or "image"
+    if kind == "export":
+        _emit({"t": "tool_call", "id": "gen", "name": "make_film",
+               "args": {"quality": params.get("quality")}})
+        raw = await tools.make_film(state.get("project_id", ""),
+                                    str(params.get("quality") or "1080p"))
+        data = json.loads(raw)
+        _emit({"t": "tool_result", "id": "gen", "ok": bool(data.get("ok")),
+               "data": {"render_id": data.get("render_id")}})
+        if not data.get("ok"):
+            return {"reply": f"导出失败：{data.get('hint') or data.get('error')}"}
+        artifact = agent_store.add_artifact(run_id, thread_id, "render", data["render_id"], "",
+                                            {"params": params, "status": "queued"})
+        _emit({"t": "artifact", "kind": "render", "ref_id": data["render_id"],
+               "artifact_id": artifact["id"], "url": ""})
+        return {"reply": f"开始导出 {params.get('shots')} 个镜头，好了我把片子发过来。"}
+
+    if kind == "save_shot":
+        _emit({"t": "tool_call", "id": "gen", "name": "save_as_shot",
+               "args": {"job_id": params.get("job_id"), "title": params.get("title")}})
+        raw = await tools.save_as_shot(params.get("job_id", ""), state.get("project_id", ""),
+                                       str(params.get("title") or ""))
+        data = json.loads(raw)
+        _emit({"t": "tool_result", "id": "gen", "ok": bool(data.get("ok")), "data": data})
+        if not data.get("ok"):
+            return {"reply": f"存不了：{data.get('hint') or data.get('error')}"}
+        artifact = agent_store.add_artifact(run_id, thread_id, "shot", data["shot_id"], "",
+                                            {"title": data.get("title")})
+        _emit({"t": "artifact", "kind": "shot", "ref_id": data["shot_id"],
+               "artifact_id": artifact["id"], "url": ""})
+        return {"reply": f"已存成镜头「{data.get('title')}」，去剪辑页就能看到。"}
+
+    is_video = kind == "video"
     if is_video:
         _emit({"t": "tool_call", "id": "gen", "name": "make_video",
                "args": {"prompt": params.get("prompt"), "mode": plan.get("mode"),
@@ -299,6 +383,10 @@ def route_after_decide(state: AgentState) -> str:
         return "lookup"
     if intent in {"generate", "generate_video"}:
         return "prepare"
+    if intent == "export":
+        return "prepare_export"
+    if intent == "save_shot":
+        return "prepare_save"
     return "chat"
 
 
@@ -317,16 +405,22 @@ def build_graph():
     graph.add_node("chat", node_chat)
     graph.add_node("lookup", node_lookup)
     graph.add_node("prepare", node_prepare)
+    graph.add_node("prepare_export", node_prepare_export)
+    graph.add_node("prepare_save", node_prepare_save)
     graph.add_node("confirm", node_confirm)
     graph.add_node("dispatch", node_dispatch)
 
     graph.add_edge(START, "intake")
     graph.add_edge("intake", "decide")
     graph.add_conditional_edges("decide", route_after_decide,
-                                {"chat": "chat", "lookup": "lookup", "prepare": "prepare"})
+                                {"chat": "chat", "lookup": "lookup", "prepare": "prepare",
+                                 "prepare_export": "prepare_export",
+                                 "prepare_save": "prepare_save"})
     graph.add_edge("lookup", END)
     graph.add_conditional_edges("prepare", route_after_prepare,
                                 {"chat": "chat", "confirm": "confirm"})
+    graph.add_edge("prepare_export", "confirm")
+    graph.add_edge("prepare_save", "confirm")
     graph.add_conditional_edges("confirm", route_after_confirm,
                                 {"dispatch": "dispatch", "chat": "chat"})
     graph.add_edge("dispatch", END)

@@ -15,6 +15,7 @@ from typing import Any
 
 from .. import store
 from ..jobs import runner
+from ..render import runner as render_runner
 from ..presets import build_bindings, get_card, load_cards, public_card, size_from, validate
 
 IMAGE_CARD_ID = "image.c16"
@@ -248,3 +249,114 @@ async def make_video(prompt: str, mode: str = "t2v", aspect: str = "16:9",
                        "job_id": job["id"]})
     return _dumps({"ok": True, "job_id": job["id"], "preset_id": card_id,
                    "params": preview["params"]})
+
+
+# --------------------------------------------------------------------------- #
+# 成片导出（M2b）
+# --------------------------------------------------------------------------- #
+QUALITY = {
+    "720p": (1280, 720),
+    "1080p": (1920, 1080),
+    "480p": (854, 480),
+    "竖屏1080": (1080, 1920),
+    "竖屏720": (720, 1280),
+}
+
+
+def _edit_state(project_id: str) -> dict:
+    import json as _json
+
+    raw = store.get_setting(f"edit_state.{project_id}", "")
+    try:
+        data = _json.loads(raw) if raw else {}
+    except Exception:
+        data = {}
+    return data if isinstance(data, dict) else {}
+
+
+def export_preview(project_id: str, quality: str = "1080p") -> dict:
+    """给确认卡用：项目的镜头数、分辨率、预估时长。"""
+    shots = store.list_shots(project_id)
+    if not shots:
+        return {"ok": False, "errors": ["项目里还没有镜头"]}
+    width, height = QUALITY.get(quality, QUALITY["1080p"])
+    state = _edit_state(project_id)
+    options = state.get("options") or {}
+    edits = {str(e.get("shot_id")): e for e in (state.get("shot_edits") or []) if e.get("shot_id")}
+
+    total = 0.0
+    for shot in shots:
+        edit = edits.get(shot["id"], {})
+        out_point = float(edit.get("out_point") or 0)
+        in_point = float(edit.get("in_point") or 0)
+        speed = float(edit.get("speed") or 1) or 1
+        if out_point > in_point:
+            total += (out_point - in_point) / speed
+    return {
+        "ok": True,
+        "project_id": project_id,
+        "shots": len(shots),
+        "width": width,
+        "height": height,
+        "quality": quality,
+        "subtitles": bool((options.get("subtitles") or {}).get("enabled")),
+        "bgm": len(options.get("bgm_tracks") or []),
+        "approx_seconds": round(total, 1),
+        "eta": max(30, int(total * 3)),
+    }
+
+
+async def make_film(project_id: str, quality: str = "1080p") -> str:
+    """按剪辑页的状态导出成片（全部镜头）。"""
+    preview = export_preview(project_id, quality)
+    if not preview.get("ok"):
+        return _dumps({"ok": False, "error": "no_shots", "hint": "；".join(preview.get("errors") or [])})
+
+    shots = store.list_shots(project_id)
+    shot_ids = [s["id"] for s in shots]
+    state = _edit_state(project_id)
+    options = dict(state.get("options") or {})
+    options["width"], options["height"] = preview["width"], preview["height"]
+    options.setdefault("fps", 24)
+    options.pop("preview", None)
+    options.pop("cache_key", None)
+
+    render = store.create_render(project_id, shot_ids, options)
+    edits = [e for e in (state.get("shot_edits") or []) if e.get("shot_id") in set(shot_ids)]
+    if edits:
+        store.save_render_shots(render["id"], edits)
+    try:
+        await render_runner.enqueue(render["id"])
+    except Exception as exc:
+        return _dumps({"ok": False, "error": "enqueue_failed", "hint": str(exc),
+                       "render_id": render["id"]})
+    return _dumps({"ok": True, "render_id": render["id"], "params": preview})
+
+
+# --------------------------------------------------------------------------- #
+# 产物 → 镜头
+# --------------------------------------------------------------------------- #
+async def save_as_shot(job_id: str, project_id: str, title: str = "") -> str:
+    job = store.get_job(job_id)
+    if not job:
+        return _dumps({"ok": False, "error": "job_not_found", "hint": "任务不存在"})
+    if job.get("status") != "succeeded":
+        return _dumps({"ok": False, "error": "not_finished", "hint": "任务还没成功，先等等"})
+    if job.get("shot_id"):
+        return _dumps({"ok": False, "error": "already_shot",
+                       "hint": f"这个任务已经是镜头 {job['shot_id']} 了"})
+    if not store.get_project(project_id):
+        return _dumps({"ok": False, "error": "project_missing", "hint": "项目不存在"})
+
+    shot = store.create_shot(project_id, title or f"镜头 {len(store.list_shots(project_id)) + 1}",
+                             job.get("preset_id") or "")
+    store.update_shot(shot["id"], values=job.get("inputs") or {})
+    store.update_job(job_id, project_id=project_id, shot_id=shot["id"])
+    updated = store.get_job(job_id)
+    if updated and updated.get("outputs"):
+        try:
+            await runner._attach_last_frame(updated, updated["outputs"])
+        except Exception:
+            pass
+    return _dumps({"ok": True, "shot_id": shot["id"],
+                   "title": title or "新镜头", "project_id": project_id})
