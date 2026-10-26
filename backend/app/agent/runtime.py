@@ -70,10 +70,13 @@ async def start_run(thread: dict, text: str, attachments: list[dict] | None = No
              for a in attachments if a.get("kind") == "image"]
     agent_store.add_message(thread_id, "user", text, parts)
 
-    # 首条消息顺手给会话起个名字，省得列表里一堆「新对话」
-    if thread.get("title") in ("", "新对话"):
-        title = text.strip().replace("\n", " ")[:16] or "新对话"
-        agent_store.update_thread(thread_id, title=title)
+    # 首条消息先给个占位名，随后让模型起个更贴切的（不阻塞回复）
+    first_message = thread.get("title") in ("", "新对话")
+    if first_message:
+        placeholder = text.strip().replace("\n", " ")[:16] or "新对话"
+        agent_store.update_thread(thread_id, title=placeholder)
+        bus.publish(thread_id, {"t": "thread_title", "title": placeholder})
+        asyncio.create_task(_auto_title(thread_id, text))
     bus.publish(thread_id, {"t": "run_start", "run_id": run["id"]})
     asyncio.create_task(_run(thread, run["id"], text, attachments))
     return run
@@ -225,3 +228,18 @@ async def watch_render(render_id: str, run_id: str, thread_id: str,
         bus.publish(thread_id, {"t": "message", "role": "assistant", "content": text,
                                 "parts": parts})
         return
+
+
+async def _auto_title(thread_id: str, text: str) -> None:
+    """让模型给会话起个短标题，失败就保留占位名。"""
+    from .. import ai_script
+
+    try:
+        title = await ai_script.thread_title(text)
+    except Exception:
+        return
+    title = (title or "").strip()
+    if not title:
+        return
+    agent_store.update_thread(thread_id, title=title)
+    bus.publish(thread_id, {"t": "thread_title", "title": title})

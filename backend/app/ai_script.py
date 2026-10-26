@@ -513,3 +513,49 @@ async def title_for(project: dict, shots: list[dict], kind: str = "title",
     text = clean(resp.json()["choices"][0]["message"]["content"])
     text = text.strip("《》\"'“”")
     return tidy_title(text, kind)
+
+
+async def thread_title(text: str) -> str:
+    """给会话起个短标题：6~10 个字，概括用户想做什么。"""
+    import re
+
+    api_key = str(settings.get("ai.api_key", "") or "")
+    base = str(settings.get("ai.base_url", "")).rstrip("/")
+    model = str(settings.get("ai.model", "") or "")
+    proxy = str(settings.get("ai.proxy", "") or "").strip()
+    text = (text or "").strip()
+    if not (api_key and base and text):
+        return ""
+
+    kwargs: dict = {"timeout": httpx.Timeout(connect=10, read=30, write=20, pool=20), "trust_env": False}
+    use_proxy = proxy_for(base, proxy)
+    if use_proxy:
+        kwargs["proxy"] = use_proxy
+
+    prompt = (
+        "给下面这句用户请求起一个中文短标题，用来做聊天会话名。\n"
+        "要求：6~10 个字，动词开头，不要标点、不要引号、不要解释。\n\n"
+        f"用户说：{text[:200]}"
+    )
+    try:
+        async with httpx.AsyncClient(**kwargs) as client:
+            resp = await client.post(
+                base + "/chat/completions",
+                headers={"Authorization": "Bearer " + api_key},
+                json={"model": model,
+                      "messages": [
+                          {"role": "system", "content": "直接输出标题本身，不要思考过程，不要标点。"},
+                          {"role": "user", "content": prompt},
+                      ],
+                      # 推理型模型会先花 token 思考，给少了 content 会是空的
+                      "temperature": 0.3, "max_tokens": 800, "stream": False},
+            )
+        if resp.status_code >= 400:
+            return ""
+        raw = (resp.json()["choices"][0]["message"]["content"] or "").strip()
+    except Exception:
+        return ""
+
+    raw = raw.splitlines()[0] if raw else ""
+    raw = re.sub(r"^[「『\"'“”#\s]+|[」』\"'“”。，,、\s]+$", "", raw)
+    return raw[:12]

@@ -121,6 +121,11 @@ export default function AgentPanel({ projectId, onOpenProject }: {
       setRun((prev) => prev ? { ...prev, status: 'waiting_confirm', pending: event as unknown as Record<string, unknown> } : prev)
       setConfirmDraft(draftFrom(params))
       api.agentThread(threadId).then((res) => setRun((res.runs || [])[0] || null)).catch(() => undefined)
+    } else if (event.t === 'thread_title') {
+      const title = String(event.title || '')
+      if (title) {
+        setThreads((prev) => prev.map((x) => (x.id === threadId ? { ...x, title } : x)))
+      }
     } else if (event.t === 'message_delta') {
       setStreamText((prev) => prev + String(event.text || ''))
     } else if (event.t === 'message') {
