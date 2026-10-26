@@ -17,6 +17,7 @@ export default function AgentPanel({ projectId, onOpenProject }: {
   onOpenProject: (projectId: string) => void
 }) {
   const [projects, setProjects] = useState<Project[]>([])
+  const [activeProject, setActiveProject] = useState(projectId)
   const [threads, setThreads] = useState<AgentThread[]>([])
   const [threadId, setThreadId] = useState('')
   const [messages, setMessages] = useState<AgentMessage[]>([])
@@ -39,6 +40,10 @@ export default function AgentPanel({ projectId, onOpenProject }: {
   const streamStop = useRef<(() => void) | null>(null)
   const bottomRef = useRef<HTMLDivElement | null>(null)
 
+  useEffect(() => {
+    setActiveProject(projectId)
+  }, [projectId])
+
   // 项目列表
   useEffect(() => {
     api.projects().then((res) => setProjects(res.items)).catch(() => undefined)
@@ -47,22 +52,23 @@ export default function AgentPanel({ projectId, onOpenProject }: {
 
   // 切项目 → 拉会话（没有就建一个）
   useEffect(() => {
-    if (!projectId) return
+    if (!activeProject) return
     let cancelled = false
-    api.agentThreads(projectId).then(async (res) => {
+    setThreadId('')
+    api.agentThreads(activeProject).then(async (res) => {
       if (cancelled) return
       if (res.items.length) {
         setThreads(res.items)
         setThreadId((prev) => prev || res.items[0].id)
       } else {
-        const thread = await api.agentCreateThread(projectId, '新对话')
+        const thread = await api.agentCreateThread(activeProject, '新对话')
         if (cancelled) return
         setThreads([thread])
         setThreadId(thread.id)
       }
     }).catch((err) => setError(String(err)))
     return () => { cancelled = true }
-  }, [projectId])
+  }, [activeProject])
 
   // 切会话 → 拉历史 + 活跃 run
   useEffect(() => {
@@ -281,23 +287,28 @@ export default function AgentPanel({ projectId, onOpenProject }: {
   }
 
   function switchProject(nextId: string) {
-    if (!nextId || nextId === projectId) return
+    if (!nextId || nextId === activeProject) return
+    setActiveProject(nextId)
+    setThreads([])
+    setThreadId('')
+    setMessages([])
+    setSteps([])
+    setArtifacts([])
+    setRun(null)
     const url = new URL(window.location.href)
     url.searchParams.set('project', nextId)
     url.searchParams.set('tab', 'agent')
     window.history.replaceState({}, '', url)
-    // 换项目 = 换会话空间，重新拉该项目的会话
-    onOpenProject(nextId)
   }
 
   async function newThread() {
-    if (!projectId) return
-    const thread = await api.agentCreateThread(projectId, '新对话')
+    if (!activeProject) return
+    const thread = await api.agentCreateThread(activeProject, '新对话')
     setThreads((prev) => [thread, ...prev])
     setThreadId(thread.id)
   }
 
-  if (!projectId) {
+  if (!activeProject) {
     return (
       <div className="agent-empty">
         <h2>导演助手</h2>
@@ -321,7 +332,7 @@ export default function AgentPanel({ projectId, onOpenProject }: {
             <h1>导演助手</h1>
             <div className="agent-project-chip">
               <span className="label">项目</span>
-              <select value={projectId} onChange={(e) => switchProject(e.target.value)}>
+              <select value={activeProject} onChange={(e) => switchProject(e.target.value)}>
                 {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
               <span className="agent-bind-hint">一个会话只属于一个项目</span>

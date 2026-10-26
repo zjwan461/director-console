@@ -100,6 +100,48 @@ async def node_intake(state: AgentState) -> dict:
     return {"error": ""}
 
 
+VIDEO_RE = re.compile(r"(视频|动起来|动一下|动画|运镜|几秒|秒的片|短片|出片)")
+IMAGE_RE = re.compile(r"(画|图|海报|剧照|插画|立绘|封面|定妆照)")
+LOOKUP_RE = re.compile(r"(素材|找一?张|有没有.*图|看看.*图)")
+EXPORT_RE = re.compile(r"(导出|合成|出成片|成片)")
+SAVE_RE = re.compile(r"(存成?镜头|放进项目|存进项目|加入项目)")
+DURATION_RE = re.compile(r"(\d+)\s*秒")
+
+
+def _fast_intent(state: AgentState) -> dict | None:
+    """常见说法直接判定意图，避免每次都等模型（推理模型要一两分钟）。
+
+    只有真正模糊的（闲聊、改稿）才交给模型。
+    """
+    text = (state.get("text") or "").strip()
+    if not text:
+        return None
+
+    ctx = agent_store.get_context(state.get("thread_id", ""))
+    last_asset = str(ctx.get("last_asset_id") or "")
+    duration_match = DURATION_RE.search(text)
+    duration = int(duration_match.group(1)) if duration_match else 5
+
+    if EXPORT_RE.search(text):
+        return {"intent": "export", "args": {}, "reply": "好，我按项目设置导出成片。"}
+    if SAVE_RE.search(text):
+        return {"intent": "save_shot", "args": {}, "reply": "好，把刚才的产物存成镜头。"}
+    if LOOKUP_RE.search(text):
+        return {"intent": "lookup", "args": {"q": "", "kind": "image"},
+                "reply": "我去素材库里翻一下。"}
+    if VIDEO_RE.search(text):
+        mode = "i2v" if (last_asset and "首帧" in text) else "t2v"
+        args = {"prompt": text, "mode": mode, "duration": duration, "aspect": "16:9"}
+        if mode == "i2v":
+            args["image_asset_id"] = last_asset
+        return {"intent": "generate_video", "args": args,
+                "reply": "好，我来生成这段视频。"}
+    if IMAGE_RE.search(text):
+        return {"intent": "generate", "args": {"prompt": text, "aspect": "9:16"},
+                "reply": "好，我来出图。"}
+    return None
+
+
 AFFIRM_RE = re.compile(
     r"(可以|好的|好吧|好嘞|好|行|嗯|对|是的|继续|开始|就用|用这张|用那张|用这个|来吧|走起|ok|okay|yes)",
     re.IGNORECASE)
@@ -151,6 +193,13 @@ def _short_circuit(state: AgentState) -> dict | None:
 
 
 async def node_decide(state: AgentState) -> dict:
+    fast = _fast_intent(state)
+    if fast:
+        _emit({"t": "step", "id": "decide", "node": "decide", "title": "理解需求",
+               "status": "done", "detail": {"intent": fast["intent"], "fast": True,
+                                             "args": fast.get("args")}})
+        return fast
+
     shortcut = _short_circuit(state)
     if shortcut:
         _emit({"t": "step", "id": "decide", "node": "decide", "title": "接着上一步",
@@ -191,8 +240,13 @@ async def node_decide(state: AgentState) -> dict:
     history = [m for m in state.get("messages", []) if isinstance(m, (HumanMessage, AIMessage))]
     msgs = [SystemMessage(content=prompts.system_prompt(env, project_ctx)), *history[-12:]]
     try:
-        resp = await llm.ainvoke(msgs)
+        import asyncio as _asyncio
+
+        resp = await _asyncio.wait_for(llm.ainvoke(msgs), timeout=45)
         data = _parse_json(getattr(resp, "content", "") or "")
+    except _asyncio.TimeoutError:
+        return {"intent": "chat", "args": {},
+                "reply": "模型响应有点慢，我先按最直接的理解处理：你想出图还是出视频？"}
     except Exception as exc:  # LLM 挂了也不能让会话崩
         return {"intent": "chat", "reply": f"我这边调用模型失败了：{exc}", "args": {}}
 
