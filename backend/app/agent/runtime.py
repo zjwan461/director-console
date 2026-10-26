@@ -190,6 +190,8 @@ async def watch_job(job_id: str, run_id: str, thread_id: str,
         artifact = agent_store.add_artifact(
             run_id, thread_id, kind, job_id, url,
             {"status": status, "error": job.get("error", "")})
+        if status == "succeeded":
+            _remember_output(thread_id, job, kind, url)
         text = ("视频出来了" if kind == "video" else "图出来了") \
             if status == "succeeded" else f"生成失败：{job.get('error') or status}"
         parts = [{"type": kind, "url": url, "job_id": job_id,
@@ -243,3 +245,24 @@ async def _auto_title(thread_id: str, text: str) -> None:
         return
     agent_store.update_thread(thread_id, title=title)
     bus.publish(thread_id, {"t": "thread_title", "title": title})
+
+
+def _remember_output(thread_id: str, job: dict, kind: str, url: str) -> None:
+    """记住刚生成的东西，下一轮「用这张图」才接得上。"""
+    patch = {
+        "last_kind": kind,
+        "last_job_id": job.get("id", ""),
+        "last_url": url,
+        "last_prompt": (job.get("inputs") or {}).get("prompt", ""),
+        "last_preset": job.get("preset_id", ""),
+    }
+    if kind == "image" and url:
+        try:
+            rel = url.split("/media/files/", 1)[-1]
+            asset = store.get_asset_by_path(rel) or store.add_asset(
+                "image", rel, meta={"origin": "agent", "job_id": job.get("id", "")})
+            if asset:
+                patch["last_asset_id"] = asset["id"]
+        except Exception:
+            pass
+    agent_store.set_context(thread_id, patch)

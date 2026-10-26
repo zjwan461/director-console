@@ -76,6 +76,32 @@ def touch_thread(thread_id: str) -> None:
         conn.execute("UPDATE agent_threads SET updated_at=? WHERE id=?", (_now(), thread_id))
 
 
+def get_context(thread_id: str) -> dict:
+    """跨轮次上下文：最近产物、最近的提议。
+
+    下一轮说「可以/就用这张图/开始吧」时，靠它直接推进，而不是让模型重新猜意图。
+    """
+    with _lock, connect() as conn:
+        row = conn.execute("SELECT context_json FROM agent_threads WHERE id=?",
+                           (thread_id,)).fetchone()
+    if not row:
+        return {}
+    try:
+        data = json.loads(row["context_json"] or "{}")
+        return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
+
+
+def set_context(thread_id: str, patch: dict) -> dict:
+    ctx = get_context(thread_id)
+    ctx.update(patch or {})
+    with _lock, connect() as conn:
+        conn.execute("UPDATE agent_threads SET context_json=? WHERE id=?",
+                     (json.dumps(ctx, ensure_ascii=False), thread_id))
+    return ctx
+
+
 def delete_thread(thread_id: str) -> None:
     with _lock, connect() as conn:
         conn.execute("DELETE FROM agent_artifacts WHERE thread_id=?", (thread_id,))
@@ -95,7 +121,22 @@ def _thread_row(row) -> dict | None:
         "created_at": row["created_at"],
         "updated_at": row["updated_at"],
         "archived": bool(row["archived"]),
+        "context": _load_context(row),
     }
+
+
+def _load_context(row) -> dict:
+    try:
+        keys = row.keys()
+    except Exception:
+        return {}
+    if "context_json" not in keys:
+        return {}
+    try:
+        data = json.loads(row["context_json"] or "{}")
+        return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
 
 
 # --------------------------------------------------------------------------- #

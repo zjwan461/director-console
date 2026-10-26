@@ -100,12 +100,79 @@ async def node_intake(state: AgentState) -> dict:
     return {"error": ""}
 
 
+AFFIRM_RE = re.compile(
+    r"(可以|好的|好吧|好嘞|好|行|嗯|对|是的|继续|开始|就用|用这张|用那张|用这个|来吧|走起|ok|okay|yes)",
+    re.IGNORECASE)
+NEGATIVE_RE = re.compile(r"(不好|不要|别用|不用|取消|算了|重新|换一张|换个|先不)")
+
+VIDEO_WORDS = ("视频", "动起来", "动一下", "运镜", "动画", "几秒", "秒的片子", "出片")
+
+
+def _is_affirmative(text: str) -> bool:
+    text = (text or "").strip().strip("。.!！~ ")
+    if not text or len(text) > 16:  # 太长的多半是新需求，不当作"同意"
+        return False
+    if NEGATIVE_RE.search(text):
+        return False
+    return bool(AFFIRM_RE.search(text.replace(" ", "")))
+
+
+def _short_circuit(state: AgentState) -> dict | None:
+    """上一轮刚出了图，这一轮说「可以/就用这张」，直接推进成图生视频。
+
+    这是纯规则判断，不依赖模型——否则用户得写一长串提示词才能让流程继续。
+    """
+    thread_id = state.get("thread_id", "")
+    text = state.get("text", "") or ""
+    ctx = agent_store.get_context(thread_id)
+    asset_id = str(ctx.get("last_asset_id") or "")
+    if not asset_id:
+        return None
+
+    video_intent = any(word in text for word in VIDEO_WORDS)
+    if not (_is_affirmative(text) or video_intent):
+        return None
+    # 用户明确要图片/重新画时，不要抢
+    if any(word in text for word in ("重新画", "再画", "生成图片", "换一张图")):
+        return None
+
+    prompt = str(ctx.get("last_prompt") or "").strip() or "让画面动起来"
+    return {
+        "intent": "generate_video",
+        "args": {
+            "prompt": prompt,
+            "mode": "i2v",
+            "image_asset_id": asset_id,
+            "aspect": "9:16",
+            "duration": 5,
+        },
+        "reply": "好，拿这张图当首帧，我来生成一条动态镜头。",
+    }
+
+
 async def node_decide(state: AgentState) -> dict:
+    shortcut = _short_circuit(state)
+    if shortcut:
+        _emit({"t": "step", "id": "decide", "node": "decide", "title": "接着上一步",
+               "status": "done", "detail": {"intent": shortcut["intent"],
+                                             "reason": "肯定回复 + 最近有产物"}})
+        return {**shortcut, "decision": ""}
+
     env = json.loads(tools.env_check())
     env.pop("presets", None)  # 提示词里只留必要信息
     project = store.get_project(state.get("project_id", "")) or {}
     shots = store.list_shots(state.get("project_id", "")) if project else []
     project_ctx = {**project, "shot_count": len(shots)} if project else None
+
+    ctx = agent_store.get_context(state.get("thread_id", ""))
+    if ctx:
+        project_ctx = dict(project_ctx or {})
+        project_ctx["最近一次产物"] = {
+            "类型": ctx.get("last_kind", ""),
+            "任务": ctx.get("last_job_id", ""),
+            "画面描述": (ctx.get("last_prompt") or "")[:120],
+            "可以当首帧的素材": ctx.get("last_asset_id", ""),
+        }
 
     attachments = state.get("attachments") or []
     if attachments:
