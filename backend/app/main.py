@@ -1499,6 +1499,7 @@ class AISettings(BaseModel):
     model: str = ""
     proxy: str = ""
     vision_model: str = ""
+    reasoning_mode: str = ""
 
 
 @app.get("/api/settings/ai")
@@ -1509,7 +1510,8 @@ async def get_ai_settings() -> dict:
 @app.put("/api/settings/ai")
 async def put_ai_settings(body: AISettings) -> dict:
     try:
-        return runtime.save_ai_settings(body.base_url, body.api_key, body.model, body.proxy, body.vision_model)
+        return runtime.save_ai_settings(body.base_url, body.api_key, body.model, body.proxy,
+                                         body.vision_model, body.reasoning_mode)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 

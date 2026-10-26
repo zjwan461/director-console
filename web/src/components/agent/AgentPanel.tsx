@@ -32,6 +32,7 @@ export default function AgentPanel({ projectId, onOpenProject }: {
   const fileRef = useRef<HTMLInputElement | null>(null)
   const [busy, setBusy] = useState(false)
   const [streamText, setStreamText] = useState('')
+  const [thinking, setThinking] = useState('')
   const [lastUserText, setLastUserText] = useState('')
   const [error, setError] = useState('')
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
@@ -78,6 +79,7 @@ export default function AgentPanel({ projectId, onOpenProject }: {
     setMessages([])
     setSteps([])
     setStreamText('')
+    setThinking('')
     setArtifacts([])
     setRun(null)
     api.agentMessages(threadId).then((res) => {
@@ -148,9 +150,11 @@ export default function AgentPanel({ projectId, onOpenProject }: {
       if (title) {
         setThreads((prev) => prev.map((x) => (x.id === threadId ? { ...x, title } : x)))
       }
+    } else if (event.t === 'thinking') {
+      // 推理模型的思考增量：先显示出来，用户不用干等正文
+      setThinking((prev) => (prev + String(event.text || '')).slice(-4000))
     } else if (event.t === 'message_delta') {
-      setStreamText((prev) => prev + String(event.text || ''))
-    } else if (event.t === 'message') {
+      setStreamText((prev) => prev + String(event.text || ''))    } else if (event.t === 'message') {
       setMessages((prev) => {
         if (prev.some((m) => m.id === event.message_id)) return prev
         return [...prev, {
@@ -165,6 +169,7 @@ export default function AgentPanel({ projectId, onOpenProject }: {
       })
       setBusy(false)
       setStreamText('')
+      setThinking('')
     } else if (event.t === 'artifact') {
       const refId = String(event.ref_id || '')
       const url = String(event.url || '')
@@ -192,6 +197,7 @@ export default function AgentPanel({ projectId, onOpenProject }: {
     } else if (event.t === 'run_end') {
       setBusy(false)
       setStreamText('')
+      setThinking('')
       if (event.status === 'waiting_confirm') setBusy(false)
       setRun((prev) => prev ? { ...prev, status: (event.status as AgentRun['status']) || 'done' } : prev)
       // 用服务端记录覆盖本地乐观消息，避免重复
@@ -208,6 +214,7 @@ export default function AgentPanel({ projectId, onOpenProject }: {
     setText('')
     setSteps([])
     setStreamText('')
+    setThinking('')
     try {
       const res = await api.agentSend(threadId, value, attachments.map((a) => a.id))
       setRun({ id: res.run_id, thread_id: threadId, status: 'running', node: '', pending: {}, error: '', steps: 0, started_at: Date.now() / 1000 })
@@ -252,6 +259,7 @@ export default function AgentPanel({ projectId, onOpenProject }: {
       await api.agentCancel(run.id)
       setBusy(false)
       setStreamText('')
+      setThinking('')
       notifyLocal('已取消当前任务')
       const res = await api.agentThread(threadId)
       setArtifacts(res.artifacts || [])
@@ -281,6 +289,7 @@ export default function AgentPanel({ projectId, onOpenProject }: {
     setError('')
     setLastUserText(value)
     setStreamText('')
+    setThinking('')
     setSteps([])
     try {
       const res = await api.agentSend(threadId, value)
@@ -627,6 +636,16 @@ export default function AgentPanel({ projectId, onOpenProject }: {
                 <button className="ghost" disabled={busy} onClick={() => void decide(false)}>取消</button>
               </div>
             </div>
+          )}
+
+          {thinking && (
+            <details className="agent-thinking" open={busy && !streamText}>
+              <summary>
+                {busy && !streamText ? '正在思考…' : '思考过程'}
+                <span className="meta"> · {thinking.length} 字</span>
+              </summary>
+              <pre>{thinking}</pre>
+            </details>
           )}
 
           {busy && !pending && (

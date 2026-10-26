@@ -40,22 +40,10 @@ class AgentState(TypedDict, total=False):
 # --------------------------------------------------------------------------- #
 # LLM
 # --------------------------------------------------------------------------- #
-def _llm():
-    from langchain_openai import ChatOpenAI
+def _messages_as_dicts(messages) -> list[dict]:
+    from ..llm import to_dicts
 
-    base = str(settings.get("ai.base_url", "") or "").rstrip("/")
-    key = str(settings.get("ai.api_key", "") or "")
-    model = str(settings.get("ai.model", "") or "")
-    if not base or not key or not model:
-        return None
-    return ChatOpenAI(
-        model=model,
-        base_url=base,
-        api_key=key,
-        temperature=0.3,
-        timeout=60,
-        max_retries=1,
-    )
+    return to_dicts(messages)
 
 
 def _config() -> dict:
@@ -298,19 +286,30 @@ async def node_decide(state: AgentState) -> dict:
             project_ctx = dict(project_ctx or {})
             project_ctx["用户随消息上传的图片"] = lines
 
-    llm = _llm()
-    if llm is None:
+    from .. import llm as llm_module
+
+    if not llm_module.ready():
         return {"intent": "chat",
                 "reply": "还没配置大模型（设置 → AI），先配好我才能帮你出图。",
                 "args": {}}
 
     history = [m for m in state.get("messages", []) if isinstance(m, (HumanMessage, AIMessage))]
-    msgs = [SystemMessage(content=prompts.system_prompt(env, project_ctx)), *history[-12:]]
+    msgs = llm_module.to_dicts(
+        [SystemMessage(content=prompts.system_prompt(env, project_ctx)), *history[-12:]])
+    content = ""
     try:
         import asyncio as _asyncio
 
-        resp = await _asyncio.wait_for(llm.ainvoke(msgs), timeout=45)
-        data = _parse_json(getattr(resp, "content", "") or "")
+        async with _asyncio.timeout(150):
+            async for event in llm_module.chat_stream(msgs, temperature=0.2, max_tokens=2000):
+                if event.get("type") == "reasoning":
+                    # 让用户先看到思考过程，而不是盯着转圈
+                    _emit({"t": "thinking", "text": str(event.get("text") or "")})
+                else:
+                    content += str(event.get("text") or "")
+        data = _parse_json(content)
+        if not data and content:
+            data = _parse_json(content.strip().strip("`"))
     except _asyncio.TimeoutError:
         return {"intent": "chat", "args": {},
                 "reply": "模型响应有点慢，我先按最直接的理解处理：你想出图还是出视频？"}
@@ -387,9 +386,10 @@ async def node_reply_capability(state: AgentState) -> dict:
 
 async def node_chat(state: AgentState) -> dict:
     """闲聊/解释走这里：真流式输出，前端能一个字一个字看到。"""
-    llm = _llm()
+    from .. import llm as llm_module
+
     fallback = state.get("reply") or ""
-    if llm is None:
+    if not llm_module.ready():
         return {"reply": fallback or "还没配置大模型（设置 → AI）。"}
 
     env = json.loads(tools.env_check())
@@ -399,16 +399,20 @@ async def node_chat(state: AgentState) -> dict:
     project_ctx = {**project, "shot_count": len(shots)} if project else None
 
     history = [m for m in state.get("messages", []) if isinstance(m, (HumanMessage, AIMessage))]
-    msgs = [
+    msgs = llm_module.to_dicts([
         SystemMessage(content=prompts.chat_system_prompt(env, project_ctx)),
         *history[-12:],
-    ]
+    ])
 
     text = ""
     try:
-        async for chunk in llm.astream(msgs):
-            delta = getattr(chunk, "content", "") or ""
+        async for event in llm_module.chat_stream(msgs, temperature=0.4):
+            delta = str(event.get("text") or "")
             if not delta:
+                continue
+            if event.get("type") == "reasoning":
+                # 思考过程单独推给前端，前端边等边显示，不至于干等
+                _emit({"t": "thinking", "text": delta})
                 continue
             text += delta
             _emit({"t": "message_delta", "text": delta})

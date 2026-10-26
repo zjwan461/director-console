@@ -366,6 +366,7 @@ function AISettingsPanel() {
   const [model, setModel] = useState('')
   const [proxy, setProxy] = useState('')
   const [visionModel, setVisionModel] = useState('')
+  const [reasoningMode, setReasoningMode] = useState('auto')
   const [apiKey, setApiKey] = useState('')
   const [keyHint, setKeyHint] = useState('')
   const [overridden, setOverridden] = useState(false)
@@ -377,12 +378,14 @@ function AISettingsPanel() {
       setBaseUrl(s.base_url)
       setModel(s.model)
       setProxy(s.proxy || '')
+      setReasoningMode(s.reasoning_mode || 'auto')
       setKeyHint(s.key_hint)
       setOverridden(s.overridden)
     }).catch(() => undefined)
   }, [])
 
-  const payload = () => ({ base_url: baseUrl, model, proxy, vision_model: visionModel, api_key: apiKey || undefined })
+  const payload = () => ({ base_url: baseUrl, model, proxy, vision_model: visionModel,
+    reasoning_mode: reasoningMode, api_key: apiKey || undefined })
 
   const save = async () => {
     setBusy('save')
@@ -450,6 +453,17 @@ function AISettingsPanel() {
         <label><span>多模态模型（可选，带视频截图生成时用）</span></label>
         <input value={visionModel} placeholder="例如 qwen3-vl-plus"
                onChange={(e) => setVisionModel(e.target.value)} />
+      </div>
+      <div className="field">
+        <label><span>思考模式（推理模型的思考内容怎么取）</span></label>
+        <select value={reasoningMode} onChange={(e) => setReasoningMode(e.target.value)}>
+          <option value="auto">自动（默认，有 reasoning_content 就显示）</option>
+          <option value="deepseek">DeepSeek（思考放在 reasoning_content）</option>
+          <option value="off">关闭思考（仅支持 enable_thinking 的模型）</option>
+        </select>
+        <p className="hint" style={{ marginTop: 6 }}>
+          选 DeepSeek 后，等待时会先把思考过程流式显示出来，不用干等正文。
+        </p>
       </div>
       <div className="field">
         <label><span>API Key{keyHint ? `（当前 ${keyHint}）` : ''}</span></label>

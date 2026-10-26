@@ -1257,3 +1257,26 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
 .task-outputs { margin-top: 8px; padding-top: 8px; border-top: 1px dashed #232838; }
 .task-pager { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 14px; }
 .task-pager button { height: 28px; padding: 0 14px; font-size: 12px; }
+
+/* 思考过程 */
+.agent-thinking {
+  max-width: 82%;
+  margin: 2px 0 8px;
+  padding: 8px 12px;
+  border-radius: 9px;
+  border: 1px dashed #2a3450;
+  background: #10141d;
+  font-size: 12px;
+  color: #8b97ae;
+}
+.agent-thinking summary { cursor: pointer; color: #93a0b8; }
+.agent-thinking pre {
+  margin: 8px 0 0;
+  max-height: 220px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.65;
+  color: #77849c;
+  font-family: inherit;
+}

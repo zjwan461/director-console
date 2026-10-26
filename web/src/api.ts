@@ -58,10 +58,10 @@ export const api = {
   },
 
   aiSettings: () =>
-    request<{ base_url: string; model: string; proxy: string; vision_model: string; key_set: boolean; key_hint: string; overridden: boolean }>(
+    request<{ base_url: string; model: string; proxy: string; vision_model: string; reasoning_mode: string; key_set: boolean; key_hint: string; overridden: boolean }>(
       '/api/settings/ai',
     ),
-  saveAiSettings: (payload: { base_url: string; api_key?: string; model: string; proxy?: string; vision_model?: string }) =>
+  saveAiSettings: (payload: { base_url: string; api_key?: string; model: string; proxy?: string; vision_model?: string; reasoning_mode?: string }) =>
     request<{ base_url: string; model: string; key_set: boolean; key_hint: string }>('/api/settings/ai', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
