@@ -125,6 +125,17 @@ def _fast_intent(state: AgentState) -> dict | None:
     BGM_RE = re.compile(r"(配乐|背景音乐|BGM|加.*音乐|音乐.*换|来点音乐)", re.IGNORECASE)
     FILM_RE = re.compile(r"(转场|片头|片尾|画幅|比例)")
 
+    NEWPROJECT_RE = re.compile(r"(新建|建个|开个|创建).{0,4}项目|新项目")
+    ADDSHOT_RE = re.compile(r"(加|添加|补|建).{0,3}(镜头|几镜|分镜)")
+
+    if NEWPROJECT_RE.search(text):
+        name_match = re.search(r"[叫名称为是]\s*[「《\"]([^」》\"]{1,20})", text)
+        name = name_match.group(1) if name_match else text.strip()[:16]
+        return {"intent": "create_project", "args": {"name": name},
+                "reply": f"好，我新建一个项目《{name}》。"}
+    if ADDSHOT_RE.search(text):
+        return {"intent": "add_shot", "args": {"raw": text},
+                "reply": "好，我按你的描述排几个镜头。"}
     if POLISH_RE.search(text):
         kinds = "narration" if "旁白" in text and "字幕" not in text else (
             "subtitle" if "字幕" in text and "旁白" not in text else "both")
@@ -472,6 +483,31 @@ async def node_prepare_save(state: AgentState) -> dict:
     return {"plan": plan}
 
 
+async def node_prepare_new_project(state: AgentState) -> dict:
+    args = state.get("args") or {}
+    name = str(args.get("name") or "未命名项目").strip()[:40]
+    _emit({"t": "tool_call", "id": "prep_new", "name": "create_project", "args": {"name": name}})
+    _emit({"t": "tool_result", "id": "prep_new", "ok": True, "data": {"name": name}})
+    return {"plan": {"kind": "create_project", "params": {"name": name}}}
+
+
+async def node_prepare_add_shot(state: AgentState) -> dict:
+    args = state.get("args") or {}
+    project_id = state.get("project_id", "")
+    raw = str(args.get("raw") or state.get("text") or "")
+    # 去掉「加三个镜头：」这类前缀，只留画面描述
+    if any(sep in raw for sep in ("：", ":")):
+        raw = re.split(r"[：:]", raw, maxsplit=1)[1]
+    # 按“、，,;；/”切成几镜
+    parts = [p.strip(" 。；;、") for p in re.split(r"[、，,;；/]|\s+和\s+", raw) if p.strip(" 。；;、")]
+    prompts = [p for p in parts if len(p) >= 2][:8] or [raw.strip()]
+    preview = tools.add_shot_preview(project_id, prompts)
+    _emit({"t": "tool_call", "id": "prep_shot", "name": "add_shots.preview",
+           "args": {"count": len(prompts)}})
+    _emit({"t": "tool_result", "id": "prep_shot", "ok": True, "data": preview})
+    return {"plan": {"kind": "add_shot", "params": {"prompts": prompts, "count": len(prompts)}}}
+
+
 async def node_prepare_polish(state: AgentState) -> dict:
     args = state.get("args") or {}
     project_id = state.get("project_id", "")
@@ -548,6 +584,14 @@ async def node_confirm(state: AgentState) -> dict:
                    f"约 {params.get('approx_seconds')} 秒 · {' · '.join(extras)} · 预计 {params.get('eta')} 秒")
         payload = {"kind": "confirm", "action": "export", "title": "导出成片",
                    "summary": summary, "params": params, "preset_id": "", "mode": ""}
+    elif kind == "create_project":
+        payload = {"kind": "confirm", "action": "create_project", "title": "新建项目",
+                   "summary": f"项目名《{params.get('name')}》，并新开一个会话",
+                   "params": params, "preset_id": "", "mode": ""}
+    elif kind == "add_shot":
+        payload = {"kind": "confirm", "action": "add_shot", "title": "加镜头",
+                   "summary": f"新增 {params.get('count')} 个镜头（文生视频，5 秒）",
+                   "params": params, "preset_id": "", "mode": ""}
     elif kind == "polish":
         kinds_label = {"both": "字幕 + 旁白", "subtitle": "只写字幕", "narration": "只写旁白"}.get(
             str(params.get("kinds")), "字幕 + 旁白")
@@ -657,6 +701,29 @@ async def node_dispatch(state: AgentState) -> dict:
                "artifact_id": artifact["id"], "url": ""})
         return {"reply": f"开始导出 {params.get('shots')} 个镜头，好了我把片子发过来。"}
 
+    if kind == "create_project":
+        _emit({"t": "tool_call", "id": "gen", "name": "create_project",
+               "args": {"name": params.get("name")}})
+        data = json.loads(tools.create_project(str(params.get("name") or "")))
+        _emit({"t": "tool_result", "id": "gen", "ok": bool(data.get("ok")), "data": data})
+        if not data.get("ok"):
+            return {"reply": "建项目失败了，稍后再试。"}
+        _emit({"t": "switch_thread", "thread_id": data["thread_id"],
+               "project_id": data["project_id"], "title": data["project_name"]})
+        return {"reply": f"项目《{data['project_name']}》建好了，已经给你开好新会话，"
+                         f"接着说想拍什么就行。"}
+
+    if kind == "add_shot":
+        _emit({"t": "tool_call", "id": "gen", "name": "add_shots",
+               "args": {"count": params.get("count")}})
+        raw = await tools.add_shots(state.get("project_id", ""), list(params.get("prompts") or []))
+        data = json.loads(raw)
+        _emit({"t": "tool_result", "id": "gen", "ok": bool(data.get("ok")), "data": data})
+        if not data.get("ok"):
+            return {"reply": f"加镜头没成功：{data.get('hint') or data.get('error')}"}
+        lines = "、".join(item["title"] for item in data["created"])
+        return {"reply": f"加了 {data['count']} 个镜头（{lines}）。可以让我逐镜出片，或者说「导出成片」。"}
+
     if kind == "polish":
         _emit({"t": "tool_call", "id": "gen", "name": "polish_film",
                "args": {"kinds": params.get("kinds"), "tts": params.get("tts")}})
@@ -764,6 +831,10 @@ def route_after_decide(state: AgentState) -> str:
         return "prepare_bgm"
     if intent == "film_options":
         return "prepare_film"
+    if intent == "create_project":
+        return "prepare_new_project"
+    if intent == "add_shot":
+        return "prepare_add_shot"
     return "chat"
 
 
@@ -793,6 +864,8 @@ def build_graph(checkpointer=None):
     graph.add_node("prepare_polish", node_prepare_polish)
     graph.add_node("prepare_bgm", node_prepare_bgm)
     graph.add_node("prepare_film", node_prepare_film)
+    graph.add_node("prepare_new_project", node_prepare_new_project)
+    graph.add_node("prepare_add_shot", node_prepare_add_shot)
     graph.add_node("confirm", node_confirm)
     graph.add_node("dispatch", node_dispatch)
 
@@ -804,7 +877,9 @@ def build_graph(checkpointer=None):
                                  "prepare_save": "prepare_save",
                                  "prepare_polish": "prepare_polish",
                                  "prepare_bgm": "prepare_bgm",
-                                 "prepare_film": "prepare_film"})
+                                 "prepare_film": "prepare_film",
+                                 "prepare_new_project": "prepare_new_project",
+                                 "prepare_add_shot": "prepare_add_shot"})
     graph.add_edge("lookup", END)
     graph.add_conditional_edges("prepare", route_after_prepare,
                                 {"chat": "chat", "confirm": "confirm"})
@@ -813,6 +888,8 @@ def build_graph(checkpointer=None):
     graph.add_edge("prepare_polish", "confirm")
     graph.add_edge("prepare_bgm", "confirm")
     graph.add_edge("prepare_film", "confirm")
+    graph.add_edge("prepare_new_project", "confirm")
+    graph.add_edge("prepare_add_shot", "confirm")
     graph.add_conditional_edges("confirm", route_after_confirm,
                                 {"dispatch": "dispatch", "chat": "chat"})
     graph.add_edge("dispatch", END)

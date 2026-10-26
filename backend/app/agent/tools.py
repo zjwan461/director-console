@@ -544,3 +544,44 @@ def asset_from_url(url: str, job_id: str = "") -> str:
         return asset["id"] if asset else ""
     except Exception:
         return ""
+
+
+# --------------------------------------------------------------------------- #
+# 从零开始：建项目 / 加镜头
+# --------------------------------------------------------------------------- #
+def create_project(name: str) -> str:
+    """建一个项目，并给它开一个会话（一会话一项目）。"""
+    name = (name or "").strip()[:40] or "未命名项目"
+    if store.list_projects() and any(p.get("name") == name for p in store.list_projects()):
+        name = f"{name} 2"
+    project = store.create_project(name)
+    from . import store as agent_store
+
+    thread = agent_store.create_thread(project["id"], name)
+    return _dumps({"ok": True, "project_id": project["id"], "project_name": name,
+                   "thread_id": thread["id"]})
+
+
+def add_shot_preview(project_id: str, titles: list[str] | None = None) -> dict:
+    shots = store.list_shots(project_id)
+    return {"ok": True, "project_id": project_id, "existing": len(shots),
+            "titles": titles or []}
+
+
+async def add_shots(project_id: str, prompts: list[str]) -> str:
+    """按顺序加几个镜头（每个 prompt 一镜，默认用文生视频卡）。"""
+    if not store.get_project(project_id):
+        return _dumps({"ok": False, "error": "project_missing", "hint": "项目不存在"})
+    prompts = [str(p).strip() for p in (prompts or []) if str(p).strip()][:8]
+    if not prompts:
+        return _dumps({"ok": False, "error": "empty", "hint": "没有提供镜头画面描述"})
+
+    created = []
+    base = len(store.list_shots(project_id))
+    for index, prompt in enumerate(prompts, start=1):
+        shot = store.create_shot(project_id, f"镜头 {base + index}", "h3.t2v", prompt)
+        store.update_shot(shot["id"], values={"prompt": prompt,
+                                              "size": {"aspect": "16:9", "megapixels": 0.4},
+                                              "duration": 5})
+        created.append({"id": shot["id"], "title": f"镜头 {base + index}", "prompt": prompt})
+    return _dumps({"ok": True, "created": created, "count": len(created)})

@@ -128,6 +128,21 @@ export default function AgentPanel({ projectId, onOpenProject }: {
       setRun((prev) => prev ? { ...prev, status: 'waiting_confirm', pending: event as unknown as Record<string, unknown> } : prev)
       setConfirmDraft(draftFrom(params))
       api.agentThread(threadId).then((res) => setRun((res.runs || [])[0] || null)).catch(() => undefined)
+    } else if (event.t === 'switch_thread') {
+      const nextThread = String(event.thread_id || '')
+      const nextProject = String(event.project_id || '')
+      if (nextProject) {
+        setActiveProject(nextProject)
+        const url = new URL(window.location.href)
+        url.searchParams.set('project', nextProject)
+        url.searchParams.set('tab', 'agent')
+        window.history.replaceState({}, '', url)
+        api.projects().then((res) => setProjects(res.items)).catch(() => undefined)
+      }
+      if (nextThread) {
+        api.agentThreads(nextProject).then((res) => setThreads(res.items)).catch(() => undefined)
+        setThreadId(nextThread)
+      }
     } else if (event.t === 'thread_title') {
       const title = String(event.title || '')
       if (title) {
@@ -525,8 +540,11 @@ export default function AgentPanel({ projectId, onOpenProject }: {
               </div>
 
               {(actionOf(pending) === 'polish' || actionOf(pending) === 'bgm'
-                || actionOf(pending) === 'film_options') && (
+                || actionOf(pending) === 'film_options' || actionOf(pending) === 'add_shot') && (
                 <p className="agent-confirm-hint">执行后会直接写入项目设置，可在剪辑页复查。</p>
+              )}
+              {actionOf(pending) === 'create_project' && (
+                <p className="agent-confirm-hint">建好后会自动切到新项目的新会话。</p>
               )}
 
               {(actionOf(pending) === 'image' || actionOf(pending) === 'video') && (
