@@ -41,6 +41,14 @@ async def get_run(run_id: str) -> dict:
     return run
 
 
+@router.post("/runs/{run_id}/cancel")
+async def cancel(run_id: str) -> dict:
+    try:
+        return await ai_edit.cancel_run(run_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+
 @router.post("/runs/{run_id}/retry")
 async def retry(run_id: str) -> dict:
     try:

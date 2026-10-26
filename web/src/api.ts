@@ -102,6 +102,8 @@ export const api = {
   aiEditRun: (runId: string) => request<{
     id: string; status: string; state: { rows?: Record<string, unknown>; done?: number; total?: number }
   }>(`/api/ai-edit/runs/${runId}`),
+  aiEditCancel: (runId: string) =>
+    request<{ id: string; status: string }>(`/api/ai-edit/runs/${runId}/cancel`, { method: 'POST' }),
   aiEditRetry: (runId: string) =>
     request<{ id: string; status: string }>(`/api/ai-edit/runs/${runId}/retry`, { method: 'POST' }),
   aiEditActive: (projectId: string) =>
@@ -253,6 +255,8 @@ export const api = {
       body: JSON.stringify({ approved, params }),
     }),
   agentRun: (runId: string) => request<AgentRun>(`/api/agent/runs/${runId}`),
+  agentCancel: (runId: string) =>
+    request<AgentRun>(`/api/agent/runs/${runId}/cancel`, { method: 'POST' }),
   assetWaveform: (id: string, buckets = 160) =>
     request<{ peaks: number[]; cached: boolean }>(`/api/assets/${id}/waveform?buckets=${buckets}`),
   createShotFromAsset: (

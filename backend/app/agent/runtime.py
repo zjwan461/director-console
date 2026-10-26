@@ -15,6 +15,7 @@ from .graph import build_graph
 
 _graph = None
 PROCESS_START = time.time()
+_tasks: dict[str, asyncio.Task] = {}
 
 
 def graph():
@@ -79,7 +80,9 @@ async def start_run(thread: dict, text: str, attachments: list[dict] | None = No
         bus.publish(thread_id, {"t": "thread_title", "title": placeholder})
         asyncio.create_task(_auto_title(thread_id, text))
     bus.publish(thread_id, {"t": "run_start", "run_id": run["id"]})
-    asyncio.create_task(_run(thread, run["id"], text, attachments))
+    task = asyncio.create_task(_run(thread, run["id"], text, attachments))
+    _tasks[run["id"]] = task
+    task.add_done_callback(lambda _t, rid=run["id"]: _tasks.pop(rid, None))
     return run
 
 
@@ -319,3 +322,23 @@ async def mark_stale_runs() -> int:
             "UPDATE agent_runs SET status='interrupted', error='服务重启导致中断',"
             " finished_at=? WHERE status IN ('running','waiting_confirm')", (time.time(),))
         return cur.rowcount
+
+
+async def cancel_run(run_id: str, reason: str = "用户取消") -> dict:
+    """取消一个运行：停掉后台 task，把状态置 canceled。"""
+    run = agent_store.get_run(run_id)
+    if not run:
+        raise ValueError("run 不存在")
+    if run["status"] in ("done", "failed", "canceled"):
+        return run
+
+    task = _tasks.pop(run_id, None)
+    if task and not task.done():
+        task.cancel()
+
+    thread_id = run["thread_id"]
+    agent_store.update_run(run_id, status="canceled", error=reason, finished_at=time.time())
+    agent_store.add_message(thread_id, "assistant", f"已取消（{reason}）",
+                            [{"type": "notice", "text": reason}], run_id)
+    bus.publish(thread_id, {"t": "run_end", "run_id": run_id, "status": "canceled"})
+    return agent_store.get_run(run_id) or {}

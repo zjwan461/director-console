@@ -13,6 +13,9 @@ from typing import Any
 from . import store
 from .agent.events import bus
 
+_tasks: dict[str, Any] = {}
+_canceled: set[str] = set()
+
 
 def _new_id() -> str:
     return "aied_" + uuid.uuid4().hex[:12]
@@ -141,7 +144,9 @@ async def start(project_id: str, shot_ids: list[str], options: dict) -> dict:
         raise ValueError("项目里还没有镜头")
 
     run = create_run(project_id, targets, options)
-    asyncio.create_task(_guarded(run["id"], project_id, targets, options))
+    task = asyncio.create_task(_guarded(run["id"], project_id, targets, options))
+    _tasks[run["id"]] = task
+    task.add_done_callback(lambda _t, rid=run["id"]: _tasks.pop(rid, None))
     return run
 
 
@@ -186,6 +191,10 @@ async def _execute(run_id: str, project_id: str, shot_ids: list[str], options: d
     emit({"t": "start", "run_id": run_id, "total": len(shot_ids), "kind": kind})
 
     for index, sid in enumerate(shot_ids):
+        if run_id in _canceled:
+            emit({"t": "error", "text": "已取消"})
+            update_run(run_id, status="canceled", error="用户取消")
+            return
         shot = by_id.get(sid)
         if not shot:
             continue
@@ -339,3 +348,18 @@ async def retry_failed(run_id: str) -> dict:
     options = dict(run.get("options") or {})
     options["mode"] = "rewrite"
     return await start(run["project_id"], failed, options)
+
+
+async def cancel_run(run_id: str) -> dict:
+    run = get_run(run_id)
+    if not run:
+        raise ValueError("任务不存在")
+    if run["status"] in ("done", "failed", "canceled"):
+        return run
+    _canceled.add(run_id)
+    task = _tasks.get(run_id)
+    if task and not task.done():
+        task.cancel()
+    update_run(run_id, status="canceled", error="用户取消")
+    bus.publish(run_id, {"t": "error", "text": "已取消"})
+    return get_run(run_id) or {}

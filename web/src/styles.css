@@ -1176,3 +1176,15 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+
+/* 产物卡片动作 */
+.agent-artifact-actions { display: flex; gap: 6px; margin-top: 2px; }
+.agent-artifact-actions button { height: 22px; padding: 0 8px; font-size: 10.5px; }
+
+/* 错误卡里的重试按钮 */
+.agent-error-card { display: flex; align-items: center; gap: 10px; justify-content: space-between; }
+.agent-error-card button { flex: 0 0 auto; }
+
+/* 思考中 + 取消 */
+.agent-typing { display: flex; align-items: center; gap: 10px; }

@@ -32,6 +32,7 @@ export default function AgentPanel({ projectId, onOpenProject }: {
   const fileRef = useRef<HTMLInputElement | null>(null)
   const [busy, setBusy] = useState(false)
   const [streamText, setStreamText] = useState('')
+  const [lastUserText, setLastUserText] = useState('')
   const [error, setError] = useState('')
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const [confirmDraft, setConfirmDraft] = useState<{
@@ -188,6 +189,7 @@ export default function AgentPanel({ projectId, onOpenProject }: {
     if ((!value && !attachments.length) || !threadId || busy) return
     setBusy(true)
     setError('')
+    setLastUserText(value)
     setText('')
     setSteps([])
     setStreamText('')
@@ -226,6 +228,56 @@ export default function AgentPanel({ projectId, onOpenProject }: {
     } finally {
       setUploading(false)
       if (fileRef.current) fileRef.current.value = ''
+    }
+  }
+
+  async function cancelRun() {
+    if (!run?.id) return
+    try {
+      await api.agentCancel(run.id)
+      setBusy(false)
+      setStreamText('')
+      notifyLocal('已取消当前任务')
+      const res = await api.agentThread(threadId)
+      setArtifacts(res.artifacts || [])
+      const msgs = await api.agentMessages(threadId)
+      setMessages(msgs.items)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    }
+  }
+
+  function notifyLocal(message: string) {
+    setSteps((prev) => [...prev, {
+      id: `notice_${Date.now()}`, node: 'notice', title: message, status: 'done',
+    }])
+  }
+
+  /** 产物卡片上的一键动作：等价于让用户说那句话 */
+  async function quickAsk(text: string) {
+    if (!threadId || busy) return
+    setText(text)
+    setTimeout(() => { void sendText(text) }, 0)
+  }
+
+  async function sendText(value: string) {
+    if (!threadId || busy || !value.trim()) return
+    setBusy(true)
+    setError('')
+    setLastUserText(value)
+    setStreamText('')
+    setSteps([])
+    try {
+      const res = await api.agentSend(threadId, value)
+      setRun({ id: res.run_id, thread_id: threadId, status: 'running', node: '', pending: {}, error: '', steps: 0, started_at: Date.now() / 1000 })
+      setMessages((prev) => [...prev, {
+        id: `local_${Date.now()}`, thread_id: threadId, role: 'user', content: value,
+        parts: [], seq: prev.length + 1, created_at: Date.now() / 1000,
+      }])
+      setText('')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+      setBusy(false)
     }
   }
 
@@ -402,7 +454,16 @@ export default function AgentPanel({ projectId, onOpenProject }: {
                   )
                 }
                 if (part.type === 'error') {
-                  return <div className="agent-error-card" key={index}>{String(part.text || '出错了')}</div>
+                  return (
+                    <div className="agent-error-card" key={index}>
+                      <span>{String(part.text || '出错了')}</span>
+                      {lastUserText && (
+                        <button className="ghost tiny" onClick={() => void sendText(lastUserText)}>
+                          重试
+                        </button>
+                      )}
+                    </div>
+                  )
                 }
                 if (part.type === 'image' || part.type === 'video') {
                   const url = String(part.url || '')
@@ -542,7 +603,12 @@ export default function AgentPanel({ projectId, onOpenProject }: {
             </div>
           )}
 
-          {busy && !pending && <div className="agent-typing">思考中…</div>}
+          {busy && !pending && (
+            <div className="agent-typing">
+              <span>思考中…</span>
+              <button className="ghost tiny" onClick={() => void cancelRun()}>取消</button>
+            </div>
+          )}
           {error && <div className="notice err">{error}</div>}
           <div ref={bottomRef} />
         </div>
@@ -615,6 +681,20 @@ export default function AgentPanel({ projectId, onOpenProject }: {
                         {failedState(item) ? '生成失败' : '排队中'}
                       </div>}
                 <span>{label}{status ? ` · ${status}` : ''}</span>
+                {item.url && item.kind !== 'shot' && (
+                  <div className="agent-artifact-actions">
+                    <button className="ghost tiny" onClick={(e) => {
+                      e.preventDefault()
+                      void quickAsk('把刚才这个存成镜头')
+                    }}>存镜头</button>
+                    {item.kind !== 'video' && item.kind !== 'render' && (
+                      <button className="ghost tiny" onClick={(e) => {
+                        e.preventDefault()
+                        void quickAsk('用刚才这张图做视频')
+                      }}>做视频</button>
+                    )}
+                  </div>
+                )}
               </a>
             )
           })}

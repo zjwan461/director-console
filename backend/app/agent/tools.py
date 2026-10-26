@@ -291,6 +291,8 @@ def export_preview(project_id: str, quality: str = "1080p") -> dict:
     options = state.get("options") or {}
     edits = {str(e.get("shot_id")): e for e in (state.get("shot_edits") or []) if e.get("shot_id")}
 
+    title = options.get("title") or {}
+    tail = options.get("tail") or {}
     total = 0.0
     for shot in shots:
         edit = edits.get(shot["id"], {})
@@ -308,6 +310,10 @@ def export_preview(project_id: str, quality: str = "1080p") -> dict:
         "quality": quality,
         "subtitles": bool((options.get("subtitles") or {}).get("enabled")),
         "bgm": len(options.get("bgm_tracks") or []),
+        "title_seconds": round(float(title.get("duration") or 0), 1) if title.get("enabled") else 0.0,
+        "title_text": str(title.get("text") or ""),
+        "tail_seconds": round(float(tail.get("duration") or 0), 1) if tail.get("enabled") else 0.0,
+        "tail_text": str(tail.get("text") or ""),
         "approx_seconds": round(total, 1),
         "eta": max(30, int(total * 3)),
     }

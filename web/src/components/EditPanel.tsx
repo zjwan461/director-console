@@ -872,6 +872,20 @@ export default function EditPanel({
   const failedRowCount = Object.values(aiRows).filter((row) => row.status === 'error').length
   const hasFailedRows = failedRowCount > 0
 
+  const cancelAiEdit = async () => {
+    const runId = activeAiRun || lastAiRun
+    if (!runId) return
+    try {
+      await api.aiEditCancel(runId)
+      setAiRunning(false)
+      setActiveAiRun('')
+      notify('ok', '已取消', '未处理的镜头不会再跑')
+      void syncFromServer()
+    } catch (err) {
+      notify('err', '取消失败', (err instanceof Error ? err.message : String(err)).slice(0, 120))
+    }
+  }
+
   const retryFailedShots = async () => {
     if (!lastAiRun) return
     try {
@@ -1462,6 +1476,7 @@ export default function EditPanel({
               <div className="ai-progress">
                 <span className="spin" />
                 <span>{aiProgress.done}/{aiProgress.total} 镜处理中…</span>
+                <button className="ghost tiny" onClick={() => void cancelAiEdit()}>取消</button>
               </div>
             )}
             {Object.keys(aiRows).length > 0 && (

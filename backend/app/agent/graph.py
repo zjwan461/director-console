@@ -448,8 +448,15 @@ async def node_confirm(state: AgentState) -> dict:
     mp_options = plan.get("megapixels_options") or []
 
     if kind == "export":
+        extras = ["烧字幕" if params.get("subtitles") else "不烧字幕"]
+        if params.get("bgm"):
+            extras.append(f"{params['bgm']} 条 BGM")
+        if params.get("title_seconds"):
+            extras.append(f"片头 {params['title_seconds']}s")
+        if params.get("tail_seconds"):
+            extras.append(f"片尾 {params['tail_seconds']}s")
         summary = (f"{params.get('width')}×{params.get('height')} · {params.get('shots')} 镜 · "
-                   f"约 {params.get('approx_seconds')} 秒 · 预计 {params.get('eta')} 秒出片")
+                   f"约 {params.get('approx_seconds')} 秒 · {' · '.join(extras)} · 预计 {params.get('eta')} 秒")
         payload = {"kind": "confirm", "action": "export", "title": "导出成片",
                    "summary": summary, "params": params, "preset_id": "", "mode": ""}
     elif kind == "save_shot":

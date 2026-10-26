@@ -196,6 +196,14 @@ async def confirm(run_id: str, body: ConfirmIn) -> dict:
         raise HTTPException(status_code=400, detail=str(exc))
 
 
+@router.post("/runs/{run_id}/cancel")
+async def cancel(run_id: str) -> dict:
+    try:
+        return await runtime.cancel_run(run_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+
 @router.get("/runs/{run_id}")
 async def get_run(run_id: str) -> dict:
     run = agent_store.get_run(run_id)
