@@ -1084,3 +1084,16 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
   border-radius: 50%; border: 1px solid #2a3145; background: #1b2130; color: #c9d2e3;
   font-size: 12px; line-height: 1; cursor: pointer; padding: 0; }
 .agent-composer-tools { display: flex; align-items: center; gap: 10px; }
+
+
+/* 流式光标 */
+.agent-caret {
+  display: inline-block;
+  width: 6px;
+  height: 14px;
+  margin-left: 2px;
+  vertical-align: -2px;
+  background: #7b8cff;
+  animation: agent-caret-blink 1s steps(2, start) infinite;
+}
+@keyframes agent-caret-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }

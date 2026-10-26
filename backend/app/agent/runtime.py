@@ -148,8 +148,12 @@ def _append_assistant(thread_id: str, run_id: str, reply: str, result: dict) -> 
     if isinstance(assets, list) and assets:
         parts.append({"type": "assets", "items": assets})
     msg = agent_store.add_message(thread_id, "assistant", reply, parts, run_id)
-    bus.publish(thread_id, {"t": "message", "role": "assistant", "content": reply,
-                            "parts": parts, "message_id": msg["id"]})
+    # 流式已经逐字推过了，这里只发一个 final 标记，避免前端重复一遍
+    event = {"t": "message", "role": "assistant", "content": reply,
+             "parts": parts, "message_id": msg["id"]}
+    if result.get("streamed"):
+        event["final"] = True
+    bus.publish(thread_id, event)
     return msg
 
 

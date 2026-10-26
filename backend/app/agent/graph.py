@@ -34,6 +34,7 @@ class AgentState(TypedDict, total=False):
     plan: dict
     decision: str
     attachments: list
+    streamed: bool
     error: str
 
 
@@ -141,7 +142,38 @@ async def node_decide(state: AgentState) -> dict:
 
 
 async def node_chat(state: AgentState) -> dict:
-    return {"reply": state.get("reply") or "我在。"}
+    """闲聊/解释走这里：真流式输出，前端能一个字一个字看到。"""
+    llm = _llm()
+    fallback = state.get("reply") or ""
+    if llm is None:
+        return {"reply": fallback or "还没配置大模型（设置 → AI）。"}
+
+    env = json.loads(tools.env_check())
+    env.pop("presets", None)
+    project = store.get_project(state.get("project_id", "")) or {}
+    shots = store.list_shots(state.get("project_id", "")) if project else []
+    project_ctx = {**project, "shot_count": len(shots)} if project else None
+
+    history = [m for m in state.get("messages", []) if isinstance(m, (HumanMessage, AIMessage))]
+    msgs = [
+        SystemMessage(content=prompts.system_prompt(env, project_ctx)),
+        *history[-12:],
+        SystemMessage(content="现在用一段自然口语回答用户，不要输出 JSON，不要罗列工具名。"),
+    ]
+
+    text = ""
+    try:
+        async for chunk in llm.astream(msgs):
+            delta = getattr(chunk, "content", "") or ""
+            if not delta:
+                continue
+            text += delta
+            _emit({"t": "message_delta", "text": delta})
+    except Exception as exc:
+        if not text:
+            return {"reply": fallback or f"我这边调用模型失败了：{exc}"}
+
+    return {"reply": text.strip() or fallback or "我在。", "streamed": True}
 
 
 async def node_lookup(state: AgentState) -> dict:

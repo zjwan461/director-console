@@ -28,6 +28,7 @@ export default function AgentPanel({ projectId, onOpenProject }: {
   const [uploading, setUploading] = useState(false)
   const fileRef = useRef<HTMLInputElement | null>(null)
   const [busy, setBusy] = useState(false)
+  const [streamText, setStreamText] = useState('')
   const [error, setError] = useState('')
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const [confirmDraft, setConfirmDraft] = useState<{ prompt: string; aspect: string } | null>(null)
@@ -67,6 +68,7 @@ export default function AgentPanel({ projectId, onOpenProject }: {
     let cancelled = false
     setMessages([])
     setSteps([])
+    setStreamText('')
     setArtifacts([])
     setRun(null)
     api.agentMessages(threadId).then((res) => {
@@ -117,6 +119,8 @@ export default function AgentPanel({ projectId, onOpenProject }: {
       setRun((prev) => prev ? { ...prev, status: 'waiting_confirm', pending: event as unknown as Record<string, unknown> } : prev)
       setConfirmDraft({ prompt: String(params.prompt || ''), aspect: String(params.aspect || '9:16') })
       api.agentThread(threadId).then((res) => setRun((res.runs || [])[0] || null)).catch(() => undefined)
+    } else if (event.t === 'message_delta') {
+      setStreamText((prev) => prev + String(event.text || ''))
     } else if (event.t === 'message') {
       setMessages((prev) => {
         if (prev.some((m) => m.id === event.message_id)) return prev
@@ -131,6 +135,7 @@ export default function AgentPanel({ projectId, onOpenProject }: {
         }]
       })
       setBusy(false)
+      setStreamText('')
     } else if (event.t === 'artifact') {
       api.agentThread(threadId).then((res) => setArtifacts(res.artifacts || [])).catch(() => undefined)
       setArtifacts((prev) => [{
@@ -143,6 +148,7 @@ export default function AgentPanel({ projectId, onOpenProject }: {
       }, ...prev])
     } else if (event.t === 'run_end') {
       setBusy(false)
+      setStreamText('')
       if (event.status === 'waiting_confirm') setBusy(false)
       setRun((prev) => prev ? { ...prev, status: (event.status as AgentRun['status']) || 'done' } : prev)
       // 用服务端记录覆盖本地乐观消息，避免重复
@@ -157,6 +163,7 @@ export default function AgentPanel({ projectId, onOpenProject }: {
     setError('')
     setText('')
     setSteps([])
+    setStreamText('')
     try {
       const res = await api.agentSend(threadId, value, attachments.map((a) => a.id))
       setRun({ id: res.run_id, thread_id: threadId, status: 'running', node: '', pending: {}, error: '', steps: 0, started_at: Date.now() / 1000 })
@@ -310,6 +317,15 @@ export default function AgentPanel({ projectId, onOpenProject }: {
               })}
             </div>
           ))}
+
+          {streamText && (
+            <div className="agent-msg assistant">
+              <div className="agent-bubble">
+                {streamText}
+                <span className="agent-caret" />
+              </div>
+            </div>
+          )}
 
           {steps.length > 0 && (
             <div className="agent-trace">
