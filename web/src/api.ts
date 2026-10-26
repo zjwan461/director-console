@@ -202,14 +202,27 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     }),
-  tasks: (limit = 40, activeOnly = false) =>
-    request<{
+  tasks: (params: {
+    kind?: string; status?: string; limit?: number; offset?: number; activeOnly?: boolean
+  } = {}) => {
+    const qs = new URLSearchParams()
+    if (params.kind) qs.set('kind', params.kind)
+    if (params.status) qs.set('status', params.status)
+    qs.set('limit', String(params.limit ?? 20))
+    qs.set('offset', String(params.offset ?? 0))
+    if (params.activeOnly) qs.set('active_only', 'true')
+    return request<{
       items: Array<{
         id: string; kind: string; title: string; status: string; progress: number
-        message: string; error: string; created_at: number; project_id: string; cancelable: boolean
+        message: string; error: string; created_at: number; project_id: string
+        shot_id: string; thread_id?: string
+        outputs: Array<{ kind: string; url: string }>
+        cancelable: boolean; retryable: boolean
       }>
-      total: number; active: number
-    }>(`/api/tasks?limit=${limit}&active_only=${activeOnly ? 'true' : 'false'}`),
+      total: number; active: number; counts: Record<string, number>
+      limit: number; offset: number
+    }>(`/api/tasks?${qs.toString()}`)
+  },
   newCounts: (jobsSince: number, rendersSince: number) =>
     request<{ jobs: number; renders: number }>(
       `/api/activity/new-counts?jobs_since=${jobsSince}&renders_since=${rendersSince}`),

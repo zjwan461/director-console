@@ -1226,3 +1226,34 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
 .task-status { color: #8b97ae; }
 .task-msg { color: #6f7b92; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .task-id { color: #4f5a6e; font-family: ui-monospace, monospace; font-size: 10.5px; }
+
+
+/* 任务中心表格 */
+.task-filters { gap: 8px; margin: 14px 0 10px; flex-wrap: wrap; align-items: center; }
+.chip-count { margin-left: 5px; font-size: 10.5px; opacity: .65; }
+.task-table { display: flex; flex-direction: column; gap: 6px; }
+.task-item { border: 1px solid var(--line); border-radius: 9px; background: #12161f; padding: 8px 10px; }
+.task-item.failed, .task-item.interrupted { border-color: #5a2a2e; background: #1a1214; }
+.task-item.running, .task-item.rendering, .task-item.waiting_confirm { border-color: #2c3a63; }
+.task-row {
+  display: grid;
+  grid-template-columns: 60px minmax(110px, 1.3fr) 70px minmax(120px, 1.6fr) 76px auto;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+}
+.task-kind { padding: 1px 6px; border-radius: 4px; background: #1b2233; color: #93a0b8;
+  font-size: 11px; text-align: center; }
+.task-kind.agent { background: #232a4a; color: #a9b6f0; }
+.task-kind.ai_edit { background: #1f2f2a; color: #9fd3b8; }
+.task-kind.render { background: #2a2233; color: #c9a9e8; }
+.task-title { font-weight: 600; color: #dfe6f3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.task-status { color: #8b97ae; }
+.task-msg { color: #6f7b92; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.task-time { color: #4f5a6e; font-size: 11px; }
+.task-actions { display: flex; gap: 6px; justify-content: flex-end; }
+.task-actions button { height: 22px; padding: 0 8px; font-size: 10.5px; }
+.task-item .bar { margin-top: 6px; }
+.task-outputs { margin-top: 8px; padding-top: 8px; border-top: 1px dashed #232838; }
+.task-pager { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 14px; }
+.task-pager button { height: 28px; padding: 0 14px; font-size: 12px; }

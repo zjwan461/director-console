@@ -3,7 +3,6 @@ import { api } from './api'
 import type { Job, ServiceStatus } from './types'
 import ServicePanel from './components/ServicePanel'
 import StudioPanel from './components/StudioPanel'
-import JobsPanel from './components/JobsPanel'
 import TaskCenter from './components/TaskCenter'
 import ProjectsPanel from './components/ProjectsPanel'
 import AssetsPanel from './components/AssetsPanel'
@@ -49,10 +48,19 @@ function writeSeen(key: BadgeKey, at: number) {
 export default function App() {
   const [tab, setTabState] = useState<Tab>(initialTab)
   const [status, setStatus] = useState<ServiceStatus | null>(null)
-  const [jobsRefresh, setJobsRefresh] = useState(0)
   const [toasts, setToasts] = useState<Toast[]>([])
   const known = useRef<Map<string, string> | null>(null)
   const [badges, setBadges] = useState<{ jobs: number; renders: number }>({ jobs: 0, renders: 0 })
+
+  const navigate = (next: Tab, params?: Record<string, string>) => {
+    const url = new URL(window.location.href)
+    url.searchParams.set('tab', next)
+    for (const [key, value] of Object.entries(params || {})) {
+      if (value) url.searchParams.set(key, value)
+    }
+    window.history.replaceState({}, '', url)
+    setTabState(next)
+  }
 
   const setTab = (next: Tab) => {
     setTabState(next)
@@ -73,16 +81,15 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    let stopped = false
     const tick = async () => {
       try {
         const res = await api.newCounts(readSeen('jobs'), readSeen('renders'))
-        if (!stopped) setBadges(res)
+        setBadges(res)
       } catch { /* 忽略网络抖动 */ }
     }
     void tick()
     const timer = window.setInterval(tick, 5000)
-    return () => { stopped = true; window.clearInterval(timer) }
+    return () => { window.clearInterval(timer) }
   }, [])
 
   // 进入任务/成片页即视为已读
@@ -115,7 +122,6 @@ export default function App() {
 
   // 全局轮询：任务 / 成片 从“进行中”变成“成功/失败”时右上角弹提示
   useEffect(() => {
-    let stopped = false
     const tick = async () => {
       try {
         const [jobRes, renderRes] = await Promise.all([
@@ -153,14 +159,13 @@ export default function App() {
           }
         }
         known.current = current
-        if (!stopped) setJobsRefresh((v) => v + 0)
       } catch {
         // 网络抖动忽略
       }
     }
     void tick()
     const timer = window.setInterval(tick, 4000)
-    return () => { stopped = true; window.clearInterval(timer) }
+    return () => { window.clearInterval(timer) }
   }, [pushToast])
 
   useEffect(() => {
@@ -178,7 +183,6 @@ export default function App() {
   }, [pushToast])
 
   const onJobCreated = (_job: Job) => {
-    setJobsRefresh((v) => v + 1)
   }
 
   const ready = Boolean(status?.running)
@@ -251,12 +255,7 @@ export default function App() {
             onGoJobs={() => setTab('jobs')}
           />
         )}
-        {tab === 'jobs' && (
-          <>
-            <TaskCenter />
-            <JobsPanel refreshKey={jobsRefresh} />
-          </>
-        )}
+        {tab === 'jobs' && <TaskCenter onNavigate={navigate} />}
         {tab === 'projects' && (
           <ProjectsPanel
             onEdit={(projectId) => {
