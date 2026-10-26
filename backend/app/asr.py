@@ -8,6 +8,7 @@ import httpx
 
 from . import ffmpeg
 from .config import settings
+from .netutil import proxy_for
 
 
 def config() -> dict:
@@ -61,8 +62,9 @@ async def transcribe(path: Path) -> str:
     data_uri = f"data:audio/{suffix};base64," + base64.b64encode(source.read_bytes()).decode()
 
     kwargs: dict = {"timeout": 180, "trust_env": False}
-    if cfg["proxy"]:
-        kwargs["proxy"] = cfg["proxy"]
+    use_proxy = proxy_for(cfg.get("base_url", ""), cfg.get("proxy", ""))
+    if use_proxy:
+        kwargs["proxy"] = use_proxy
 
     url = host + "/api/v1/services/aigc/multimodal-generation/generation"
     payload = {

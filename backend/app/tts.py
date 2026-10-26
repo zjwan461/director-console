@@ -10,6 +10,7 @@ import httpx
 
 from . import ffmpeg
 from .config import settings
+from .netutil import proxy_for
 
 DEFAULT_FALLBACK = {
     "provider": "aliyun-bailian",
@@ -154,8 +155,9 @@ async def synthesize(text: str, voice: str | None = None, use_cache: bool = True
                "input": {"text": text, "voice": voice, "format": fmt, "sample_rate": rate}}
     proxy = cfg["proxy"].strip()
     kwargs: dict = {"timeout": 120, "trust_env": False}
-    if proxy:
-        kwargs["proxy"] = proxy
+    use_proxy = proxy_for(cfg["base_url"], proxy)
+    if use_proxy:
+        kwargs["proxy"] = use_proxy
     async with httpx.AsyncClient(**kwargs) as client:
         try:
             resp = await client.post(url, json=payload, headers={"Authorization": f"Bearer {key}"})

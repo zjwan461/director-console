@@ -23,6 +23,7 @@ from . import ai_script, asr, ffmpeg, tts as tts_module
 from .render import runner as render_runner
 from .comfy import ComfyError, make_client, probe
 from .config import settings
+from .netutil import proxy_for, proxy_note
 from .jobs import runner
 from .launcher import LaunchError, get_launcher
 from .presets import default_values, get_card, is_video_card, load_cards, public_card, validate
@@ -1496,15 +1497,22 @@ async def test_ai_settings(body: AISettings) -> dict:
     import time
 
     started = time.time()
+    # 内网地址（192.168 / 10. / 172.16-31 / localhost）不能走代理，否则代理会返回 504
+    use_proxy = proxy_for(base, proxy)
+    note = proxy_note(base, proxy)
     try:
-        async with httpx.AsyncClient(timeout=20, trust_env=False, proxy=proxy or None) as client:
+        async with httpx.AsyncClient(timeout=20, trust_env=False, proxy=use_proxy) as client:
             resp = await client.get(f"{base}/models", headers={"Authorization": f"Bearer {key}"})
         latency = int((time.time() - started) * 1000)
         if resp.status_code >= 400:
-            return {"ok": False, "latency_ms": latency, "error": f"HTTP {resp.status_code}: {resp.text[:200]}"}
-        return {"ok": True, "latency_ms": latency, "model_count": len((resp.json() or {}).get("data") or [])}
+            text = resp.text[:200].replace("\n", " ")
+            return {"ok": False, "latency_ms": latency, "proxy_used": bool(use_proxy),
+                    "error": f"HTTP {resp.status_code}{note}: {text}"}
+        return {"ok": True, "latency_ms": latency, "proxy_used": bool(use_proxy),
+                "model_count": len((resp.json() or {}).get("data") or [])}
     except Exception as exc:
-        return {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
+        return {"ok": False, "proxy_used": bool(use_proxy),
+                "error": f"{type(exc).__name__}{note}: {exc}"}
 
 
 @app.get("/api/ffmpeg/status")

@@ -8,6 +8,7 @@ from pathlib import Path
 import httpx
 
 from .config import settings
+from .netutil import proxy_for
 
 PROMPT_KEYS = {"subtitle": "subtitleGen", "narration": "narrationGen"}
 
@@ -116,8 +117,9 @@ async def narration_matches(narration: str, description: str) -> bool:
     if not (api_key and base and description):
         return True
     kwargs: dict = {"timeout": httpx.Timeout(connect=10, read=60, write=20, pool=20), "trust_env": False}
-    if proxy:
-        kwargs["proxy"] = proxy
+    use_proxy = proxy_for(base, proxy)
+    if use_proxy:
+        kwargs["proxy"] = use_proxy
     prompt = (
         "判断下面两段内容是否在描述同一个画面/场景。"
         "只回答「是」或「否」，不要解释。\n\n"
@@ -242,8 +244,9 @@ async def generate(kind: str, shot: dict, project: dict, neighbors: dict,
     }
 
     kwargs: dict = {"timeout": httpx.Timeout(connect=15, read=120, write=30, pool=30), "trust_env": False}
-    if proxy:
-        kwargs["proxy"] = proxy
+    use_proxy = proxy_for(base, proxy)
+    if use_proxy:
+        kwargs["proxy"] = use_proxy
     async with httpx.AsyncClient(**kwargs) as client:
         resp = await client.post(
             base + "/chat/completions",
@@ -360,8 +363,9 @@ async def build_outline(project: dict, shots: list[dict]) -> str:
         "stream": False,
     }
     kwargs: dict = {"timeout": httpx.Timeout(connect=10, read=90, write=20, pool=20), "trust_env": False}
-    if proxy:
-        kwargs["proxy"] = proxy
+    use_proxy = proxy_for(base, proxy)
+    if use_proxy:
+        kwargs["proxy"] = use_proxy
     async with httpx.AsyncClient(**kwargs) as client:
         resp = await client.post(base + "/chat/completions",
                                  headers={"Authorization": "Bearer " + api_key}, json=payload)
@@ -498,8 +502,9 @@ async def title_for(project: dict, shots: list[dict], kind: str = "title",
         "stream": False,
     }
     kwargs: dict = {"timeout": httpx.Timeout(connect=10, read=60, write=20, pool=20), "trust_env": False}
-    if proxy:
-        kwargs["proxy"] = proxy
+    use_proxy = proxy_for(base, proxy)
+    if use_proxy:
+        kwargs["proxy"] = use_proxy
     async with httpx.AsyncClient(**kwargs) as client:
         resp = await client.post(base + "/chat/completions",
                                  headers={"Authorization": "Bearer " + api_key}, json=payload)
