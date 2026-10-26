@@ -202,6 +202,14 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     }),
+  tasks: (limit = 40, activeOnly = false) =>
+    request<{
+      items: Array<{
+        id: string; kind: string; title: string; status: string; progress: number
+        message: string; error: string; created_at: number; project_id: string; cancelable: boolean
+      }>
+      total: number; active: number
+    }>(`/api/tasks?limit=${limit}&active_only=${activeOnly ? 'true' : 'false'}`),
   newCounts: (jobsSince: number, rendersSince: number) =>
     request<{ jobs: number; renders: number }>(
       `/api/activity/new-counts?jobs_since=${jobsSince}&renders_since=${rendersSince}`),

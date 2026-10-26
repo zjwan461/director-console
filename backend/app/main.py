@@ -30,6 +30,7 @@ from .presets import default_values, get_card, is_video_card, load_cards, public
 from .prompt_stream import router as prompt_stream_router
 from .agent.api import router as agent_router
 from .ai_edit_api import router as ai_edit_router
+from .task_center import router as tasks_router
 from .model_check import check_models
 from .model_inventory import fetch_inventory, load_snapshot, save_snapshot
 from .model_sources import load_sources, merge_sources, upsert_source
@@ -45,6 +46,7 @@ app = FastAPI(title="ComfyUI 导演台", version="0.1.0")
 app.include_router(prompt_stream_router)
 app.include_router(agent_router)
 app.include_router(ai_edit_router)
+app.include_router(tasks_router)
 
 app.add_middleware(
     CORSMiddleware,

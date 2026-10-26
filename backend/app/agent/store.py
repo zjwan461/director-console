@@ -231,6 +231,20 @@ def update_run(run_id: str, **fields) -> dict | None:
     return get_run(run_id)
 
 
+def list_runs(thread_id: str | None = None, limit: int = 40) -> list[dict]:
+    """全部运行（可按会话过滤），任务中心用。"""
+    sql = "SELECT * FROM agent_runs"
+    params: list = []
+    if thread_id:
+        sql += " WHERE thread_id=?"
+        params.append(thread_id)
+    sql += " ORDER BY started_at DESC LIMIT ?"
+    params.append(limit)
+    with _lock, connect() as conn:
+        rows = conn.execute(sql, params).fetchall()
+    return [_run_row(r) for r in rows if r is not None]
+
+
 def list_active_runs(thread_id: str) -> list[dict]:
     with _lock, connect() as conn:
         rows = conn.execute(

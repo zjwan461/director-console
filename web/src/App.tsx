@@ -4,6 +4,7 @@ import type { Job, ServiceStatus } from './types'
 import ServicePanel from './components/ServicePanel'
 import StudioPanel from './components/StudioPanel'
 import JobsPanel from './components/JobsPanel'
+import TaskCenter from './components/TaskCenter'
 import ProjectsPanel from './components/ProjectsPanel'
 import AssetsPanel from './components/AssetsPanel'
 import RendersPanel from './components/RendersPanel'
@@ -250,7 +251,12 @@ export default function App() {
             onGoJobs={() => setTab('jobs')}
           />
         )}
-        {tab === 'jobs' && <JobsPanel refreshKey={jobsRefresh} />}
+        {tab === 'jobs' && (
+          <>
+            <TaskCenter />
+            <JobsPanel refreshKey={jobsRefresh} />
+          </>
+        )}
         {tab === 'projects' && (
           <ProjectsPanel
             onEdit={(projectId) => {
