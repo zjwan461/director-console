@@ -69,6 +69,11 @@ async def start_run(thread: dict, text: str, attachments: list[dict] | None = No
     parts = [{"type": "image", "url": a["url"], "asset_id": a["id"], "name": a["path"].rsplit("/", 1)[-1]}
              for a in attachments if a.get("kind") == "image"]
     agent_store.add_message(thread_id, "user", text, parts)
+
+    # 首条消息顺手给会话起个名字，省得列表里一堆「新对话」
+    if thread.get("title") in ("", "新对话"):
+        title = text.strip().replace("\n", " ")[:16] or "新对话"
+        agent_store.update_thread(thread_id, title=title)
     bus.publish(thread_id, {"t": "run_start", "run_id": run["id"]})
     asyncio.create_task(_run(thread, run["id"], text, attachments))
     return run

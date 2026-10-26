@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { agentStream, api } from '../../api'
 import type { AgentArtifact, AgentEvent, AgentMessage, AgentRun, AgentThread, Project } from '../../types'
 
@@ -26,6 +26,8 @@ export default function AgentPanel({ projectId, onOpenProject }: {
   const [text, setText] = useState('')
   const [attachments, setAttachments] = useState<Array<{ id: string; url: string; name: string }>>([])
   const [uploading, setUploading] = useState(false)
+  const [renaming, setRenaming] = useState(false)
+  const [nameDraft, setNameDraft] = useState('')
   const fileRef = useRef<HTMLInputElement | null>(null)
   const [busy, setBusy] = useState(false)
   const [streamText, setStreamText] = useState('')
@@ -42,8 +44,6 @@ export default function AgentPanel({ projectId, onOpenProject }: {
     api.projects().then((res) => setProjects(res.items)).catch(() => undefined)
   }, [])
 
-  const currentProject = useMemo(
-    () => projects.find((p) => p.id === projectId) || null, [projects, projectId])
 
   // 切项目 → 拉会话（没有就建一个）
   useEffect(() => {
@@ -169,6 +169,11 @@ export default function AgentPanel({ projectId, onOpenProject }: {
     try {
       const res = await api.agentSend(threadId, value, attachments.map((a) => a.id))
       setRun({ id: res.run_id, thread_id: threadId, status: 'running', node: '', pending: {}, error: '', steps: 0, started_at: Date.now() / 1000 })
+      const current = threads.find((x) => x.id === threadId)
+      if (current && (current.title === '新对话' || !current.title)) {
+        const guess = value.replace(/\s+/g, ' ').slice(0, 16)
+        setThreads((prev) => prev.map((x) => (x.id === threadId ? { ...x, title: guess } : x)))
+      }
       setMessages((prev) => [...prev, {
         id: `local_${Date.now()}`, thread_id: threadId, role: 'user', content: value,
         parts: attachments.map((a) => ({ type: 'image', url: a.url, asset_id: a.id, name: a.name })),
@@ -239,6 +244,28 @@ export default function AgentPanel({ projectId, onOpenProject }: {
     }
   }
 
+  async function saveName() {
+    const title = nameDraft.trim()
+    setRenaming(false)
+    if (!title || !threadId) return
+    try {
+      const updated = await api.agentRenameThread(threadId, title)
+      setThreads((prev) => prev.map((x) => (x.id === updated.id ? { ...x, title: updated.title } : x)))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    }
+  }
+
+  function switchProject(nextId: string) {
+    if (!nextId || nextId === projectId) return
+    const url = new URL(window.location.href)
+    url.searchParams.set('project', nextId)
+    url.searchParams.set('tab', 'agent')
+    window.history.replaceState({}, '', url)
+    // 换项目 = 换会话空间，重新拉该项目的会话
+    onOpenProject(nextId)
+  }
+
   async function newThread() {
     if (!projectId) return
     const thread = await api.agentCreateThread(projectId, '新对话')
@@ -266,15 +293,41 @@ export default function AgentPanel({ projectId, onOpenProject }: {
     <div className="agent-page">
       <div className="agent-main">
         <header className="agent-head">
-          <div>
+          <div className="agent-head-title">
             <h1>导演助手</h1>
-            <p className="meta">{currentProject?.name || projectId} · 用聊天出图</p>
+            <div className="agent-project-chip">
+              <span className="label">项目</span>
+              <select value={projectId} onChange={(e) => switchProject(e.target.value)}>
+                {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+              <span className="agent-bind-hint">一个会话只属于一个项目</span>
+            </div>
           </div>
           <div className="agent-head-actions">
-            <select value={threadId} onChange={(e) => setThreadId(e.target.value)}>
-              {threads.map((t) => <option key={t.id} value={t.id}>{t.title}</option>)}
-            </select>
-            <button className="ghost" onClick={() => void newThread()}>新对话</button>
+            {renaming ? (
+              <input
+                className="agent-rename"
+                autoFocus
+                value={nameDraft}
+                onChange={(e) => setNameDraft(e.target.value)}
+                onBlur={() => void saveName()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') void saveName()
+                  if (e.key === 'Escape') { setRenaming(false); setNameDraft('') }
+                }}
+              />
+            ) : (
+              <select value={threadId} onChange={(e) => setThreadId(e.target.value)}>
+                {threads.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
+              </select>
+            )}
+            <button className="ghost" disabled={!threadId}
+                    onClick={() => {
+                      const current = threads.find((x) => x.id === threadId)
+                      setNameDraft(current?.title || '')
+                      setRenaming(true)
+                    }}>改名</button>
+            <button className="ghost" onClick={() => void newThread()}>新会话</button>
           </div>
         </header>
 

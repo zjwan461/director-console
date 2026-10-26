@@ -233,6 +233,11 @@ export const api = {
   agentThread: (threadId: string) =>
     request<{ thread: AgentThread; project: { id: string; name: string }; runs: AgentRun[]; artifacts: AgentArtifact[] }>(
       `/api/agent/threads/${threadId}`),
+  agentRenameThread: (threadId: string, title: string) =>
+    request<AgentThread>(`/api/agent/threads/${threadId}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title }),
+    }),
   agentDeleteThread: (threadId: string) =>
     request<{ ok: boolean }>(`/api/agent/threads/${threadId}`, { method: 'DELETE' }),
   agentMessages: (threadId: string, afterSeq = 0) =>
