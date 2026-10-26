@@ -402,7 +402,11 @@ export default function AgentPanel({ projectId, onOpenProject }: {
                         ? (isVideo
                           ? <video src={url} controls playsInline className="agent-artifact-video" />
                           : <img src={url} alt="" />)
-                        : <div className="agent-artifact-empty">{isVideo ? '视频生成中…' : '生成中…'}</div>}
+                        : <div className={`agent-artifact-empty ${String(part.status) === 'failed' ? 'bad' : ''}`}>
+                            {String(part.status) === 'failed'
+                              ? (isVideo ? '视频生成失败' : '生成失败')
+                              : (isVideo ? '视频生成中…' : '生成中…')}
+                          </div>}
                       {url && <a href={url} download><button className="ghost tiny">下载</button></a>}
                     </div>
                   )

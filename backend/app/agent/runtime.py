@@ -276,12 +276,28 @@ def _remember_output(thread_id: str, job: dict, kind: str, url: str) -> None:
         "last_preset": job.get("preset_id", ""),
     }
     if kind == "image" and url:
-        try:
-            rel = url.split("/media/files/", 1)[-1]
-            asset = store.get_asset_by_path(rel) or store.add_asset(
-                "image", rel, meta={"origin": "agent", "job_id": job.get("id", "")})
-            if asset:
-                patch["last_asset_id"] = asset["id"]
-        except Exception:
-            pass
+        rel = _rel_from_url(url)
+        if rel:
+            try:
+                asset = store.get_asset_by_path(rel) or store.add_asset(
+                    "image", rel, meta={"origin": "agent", "job_id": job.get("id", "")})
+                if asset:
+                    patch["last_asset_id"] = asset["id"]
+            except Exception:
+                pass
     agent_store.set_context(thread_id, patch)
+
+
+def _rel_from_url(url: str) -> str:
+    """把 /media/xxx/yyy 转成相对 data 的路径：outputs/xxx、uploads/yyy、files 直接取余下部分。
+
+    之前用 split("/media/files/") 处理所有 URL，遇到 /media/outputs/... 会把整串当路径，
+    结果素材路径变成 "/media/outputs/..."，后续读文件就落到 D:\media\... 上。
+    """
+    url = (url or "").strip()
+    for prefix, root in (("/media/files/", ""), ("/media/outputs/", "outputs/"),
+                         ("/media/uploads/", "uploads/")):
+        if url.startswith(prefix):
+            rest = url[len(prefix):]
+            return f"{root}{rest}" if root else rest
+    return ""

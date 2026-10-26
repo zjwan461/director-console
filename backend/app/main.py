@@ -523,6 +523,31 @@ async def assets(
     return {"items": items, "total": total, "limit": limit, "offset": offset}
 
 
+@app.post("/api/assets/repair-paths")
+async def repair_asset_paths() -> dict:
+    """把历史遗留的绝对/错误素材路径修回相对路径，修不了就删记录。"""
+    fixed, removed = 0, 0
+    for asset in store.list_assets(None, 5000):
+        path = str(asset.get("path") or "")
+        if not path.startswith(("/", "\\")):
+            continue
+        rel = ""
+        for prefix, root in (("/media/files/", ""), ("/media/outputs/", "outputs/"),
+                             ("/media/uploads/", "uploads/")):
+            if path.startswith(prefix):
+                rel = root + path[len(prefix):]
+                break
+        if rel and (DATA / rel).exists():
+            with store.connect() as conn:
+                conn.execute("UPDATE assets SET path=? WHERE id=?", (rel, asset["id"]))
+            fixed += 1
+        else:
+            with store.connect() as conn:
+                conn.execute("DELETE FROM assets WHERE id=?", (asset["id"],))
+            removed += 1
+    return {"ok": True, "fixed": fixed, "removed": removed}
+
+
 @app.get("/api/assets/{asset_id}/poster")
 async def asset_poster(asset_id: str):
     """视频首帧封面：首次访问时用 ffmpeg 抽帧并缓存。"""
