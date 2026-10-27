@@ -176,6 +176,9 @@ def _fast_intent(state: AgentState) -> dict | None:
             "subtitle" if "字幕" in text and "旁白" not in text else "both")
         return {"intent": "polish", "args": {"kinds": kinds, "tts": "配音" in text or kinds != "subtitle"},
                 "reply": "好，我来补文案和配音。"}
+    if re.search(r"(音频|录音|这段声音|这首歌)", text) and re.search(r"(背景音乐|配乐|当音乐|做音乐|bgm)", text, re.IGNORECASE):
+        return {"intent": "bgm", "args": {"mode": "asset", "query": text},
+                "reply": "好，把这段音频当背景音乐。"}
     if BGM_RE.search(text):
         mode = "off" if ("关掉" in text or "去掉" in text) else (
             "asset" if ("这首" in text or "那首" in text or "用" in text) else "auto")
@@ -666,18 +669,29 @@ async def node_prepare(state: AgentState) -> dict:
                    "title": "挑选参考图", "status": "done",
                    "detail": {"asset": items[0].get("path"), "matched": bool(found.get("items"))}})
 
-        # 音频：消息里带的附件优先，其次 args 里指定的
-        audio_id = str(args.get("audio_asset_id") or "").strip()
-        if not audio_id:
-            for att in state.get("attachments") or []:
-                if att.get("kind") == "audio":
-                    audio_id = str(att.get("id") or "")
-                    break
+        # 音频：附件优先（可多段），其次 args 里指定的
+        audio_ids = [str(att.get("id") or "") for att in (state.get("attachments") or [])
+                     if att.get("kind") == "audio"]
+        if args.get("audio_asset_id"):
+            audio_ids = [str(args["audio_asset_id"])]
+        elif args.get("audio_asset_ids"):
+            audio_ids = [str(x) for x in args["audio_asset_ids"]]
+        audio_ids = [x for x in audio_ids if x][:3]
+        audio_id = audio_ids[0] if audio_ids else ""
+
+        # 对口型：默认按音频时长出片，避免画面比声音长/短
+        seconds = float(args["duration"]) if args.get("duration") else None
+        if mode == "lipsync" and audio_id and not seconds:
+            audio_len = await tools.audio_seconds(audio_id)
+            if audio_len > 0:
+                seconds = audio_len
+                _emit({"t": "step", "id": "audio_len", "node": "prepare",
+                       "title": f"按音频长度出片 {audio_len:.1f}s", "status": "done",
+                       "detail": {"audio_asset_id": audio_id}})
 
         preview = tools.video_inputs_preview(
-            prompt, mode, str(args.get("aspect") or ""),
-            float(args["duration"]) if args.get("duration") else None, asset_id,
-            None, audio_id)
+            prompt, mode, str(args.get("aspect") or ""), seconds, asset_id,
+            None, audio_id, audio_ids)
         _emit({"t": "tool_call", "id": "prep", "name": "make_video.preview",
                "args": {"prompt": prompt, "mode": mode,
                         "duration": preview.get("params", {}).get("duration"),
@@ -901,13 +915,23 @@ async def node_prepare_bgm(state: AgentState) -> dict:
     project_id = state.get("project_id", "")
     mode = str(args.get("mode") or "auto")
     query = str(args.get("query") or "")
-    preview = tools.bgm_preview(project_id, mode, query)
+
+    # 消息里带了音频，且用户说「当背景音乐」→ 直接用这条
+    asset_id = str(args.get("asset_id") or "")
+    if not asset_id and mode == "asset":
+        for att in state.get("attachments") or []:
+            if att.get("kind") == "audio":
+                asset_id = str(att.get("id") or "")
+                break
+
+    preview = tools.bgm_preview(project_id, mode, query, asset_id)
     _emit({"t": "tool_call", "id": "prep_bgm", "name": "set_bgm.preview",
            "args": {"mode": mode, "query": query}})
     if not preview.get("ok"):
         _emit({"t": "tool_result", "id": "prep_bgm", "ok": False, "data": preview})
         return {"intent": "chat", "reply": "；".join(preview.get("errors") or ["配乐不可用"])}
     _emit({"t": "tool_result", "id": "prep_bgm", "ok": True, "data": preview})
+    preview = {**preview, "asset_id": asset_id}
     return {"plan": {"kind": "bgm", "params": preview}}
 
 
@@ -1173,7 +1197,8 @@ async def node_dispatch(state: AgentState) -> dict:
                "args": {"mode": params.get("mode")}})
         raw = await tools.set_bgm(state.get("project_id", ""),
                                   str(params.get("mode") or "auto"),
-                                  str(params.get("query") or ""))
+                                  str(params.get("query") or ""),
+                                  str(params.get("asset_id") or ""))
         data = json.loads(raw)
         _emit({"t": "tool_result", "id": "gen", "ok": bool(data.get("ok")), "data": data})
         if not data.get("ok"):
@@ -1223,7 +1248,8 @@ async def node_dispatch(state: AgentState) -> dict:
             float(params["duration"]) if params.get("duration") else None,
             str(params.get("image_asset_id") or ""),
             float(params["megapixels"]) if params.get("megapixels") else None,
-            str(params.get("audio_asset_id") or ""))
+            str(params.get("audio_asset_id") or ""),
+            [str(x) for x in (params.get("audio_asset_ids") or [])])
     else:
         _emit({"t": "tool_call", "id": "gen", "name": "make_image",
                "args": {"prompt": params.get("prompt"), "aspect": params.get("aspect")}})

@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import json
+import pathlib
 from typing import Any
 
 from .. import store
@@ -198,11 +199,38 @@ def _card_default(card: dict, key: str, fallback=None):
     return field.get("default", fallback)
 
 
+async def audio_seconds(asset_id: str) -> float:
+    """读音频素材时长（有缓存用缓存，没有就 ffprobe 一次）。"""
+    if not asset_id:
+        return 0.0
+    asset = store.get_asset(asset_id)
+    if not asset:
+        return 0.0
+    cached = (asset.get("meta") or {}).get("duration")
+    if cached:
+        try:
+            return float(cached)
+        except (TypeError, ValueError):
+            pass
+    from .. import ffmpeg
+    from ..config import settings
+
+    target = pathlib.Path(settings.paths["data"]) / str(asset.get("path") or "")
+    if not target.exists():
+        return 0.0
+    try:
+        seconds = float(await ffmpeg.duration_of(target))
+    except Exception:
+        return 0.0
+    return round(seconds, 2)
+
+
 def video_inputs_preview(prompt: str, mode: str = "t2v", aspect: str = "16:9",
                          duration: float | None = None,
                          image_asset_id: str = "",
                          megapixels: float | None = None,
-                         audio_asset_id: str = "") -> dict:
+                         audio_asset_id: str = "",
+                         audio_asset_ids: list[str] | None = None) -> dict:
     """给确认卡用：算视频参数，不提交。"""
     card_id, image_slot = VIDEO_CARDS.get(mode, VIDEO_CARDS["t2v"])
     card = get_card(card_id)
@@ -225,14 +253,16 @@ def video_inputs_preview(prompt: str, mode: str = "t2v", aspect: str = "16:9",
     if image_slot:
         values[image_slot] = image_asset_id or ""
 
-    # 音频参考：卡片上有 audio 类字段就填第一个槽（对口型的 audio / 参考音频 audio_1）
-    audio_slot = ""
-    for field in card.get("fields") or []:
-        if str(field.get("type")) == "audio" and field.get("key"):
-            audio_slot = str(field["key"])
-            break
-    if audio_slot:
-        values[audio_slot] = audio_asset_id or ""
+    # 音频参考：卡片上的 audio 类字段依次填充（对口型 audio，九图 audio_1/2/3）
+    audio_slots = [str(f.get("key")) for f in (card.get("fields") or [])
+                   if str(f.get("type")) == "audio" and f.get("key")]
+    supplied = [aid for aid in ((audio_asset_ids or []) or ([audio_asset_id] if audio_asset_id else []))
+                if aid]
+    for slot, aid in zip(audio_slots, supplied):
+        values[slot] = aid
+    for slot in audio_slots[len(supplied):]:
+        values.setdefault(slot, "")
+    audio_slot = audio_slots[0] if audio_slots else ""
 
     errors = validate(card, values)
     width, height = size_from(aspect, mp) if aspect else (0, 0)
@@ -247,7 +277,8 @@ def video_inputs_preview(prompt: str, mode: str = "t2v", aspect: str = "16:9",
             "width": width,
             "height": height,
             "image_asset_id": image_asset_id,
-            "audio_asset_id": audio_asset_id,
+            "audio_asset_id": supplied[0] if supplied else "",
+            "audio_asset_ids": supplied,
             "audio_slot": audio_slot,
         },
         "megapixels_options": size_field.get("megapixels_options") or [0.4, 0.8],
@@ -259,9 +290,10 @@ def video_inputs_preview(prompt: str, mode: str = "t2v", aspect: str = "16:9",
 async def make_video(prompt: str, mode: str = "t2v", aspect: str = "16:9",
                      duration: float | None = None, image_asset_id: str = "",
                      megapixels: float | None = None,
-                     audio_asset_id: str = "") -> str:
+                     audio_asset_id: str = "",
+                     audio_asset_ids: list[str] | None = None) -> str:
     preview = video_inputs_preview(prompt, mode, aspect, duration, image_asset_id,
-                                   megapixels, audio_asset_id)
+                                   megapixels, audio_asset_id, audio_asset_ids)
     if preview["errors"]:
         return _dumps({"ok": False, "error": "invalid_params",
                        "hint": "；".join(preview["errors"])})
@@ -433,14 +465,18 @@ async def polish_film(project_id: str, kinds: str = "both", tts: bool = True,
                    "preview": polish_preview(project_id, kinds, tts, titles)})
 
 
-def bgm_preview(project_id: str, mode: str = "auto", query: str = "") -> dict:
+def bgm_preview(project_id: str, mode: str = "auto", query: str = "",
+                asset_id: str = "") -> dict:
     """配乐预演：auto=按段落自动挑；asset=按关键词找一首；off=关闭。"""
     music = [a for a in store.list_assets("audio", 200)
              if str((a.get("meta") or {}).get("purpose") or "") == "music"
              or "/music/" in str(a.get("path") or "")]
     picked = None
     if mode == "asset":
-        if query:
+        if asset_id:
+            # 用户上传的音频 / 手动指定的那条素材，优先于关键词匹配
+            picked = store.get_asset(asset_id)
+        if picked is None and query:
             picked = next((a for a in music
                            if query.lower() in str(a.get("path", "")).lower()), None)
         picked = picked or (music[0] if music else None)
@@ -456,7 +492,8 @@ def bgm_preview(project_id: str, mode: str = "auto", query: str = "") -> dict:
     }
 
 
-async def set_bgm(project_id: str, mode: str = "auto", query: str = "") -> str:
+async def set_bgm(project_id: str, mode: str = "auto", query: str = "",
+                  asset_id: str = "") -> str:
     """写入 bgm_tracks：auto 走按段落配乐，asset 选一首，off 清空。"""
     state = _edit_state(project_id)
     options = dict(state.get("options") or {})
@@ -467,7 +504,7 @@ async def set_bgm(project_id: str, mode: str = "auto", query: str = "") -> str:
         return _dumps({"ok": True, "mode": "off", "tracks": 0})
 
     if mode == "asset":
-        preview = bgm_preview(project_id, "asset", query)
+        preview = bgm_preview(project_id, "asset", query, asset_id)
         if not preview.get("ok") or not preview.get("picked"):
             return _dumps({"ok": False, "error": "no_music",
                            "hint": "；".join(preview.get("errors") or ["没有可用音乐"])})
