@@ -665,6 +665,11 @@ export default function AgentPanel({ projectId, onOpenProject }: {
                 )
               })()}
 
+              {actionOf(pending) === 'video'
+                && Boolean((pending.params as Record<string, unknown> | undefined)?.ai_optimized) && (
+                <p className="agent-confirm-hint">提示词已由 AI 优化，可直接执行，也可以再改。</p>
+              )}
+
               {actionOf(pending) === 'video' && Boolean((pending.params as Record<string, unknown> | undefined)?.audio_asset_id) && (
                 <p className="agent-confirm-hint">已带上音频参考（对口型／配音），确认后会一起提交。</p>
               )}

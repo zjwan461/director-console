@@ -308,8 +308,9 @@ def _fast_intent(state: AgentState) -> dict | None:
             [a for a in (state.get("attachments") or []) if a.get("kind") == "image"])
         if re.search(r"(参考|参考图|照这张|按这张)", text) and has_ref:
             mode = "r2v"
-        elif has_ref and re.search(
-                r"(首帧|这张图|这个图|用它|把这张|让这张|让它|给它|动起来|动一下|动一动)", text):
+        elif re.search(r"(让它|给它|动起来|动一下|动一动)", text):
+            mode = "i2v"
+        elif has_ref and re.search(r"(首帧|这张图|这个图|用它|把这张|让这张)", text):
             mode = "i2v"
         else:
             mode = "t2v"
@@ -940,6 +941,13 @@ async def node_prepare(state: AgentState) -> dict:
             ctx_now = agent_store.get_context(state.get("thread_id", ""))
             if str(ctx_now.get("last_kind") or "") == "image":
                 asset_id = str(ctx_now.get("last_asset_id") or "")
+            if not asset_id:
+                # 上下文没记住时，回退到会话里最近一张图片产物
+                for art in agent_store.list_artifacts(state.get("thread_id", ""), limit=12):
+                    if art.get("kind") == "image" and art.get("url"):
+                        asset_id = tools.asset_from_url(str(art["url"]), str(art.get("ref_id") or ""))
+                        if asset_id:
+                            break
 
         # 没带图就去素材库找
         if mode in {"i2v", "r2v", "lipsync", "r2v9"} and not asset_id:
@@ -1000,6 +1008,21 @@ async def node_prepare(state: AgentState) -> dict:
         if not prompt or not prompt.strip():
             return {"intent": "chat", "reply": "能再说清楚一点画面内容吗？我好照着拍。"}
 
+        # 已经够具体就不动；否则让 AI 按卡片要求把提示词打磨一遍
+        optimized = False
+        if len(prompt) < 60 and not commandish:
+            try:
+                polished = await tools.optimize_prompt(
+                    str(state.get("text") or prompt), asset_id if mode in {"i2v", "r2v", "r2v9"} else "")
+                if polished and polished != prompt:
+                    _emit({"t": "step", "id": "optimize", "node": "prepare",
+                           "title": "AI 优化提示词", "status": "done",
+                           "detail": {"before": prompt[:60], "after": polished[:60]}})
+                    prompt = polished
+                    optimized = True
+            except Exception:
+                pass
+
         # 对口型：默认按音频时长出片，避免画面比声音长/短
         seconds = float(args["duration"]) if args.get("duration") else None
         if mode == "lipsync" and audio_id and not seconds:
@@ -1013,6 +1036,7 @@ async def node_prepare(state: AgentState) -> dict:
         preview = tools.video_inputs_preview(
             prompt, mode, str(args.get("aspect") or ""), seconds, asset_id,
             None, audio_id, audio_ids)
+        preview["params"]["ai_optimized"] = optimized
         _emit({"t": "tool_call", "id": "prep", "name": "make_video.preview",
                "args": {"prompt": prompt, "mode": mode,
                         "duration": preview.get("params", {}).get("duration"),

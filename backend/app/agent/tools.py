@@ -832,3 +832,48 @@ async def expand_brief(topic: str) -> str:
     if len(text) < 12:
         return ""
     return text[:200]
+
+
+OPTIMIZE_INSTRUCTION = """把用户的诉求写成一条可直接用于视频生成的提示词。
+
+用户说：{request}
+{reference}
+
+要求：
+- 中文，40~70 字，一到两句
+- 包含：主体与动作、场景环境、光线氛围、景别或运镜
+- 不要出现「用户」「提示词」「视频」这些词，不要引号，不要解释
+- 如果有参考图，必须以图里的实际内容为主体
+- 只输出提示词本身"""
+
+
+async def optimize_prompt(request: str, asset_id: str = "") -> str:
+    """AI 优化提示词：有参考图就结合图，没有就纯文本扩写。"""
+    from .. import llm
+
+    request = (request or "").strip()
+    if not request:
+        return ""
+    reference = ""
+    images: list[tuple[str, str]] = []
+    if asset_id:
+        mime, b64 = await image_b64(asset_id)
+        if b64:
+            images.append((mime, b64))
+            reference = "（附带一张参考图，请以图中的主体、服装、场景为准）"
+
+    instruction = OPTIMIZE_INSTRUCTION.format(request=request[:120], reference=reference)
+    for attempt in range(2):
+        try:
+            if images:
+                text = await llm.chat_vision(images, instruction, max_tokens=700)
+            else:
+                result = await llm.chat_once([{"role": "user", "content": instruction}],
+                                             temperature=0.6, max_tokens=700)
+                text = str(result.get("content") or "")
+        except Exception:
+            continue
+        text = text.strip().strip('"“”').strip()
+        if len(text) >= 12:
+            return text[:220]
+    return ""

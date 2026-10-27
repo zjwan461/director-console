@@ -38,6 +38,7 @@ python test_motion_prompt.py # 图生视频的运镜是否看图生成 + 确认�
 python test_vision.py        # 看图写运镜（i2v/r2v）+ 视觉修订（模糊评价/改画幅）
 python test_topic.py         # 换话题后答「视频啊」：应按新题材生成
 python test_animate.py       # 上传图 + 「让它动起来」：走 i2v 并看图写运镜
+python test_optimize.py      # 视频提示词是否经 AI 优化（纯文本 / 带参考图）
 ```
 
 ## 覆盖范围
@@ -56,6 +57,7 @@ python test_animate.py       # 上传图 + 「让它动起来」：走 i2v 并�
 | `test_vision.py` | i2v/r2v 看图写运镜、模糊修订与改画幅走视觉 |
 | `test_topic.py` | 话题切换后按新题材出片、题材扩写成画面描述 |
 | `test_animate.py` | 「让它动起来」走图生视频、用的是刚上传的图 |
+| `test_optimize.py` | 视频提示词经 AI 优化，带图时结合图内容 |
 
 ## 约定
 
