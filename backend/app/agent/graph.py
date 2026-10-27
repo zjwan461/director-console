@@ -279,6 +279,32 @@ def _short_circuit(state: AgentState) -> dict | None:
 
 
 async def node_decide(state: AgentState) -> dict:
+    # 只发了文件、没写文字：直接确认收到并引导，不要让模型说「没收到图片」
+    text_only = str(state.get("text") or "").strip()
+    files = state.get("attachments") or []
+    if files and not text_only:
+        images = [a for a in files if a.get("kind") == "image"]
+        audios = [a for a in files if a.get("kind") == "audio"]
+        if images:
+            first = images[0]
+            asset_id = tools.asset_from_url(str(first.get("url") or ""), "")
+            if asset_id:
+                agent_store.set_context(state.get("thread_id", ""), {
+                    "last_asset_id": asset_id, "last_kind": "image",
+                    "last_url": first.get("url") or "",
+                    "last_prompt": str(first.get("path") or ""),
+                })
+            reply = "收到图片了。你想拿它做什么？做成视频、改画幅、还是存成镜头？"
+            if audios:
+                reply = "收到图片和音频了。要做对口型，还是把这段音频当背景音乐？"
+            return {"intent": "chat", "reply": reply, "args": {}}
+        if audios:
+            seconds = await tools.audio_seconds(str(audios[0].get("id") or ""))
+            hint = f"（约 {seconds:.1f} 秒）" if seconds else ""
+            return {"intent": "chat",
+                    "reply": f"收到音频{hint}。你打算把它当背景音乐、做对口型、还是配到某一镜做旁白？",
+                    "args": {}}
+
     # 上一轮确认过的多步计划，依赖产物到位后继续执行（不再弹确认）
     if state.get("preapproved"):
         steps = list((state.get("args") or {}).get("steps") or [])
@@ -350,11 +376,19 @@ async def node_decide(state: AgentState) -> dict:
 
     attachments = state.get("attachments") or []
     if attachments:
-        lines = [f"- asset_id={a['id']}，文件 {a['path'].rsplit('/', 1)[-1]}"
-                 for a in attachments if a.get("kind") == "image"]
+        lines = []
+        for att in attachments:
+            name = str(att.get("path") or "").rsplit("/", 1)[-1]
+            kind = str(att.get("kind") or "")
+            if kind == "image":
+                lines.append(f"- 图片：asset_id={att.get('id')}，文件 {name}")
+            elif kind == "audio":
+                seconds = await tools.audio_seconds(str(att.get("id") or ""))
+                extra = f"，约 {seconds:.1f} 秒" if seconds else ""
+                lines.append(f"- 音频：asset_id={att.get('id')}，文件 {name}{extra}")
         if lines:
             project_ctx = dict(project_ctx or {})
-            project_ctx["用户随消息上传的图片"] = lines
+            project_ctx["用户随本条消息上传的文件（已经收到，不要说没收到）"] = lines
 
     from .. import llm as llm_module
 
@@ -1279,6 +1313,8 @@ def route_after_decide(state: AgentState) -> str:
         return "lookup"
     if intent == "explain":
         return "explain"
+    if intent == "chat" and str(state.get("reply") or "").strip():
+        return "quick_reply"
     if intent in {"capability", "list_presets"}:
         return "reply_capability"
     if intent in {"generate", "generate_video"}:
@@ -1365,7 +1401,8 @@ def build_graph(checkpointer=None):
                                  "reply_capability": "reply_capability",
                                  "explain": "explain",
                                  "prepare_revise": "prepare_revise",
-                                 "prepare_multi": "prepare_multi"})
+                                 "prepare_multi": "prepare_multi",
+                                 "quick_reply": "quick_reply"})
     graph.add_edge("lookup", END)
     graph.add_conditional_edges("prepare", route_after_prepare,
                                 {"chat": "chat", "confirm": "confirm",

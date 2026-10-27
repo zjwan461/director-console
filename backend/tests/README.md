@@ -32,6 +32,7 @@ python test_chain.py --gpu   # 依赖链：出图 → 自动续跑视频
 python test_audio.py         # 音频上传 + 对口型确认卡（不提交 GPU）
 python test_audio2.py        # 时长对齐 / 多段参考音频 / 上传音频当 BGM
 python test_cancel.py        # 取消确认卡后的回复（不能像要继续）
+python test_files_only.py    # 只发图片/音频不说话：应确认收到并记住素材
 ```
 
 ## 覆盖范围
@@ -44,6 +45,7 @@ python test_cancel.py        # 取消确认卡后的回复（不能像要继续�
 | `test_audio.py` | 音频上传、附件进消息、对口型（lipsync）确认卡带参考音频 |
 | `test_audio2.py` | 对口型按音频时长出片、多段参考音频、上传音频当 BGM |
 | `test_cancel.py` | 取消确认卡后回复为「已取消」且不产生任务 |
+| `test_files_only.py` | 只发文件不说话时的确认与素材记忆 |
 
 ## 约定
 
