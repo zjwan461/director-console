@@ -33,6 +33,7 @@ python test_audio.py         # 音频上传 + 对口型确认卡（不提交 GPU
 python test_audio2.py        # 时长对齐 / 多段参考音频 / 上传音频当 BGM
 python test_cancel.py        # 取消确认卡后的回复（不能像要继续）
 python test_files_only.py    # 只发图片/音频不说话：应确认收到并记住素材
+python test_agent_loop.py    # 规则没覆盖的说法：看状态后能否做对
 ```
 
 ## 覆盖范围
@@ -46,6 +47,7 @@ python test_files_only.py    # 只发图片/音频不说话：应确认收到并
 | `test_audio2.py` | 对口型按音频时长出片、多段参考音频、上传音频当 BGM |
 | `test_cancel.py` | 取消确认卡后回复为「已取消」且不产生任务 |
 | `test_files_only.py` | 只发文件不说话时的确认与素材记忆 |
+| `test_agent_loop.py` | agentic 循环：从镜头出视频、查镜头、片子体检、图塞进镜头 |
 
 ## 约定
 

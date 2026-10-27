@@ -158,6 +158,14 @@ def _fast_intent(state: AgentState) -> dict | None:
     NEWPROJECT_RE = re.compile(r"(新建|建个|开个|创建).{0,4}项目|新项目")
     ADDSHOT_RE = re.compile(r"(加|添加|补|建).{0,3}(镜头|几镜|分镜)")
 
+    # 「还缺什么 / 体检 / 什么状态」→ 读项目实际情况再回答
+    if re.search(r"(还缺|缺什么|差什么|体检|检查一下|什么状态|做到哪)", text):
+        return {"intent": "audit", "args": {}, "reply": ""}
+
+    # 问「项目里有几个镜头/都是什么」→ 直接读镜头列表
+    if re.search(r"(几个|多少|有哪些|看看).{0,6}(镜头|分镜)|镜头.{0,4}(几个|多少)", text):
+        return {"intent": "list_shots", "args": {}, "reply": ""}
+
     # 找素材优先：问句里也常带「有什么猫的图」「有没有生成好的视频」
     # 但「有哪些视频工作流」问的是能力卡，不是素材
     workflow_question = bool(re.search(r"(工作流|能力卡|卡片|预设|模型|节点)", text))
@@ -190,6 +198,17 @@ def _fast_intent(state: AgentState) -> dict | None:
         name = name_match.group(1) if name_match else text.strip()[:16]
         return {"intent": "create_project", "args": {"name": name},
                 "reply": f"好，我新建一个项目《{name}》。"}
+    # 「把这张图放进第 2 镜当首帧」→ 图生视频，不是新增镜头
+    if (re.search(r"第\s*\d+\s*镜", text)
+            and re.search(r"(这张|刚才|上一张|这个图)", text)
+            and re.search(r"(首帧|首图|当首帧|做成|塞进|放进|用作)", text)):
+        ctx_now = agent_store.get_context(state.get("thread_id", ""))
+        return {"intent": "generate_video",
+                "args": {"prompt": "让这张图动起来，自然运镜，人物轻微动作",
+                         "mode": "i2v", "aspect": "16:9",
+                         "image_asset_id": str(ctx_now.get("last_asset_id") or "")},
+                "reply": "好，拿这张图当首帧生成一段镜头。"}
+
     if ADDSHOT_RE.search(text):
         return {"intent": "add_shot", "args": {"raw": text},
                 "reply": "好，我按你的描述排几个镜头。"}
@@ -241,7 +260,7 @@ AFFIRM_RE = re.compile(
     re.IGNORECASE)
 NEGATIVE_RE = re.compile(r"(不好|不要|别用|不用|取消|算了|重新|换一张|换个|先不)")
 
-VIDEO_WORDS = ("视频", "动起来", "动一下", "运镜", "动画", "几秒", "秒的片子", "出片")
+VIDEO_WORDS = ("视频", "动起来", "动一下", "动态", "运镜", "动画", "几秒", "秒的片子", "出片")
 
 
 def _is_affirmative(text: str) -> bool:
@@ -420,39 +439,29 @@ async def node_decide(state: AgentState) -> dict:
                 "reply": "还没配置大模型（设置 → AI），先配好我才能帮你出图。",
                 "args": {}}
 
-    history = [m for m in state.get("messages", []) if isinstance(m, (HumanMessage, AIMessage))]
-    msgs = llm_module.to_dicts(
-        [SystemMessage(content=prompts.system_prompt(env, project_ctx)), *history[-12:]])
-    content = ""
-    try:
-        import asyncio as _asyncio
+    # 规则没接住 → 交给 agentic 循环：模型可以查状态/素材，再决定做什么
+    from . import agent_loop
 
-        async with _asyncio.timeout(150):
-            async for event in llm_module.chat_stream(msgs, temperature=0.2, max_tokens=2000):
-                if event.get("type") == "reasoning":
-                    # 让用户先看到思考过程，而不是盯着转圈
-                    _emit({"t": "thinking", "text": str(event.get("text") or "")})
-                else:
-                    content += str(event.get("text") or "")
-        data = _parse_json(content)
-        if not data and content:
-            data = _parse_json(content.strip().strip("`"))
-    except _asyncio.TimeoutError:
-        return {"intent": "chat", "args": {},
-                "reply": "模型响应有点慢，我先按最直接的理解处理：你想出图还是出视频？"}
-    except Exception as exc:  # LLM 挂了也不能让会话崩
-        return {"intent": "chat", "reply": f"我这边调用模型失败了：{exc}", "args": {}}
+    looped = await agent_loop.run(
+        str(state.get("text") or ""), state.get("thread_id", ""),
+        state.get("project_id", ""), state.get("attachments") or [])
+    steps = looped.get("steps") or []
+    reply = str(looped.get("reply") or "").strip()
 
-    intent = str(data.get("intent") or "chat").strip()
-    if intent not in {"chat", "lookup", "generate", "generate_video", "export", "save_shot"}:
-        intent = "chat"
-    reply = str(data.get("reply") or "").strip()
-    args = data.get("args") or {}
-    if not isinstance(args, dict):
-        args = {}
-    _emit({"t": "step", "id": "decide", "node": "decide", "title": "理解需求",
-                   "status": "done", "detail": {"intent": intent, "args": args}})
-    return {"intent": intent, "reply": reply, "args": args}
+    if len(steps) == 1:
+        step = steps[0]
+        _emit({"t": "step", "id": "decide", "node": "decide", "title": "理解需求",
+               "status": "done",
+               "detail": {"intent": step["intent"], "tool": step["tool"], "args": step["args"]}})
+        return {"intent": step["intent"], "args": step.get("args") or {}, "reply": reply}
+
+    if len(steps) > 1:
+        _emit({"t": "step", "id": "decide", "node": "decide",
+               "title": f"拆成 {len(steps)} 步", "status": "done",
+               "detail": {"steps": [{"tool": s["tool"], "why": s.get("why")} for s in steps]}})
+        return {"intent": "multi", "args": {"steps": steps}, "reply": reply}
+
+    return {"intent": "chat", "args": {}, "reply": reply}
 
 
 TOOL_LABEL = {
@@ -688,6 +697,84 @@ async def node_chat(state: AgentState) -> dict:
         parsed = _parse_json(cleaned)
         cleaned = str(parsed.get("reply") or "").strip() or fallback or "我在。"
     return {"reply": cleaned or fallback or "我在。", "streamed": True}
+
+
+async def node_audit(state: AgentState) -> dict:
+    """片子体检：按项目实际数据列出「有什么、缺什么」。"""
+    project_id = state.get("project_id", "")
+    shots = store.list_shots(project_id) if project_id else []
+    state_data = tools._edit_state(project_id) if project_id else {}
+    options = state_data.get("options") or {}
+    edits = state_data.get("shot_edits") or []
+
+    with_cover = [s for s in shots if s.get("cover") or s.get("last_frame")]
+    narration = sum(1 for e in edits if e.get("narration_on"))
+    subtitles = sum(1 for e in edits if (e.get("narration") or e.get("subtitle")))
+    bgm = len(options.get("bgm_tracks") or [])
+    burned = bool((options.get("subtitles") or {}).get("enabled"))
+    title_on = bool((options.get("title") or {}).get("enabled"))
+    tail_on = bool((options.get("tail") or {}).get("enabled"))
+    renders = store.list_renders(project_id, limit=5) if project_id else []
+    exported = any(r.get("status") == "succeeded" for r in renders)
+
+    lines = [f"项目现状：{len(shots)} 个镜头，{len(with_cover)} 个已有画面"]
+    if narration:
+        lines.append(f"· 旁白：{narration} 镜已写")
+    if subtitles:
+        lines.append(f"· 字幕：{subtitles} 镜有文案" + ("（导出会烧进画面）" if burned else ""))
+    if bgm:
+        lines.append(f"· 配乐：{bgm} 条")
+    if title_on or tail_on:
+        bits = []
+        if title_on:
+            bits.append("片头")
+        if tail_on:
+            bits.append("片尾")
+        lines.append("· " + " + ".join(bits) + "：已开启")
+    if exported:
+        lines.append("· 成片：已经导出过一版")
+
+    todo = []
+    if not shots:
+        todo.append("先加镜头：「加三个镜头：A，B，C」")
+    elif len(with_cover) < len(shots):
+        todo.append(f"还有 {len(shots) - len(with_cover)} 个镜头没画面，可以让我逐镜出片")
+    if shots and not narration:
+        todo.append("没有旁白/字幕：「帮我补字幕和旁白」")
+    if shots and not bgm:
+        todo.append("没有配乐：「配点背景音乐」")
+    if shots and not (title_on or tail_on):
+        todo.append("片头片尾还没开：「片头写《…》」")
+    if shots and with_cover and not exported:
+        todo.append("还没导出过：「导出成片」")
+
+    reply = "\n".join(lines)
+    if todo:
+        reply += "\n\n建议下一步：\n" + "\n".join(f"{i}. {x}" for i, x in enumerate(todo[:3], 1))
+    else:
+        reply += "\n\n基本齐了，可以直接「导出成片」。"
+    _emit({"t": "step", "id": "audit", "node": "decide", "title": "项目体检",
+           "status": "done", "detail": {"shots": len(shots), "covered": len(with_cover)}})
+    return {"intent": "chat", "reply": reply}
+
+
+async def node_list_shots(state: AgentState) -> dict:
+    project_id = state.get("project_id", "")
+    shots = store.list_shots(project_id) if project_id else []
+    if not shots:
+        return {"intent": "chat",
+                "reply": "这个项目还没有镜头。可以先说「加三个镜头：A，B，C」，或者让我出一张图再存成镜头。"}
+    lines = []
+    for index, shot in enumerate(shots, start=1):
+        title = shot.get("title") or f"镜头 {index}"
+        cover = "有画面" if shot.get("cover") else "还没画面"
+        duration = (shot.get("values") or {}).get("duration")
+        extra = f" · {duration}s" if duration else ""
+        lines.append(f"{index}. {title}（{cover}{extra}）")
+    reply = f"项目里一共 {len(shots)} 个镜头：\n" + "\n".join(lines)
+    _emit({"t": "step", "id": "shots", "node": "decide", "title": "读取镜头列表",
+           "status": "done", "detail": {"count": len(shots)}})
+    return {"intent": "chat", "reply": reply}
 
 
 async def node_lookup(state: AgentState) -> dict:
@@ -1372,6 +1459,10 @@ async def node_dispatch(state: AgentState) -> dict:
 
 def route_after_decide(state: AgentState) -> str:
     intent = state.get("intent") or "chat"
+    if intent == "audit":
+        return "audit"
+    if intent == "list_shots":
+        return "list_shots"
     if intent == "lookup":
         return "lookup"
     if intent == "advise":
@@ -1439,6 +1530,8 @@ def build_graph(checkpointer=None):
     graph.add_node("explain", node_explain)
     graph.add_node("advise", node_advise)
     graph.add_node("lookup", node_lookup)
+    graph.add_node("list_shots", node_list_shots)
+    graph.add_node("audit", node_audit)
     graph.add_node("prepare", node_prepare)
     graph.add_node("prepare_export", node_prepare_export)
     graph.add_node("prepare_save", node_prepare_save)
@@ -1467,10 +1560,14 @@ def build_graph(checkpointer=None):
                                  "reply_capability": "reply_capability",
                                  "explain": "explain",
                                  "advise": "advise",
+                                 "list_shots": "list_shots",
+                                 "audit": "audit",
                                  "prepare_revise": "prepare_revise",
                                  "prepare_multi": "prepare_multi",
                                  "quick_reply": "quick_reply"})
     graph.add_edge("lookup", END)
+    graph.add_edge("list_shots", END)
+    graph.add_edge("audit", END)
     graph.add_conditional_edges("prepare", route_after_prepare,
                                 {"chat": "chat", "confirm": "confirm",
                                  "quick_reply": "quick_reply"})
