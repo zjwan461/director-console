@@ -102,12 +102,23 @@ def _collect_all(scan: int = 200) -> list[dict]:
 TERMINAL = ("succeeded", "done", "failed", "canceled", "interrupted")
 
 
+UNREAD_KINDS = ("job", "render", "ai_edit")
+
+
 @router.get("/unread")
 async def unread_tasks(since: float = 0.0) -> dict:
-    """since 之后结束的任务数（四类合计），用于侧边栏角标。"""
+    """since 之后结束的「产出型」任务数，用于侧边栏角标。
+
+    只统计生成 / 成片 / AI 剪辑；助手对话（agent）不计入——
+    否则随便聊一句就会亮红点，角标就没有意义了。
+    """
     items = _collect_all()
+    # 取消/中断不算「有新结果」，只有成功或失败值得提示
+    notify = {"succeeded", "done", "failed", "interrupted"}
     count = sum(1 for i in items
-                if i["status"] in TERMINAL and (i.get("finished_at") or 0) > since)
+                if i["kind"] in UNREAD_KINDS
+                and i["status"] in notify
+                and (i.get("finished_at") or 0) > since)
     return {"count": count}
 
 
