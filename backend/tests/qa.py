@@ -121,3 +121,13 @@ def add_artifacts(thread_id, items):
             {"status": "succeeded", "params": item.get("params", {}),
              "note": item.get("note", "")}))
     return created
+
+
+def set_shot_cover(shot_id: str, url: str) -> None:
+    """直接给镜头写封面（测试用，避免真跑生成）。"""
+    import os
+    import sys
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+    from app import store
+
+    store.update_shot(shot_id, cover=url)

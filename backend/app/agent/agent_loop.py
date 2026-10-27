@@ -45,6 +45,7 @@ LOOP_SYSTEM = """你是导演台的执行大脑。你能看状态、查素材，
 5. 后一步依赖前一步产物时，args.depends_on 写前一步序号，视频 mode 用 i2v
 6. 不要重复调用同一个只读工具超过一次
 7. add_shots 只用于「新增空镜头」；「把这张图放进第 N 镜 / 当首帧」应该用 make_video（mode=i2v）
+8. 「用第 N 镜的画面/镜头做成视频」→ make_video mode=i2v，image_asset_id 取该镜的 cover_asset_id
 
 当前状态：
 {state}
@@ -76,7 +77,11 @@ def _read_tool(name: str, args: dict, thread_id: str, project_id: str,
         return {
             "artifacts": [{"ref": a["ref"], "kind": a["kind"], "note": a["note"] or a["prompt"][:30],
                            "params": a["params"]} for a in st["artifacts"][-8:]],
-            "shots": agent_state._shot_refs(project_id),
+            "shots": [
+                {**s, "cover_asset_id": tools.asset_from_url(str(s.get("cover") or ""), "")
+                 if s.get("cover") else ""}
+                for s in agent_state._shot_refs(project_id)
+            ],
             "attachments": [{"kind": a.get("kind"), "asset_id": a.get("id"),
                              "name": str(a.get("path") or "").rsplit("/", 1)[-1]} for a in attachments],
         }

@@ -30,6 +30,13 @@ def main() -> int:
         {"note": "雪地里的黑猫", "params": {"prompt": "雪地里的黑猫", "aspect": "9:16",
                                         "megapixels": 1.0, "duration": 5}},
     ])
+    # 给第一镜一张封面，这样「用第一镜的画面做视频」才有图可用
+    import httpx as _httpx
+    with open(r"D:\temp\qa_cover.png", "rb") as fh:
+        cover = _httpx.Client(trust_env=False, timeout=60).post(
+            qa.B + "/api/assets/upload",
+            files={"file": ("cover.png", fh, "image/png")}, data={"kind": "image"}).json()
+    qa.set_shot_cover(shot1["id"], f"/media/files/{cover['path']}")
 
     failed = 0
     for text, expect, label in CASES:

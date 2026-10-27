@@ -107,8 +107,8 @@ CAPABILITY_TEXT = (
 )
 
 
-VIDEO_RE = re.compile(r"(视频|动起来|动一下|动画|运镜|几秒|秒的片|短片|出片)")
-IMAGE_RE = re.compile(r"(画|图|海报|剧照|插画|立绘|封面|定妆照)")
+VIDEO_RE = re.compile(r"(视频|动起来|动一下|动态|动画|运镜|几秒|秒的片|短片|出片)")
+IMAGE_RE = re.compile(r"(画(?![面质风])|图(?![片])|海报|剧照|插画|立绘|封面|定妆照)")
 LOOKUP_RE = re.compile(
     r"(素材|找一?张|有没有.*图|看看.*图|"
     r"(有没有|有哪些|查一下|看看|列一下|给我看|生成好的|做好的|已有的|现成的)"
@@ -122,6 +122,33 @@ QUERY_RE = re.compile(r"(有没有|有哪些|查一下|看看|列一下|给我�
 EXPORT_RE = re.compile(r"(导出|合成|出成片|成片)")
 SAVE_RE = re.compile(r"(存成?镜头|放进项目|存进项目|加入项目)")
 DURATION_RE = re.compile(r"(\d+)\s*秒")
+
+
+MEDIA_CHOICE_RE = re.compile(
+    r"^\s*(我?(还是|只要)?要?(生成|做|出|来)?(个|一段|一个)?)?"
+    r"(视频|片子|短片|动画|图片|图|剧照)[啊呀吧呢哦。！!？?\s]*$")
+TOPIC_STOP_RE = re.compile(
+    r"(画|做|生成|导出|加|配|改|换|存|建|查|看|要|视频|图片|图|音乐|字幕|旁白|镜头|秒)")
+
+
+def _is_media_choice(text: str) -> bool:
+    """「视频啊」「图」这种只是在回答「要图还是要视频」。"""
+    return bool(MEDIA_CHOICE_RE.match((text or "").strip()))
+
+
+def _remember_topic(thread_id: str, text: str) -> None:
+    """把「生化危机」这种纯话题记下来，供下一句「视频啊」使用。"""
+    value = (text or "").strip().strip("。！？!? ")
+    if not (2 <= len(value) <= 16):
+        return
+    if TOPIC_STOP_RE.search(value):
+        return
+    if re.search(r"(吗|呢|怎么|什么|哪个|为什么)", value):
+        return
+    try:
+        agent_store.set_context(thread_id, {"last_topic": value})
+    except Exception:
+        pass
 
 
 PATHISH_RE = re.compile(r"(^[\w./\\-]+\.(png|jpe?g|webp|mp4|mov|wav|mp3)$|^uploads/|^outputs/)")
@@ -242,6 +269,39 @@ def _fast_intent(state: AgentState) -> dict | None:
                 "args": {"prompt": text, "mode": "lipsync", "aspect": "16:9"},
                 "reply": "好，用这张人像和这段音频做对口型。"}
 
+    # 「第 N 镜」的两类明确说法先本地判定，剩下的再交给 agent 循环
+    shot_match = re.search(r"第\s*([0-9一二三四五六七八九十]+)\s*镜", text)
+    if shot_match:
+        from .state import _parse_number as _num
+
+        shot_index = _num(shot_match.group(1))
+        shots = store.list_shots(state.get("project_id", "")) if state.get("project_id") else []
+        shot = shots[shot_index - 1] if 1 <= shot_index <= len(shots) else None
+
+        # 把某张图当这一镜的首帧
+        if (re.search(r"(这张|刚才|上一张|这个图)", text)
+                and re.search(r"(首帧|首图|当首帧|做成|塞进|放进|用作)", text)):
+            return {"intent": "generate_video",
+                    "args": {"prompt": "让这张图动起来，自然运镜",
+                             "mode": "i2v", "aspect": "16:9",
+                             "image_asset_id": str(last_asset or "")},
+                    "reply": f"好，把这张图当第 {shot_index} 镜的首帧。"}
+
+        # 用这一镜已有的画面做视频
+        if re.search(r"(画面|镜头|素材).{0,6}(做成|变成|改成|来一?段)|做成.{0,8}(动态|视频)", text):
+            cover = str((shot or {}).get("cover") or (shot or {}).get("last_frame") or "")
+            if shot and cover:
+                asset_id = tools.asset_from_url(cover, "")
+                return {"intent": "generate_video",
+                        "args": {"prompt": "", "mode": "i2v", "aspect": "16:9",
+                                 "image_asset_id": asset_id},
+                        "reply": f"好，用第 {shot_index} 镜的画面出一段视频。"}
+            if shot:
+                return {"intent": "chat",
+                        "reply": f"第 {shot_index} 镜还没有画面，先让我给它出一张图吧。"}
+
+        return None
+
     if VIDEO_RE.search(text) and IMPERATIVE_RE.search(text):
         # 判断用哪种视频卡：参考图 → r2v，明确说首帧/这张图 → i2v，否则 t2v
         has_ref = bool(last_asset) or bool(
@@ -319,6 +379,23 @@ def _short_circuit(state: AgentState) -> dict | None:
     video_intent = any(word in text for word in VIDEO_WORDS)
     if not (_is_affirmative(text) or video_intent):
         return None
+
+    # 只说了「视频啊」「图」这种选择词，而刚聊过新话题 → 按话题新做，不是改上一张图
+    topic = str(ctx.get("last_topic") or "").strip()
+    if topic and _is_media_choice(text):
+        want_image = bool(re.search(r"(图|图片|剧照)", text)) and not video_intent
+        if want_image:
+            return {"intent": "generate", "args": {"prompt": topic, "aspect": "9:16"},
+                    "reply": f"好，按「{topic}」出一张图。"}
+        return {"intent": "generate_video",
+                "args": {"prompt": topic, "mode": "t2v", "aspect": "16:9", "duration": 5},
+                "reply": f"好，按「{topic}」出一段视频。"}
+
+    # 接着上一张图做视频时，必须明确指代（这张/它/刚才）或直接同意
+    refers_previous = bool(re.search(r"(这张|这个图|刚才|上一张|它|首帧)", text))
+    if not (_is_affirmative(text) or refers_previous):
+        return None
+
     # 用户明确要图片/重新画时，不要抢
     if any(word in text for word in ("重新画", "再画", "生成图片", "换一张图")):
         return None
@@ -339,6 +416,9 @@ def _short_circuit(state: AgentState) -> dict | None:
 
 
 async def node_decide(state: AgentState) -> dict:
+    # 记住纯话题（「生化危机」），下一句「视频啊」才知道在说什么
+    _remember_topic(state.get("thread_id", ""), str(state.get("text") or ""))
+
     # 只发了文件、没写文字：直接确认收到并引导，不要让模型说「没收到图片」
     text_only = str(state.get("text") or "").strip()
     files = state.get("attachments") or []
@@ -885,6 +965,16 @@ async def node_prepare(state: AgentState) -> dict:
             audio_ids = [str(x) for x in args["audio_asset_ids"]]
         audio_ids = [x for x in audio_ids if x][:3]
         audio_id = audio_ids[0] if audio_ids else ""
+
+        # 文生视频：提示词只是一个题材（「生化危机」）时，先扩写成画面描述
+        if mode == "t2v" and prompt and len(prompt) <= 12 and not re.search(
+                r"(雪|雨|风|光|夜|人物|镜头|奔跑|转身|站|坐|城市|森林|海|山|手|发|房间|街)", prompt):
+            brief = await tools.expand_brief(prompt)
+            if brief:
+                _emit({"t": "step", "id": "brief", "node": "prepare",
+                       "title": f"把「{prompt}」扩成画面", "status": "done",
+                       "detail": {"prompt": brief}})
+                prompt = brief
 
         # 图生视频/参考生视频：没有具体提示词时，看图写运镜（这才是 agent 该干的事）
         # 需要「看图写运镜」的情况：没有提示词、只有默认句、或整句只是「参考这张图做个视频」这类命令

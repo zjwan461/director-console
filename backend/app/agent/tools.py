@@ -806,3 +806,29 @@ async def vision_patch(asset_id: str, request: str, aspect: str = "") -> str:
         if len(text) >= 6:
             return text[:160]
     return ""
+
+
+BRIEF_INSTRUCTION = """用户给的题材是「{topic}」。请把它写成一条可直接用于文生视频的画面描述：
+- 中文，40~70 字，一到两句
+- 包含：场景地点、主体与动作、光线/天气、镜头景别
+- 不要出现「用户」「题材」「视频」这些词，不要引号，不要解释
+- 只输出画面描述本身"""
+
+
+async def expand_brief(topic: str) -> str:
+    """把「生化危机」这种题材扩写成可拍的画面描述。"""
+    from .. import llm
+
+    topic = (topic or "").strip()
+    if not topic:
+        return ""
+    try:
+        result = await llm.chat_once(
+            [{"role": "user", "content": BRIEF_INSTRUCTION.format(topic=topic[:40])}],
+            temperature=0.7, max_tokens=600)
+    except Exception:
+        return ""
+    text = str(result.get("content") or "").strip().strip('"“”').strip()
+    if len(text) < 12:
+        return ""
+    return text[:200]
