@@ -35,6 +35,7 @@ python test_cancel.py        # 取消确认卡后的回复（不能像要继续�
 python test_files_only.py    # 只发图片/音频不说话：应确认收到并记住素材
 python test_agent_loop.py    # 规则没覆盖的说法：看状态后能否做对
 python test_motion_prompt.py # 图生视频的运镜是否看图生成 + 确认卡标出能力卡
+python test_vision.py        # 看图写运镜（i2v/r2v）+ 视觉修订（模糊评价/改画幅）
 ```
 
 ## 覆盖范围
@@ -50,6 +51,7 @@ python test_motion_prompt.py # 图生视频的运镜是否看图生成 + 确认�
 | `test_files_only.py` | 只发文件不说话时的确认与素材记忆 |
 | `test_agent_loop.py` | agentic 循环：从镜头出视频、查镜头、片子体检、图塞进镜头 |
 | `test_motion_prompt.py` | 看图生成运镜提示词、确认卡显示能力卡 |
+| `test_vision.py` | i2v/r2v 看图写运镜、模糊修订与改画幅走视觉 |
 
 ## 约定
 

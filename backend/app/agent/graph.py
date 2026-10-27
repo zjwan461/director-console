@@ -243,9 +243,23 @@ def _fast_intent(state: AgentState) -> dict | None:
                 "reply": "好，用这张人像和这段音频做对口型。"}
 
     if VIDEO_RE.search(text) and IMPERATIVE_RE.search(text):
-        mode = "i2v" if (last_asset and "首帧" in text) else "t2v"
-        args = {"prompt": text, "mode": mode, "duration": duration, "aspect": "16:9"}
-        if mode == "i2v":
+        # 判断用哪种视频卡：参考图 → r2v，明确说首帧/这张图 → i2v，否则 t2v
+        has_ref = bool(last_asset) or bool(
+            [a for a in (state.get("attachments") or []) if a.get("kind") == "image"])
+        if re.search(r"(参考|参考图|照这张|按这张)", text) and has_ref:
+            mode = "r2v"
+        elif re.search(r"(首帧|这张图|这个图|用它|把这张|让这张)", text) and has_ref:
+            mode = "i2v"
+        else:
+            mode = "t2v"
+
+        # 整句只是命令（「参考这张图做个视频」）时，画面留给看图写运镜
+        command_only = bool(re.search(r"(这张图|这个图|参考这张|用它|把这张|让这张)", text)) and not re.search(
+            r"(雪|雨|风|光|夜|人物|镜头|奔跑|转身|站|坐|城市|森林|海|山|手|发)", text)
+        prompt_text = "" if command_only else text
+
+        args = {"prompt": prompt_text, "mode": mode, "duration": duration, "aspect": "16:9"}
+        if mode in {"i2v", "r2v"}:
             args["image_asset_id"] = last_asset
         return {"intent": "generate_video", "args": args,
                 "reply": "好，我来生成这段视频。"}
@@ -296,6 +310,10 @@ def _short_circuit(state: AgentState) -> dict | None:
 
     # 「有没有生成好的视频」是查询，不是要生成
     if QUERY_RE.search(text):
+        return None
+
+    # 说「参考这张图」是要走参考生视频（r2v），别抢先判成 i2v
+    if re.search(r"(参考|参考图|照这张|按这张)", text):
         return None
 
     video_intent = any(word in text for word in VIDEO_WORDS)
@@ -869,13 +887,17 @@ async def node_prepare(state: AgentState) -> dict:
         audio_id = audio_ids[0] if audio_ids else ""
 
         # 图生视频/参考生视频：没有具体提示词时，看图写运镜（这才是 agent 该干的事）
+        # 需要「看图写运镜」的情况：没有提示词、只有默认句、或整句只是「参考这张图做个视频」这类命令
+        commandish = bool(prompt) and bool(
+            re.search(r"(这张图|这个图|参考这张|用它|把这张|参考图)", prompt)
+            and not re.search(r"(雪|雨|风|光|夜|人物|镜头|奔跑|转身|站|坐|城市|森林|海|山)", prompt))
         if (mode in {"i2v", "r2v", "r2v9"} and asset_id
                 and (not prompt or prompt == tools.DEFAULT_MOTION_PROMPT
-                     or prompt.startswith("让这张图动起来"))):
+                     or prompt.startswith("让这张图动起来") or commandish)):
             try:
                 generated = await tools.motion_prompt(asset_id, str(state.get("text") or ""))
                 if generated:
-                    prompt = generated
+                    prompt = generated if not prompt or commandish else f"{prompt.rstrip('。')}，{generated}"
                     _emit({"t": "step", "id": "motion", "node": "prepare",
                            "title": "看图写运镜", "status": "done",
                            "detail": {"prompt": generated}})
@@ -1074,6 +1096,26 @@ async def node_prepare_revise(state: AgentState) -> dict:
     if not preview.get("ok"):
         _emit({"t": "tool_result", "id": "prep_revise", "ok": False, "data": preview})
         return {"intent": "chat", "reply": preview.get("hint") or "没找到要改的那一版"}
+
+    # 图片修订：让视觉模型把「太乱/改横屏」翻译成具体改动
+    if preview.get("base_kind") == "image" and preview.get("base_url"):
+        asset_id = tools.asset_from_url(str(preview["base_url"]), "")
+        if asset_id:
+            aspect = str((preview.get("patch") or {}).get("aspect") or "")
+            guidance = await tools.vision_patch(asset_id, text, aspect)
+            if guidance:
+                params = dict(preview.get("params") or {})
+                base_prompt = str(params.get("prompt") or "")
+                keyword = str((preview.get("patch") or {}).get("prompt_suffix") or "")
+                merged = "，".join(x for x in (base_prompt, keyword, guidance) if x)
+                params["prompt"] = merged
+                preview = {**preview, "params": params,
+                           "patch": {**(preview.get("patch") or {}), "prompt_suffix": guidance},
+                           "summary": f"{preview.get('summary')}｜看图：{guidance}"}
+                _emit({"t": "step", "id": "vision_patch", "node": "prepare",
+                       "title": "看图理解改动", "status": "done",
+                       "detail": {"guidance": guidance}})
+
     _emit({"t": "tool_result", "id": "prep_revise", "ok": True, "data": preview})
     return {"plan": {"kind": "revise", "params": preview}}
 

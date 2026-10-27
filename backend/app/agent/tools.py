@@ -684,7 +684,7 @@ def revise_preview(thread_id: str, project_id: str, text: str) -> dict:
         return {"ok": False, "hint": "镜头不能直接改，先让我按这个镜头出一版，再改那一版"}
 
     patch = agent_state.build_patch(text)
-    if not patch:
+    if not patch and not agent_state.SUBJECTIVE_RE.search(text):
         return {"ok": False, "hint": "没听出要改什么，可以说「再亮一点」「时长改成 8 秒」「换成竖屏」"}
 
     params = _revision_params(target, patch)
@@ -776,3 +776,33 @@ async def motion_prompt(asset_id: str, user_text: str = "") -> str:
             return text.strip().strip('"“”')[:200]
 
     return DEFAULT_MOTION_PROMPT
+
+
+VISION_PATCH_INSTRUCTION = """这是要修改的一张图。用户的要求是：{request}
+
+请给出**具体可执行的修改描述**（中文，一句话，40 字内），要求：
+- 只描述怎么改，不要复述用户原话
+- 如果是改画幅（{aspect}），说明构图如何调整（例如「人物保持在画面右侧，左侧延伸雪地场景」）
+- 如果用户说的是主观评价（太乱/太暗/不好看），把它翻译成可执行画面调整（减少背景元素/提高曝光/统一色调）
+- 直接输出这一句话，不要引号、不要解释"""
+
+
+async def vision_patch(asset_id: str, request: str, aspect: str = "") -> str:
+    """看图把模糊要求翻译成具体改动；失败返回空串，由调用方退回关键词方案。"""
+    from .. import llm
+
+    mime, b64 = await image_b64(asset_id)
+    if not b64:
+        return ""
+    instruction = VISION_PATCH_INSTRUCTION.format(
+        request=(request or "").strip()[:120] or "让画面更好看",
+        aspect=aspect or "保持原画幅")
+    for attempt in range(2):
+        try:
+            text = await llm.chat_vision([(mime, b64)], instruction, max_tokens=600)
+        except Exception:
+            continue
+        text = text.strip().strip('"“”').strip()
+        if len(text) >= 6:
+            return text[:160]
+    return ""
