@@ -648,6 +648,10 @@ async def add_shots(project_id: str, prompts: list[str]) -> str:
 def _revision_params(target: dict, patch: dict) -> dict:
     base = dict(target.get("params") or {})
     prompt = str(base.get("prompt") or target.get("prompt") or "")
+    # 历史数据里可能把文件路径存成了 prompt，这里挡一下
+    if prompt.startswith(("uploads/", "outputs/")) or prompt.endswith(
+            (".png", ".jpg", ".jpeg", ".webp", ".mp4", ".wav")):
+        prompt = ""
     suffix = str(patch.get("prompt_suffix") or "")
     if suffix:
         prompt = f"{prompt}，{suffix}" if prompt else suffix

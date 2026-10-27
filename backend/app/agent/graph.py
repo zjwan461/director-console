@@ -124,6 +124,19 @@ SAVE_RE = re.compile(r"(存成?镜头|放进项目|存进项目|加入项目)")
 DURATION_RE = re.compile(r"(\d+)\s*秒")
 
 
+PATHISH_RE = re.compile(r"(^[\w./\\-]+\.(png|jpe?g|webp|mp4|mov|wav|mp3)$|^uploads/|^outputs/)")
+
+
+def _clean_prompt(text: str, fallback: str = "") -> str:
+    """把误当成提示词的文件路径剔除掉。"""
+    value = (text or "").strip()
+    if not value:
+        return fallback
+    if PATHISH_RE.search(value):
+        return fallback
+    return value
+
+
 def _fast_intent(state: AgentState) -> dict | None:
     """常见说法直接判定意图，避免每次都等模型（推理模型要一两分钟）。
 
@@ -156,6 +169,15 @@ def _fast_intent(state: AgentState) -> dict | None:
     # 问「有哪些/能不能/怎么做/…吗？」这类问题，不要当成生成任务
     asking = bool(re.search(r"(？|\?|怎么|如何|为什么|哪些|什么|支持|是否|能否|可以吗|吗[？?]?$)", text))
     command_hint = bool(re.match(r"^(帮我|给我|替我|劳驾)", text))
+    # 手里有一张图、又在问「怎么做/你觉得呢」→ 给具体建议，而不是念能力清单
+    ctx_now = agent_store.get_context(state.get("thread_id", ""))
+    has_asset = bool(ctx_now.get("last_asset_id"))
+    # 只对「手上这张图下一步怎么弄」给建议；问工作流/区别的仍走解释
+    advice_like = bool(re.search(r"(你觉得|建议|下一步|接下来|怎么办|咋办)", text)) or bool(
+        re.search(r"(这张|这个|它)", text) and re.search(r"(怎么做|怎么弄|能做什么|干什么)", text))
+    if advice_like and has_asset and not re.search(r"(工作流|区别|能力卡|卡片)", text):
+        return {"intent": "advise", "args": {"q": text}, "reply": ""}
+
     if asking and not command_hint:
         if (re.search(r"(工作流|能力卡|卡片|预设|模型|节点)", text)
                 and not re.search(r"(区别|不一样|哪个|选哪|哪种|怎么|如何|用法)", text)):
@@ -264,7 +286,8 @@ def _short_circuit(state: AgentState) -> dict | None:
     if any(word in text for word in ("重新画", "再画", "生成图片", "换一张图")):
         return None
 
-    prompt = str(ctx.get("last_prompt") or "").strip() or "让画面动起来"
+    prompt = _clean_prompt(str(ctx.get("last_prompt") or ""),
+                           "让这张图动起来：人物轻微呼吸与发丝摆动，镜头缓慢推近")
     return {
         "intent": "generate_video",
         "args": {
@@ -292,7 +315,7 @@ async def node_decide(state: AgentState) -> dict:
                 agent_store.set_context(state.get("thread_id", ""), {
                     "last_asset_id": asset_id, "last_kind": "image",
                     "last_url": first.get("url") or "",
-                    "last_prompt": str(first.get("path") or ""),
+                    "last_prompt": "",
                 })
             reply = "收到图片了。你想拿它做什么？做成视频、改画幅、还是存成镜头？"
             if audios:
@@ -530,6 +553,46 @@ EXPLAIN_SYSTEM = """你是导演台的能力顾问，只根据下面这份「能
 4. 3~6 句中文，先给结论；不要输出 JSON，不要罗列全部卡片"""
 
 
+ADVISE_SYSTEM = """你是导演台的现场助手。用户刚上传/生成了一张图片，正在问接下来怎么做。
+
+可用能力（只根据这些给建议）：
+{facts}
+
+要求：
+1. 给 2~3 个具体可选方案，每个一句话，写清楚「会得到什么」
+2. 最后一句给出你的推荐，并等用户确认（不要自己开始执行）
+3. 不要罗列全部工作流，不要输出 JSON"""
+
+
+async def node_advise(state: AgentState) -> dict:
+    """有素材在手时给「下一步」建议，回答要具体、可执行。"""
+    from .. import llm as llm_module
+
+    question = str((state.get("args") or {}).get("q") or state.get("text") or "")
+    facts = _card_facts()
+    if not llm_module.ready():
+        return {"reply": "还没配置大模型（设置 → AI）。可以先说「做成 5 秒视频」或「第 1 张再亮一点」。"}
+
+    msgs = [
+        {"role": "system", "content": ADVISE_SYSTEM.format(facts=facts)},
+        {"role": "user", "content": question or "你觉得这张图接下来怎么做比较好？"},
+    ]
+    text = ""
+    try:
+        async for event in llm_module.chat_stream(msgs, temperature=0.4):
+            delta = str(event.get("text") or "")
+            if not delta:
+                continue
+            if event.get("type") == "reasoning":
+                _emit({"t": "thinking", "text": delta})
+                continue
+            text += delta
+            _emit({"t": "message_delta", "text": delta})
+    except Exception as exc:
+        return {"reply": f"给建议时出错了：{exc}"}
+    return {"reply": text.strip() or "可以说「做成视频」或「再亮一点」，我来执行。", "streamed": True}
+
+
 async def node_explain(state: AgentState) -> dict:
     """解释型问答：基于真实能力卡回答「区别/怎么选」。"""
     from .. import llm as llm_module
@@ -670,7 +733,7 @@ async def node_prepare(state: AgentState) -> dict:
 
     args = state.get("args") or {}
     intent = state.get("intent") or "generate"
-    prompt = str(args.get("prompt") or "").strip()
+    prompt = _clean_prompt(str(args.get("prompt") or ""))
     if not prompt:
         return {"intent": "chat", "reply": "能再说清楚一点画面内容吗？我好照着画。"}
 
@@ -1311,6 +1374,8 @@ def route_after_decide(state: AgentState) -> str:
     intent = state.get("intent") or "chat"
     if intent == "lookup":
         return "lookup"
+    if intent == "advise":
+        return "advise"
     if intent == "explain":
         return "explain"
     if intent == "chat" and str(state.get("reply") or "").strip():
@@ -1372,6 +1437,7 @@ def build_graph(checkpointer=None):
     graph.add_node("reply_capability", node_reply_capability)
     graph.add_node("quick_reply", node_quick_reply)
     graph.add_node("explain", node_explain)
+    graph.add_node("advise", node_advise)
     graph.add_node("lookup", node_lookup)
     graph.add_node("prepare", node_prepare)
     graph.add_node("prepare_export", node_prepare_export)
@@ -1400,6 +1466,7 @@ def build_graph(checkpointer=None):
                                  "prepare_add_shot": "prepare_add_shot",
                                  "reply_capability": "reply_capability",
                                  "explain": "explain",
+                                 "advise": "advise",
                                  "prepare_revise": "prepare_revise",
                                  "prepare_multi": "prepare_multi",
                                  "quick_reply": "quick_reply"})
@@ -1425,5 +1492,6 @@ def build_graph(checkpointer=None):
     graph.add_edge("chat", END)
     graph.add_edge("reply_capability", END)
     graph.add_edge("explain", END)
+    graph.add_edge("advise", END)
     graph.add_edge("quick_reply", END)
     return graph.compile(checkpointer=checkpointer)
