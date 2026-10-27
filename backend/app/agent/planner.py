@@ -126,6 +126,10 @@ def normalize(steps: list[dict]) -> list[dict]:
         if pos == 0 or step["depends_on"]:
             continue
         prev = cleaned[pos - 1]
+        # 顺序计划里，「改上一版」几乎总是改前面刚产出的那个
+        if step["tool"] == "revise" and prev["tool"] in ("make_image", "make_video", "revise"):
+            step["depends_on"] = prev["index"]
+            continue
         if (step["tool"] == "make_video"
                 and prev["tool"] in ("make_image", "revise", "make_video")):
             step["depends_on"] = prev["index"]

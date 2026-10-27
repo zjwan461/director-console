@@ -117,6 +117,16 @@ async def _run(thread: dict, run_id: str, text: str,
 
     _finish(thread_id, run_id, result)
 
+    # 本步没有产物（配乐/片头这类），但还有后续步骤时继续往下推
+    try:
+        pending = agent_store.get_context(thread_id).get("pending_steps") or []
+        produced = [a for a in agent_store.list_artifacts(thread_id, limit=10)
+                    if a.get("run_id") == run_id]
+        if pending and not produced:
+            asyncio.create_task(_resume_pending_steps(thread_id))
+    except Exception:
+        pass
+
 
 async def confirm_run(run_id: str, approved: bool, params: dict | None = None) -> dict:
     """用户在确认卡上点了执行/取消。"""
@@ -400,8 +410,9 @@ async def _resume_pending_steps(thread_id: str) -> None:
     if first.get("intent") == "generate_video" and args.get("mode") == "i2v" and latest:
         args["image_asset_id"] = latest
     first["args"] = args
-    rest = steps
-    agent_store.set_context(thread_id, {"pending_steps": []})
+    # 只跑下一步；剩下的等这一步的产物出来再续（支持三级/四级依赖）
+    rest = steps[1:]
+    agent_store.set_context(thread_id, {"pending_steps": rest})
 
     thread = agent_store.get_thread(thread_id)
     if not thread:
@@ -411,6 +422,7 @@ async def _resume_pending_steps(thread_id: str) -> None:
                             "上一步产物出来了，我接着做剩下的步骤。",
                             [{"type": "notice", "text": "继续执行计划"}], run["id"])
     bus.publish(thread_id, {"t": "run_start", "run_id": run["id"]})
-    task = asyncio.create_task(_run(thread, run["id"], "继续执行剩余步骤", None, rest))
+    # 只执行这一步；rest 留在上下文里，等这一步的产物出来再续
+    task = asyncio.create_task(_run(thread, run["id"], "继续执行剩余步骤", None, [first]))
     _tasks[run["id"]] = task
     task.add_done_callback(lambda _t, rid=run["id"]: _tasks.pop(rid, None))
