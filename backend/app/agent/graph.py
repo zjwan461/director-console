@@ -145,6 +145,8 @@ def _fast_intent(state: AgentState) -> dict | None:
     asking = bool(re.search(r"(？|\?|怎么|如何|为什么|哪些|什么|支持|是否|能否|可以吗|吗[？?]?$)", text))
     command_hint = bool(re.match(r"^(帮我|给我|替我|劳驾)", text))
     if asking and not command_hint:
+        if re.search(r"(区别|不一样|哪个|选哪|哪种|优缺点|适合|怎么选)", text):
+            return {"intent": "explain", "args": {"q": text}, "reply": ""}
         if re.search(r"(工作流|能力卡|卡片|预设|模型|节点)", text):
             return {"intent": "list_presets", "args": {}, "reply": ""}
         return {"intent": "capability", "args": {}, "reply": CAPABILITY_TEXT}
@@ -425,6 +427,66 @@ async def node_quick_reply(state: AgentState) -> dict:
     _emit({"t": "step", "id": "decide", "node": "decide", "title": "需要确认一下",
            "status": "done", "detail": {"reply": reply[:80]}})
     return {"reply": reply or "我没太听懂，换个说法？", "streamed": False}
+
+
+def _card_facts() -> str:
+    """把能力卡整理成事实清单，供「解释型」问答使用。"""
+    lines = []
+    for card in tools.load_cards():
+        if not card.get("_workflow_exists"):
+            continue
+        public = tools.public_card(card)
+        kind = {"video": "视频", "image": "图片"}.get(public.get("output_kind"), "其他")
+        desc = str(public.get("desc") or "").strip()
+        lines.append(f"- {public.get('name')}（{kind}）：{desc}")
+        fields = public.get("fields") or []
+        labels = [str(f.get("label")) for f in fields if f.get("label")]
+        if labels:
+            lines.append(f"  可调参数：{'、'.join(labels[:6])}")
+    return "\n".join(lines) or "（没有可用的能力卡）"
+
+
+EXPLAIN_SYSTEM = """你是导演台的能力顾问，只根据下面这份「能力卡事实」回答问题。
+
+事实：
+{facts}
+
+要求：
+1. 只用事实里出现的信息，不要编造工作流或参数
+2. 3~5 句中文，先说结论再补一句区别
+3. 用户问「有什么区别」时，要点出关键差异（输入形式、时长、参考图数量、适用场景）
+4. 不要输出 JSON，不要罗列全部卡片"""
+
+
+async def node_explain(state: AgentState) -> dict:
+    """解释型问答：基于真实能力卡回答「区别/怎么选」。"""
+    from .. import llm as llm_module
+
+    question = str((state.get("args") or {}).get("q") or state.get("text") or "")
+    facts = _card_facts()
+
+    if not llm_module.ready():
+        return {"reply": "还没配置大模型（设置 → AI）。先给你看当前可用的：\n" + facts}
+
+    msgs = [
+        {"role": "system", "content": EXPLAIN_SYSTEM.format(facts=facts)},
+        {"role": "user", "content": question},
+    ]
+    text = ""
+    try:
+        async for event in llm_module.chat_stream(msgs, temperature=0.3):
+            delta = str(event.get("text") or "")
+            if not delta:
+                continue
+            if event.get("type") == "reasoning":
+                _emit({"t": "thinking", "text": delta})
+                continue
+            text += delta
+            _emit({"t": "message_delta", "text": delta})
+    except Exception as exc:
+        return {"reply": f"解释失败：{exc}", "streamed": False}
+
+    return {"reply": text.strip() or "这几张卡的说明我这边没有更细的信息。", "streamed": True}
 
 
 async def node_reply_capability(state: AgentState) -> dict:
@@ -1111,6 +1173,8 @@ def route_after_decide(state: AgentState) -> str:
     intent = state.get("intent") or "chat"
     if intent == "lookup":
         return "lookup"
+    if intent == "explain":
+        return "explain"
     if intent in {"capability", "list_presets"}:
         return "reply_capability"
     if intent in {"generate", "generate_video"}:
@@ -1166,6 +1230,7 @@ def build_graph(checkpointer=None):
     graph.add_node("chat", node_chat)
     graph.add_node("reply_capability", node_reply_capability)
     graph.add_node("quick_reply", node_quick_reply)
+    graph.add_node("explain", node_explain)
     graph.add_node("lookup", node_lookup)
     graph.add_node("prepare", node_prepare)
     graph.add_node("prepare_export", node_prepare_export)
@@ -1193,6 +1258,7 @@ def build_graph(checkpointer=None):
                                  "prepare_new_project": "prepare_new_project",
                                  "prepare_add_shot": "prepare_add_shot",
                                  "reply_capability": "reply_capability",
+                                 "explain": "explain",
                                  "prepare_revise": "prepare_revise",
                                  "prepare_multi": "prepare_multi"})
     graph.add_edge("lookup", END)
@@ -1215,5 +1281,6 @@ def build_graph(checkpointer=None):
     graph.add_edge("dispatch_multi", END)
     graph.add_edge("chat", END)
     graph.add_edge("reply_capability", END)
+    graph.add_edge("explain", END)
     graph.add_edge("quick_reply", END)
     return graph.compile(checkpointer=checkpointer)

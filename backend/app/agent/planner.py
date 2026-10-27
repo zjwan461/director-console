@@ -19,15 +19,18 @@ MAX_STEPS = 4
 
 # 工具白名单：与 graph 里的意图一一对应
 TOOLS: dict[str, dict[str, Any]] = {
-    "make_image": {"intent": "generate", "desc": "生成图片",
+    "make_image": {"intent": "generate", "desc": "生成图片：要一张静态画面/剧照时用",
                    "args": {"prompt": "画面描述", "aspect": "9:16|16:9", "megapixels": "0.8~2.0"}},
-    "make_video": {"intent": "generate_video", "desc": "生成视频",
+    "make_video": {"intent": "generate_video",
+                   "desc": "生成视频：要动的画面时用；有首帧图就 mode=i2v",
                    "args": {"prompt": "画面描述", "mode": "t2v|i2v|r2v", "duration": "秒",
                             "aspect": "9:16|16:9"}},
-    "revise": {"intent": "revise", "desc": "基于已有产物改参数",
+    "revise": {"intent": "revise",
+               "desc": "改上一版：用户说「再亮一点/慢一点/换成竖屏/时长改 8 秒」时用，不要重新写 prompt",
                "args": {"raw": "用户原话，例如 第 2 张再亮一点"}},
     "lookup_assets": {"intent": "lookup", "desc": "查素材", "args": {"q": "关键词", "kind": "image|video|audio"}},
-    "export_film": {"intent": "export", "desc": "导出成片", "args": {"quality": "1080p|720p"}},
+    "export_film": {"intent": "export", "desc": "导出成片：用户要 mp4/成片时用",
+                    "args": {"quality": "1080p|720p"}},
     "polish_film": {"intent": "polish", "desc": "AI 剪辑：字幕/旁白/配音",
                     "args": {"kinds": "both|subtitle|narration", "tts": "bool"}},
     "set_bgm": {"intent": "bgm", "desc": "配乐", "args": {"mode": "auto|asset|off", "query": "关键词"}},
@@ -44,15 +47,26 @@ DEPENDS_RE = re.compile(r"(这张图|这个图|刚才那|用它|基于它|把(�
 
 PLAN_SYSTEM = """你是导演台的执行规划器。把用户一句话拆成有序动作。
 
-可用工具（只能选这些）：
+可用工具（只能选这些，冒号后面是「什么时候用」）：
 {tools}
 
 规则：
 1. 只输出 JSON，形如 {{"steps":[{{"tool":"make_image","args":{{...}},"why":"一句话"}}],"reply":"对用户说的话"}}
-2. 最多 {max_steps} 步；能一步完成就不要拆
+2. 最多 {max_steps} 步；**能一步完成就不要拆**，宁可少拆也不要多拆
 3. 参数里不要编造用户没说的信息；prompt 用用户原话里的画面描述
-4. 如果后一步依赖前一步的产物（例如先出图再做视频），把 mode 设为 i2v，并在 args.depends_on 写前一步序号（从 1 开始）
+4. 后一步要用前一步的图（例如先出图再做视频）时：mode 设为 i2v，并在 args.depends_on 写前一步序号（从 1 开始）
 5. 用户只是在聊天/提问时，输出 {{"steps":[],"reply":"..."}}
+6. 不要输出解释、不要输出 markdown，只输出 JSON
+
+示例：
+用户「画一张雪夜黑猫，然后做成 5 秒视频」
+→ {{"steps":[{{"tool":"make_image","args":{{"prompt":"雪夜黑猫","aspect":"9:16"}}}},
+            {{"tool":"make_video","args":{{"prompt":"雪夜黑猫，5 秒","mode":"i2v","duration":5,"depends_on":1}}}}],
+    "reply":"先出图，再拿它做视频"}}
+
+用户「配点轻快的音乐，然后把片头改成《归人》」
+→ {{"steps":[{{"tool":"set_bgm","args":{{"mode":"auto"}}}},
+            {{"tool":"set_film_options","args":{{"raw":"片头改成《归人》"}}}}],"reply":"配乐和片头一起改"}}
 """
 
 
