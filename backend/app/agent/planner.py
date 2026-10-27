@@ -107,6 +107,25 @@ def normalize(steps: list[dict]) -> list[dict]:
             "why": str(step.get("why") or "")[:60],
             "depends_on": depends_on if depends_on and depends_on < index else None,
         })
+    # 自动推断依赖：先出图/出片、再做视频，说明后一步要用前一步的产物
+    for pos, step in enumerate(cleaned):
+        if pos == 0 or step["depends_on"]:
+            continue
+        prev = cleaned[pos - 1]
+        if (step["tool"] == "make_video"
+                and prev["tool"] in ("make_image", "revise", "make_video")):
+            step["depends_on"] = prev["index"]
+            args = dict(step.get("args") or {})
+            if not args.get("mode") or args.get("mode") == "t2v":
+                args["mode"] = "i2v"
+            # 「做成 3 秒视频」这类是命令不是画面描述，继承上一步的画面
+            prompt = str(args.get("prompt") or "").strip()
+            if re.match(r"^(做成|做一个|把它|把这个|用它|来一?个|生成)", prompt):
+                base = str((prev.get("args") or {}).get("prompt") or "").strip()
+                extra = re.sub(r"^(做成|做一个|把它|把这个|用它|来一?个|生成)", "", prompt).strip(" ，,。")
+                args["prompt"] = f"{base}，{extra}" if base and extra else (base or extra or prompt)
+            step["args"] = args
+
     # 去掉依赖不存在或指向自己之后的步骤
     return [s for s in cleaned if s["depends_on"] in (None,) or s["depends_on"] < s["index"]]
 

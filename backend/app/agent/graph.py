@@ -35,6 +35,7 @@ class AgentState(TypedDict, total=False):
     attachments: list
     streamed: bool
     error: str
+    preapproved: bool
 
 
 # --------------------------------------------------------------------------- #
@@ -252,6 +253,16 @@ def _short_circuit(state: AgentState) -> dict | None:
 
 
 async def node_decide(state: AgentState) -> dict:
+    # 上一轮确认过的多步计划，依赖产物到位后继续执行（不再弹确认）
+    if state.get("preapproved"):
+        steps = list((state.get("args") or {}).get("steps") or [])
+        if steps:
+            _emit({"t": "step", "id": "decide", "node": "decide",
+                   "title": f"继续执行剩余 {len(steps)} 步", "status": "done",
+                   "detail": {"source": "preapproved"}})
+            return {"intent": "multi", "args": {"steps": steps},
+                    "reply": ""}
+
     # 复合请求（一句话多件事）先做规划：规则分句优先，判不出来才问模型
     text_in = str(state.get("text") or "")
     try:
@@ -685,8 +696,10 @@ async def node_dispatch_multi(state: AgentState) -> dict:
     deferred: list[dict] = []
     done = 0
 
+    preapproved = bool(state.get("preapproved"))
     for step in steps:
-        if step.get("depends_on"):
+        # 预授权续跑时依赖已经满足（上一轮产物已就绪），不再延后
+        if step.get("depends_on") and not preapproved:
             deferred.append(step)
             break
 
@@ -1090,7 +1103,8 @@ async def node_dispatch(state: AgentState) -> dict:
                                    "note": params.get("note", "")})
     _emit({"t": "artifact", "kind": kind, "ref_id": data["job_id"],
                    "artifact_id": artifact["id"], "url": ""})
-    return {"reply": f"已提交，任务 id {data['job_id']}。出图后我会把结果发过来。"}
+    what = "视频" if is_video else "图"
+    return {"reply": f"已提交，任务 id {data['job_id']}。{what}出来后我会把结果发过来。"}
 
 
 def route_after_decide(state: AgentState) -> str:
@@ -1123,6 +1137,9 @@ def route_after_decide(state: AgentState) -> str:
 
 
 def route_after_prepare(state: AgentState) -> str:
+    # 计划已在上一轮确认过 → 跳过确认门，直接执行
+    if state.get("preapproved") and state.get("intent") == "multi":
+        return "dispatch_multi"
     if state.get("intent") == "chat":
         # 节点里已经写好了提示（比如「没听出要改什么」），直接回，不用再等模型
         return "quick_reply" if str(state.get("reply") or "").strip() else "chat"
@@ -1184,7 +1201,8 @@ def build_graph(checkpointer=None):
                                  "quick_reply": "quick_reply"})
     graph.add_conditional_edges("prepare_multi", route_after_prepare,
                                 {"confirm": "confirm", "chat": "chat",
-                                 "quick_reply": "quick_reply"})
+                                 "quick_reply": "quick_reply",
+                                 "dispatch_multi": "dispatch_multi"})
     for name in ("prepare_export", "prepare_save", "prepare_polish", "prepare_bgm",
                  "prepare_film", "prepare_new_project", "prepare_revise", "prepare_add_shot"):
         graph.add_conditional_edges(name, route_after_prepare,

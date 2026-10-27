@@ -86,7 +86,8 @@ async def start_run(thread: dict, text: str, attachments: list[dict] | None = No
 
 
 async def _run(thread: dict, run_id: str, text: str,
-               attachments: list[dict] | None = None) -> None:
+               attachments: list[dict] | None = None,
+               steps: list[dict] | None = None) -> None:
     thread_id = thread["id"]
     config = {"configurable": {"thread_id": run_id, "emit": _sink(thread_id)}}
     state = {
@@ -97,6 +98,9 @@ async def _run(thread: dict, run_id: str, text: str,
         "attachments": attachments or [],
         "messages": [HumanMessage(content=text)],
     }
+    if steps:
+        state["preapproved"] = True
+        state["args"] = {"steps": steps}
     try:
         g = await ensure_graph()
         result = await g.ainvoke(state, config)
@@ -218,6 +222,10 @@ async def watch_job(job_id: str, run_id: str, thread_id: str,
             artifact = agent_store.add_artifact(run_id, thread_id, kind, job_id, url, meta)
         if status == "succeeded":
             _remember_output(thread_id, job, kind, url)
+            try:
+                await _resume_pending_steps(thread_id)
+            except Exception:
+                pass
         text = ("视频出来了" if kind == "video" else "图出来了") \
             if status == "succeeded" else f"生成失败：{job.get('error') or status}"
         parts = [{"type": kind, "url": url, "job_id": job_id,
@@ -378,3 +386,31 @@ async def watch_ai_edit(edit_run_id: str, run_id: str, thread_id: str,
                                     "content": text, "parts": [{"type": "notice", "text": text}]})
             return
         await asyncio.sleep(interval)
+
+
+async def _resume_pending_steps(thread_id: str) -> None:
+    """产物的依赖步骤：等上一步出结果后继续跑剩下的计划。"""
+    ctx = agent_store.get_context(thread_id)
+    steps = list(ctx.get("pending_steps") or [])
+    if not steps:
+        return
+    latest = ctx.get("last_asset_id")
+    first = dict(steps[0])
+    args = dict(first.get("args") or {})
+    if first.get("intent") == "generate_video" and args.get("mode") == "i2v" and latest:
+        args["image_asset_id"] = latest
+    first["args"] = args
+    rest = steps
+    agent_store.set_context(thread_id, {"pending_steps": []})
+
+    thread = agent_store.get_thread(thread_id)
+    if not thread:
+        return
+    run = agent_store.create_run(thread_id)
+    agent_store.add_message(thread_id, "assistant",
+                            "上一步产物出来了，我接着做剩下的步骤。",
+                            [{"type": "notice", "text": "继续执行计划"}], run["id"])
+    bus.publish(thread_id, {"t": "run_start", "run_id": run["id"]})
+    task = asyncio.create_task(_run(thread, run["id"], "继续执行剩余步骤", None, rest))
+    _tasks[run["id"]] = task
+    task.add_done_callback(lambda _t, rid=run["id"]: _tasks.pop(rid, None))
