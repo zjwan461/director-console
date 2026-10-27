@@ -132,7 +132,17 @@ export default function EditPanel({
   useEffect(() => {
     api.projects().then((res) => {
       setProjects(res.items)
-      if (!projectId && res.items.length) setProjectId(res.items[0].id)
+      const exists = res.items.some((item) => item.id === projectId)
+      if (res.items.length && (!projectId || !exists)) {
+        // URL 里带的是已删除的项目：直接落到第一个可用项目，并把 URL 一并纠正
+        const fallback = res.items[0].id
+        setProjectId(fallback)
+        if (projectId && !exists) {
+          const url = new URL(window.location.href)
+          url.searchParams.set('project', fallback)
+          window.history.replaceState({}, '', url)
+        }
+      }
     }).catch(() => undefined)
     api.assets({ kind: 'audio', limit: 50 }).then((res) => setAudios(res.items)).catch(() => undefined)
     api.assets({ kind: 'image', limit: 50 }).then((res) => setImages(res.items)).catch(() => undefined)
@@ -143,6 +153,7 @@ export default function EditPanel({
   useEffect(() => {
     if (!projectId) return
     setLoaded(false)
+    setError('')
     Promise.all([api.shots(projectId), api.editState(projectId)])
       .then(([shotRes, state]) => {
         setShots(shotRes.items)
@@ -241,8 +252,13 @@ export default function EditPanel({
         // 没有历史选择时默认全选，避免第一次进来「已选 0/1」导出不了
         setSelected(savedIds.length ? savedIds : shotRes.items.map((s) => s.id))
         setLoaded(true)
+        setError('')
       })
-      .catch((err) => setError(err instanceof Error ? err.message : String(err)))
+      .catch((err) => {
+        const text = err instanceof Error ? err.message : String(err)
+        // 项目被删掉时给一句人话，而不是直接抛后端的 detail
+        setError(text.includes('项目不存在') ? '这个项目已经不在了，请在上面重新选一个项目' : text)
+      })
   }, [projectId])
 
   // 时间轴以后端为准：转场重叠、变速、片头偏移都在服务端算一次
