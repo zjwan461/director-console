@@ -749,13 +749,19 @@ async def node_prepare_multi(state: AgentState) -> dict:
 
     previews = []
     for step in steps:
+        args = dict(step.get("args") or {})
         previews.append({
             "index": step.get("index"),
             "tool": step["tool"],
             "intent": step["intent"],
+            "label": TOOL_LABEL.get(step["tool"], step["tool"]),
             "why": step.get("why") or "",
             "depends_on": step.get("depends_on"),
             "text": step.get("text") or "",
+            # 只暴露可读可改的字段，避免把内部结构塞给前端
+            "args": {k: v for k, v in args.items()
+                     if k in ("prompt", "aspect", "duration", "megapixels", "mode",
+                              "quality", "kinds", "tts", "title", "relation")},
         })
     _emit({"t": "tool_call", "id": "prep_multi", "name": "plan.preview",
            "args": {"count": len(previews)}})
@@ -918,8 +924,19 @@ async def node_confirm(state: AgentState) -> dict:
         previews = params.get("previews") or []
         lines = []
         for item in previews:
-            mark = "（需等上一步产物）" if item.get("depends_on") else ""
-            lines.append(f"{item.get('index')}. {TOOL_LABEL.get(item.get('tool'), item.get('tool'))}{mark}")
+            mark = "（等上一步产物）" if item.get("depends_on") else ""
+            args = item.get("args") or {}
+            bits = []
+            if args.get("prompt"):
+                bits.append(str(args["prompt"])[:18])
+            if args.get("aspect"):
+                bits.append(str(args["aspect"]))
+            if args.get("duration"):
+                bits.append(f"{args['duration']}s")
+            if args.get("mode"):
+                bits.append(str(args["mode"]))
+            tail = f" · {' / '.join(bits)}" if bits else ""
+            lines.append(f"{item.get('index')}. {item.get('label') or item.get('tool')}{mark}{tail}")
         payload = {"kind": "confirm", "action": "multi", "title": f"{len(previews)} 步计划",
                    "summary": " → ".join(lines) or "多步执行",
                    "params": params, "preset_id": "", "mode": "multi"}
@@ -995,6 +1012,13 @@ async def node_confirm(state: AgentState) -> dict:
 
     # 确认卡上改过的参数（提示词 / 画幅 / 清晰度 / 时长）要真正生效
     edited = decision.get("params") or {}
+    if isinstance(edited, dict) and edited.get("steps") and plan.get("kind") == "multi":
+        # 前端在多步卡上改过参数：以它为准
+        merged_steps = edited["steps"]
+        plan = {**plan, "params": {**params, "steps": merged_steps,
+                                   "previews": edited.get("previews") or params.get("previews") or []}}
+        return {"decision": "approved", "plan": plan}
+
     if isinstance(edited, dict) and edited:
         kind = plan.get("kind") or "image"
         merged = {**params, **edited}

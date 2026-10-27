@@ -36,6 +36,9 @@ export default function AgentPanel({ projectId, onOpenProject }: {
   const [lastUserText, setLastUserText] = useState('')
   const [error, setError] = useState('')
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
+  const [multiEdits, setMultiEdits] = useState<Record<number, {
+    prompt?: string; aspect?: string; duration?: number
+  }>>({})
   const [confirmDraft, setConfirmDraft] = useState<{
     prompt: string; aspect: string; quality: string; title: string; duration: number; megapixels: number
   } | null>(null)
@@ -320,8 +323,23 @@ export default function AgentPanel({ projectId, onOpenProject }: {
     }
     const action = String((target.pending as Record<string, unknown>).action || 'image')
     let params: Record<string, unknown> | undefined
-    if (approved && confirmDraft) {
-      const base = { ...((target.pending.params as Record<string, unknown>) || {}) }
+    const pendingParams = { ...((target.pending.params as Record<string, unknown>) || {}) }
+    if (approved && action === 'multi') {
+      const rawSteps = Array.isArray(pendingParams.steps)
+        ? (pendingParams.steps as Array<Record<string, unknown>>) : []
+      const steps = rawSteps.map((step) => {
+        const index = Number(step.index || 0)
+        const edit = multiEdits[index]
+        if (!edit) return step
+        const args = { ...((step.args as Record<string, unknown>) || {}) }
+        if (edit.prompt !== undefined) args.prompt = edit.prompt
+        if (edit.aspect) args.aspect = edit.aspect
+        if (edit.duration) args.duration = edit.duration
+        return { ...step, args }
+      })
+      params = { ...pendingParams, steps }
+    } else if (approved && confirmDraft) {
+      const base = pendingParams
       if (action === 'image' || action === 'video') {
         params = {
           ...base,
@@ -342,6 +360,7 @@ export default function AgentPanel({ projectId, onOpenProject }: {
     try {
       await api.agentConfirm(target.id, approved, params)
       setConfirmDraft(null)
+      setMultiEdits({})
       setSteps([])
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
@@ -555,6 +574,87 @@ export default function AgentPanel({ projectId, onOpenProject }: {
               {actionOf(pending) === 'create_project' && (
                 <p className="agent-confirm-hint">建好后会自动切到新项目的新会话。</p>
               )}
+
+              {actionOf(pending) === 'multi' && (() => {
+                const params = (pending.params || {}) as Record<string, unknown>
+                const steps = Array.isArray(params.steps)
+                  ? (params.steps as Array<Record<string, unknown>>) : []
+                const previews = Array.isArray(params.previews)
+                  ? (params.previews as Array<Record<string, unknown>>) : []
+                const labelOf = (step: Record<string, unknown>) => {
+                  const found = previews.find((p) => Number(p.index) === Number(step.index))
+                  return String(found?.label || step.tool || '')
+                }
+                const readOnlyOf = (step: Record<string, unknown>) => {
+                  const args = (step.args || {}) as Record<string, unknown>
+                  const bits: string[] = []
+                  if (args.quality) bits.push(String(args.quality))
+                  if (args.kinds) bits.push(String(args.kinds))
+                  if (args.raw) bits.push(String(args.raw).slice(0, 24))
+                  if (args.mode) bits.push(String(args.mode))
+                  return bits.join(' · ')
+                }
+                return (
+                  <div className="agent-multi">
+                    {steps.map((step, i) => {
+                      const index = Number(step.index || i + 1)
+                      const args = (step.args || {}) as Record<string, unknown>
+                      const edit = multiEdits[index] || {}
+                      const prompt = edit.prompt !== undefined
+                        ? edit.prompt : String(args.prompt || '')
+                      const aspect = edit.aspect || String(args.aspect || '9:16')
+                      const duration = edit.duration || Number(args.duration || 5)
+                      const editable = step.tool === 'make_image' || step.tool === 'make_video'
+                      return (
+                        <div className="agent-multi-step" key={index}>
+                          <div className="agent-multi-head">
+                            <span className="agent-multi-index">{index}</span>
+                            <b>{labelOf(step)}</b>
+                            {step.depends_on ? (
+                              <span className="agent-multi-dep">等上一步产物</span>
+                            ) : null}
+                          </div>
+                          {editable ? (
+                            <>
+                              <textarea rows={2} value={prompt}
+                                        onChange={(e) => setMultiEdits((prev) => ({
+                                          ...prev, [index]: { ...prev[index], prompt: e.target.value },
+                                        }))} />
+                              <div className="agent-multi-row">
+                                <label>
+                                  画幅
+                                  <select value={aspect}
+                                          onChange={(e) => setMultiEdits((prev) => ({
+                                            ...prev, [index]: { ...prev[index], aspect: e.target.value },
+                                          }))}>
+                                    {ASPECTS.map((a) => <option key={a} value={a}>{a}</option>)}
+                                  </select>
+                                </label>
+                                {step.tool === 'make_video' && (
+                                  <label>
+                                    时长
+                                    <select value={duration}
+                                            onChange={(e) => setMultiEdits((prev) => ({
+                                              ...prev,
+                                              [index]: { ...prev[index], duration: Number(e.target.value) },
+                                            }))}>
+                                      {[3, 4, 5, 6, 8, 10, 12, 15].map((n) => (
+                                        <option key={n} value={n}>{n} 秒</option>
+                                      ))}
+                                    </select>
+                                  </label>
+                                )}
+                              </div>
+                            </>
+                          ) : (
+                            <p className="agent-confirm-hint">{readOnlyOf(step) || '按当前项目设置执行'}</p>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              })()}
 
               {(actionOf(pending) === 'image' || actionOf(pending) === 'video') && (
                 <>
