@@ -670,6 +670,18 @@ export default function AgentPanel({ projectId, onOpenProject }: {
               )}
 
               {(actionOf(pending) === 'image' || actionOf(pending) === 'video') && (
+                <p className="agent-confirm-hint">
+                  能力卡：
+                  <b>{String((pending as Record<string, unknown>).preset_name || '')}</b>
+                  <span className="meta">
+                    {' '}({String((pending as Record<string, unknown>).preset_id || '')}
+                    {actionOf(pending) === 'video' && (pending as Record<string, unknown>).mode
+                      ? ` · ${String((pending as Record<string, unknown>).mode)}` : ''})
+                  </span>
+                </p>
+              )}
+
+              {(actionOf(pending) === 'image' || actionOf(pending) === 'video') && (
                 <>
                   <label className="field">
                     <span>画面描述</span>

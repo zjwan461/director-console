@@ -168,3 +168,46 @@ async def _iter_sse(resp: httpx.Response) -> AsyncIterator[dict]:
             content = "".join(str(part.get("text", "")) for part in content if isinstance(part, dict))
         if content:
             yield dict(type="content", text=str(content))
+
+
+def vision_model_name() -> str:
+    return str(settings.get("ai.vision_model") or settings.get("ai.model") or "")
+
+
+async def chat_vision(image_b64_list: list[tuple[str, str]], instruction: str,
+                      *, max_tokens: int = 900, temperature: float = 0.6) -> str:
+    """看图说话：image_b64_list 为 [(mime, base64), ...]。"""
+    base, key, _, proxy = _endpoint()
+    if not (base and key):
+        raise RuntimeError("还没配置大模型（设置 → AI）")
+
+    content: list[dict] = [{"type": "text", "text": instruction}]
+    for mime, b64 in image_b64_list[:4]:
+        content.append({"type": "image_url",
+                        "image_url": {"url": f"data:{mime};base64,{b64}"}})
+
+    body = {
+        "model": vision_model_name(),
+        "messages": [{"role": "user", "content": content}],
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+    }
+    async with _client(proxy) as client:
+        resp = await client.post(f"{base}/chat/completions", json=body,
+                                 headers={"Authorization": f"Bearer {key}"})
+        resp.raise_for_status()
+        data = resp.json()
+    message = ((data.get("choices") or [{}])[0] or {}).get("message") or {}
+    text = str(message.get("content") or "").strip()
+    if not text:
+        # 推理模型会把预算花在思考上，正文被挤空——放大预算重试一次
+        body["max_tokens"] = max_tokens * 2
+        body["messages"] = [{"role": "user", "content": content}]
+        async with _client(proxy) as client:
+            retry = await client.post(f"{base}/chat/completions", json=body,
+                                      headers={"Authorization": f"Bearer {key}"})
+            retry.raise_for_status()
+            data = retry.json()
+        message = ((data.get("choices") or [{}])[0] or {}).get("message") or {}
+        text = str(message.get("content") or "").strip()
+    return text

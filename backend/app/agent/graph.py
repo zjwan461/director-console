@@ -305,8 +305,8 @@ def _short_circuit(state: AgentState) -> dict | None:
     if any(word in text for word in ("重新画", "再画", "生成图片", "换一张图")):
         return None
 
-    prompt = _clean_prompt(str(ctx.get("last_prompt") or ""),
-                           "让这张图动起来：人物轻微呼吸与发丝摆动，镜头缓慢推近")
+    # 留空 → prepare 阶段会用多模态模型看图写运镜
+    prompt = _clean_prompt(str(ctx.get("last_prompt") or ""), "")
     return {
         "intent": "generate_video",
         "args": {
@@ -821,7 +821,8 @@ async def node_prepare(state: AgentState) -> dict:
     args = state.get("args") or {}
     intent = state.get("intent") or "generate"
     prompt = _clean_prompt(str(args.get("prompt") or ""))
-    if not prompt:
+    # 视频可以「看图写运镜」，所以空提示词只对出图直接拦截
+    if not prompt and intent != "generate_video":
         return {"intent": "chat", "reply": "能再说清楚一点画面内容吗？我好照着画。"}
 
     if intent == "generate_video":
@@ -830,12 +831,16 @@ async def node_prepare(state: AgentState) -> dict:
             mode = "t2v"
         asset_id = str(args.get("image_asset_id") or "").strip()
 
-        # 消息里带的图片优先当参考图（对口型/图生视频/参考生视频都要图）
+        # 参考图优先级：本条附件 > 会话最近产物 > 素材库搜索
         if not asset_id:
             for att in state.get("attachments") or []:
                 if att.get("kind") == "image":
                     asset_id = str(att.get("id") or "")
                     break
+        if not asset_id and mode in {"i2v", "r2v", "lipsync", "r2v9"}:
+            ctx_now = agent_store.get_context(state.get("thread_id", ""))
+            if str(ctx_now.get("last_kind") or "") == "image":
+                asset_id = str(ctx_now.get("last_asset_id") or "")
 
         # 没带图就去素材库找
         if mode in {"i2v", "r2v", "lipsync", "r2v9"} and not asset_id:
@@ -862,6 +867,24 @@ async def node_prepare(state: AgentState) -> dict:
             audio_ids = [str(x) for x in args["audio_asset_ids"]]
         audio_ids = [x for x in audio_ids if x][:3]
         audio_id = audio_ids[0] if audio_ids else ""
+
+        # 图生视频/参考生视频：没有具体提示词时，看图写运镜（这才是 agent 该干的事）
+        if (mode in {"i2v", "r2v", "r2v9"} and asset_id
+                and (not prompt or prompt == tools.DEFAULT_MOTION_PROMPT
+                     or prompt.startswith("让这张图动起来"))):
+            try:
+                generated = await tools.motion_prompt(asset_id, str(state.get("text") or ""))
+                if generated:
+                    prompt = generated
+                    _emit({"t": "step", "id": "motion", "node": "prepare",
+                           "title": "看图写运镜", "status": "done",
+                           "detail": {"prompt": generated}})
+            except Exception:
+                pass
+
+        # 「做成视频」这种只有动作没有画面描述的，看图补完后再判断
+        if not prompt or not prompt.strip():
+            return {"intent": "chat", "reply": "能再说清楚一点画面内容吗？我好照着拍。"}
 
         # 对口型：默认按音频时长出片，避免画面比声音长/短
         seconds = float(args["duration"]) if args.get("duration") else None
@@ -1239,16 +1262,21 @@ async def node_confirm(state: AgentState) -> dict:
                    "params": params, "preset_id": "", "mode": ""}
     elif kind == "video":
         eta = max(60, int(float(params.get("duration") or 5) * 40))
+        card = tools.get_card(str(plan.get("preset_id") or "")) or {}
         payload = {"kind": "confirm", "action": "video", "title": "生成视频",
                    "summary": f"{params.get('width')}×{params.get('height')} · {params.get('duration')} 秒 · 约 {eta} 秒",
                    "params": {**params, "megapixels_options": mp_options},
                    "mode": plan.get("mode", ""),
-                   "preset_id": plan.get("preset_id")}
+                   "preset_id": plan.get("preset_id"),
+                   "preset_name": str(card.get("name") or ""),
+                   "preset_id_label": str(plan.get("preset_id") or "")}
     else:
+        card = tools.get_card(str(plan.get("preset_id") or "")) or {}
         payload = {"kind": "confirm", "action": "image", "title": "生成图片",
                    "summary": f"{params.get('width')}×{params.get('height')} · 约 40 秒",
                    "params": {**params, "megapixels_options": mp_options},
-                   "mode": "", "preset_id": plan.get("preset_id")}
+                   "mode": "", "preset_id": plan.get("preset_id"),
+                   "preset_name": str(card.get("name") or "")}
 
 
     decision = interrupt(payload) or {}

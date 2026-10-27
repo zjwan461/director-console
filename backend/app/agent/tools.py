@@ -718,3 +718,61 @@ async def make_revision(thread_id: str, project_id: str, text: str) -> str:
     data["revision"] = preview
     data["params"] = params
     return _dumps(data)
+
+
+DEFAULT_MOTION_PROMPT = "让这张图动起来：人物轻微呼吸与发丝摆动，镜头缓慢推近"
+
+MOTION_INSTRUCTION = """这是视频首帧。请为它写一条「图生视频」的运镜提示词：
+- 中文，一到两句，40 字以内
+- 描述画面里**实际有的主体在怎么动**（人物动作、表情、动物姿态、光线、雪/雨/烟等）
+- 加一个镜头运动（推/拉/摇/移/环绕），不要写画面里不存在的东西
+- 直接输出提示词本身，不要引号、不要解释"""
+
+
+async def image_b64(asset_id: str) -> tuple[str, str]:
+    """读素材图片成 (mime, base64)。"""
+    import base64
+
+    asset = store.get_asset(asset_id)
+    if not asset:
+        return ("", "")
+    from ..config import settings
+
+    path = pathlib.Path(settings.paths["data"]) / str(asset.get("path") or "")
+    if not path.exists():
+        return ("", "")
+    suffix = path.suffix.lower()
+    mime = {".png": "image/png", ".webp": "image/webp"}.get(suffix, "image/jpeg")
+    return (mime, base64.b64encode(path.read_bytes()).decode("ascii"))
+
+
+async def motion_prompt(asset_id: str, user_text: str = "") -> str:
+    """用多模态模型看图写运镜提示词；输出太短就重试，仍不行才退回默认值。"""
+    from .. import llm
+
+    mime, b64 = await image_b64(asset_id)
+    if not b64:
+        return DEFAULT_MOTION_PROMPT
+    hint = f"\n用户补充：{user_text.strip()[:80]}" if user_text.strip() else ""
+
+    def usable(value: str) -> bool:
+        text = value.strip().strip('"“”').strip()
+        # 太短 / 只有颜色词 / 没有动作或镜头，都算不合格
+        if len(text) < 10:
+            return False
+        if not any(word in text for word in ("镜头", "推", "拉", "摇", "移", "环绕", "动", "呼吸", "飘", "转")):
+            return False
+        return True
+
+    for attempt in range(2):
+        instruction = MOTION_INSTRUCTION + hint
+        if attempt == 1:
+            instruction += "\n（要求：至少 20 个字，必须包含主体动作和一个镜头运动）"
+        try:
+            text = await llm.chat_vision([(mime, b64)], instruction)
+        except Exception:
+            continue
+        if usable(text):
+            return text.strip().strip('"“”')[:200]
+
+    return DEFAULT_MOTION_PROMPT
