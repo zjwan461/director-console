@@ -45,7 +45,7 @@ def thread_artifacts(thread_id: str) -> list[dict]:
     """按时间正序编号的产物列表（只含有 url 的）。"""
     rows = agent_store.list_artifacts(thread_id, limit=60)
     items = [a for a in rows if a.get("url")]
-    items.sort(key=lambda a: float(a.get("created_at") or 0))
+    items.sort(key=lambda a: (float(a.get("created_at") or 0), int(a.get("seq") or 0)))
     result = []
     for index, art in enumerate(items, start=1):
         meta: dict = art.get("meta") or {}

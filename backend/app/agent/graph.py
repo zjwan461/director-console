@@ -129,7 +129,7 @@ def _fast_intent(state: AgentState) -> dict | None:
     duration = int(duration_match.group(1)) if duration_match else 5
 
     POLISH_RE = re.compile(r"(字幕|旁白|配音|口播|解说|AI ?剪辑|一键剪辑)")
-    BGM_RE = re.compile(r"(配乐|背景音乐|BGM|加.*音乐|音乐.*换|来点音乐)", re.IGNORECASE)
+    BGM_RE = re.compile(r"(配乐|背景音乐|BGM|配.{0,6}音乐|音乐|来点音乐)", re.IGNORECASE)
     FILM_RE = re.compile(r"(转场|片头|片尾|画幅|比例)")
 
     NEWPROJECT_RE = re.compile(r"(新建|建个|开个|创建).{0,4}项目|新项目")
@@ -172,6 +172,9 @@ def _fast_intent(state: AgentState) -> dict | None:
         return {"intent": "save_shot", "args": {}, "reply": "好，把刚才的产物存成镜头。"}
     REVISE_RE = re.compile(r"(再\S{0,3}(亮|暗|快|慢)|更(亮|暗|快|慢)|改成|换成|调成|调整成|"
                            r"改一?下?|换一?下?|调整|慢一点|快一点|放慢|加快|时长.*秒|清晰度)")
+    if FILM_RE.search(text):
+        return {"intent": "film_options", "args": {"raw": text},
+                "reply": "好，我改一下成片设置。"}
     if REVISE_RE.search(text):
         return {"intent": "revise", "args": {"raw": text},
                 "reply": "好，我在上一版基础上改。"}
@@ -185,9 +188,6 @@ def _fast_intent(state: AgentState) -> dict | None:
     if IMAGE_RE.search(text) and IMPERATIVE_RE.search(text):
         return {"intent": "generate", "args": {"prompt": text, "aspect": "9:16"},
                 "reply": "好，我来出图。"}
-    if FILM_RE.search(text):
-        return {"intent": "film_options", "args": {"raw": text},
-                "reply": "好，我改一下成片设置。"}
     return None
 
 
@@ -252,6 +252,25 @@ def _short_circuit(state: AgentState) -> dict | None:
 
 
 async def node_decide(state: AgentState) -> dict:
+    # 复合请求（一句话多件事）先做规划：规则分句优先，判不出来才问模型
+    text_in = str(state.get("text") or "")
+    try:
+        from . import planner as _planner
+
+        if _planner.looks_compound(text_in):
+            planned = await _planner.plan(text_in, state.get("thread_id", ""),
+                                          state.get("project_id", ""))
+            steps = planned.get("steps") or []
+            if len(steps) >= 2:
+                _emit({"t": "step", "id": "decide", "node": "decide",
+                       "title": "拆成 " + str(len(steps)) + " 步", "status": "done",
+                       "detail": {"source": planned.get("source"), "steps": [
+                           {"tool": s["tool"], "why": s.get("why")} for s in steps]}})
+                return {"intent": "multi", "args": {"steps": steps},
+                        "reply": planned.get("reply") or "好，我按顺序做这几步。"}
+    except Exception:
+        pass
+
     # 疑问句先走问答：否则「你有哪些视频工作流」会被视频+最近产物短路成生成
     text_now = str(state.get("text") or "")
     asking = bool(re.search(r"(？|\?|怎么|如何|为什么|哪些|什么|支持|是否|能否|可以吗|吗[？?]?$)",
@@ -341,6 +360,19 @@ async def node_decide(state: AgentState) -> dict:
                    "status": "done", "detail": {"intent": intent, "args": args}})
     return {"intent": intent, "reply": reply, "args": args}
 
+
+TOOL_LABEL = {
+    "make_image": "出图",
+    "make_video": "出视频",
+    "revise": "修订上一版",
+    "lookup_assets": "查素材",
+    "export_film": "导出成片",
+    "polish_film": "AI 剪辑（字幕/旁白）",
+    "set_bgm": "配乐",
+    "set_film_options": "成片设置",
+    "create_project": "建项目",
+    "add_shots": "加镜头",
+}
 
 FAQ = [
     (r"(图生视频|图做视频|图片.*视频|首帧|用这张图)", (
@@ -594,6 +626,91 @@ async def node_prepare_save(state: AgentState) -> dict:
     return {"plan": plan}
 
 
+def _prepare_for(intent: str):
+    """多步执行时按意图选对应的 prepare 节点（图里是不同节点，这里手动分派）。"""
+    return {
+        "generate": node_prepare,
+        "generate_video": node_prepare,
+        "revise": node_prepare_revise,
+        "export": node_prepare_export,
+        "save_shot": node_prepare_save,
+        "polish": node_prepare_polish,
+        "bgm": node_prepare_bgm,
+        "film_options": node_prepare_film,
+        "create_project": node_prepare_new_project,
+        "add_shot": node_prepare_add_shot,
+    }.get(intent, node_prepare)
+
+
+def _multi_step_state(state: AgentState, step: dict) -> AgentState:
+    """把某一步包装成一次单步执行所需的状态。"""
+    return {
+        **state,
+        "intent": step["intent"],
+        "args": step.get("args") or {},
+        "text": step.get("text") or state.get("text") or "",
+        "plan": None,
+    }
+
+
+async def node_prepare_multi(state: AgentState) -> dict:
+    """多步计划：确认卡上把所有步骤列清楚，一步确认。"""
+    args = state.get("args") or {}
+    steps = list(args.get("steps") or [])
+    if not steps:
+        return {"intent": "chat", "reply": "我没拆出可执行的动作，能再说具体一点吗？"}
+
+    previews = []
+    for step in steps:
+        previews.append({
+            "index": step.get("index"),
+            "tool": step["tool"],
+            "intent": step["intent"],
+            "why": step.get("why") or "",
+            "depends_on": step.get("depends_on"),
+            "text": step.get("text") or "",
+        })
+    _emit({"t": "tool_call", "id": "prep_multi", "name": "plan.preview",
+           "args": {"count": len(previews)}})
+    _emit({"t": "tool_result", "id": "prep_multi", "ok": True,
+           "data": {"steps": previews}})
+    return {"plan": {"kind": "multi", "params": {"steps": steps, "previews": previews}}}
+
+
+async def node_dispatch_multi(state: AgentState) -> dict:
+    """按顺序执行：独立步骤立刻做，依赖前一步产物的先停住并说明。"""
+    plan = state.get("plan") or {}
+    steps = list((plan.get("params") or {}).get("steps") or [])
+    replies: list[str] = []
+    deferred: list[dict] = []
+    done = 0
+
+    for step in steps:
+        if step.get("depends_on"):
+            deferred.append(step)
+            break
+
+        sub = _multi_step_state(state, step)
+        prepare_fn = _prepare_for(step["intent"])
+        prepared = await prepare_fn(sub)
+        if prepared.get("intent") == "chat":
+            replies.append(f"第 {step['index']} 步跳过：{prepared.get('reply')}")
+            continue
+        sub["plan"] = prepared.get("plan")
+        result = await node_dispatch(sub)
+        done += 1
+        replies.append(str(result.get("reply") or ""))
+
+    if deferred:
+        try:
+            agent_store.set_context(state.get("thread_id", ""), {"pending_steps": deferred})
+        except Exception:
+            pass
+        replies.append(f"还有 {len(deferred)} 步要用到上一步的产物，等它出来我再接着做。")
+
+    return {"reply": "\n".join(r for r in replies if r) or "这几步都没能执行。"}
+
+
 async def node_prepare_revise(state: AgentState) -> dict:
     args = state.get("args") or {}
     text = str(args.get("raw") or state.get("text") or "")
@@ -708,6 +825,15 @@ async def node_confirm(state: AgentState) -> dict:
                    f"约 {params.get('approx_seconds')} 秒 · {' · '.join(extras)} · 预计 {params.get('eta')} 秒")
         payload = {"kind": "confirm", "action": "export", "title": "导出成片",
                    "summary": summary, "params": params, "preset_id": "", "mode": ""}
+    elif kind == "multi":
+        previews = params.get("previews") or []
+        lines = []
+        for item in previews:
+            mark = "（需等上一步产物）" if item.get("depends_on") else ""
+            lines.append(f"{item.get('index')}. {TOOL_LABEL.get(item.get('tool'), item.get('tool'))}{mark}")
+        payload = {"kind": "confirm", "action": "multi", "title": f"{len(previews)} 步计划",
+                   "summary": " → ".join(lines) or "多步执行",
+                   "params": params, "preset_id": "", "mode": "multi"}
     elif kind == "revise":
         payload = {"kind": "confirm", "action": "revise", "title": "修改上一版",
                    "summary": f"基于 #{params.get('base_ref')} · {params.get('summary')}",
@@ -985,6 +1111,8 @@ def route_after_decide(state: AgentState) -> str:
         return "prepare_bgm"
     if intent == "film_options":
         return "prepare_film"
+    if intent == "multi":
+        return "prepare_multi"
     if intent == "revise":
         return "prepare_revise"
     if intent == "create_project":
@@ -1002,7 +1130,10 @@ def route_after_prepare(state: AgentState) -> str:
 
 
 def route_after_confirm(state: AgentState) -> str:
-    return "dispatch" if state.get("decision") == "approved" else "chat"
+    if state.get("decision") != "approved":
+        return "chat"
+    kind = (state.get("plan") or {}).get("kind")
+    return "dispatch_multi" if kind == "multi" else "dispatch"
 
 
 def build_graph(checkpointer=None):
@@ -1027,6 +1158,8 @@ def build_graph(checkpointer=None):
     graph.add_node("prepare_film", node_prepare_film)
     graph.add_node("prepare_new_project", node_prepare_new_project)
     graph.add_node("prepare_revise", node_prepare_revise)
+    graph.add_node("prepare_multi", node_prepare_multi)
+    graph.add_node("dispatch_multi", node_dispatch_multi)
     graph.add_node("prepare_add_shot", node_prepare_add_shot)
     graph.add_node("confirm", node_confirm)
     graph.add_node("dispatch", node_dispatch)
@@ -1043,10 +1176,14 @@ def build_graph(checkpointer=None):
                                  "prepare_new_project": "prepare_new_project",
                                  "prepare_add_shot": "prepare_add_shot",
                                  "reply_capability": "reply_capability",
-                                 "prepare_revise": "prepare_revise"})
+                                 "prepare_revise": "prepare_revise",
+                                 "prepare_multi": "prepare_multi"})
     graph.add_edge("lookup", END)
     graph.add_conditional_edges("prepare", route_after_prepare,
                                 {"chat": "chat", "confirm": "confirm",
+                                 "quick_reply": "quick_reply"})
+    graph.add_conditional_edges("prepare_multi", route_after_prepare,
+                                {"confirm": "confirm", "chat": "chat",
                                  "quick_reply": "quick_reply"})
     for name in ("prepare_export", "prepare_save", "prepare_polish", "prepare_bgm",
                  "prepare_film", "prepare_new_project", "prepare_revise", "prepare_add_shot"):
@@ -1054,8 +1191,10 @@ def build_graph(checkpointer=None):
                                     {"confirm": "confirm", "chat": "chat",
                                      "quick_reply": "quick_reply"})
     graph.add_conditional_edges("confirm", route_after_confirm,
-                                {"dispatch": "dispatch", "chat": "chat"})
+                                {"dispatch": "dispatch", "chat": "chat",
+                                 "dispatch_multi": "dispatch_multi"})
     graph.add_edge("dispatch", END)
+    graph.add_edge("dispatch_multi", END)
     graph.add_edge("chat", END)
     graph.add_edge("reply_capability", END)
     graph.add_edge("quick_reply", END)

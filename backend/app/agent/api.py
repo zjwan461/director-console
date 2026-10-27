@@ -81,7 +81,7 @@ async def get_thread(thread_id: str) -> dict:
     artifacts = _heal_artifacts(agent_store.list_artifacts(thread_id, limit=12))
     # 给产物编号（只算有 url 的），前端显示 #1 #2，修订时也按这个号指代
     with_url = sorted([a for a in artifacts if a.get("url")],
-                      key=lambda a: float(a.get("created_at") or 0))
+                      key=lambda a: (float(a.get("created_at") or 0), int(a.get("seq") or 0)))
     ref_of = {a["id"]: index for index, a in enumerate(with_url, start=1)}
     for item in artifacts:
         item["ref"] = ref_of.get(item["id"], 0)

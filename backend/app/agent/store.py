@@ -351,10 +351,19 @@ def dedupe_artifacts(thread_id: str) -> int:
 
 def list_artifacts(thread_id: str, limit: int = 50) -> list[dict]:
     with _lock, connect() as conn:
+        # 同一秒插入的多条 created_at 会相同，用 rowid 兜底保证顺序稳定（编号 #1 #2 不能乱跳）
         rows = conn.execute(
-            "SELECT * FROM agent_artifacts WHERE thread_id=? ORDER BY created_at DESC LIMIT ?",
+            "SELECT *, rowid AS seq FROM agent_artifacts WHERE thread_id=?"
+            " ORDER BY created_at DESC, rowid DESC LIMIT ?",
             (thread_id, limit)).fetchall()
-    return [_artifact_row(r) for r in rows]
+    items = [_artifact_row(r) for r in rows]
+    for item, row in zip(items, rows):
+        if item is not None:
+            try:
+                item["seq"] = int(row["seq"])
+            except Exception:
+                item["seq"] = 0
+    return items
 
 
 def _artifact_row(row) -> dict | None:
