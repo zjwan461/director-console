@@ -25,7 +25,9 @@ export default function AgentPanel({ projectId, onOpenProject }: {
   const [steps, setSteps] = useState<Step[]>([])
   const [artifacts, setArtifacts] = useState<AgentArtifact[]>([])
   const [text, setText] = useState('')
-  const [attachments, setAttachments] = useState<Array<{ id: string; url: string; name: string }>>([])
+  const [attachments, setAttachments] = useState<Array<{
+    id: string; url: string; name: string; kind: string
+  }>>([])
   const [uploading, setUploading] = useState(false)
   const [renaming, setRenaming] = useState(false)
   const [nameDraft, setNameDraft] = useState('')
@@ -228,7 +230,7 @@ export default function AgentPanel({ projectId, onOpenProject }: {
       }
       setMessages((prev) => [...prev, {
         id: `local_${Date.now()}`, thread_id: threadId, role: 'user', content: value,
-        parts: attachments.map((a) => ({ type: 'image', url: a.url, asset_id: a.id, name: a.name })),
+        parts: attachments.map((a) => ({ type: a.kind, url: a.url, asset_id: a.id, name: a.name })),
         seq: prev.length + 1, created_at: Date.now() / 1000,
       }])
       setAttachments([])
@@ -242,10 +244,17 @@ export default function AgentPanel({ projectId, onOpenProject }: {
     if (!files?.length) return
     setUploading(true)
     try {
-      const next: Array<{ id: string; url: string; name: string }> = []
+      const next: Array<{ id: string; url: string; name: string; kind: string }> = []
       for (const file of Array.from(files).slice(0, 4)) {
-        const asset = await api.upload(file, 'image')
-        next.push({ id: asset.id, url: asset.url || `/media/files/${asset.path}`, name: asset.path.split('/').pop() || 'image' })
+        const kind = file.type.startsWith('audio/') ? 'audio'
+          : file.type.startsWith('video/') ? 'video' : 'image'
+        const asset = await api.upload(file, kind)
+        next.push({
+          id: asset.id,
+          url: asset.url || `/media/files/${asset.path}`,
+          name: asset.path.split('/').pop() || kind,
+          kind,
+        })
       }
       setAttachments((prev) => [...prev, ...next].slice(0, 4))
     } catch (err) {
@@ -656,6 +665,10 @@ export default function AgentPanel({ projectId, onOpenProject }: {
                 )
               })()}
 
+              {actionOf(pending) === 'video' && Boolean((pending.params as Record<string, unknown> | undefined)?.audio_asset_id) && (
+                <p className="agent-confirm-hint">已带上音频参考（对口型／配音），确认后会一起提交。</p>
+              )}
+
               {(actionOf(pending) === 'image' || actionOf(pending) === 'video') && (
                 <>
                   <label className="field">
@@ -763,8 +776,10 @@ export default function AgentPanel({ projectId, onOpenProject }: {
             {attachments.length > 0 && (
               <div className="agent-attach-row">
                 {attachments.map((item) => (
-                  <div className="agent-attach" key={item.id}>
-                    <img src={item.url} alt={item.name} />
+                  <div className={`agent-attach ${item.kind === 'audio' ? 'audio' : ''}`} key={item.id}>
+                    {item.kind === 'audio'
+                      ? <span className="agent-attach-audio" title={item.name}>♪</span>
+                      : <img src={item.url} alt={item.name} />}
                     <button title="移除" onClick={() => setAttachments((prev) => prev.filter((x) => x.id !== item.id))}>×</button>
                   </div>
                 ))}
@@ -782,9 +797,9 @@ export default function AgentPanel({ projectId, onOpenProject }: {
             <div className="agent-composer-foot">
               <div className="agent-composer-tools">
                 <button className="ghost tiny" disabled={uploading} onClick={() => fileRef.current?.click()}>
-                  {uploading ? '上传中…' : '＋ 图片'}
+                  {uploading ? '上传中…' : '＋ 图片 / 音频'}
                 </button>
-                <input ref={fileRef} type="file" accept="image/*" multiple hidden
+                <input ref={fileRef} type="file" accept="image/*,audio/*" multiple hidden
                        onChange={(e) => void pickFiles(e.target.files)} />
                 <span className="agent-composer-hint">Enter 发送 · Shift + Enter 换行</span>
               </div>

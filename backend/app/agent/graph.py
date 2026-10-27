@@ -193,6 +193,11 @@ def _fast_intent(state: AgentState) -> dict | None:
     if REVISE_RE.search(text):
         return {"intent": "revise", "args": {"raw": text},
                 "reply": "好，我在上一版基础上改。"}
+    if re.search(r"(对口型|口型|lip ?sync)", text, re.IGNORECASE):
+        return {"intent": "generate_video",
+                "args": {"prompt": text, "mode": "lipsync", "aspect": "16:9"},
+                "reply": "好，用这张人像和这段音频做对口型。"}
+
     if VIDEO_RE.search(text) and IMPERATIVE_RE.search(text):
         mode = "i2v" if (last_asset and "首帧" in text) else "t2v"
         args = {"prompt": text, "mode": mode, "duration": duration, "aspect": "16:9"}
@@ -638,8 +643,15 @@ async def node_prepare(state: AgentState) -> dict:
             mode = "t2v"
         asset_id = str(args.get("image_asset_id") or "").strip()
 
-        # i2v / r2v 需要图：先从素材库按关键词找一张
-        if mode in {"i2v", "r2v"} and not asset_id:
+        # 消息里带的图片优先当参考图（对口型/图生视频/参考生视频都要图）
+        if not asset_id:
+            for att in state.get("attachments") or []:
+                if att.get("kind") == "image":
+                    asset_id = str(att.get("id") or "")
+                    break
+
+        # 没带图就去素材库找
+        if mode in {"i2v", "r2v", "lipsync", "r2v9"} and not asset_id:
             query = str(args.get("image_query") or "").strip() or prompt[:12]
             found = json.loads(tools.list_assets(kind="image", q=query, limit=3))
             items = found.get("items") or []
@@ -654,12 +666,22 @@ async def node_prepare(state: AgentState) -> dict:
                    "title": "挑选参考图", "status": "done",
                    "detail": {"asset": items[0].get("path"), "matched": bool(found.get("items"))}})
 
+        # 音频：消息里带的附件优先，其次 args 里指定的
+        audio_id = str(args.get("audio_asset_id") or "").strip()
+        if not audio_id:
+            for att in state.get("attachments") or []:
+                if att.get("kind") == "audio":
+                    audio_id = str(att.get("id") or "")
+                    break
+
         preview = tools.video_inputs_preview(
             prompt, mode, str(args.get("aspect") or ""),
-            float(args["duration"]) if args.get("duration") else None, asset_id)
+            float(args["duration"]) if args.get("duration") else None, asset_id,
+            None, audio_id)
         _emit({"t": "tool_call", "id": "prep", "name": "make_video.preview",
-               "args": {"prompt": prompt, "mode": mode, "duration": preview.get("params", {}).get("duration"),
-                        "asset_id": asset_id}})
+               "args": {"prompt": prompt, "mode": mode,
+                        "duration": preview.get("params", {}).get("duration"),
+                        "asset_id": asset_id, "audio_asset_id": audio_id}})
         if preview["errors"]:
             _emit({"t": "tool_result", "id": "prep", "ok": False,
                    "data": {"errors": preview["errors"]}})
@@ -1200,7 +1222,8 @@ async def node_dispatch(state: AgentState) -> dict:
             params.get("aspect", "16:9"),
             float(params["duration"]) if params.get("duration") else None,
             str(params.get("image_asset_id") or ""),
-            float(params["megapixels"]) if params.get("megapixels") else None)
+            float(params["megapixels"]) if params.get("megapixels") else None,
+            str(params.get("audio_asset_id") or ""))
     else:
         _emit({"t": "tool_call", "id": "gen", "name": "make_image",
                "args": {"prompt": params.get("prompt"), "aspect": params.get("aspect")}})

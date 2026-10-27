@@ -29,6 +29,7 @@ python test_corpus.py --gpu  # 全量（会真实出图，别在 ComfyUI 忙的�
 
 python test_step2.py         # 多步计划：拆分 + 一次确认 + 连续执行
 python test_chain.py --gpu   # 依赖链：出图 → 自动续跑视频
+python test_audio.py         # 音频上传 + 对口型确认卡（不提交 GPU）
 ```
 
 ## 覆盖范围
@@ -38,6 +39,7 @@ python test_chain.py --gpu   # 依赖链：出图 → 自动续跑视频
 | `test_corpus.py` | 生成 / 导出 / 剪辑 / 配乐 / 设置 / 修订 / 指代 / 查询 / 问答 / 项目镜头 / 边界 |
 | `test_step2.py` | 复合句拆多步、一次确认、两步连续写入 |
 | `test_chain.py` | 依赖步骤延后 + 产物完成后自动续跑 |
+| `test_audio.py` | 音频上传、附件进消息、对口型（lipsync）确认卡带参考音频 |
 
 ## 约定
 

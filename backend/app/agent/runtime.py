@@ -67,8 +67,14 @@ async def start_run(thread: dict, text: str, attachments: list[dict] | None = No
     thread_id = thread["id"]
     attachments = attachments or []
     run = agent_store.create_run(thread_id)
-    parts = [{"type": "image", "url": a["url"], "asset_id": a["id"], "name": a["path"].rsplit("/", 1)[-1]}
-             for a in attachments if a.get("kind") == "image"]
+    parts = []
+    for att in attachments:
+        kind = str(att.get("kind") or "")
+        if kind not in ("image", "audio", "video"):
+            continue
+        parts.append({"type": kind, "url": att.get("url") or "",
+                      "asset_id": att.get("id") or "",
+                      "name": str(att.get("path") or "").rsplit("/", 1)[-1]})
     agent_store.add_message(thread_id, "user", text, parts)
 
     # 首条消息先给个占位名，随后让模型起个更贴切的（不阻塞回复）

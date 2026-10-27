@@ -26,6 +26,10 @@ VIDEO_CARDS = {
     "t2v": ("h3.t2v", ""),
     "i2v": ("h3.i2v", "first_frame"),
     "r2v": ("h3.r2v", "ref_1"),
+    # 对口型：一张人像 + 一段音频
+    "lipsync": ("h3.lipsync", "portrait"),
+    # 九图多参考 + 配音：图片参考，可选参考音频
+    "r2v9": ("h3.r2v9", "ref_1"),
 }
 VIDEO_MAX_DURATION = 15
 
@@ -197,7 +201,8 @@ def _card_default(card: dict, key: str, fallback=None):
 def video_inputs_preview(prompt: str, mode: str = "t2v", aspect: str = "16:9",
                          duration: float | None = None,
                          image_asset_id: str = "",
-                         megapixels: float | None = None) -> dict:
+                         megapixels: float | None = None,
+                         audio_asset_id: str = "") -> dict:
     """给确认卡用：算视频参数，不提交。"""
     card_id, image_slot = VIDEO_CARDS.get(mode, VIDEO_CARDS["t2v"])
     card = get_card(card_id)
@@ -220,6 +225,15 @@ def video_inputs_preview(prompt: str, mode: str = "t2v", aspect: str = "16:9",
     if image_slot:
         values[image_slot] = image_asset_id or ""
 
+    # 音频参考：卡片上有 audio 类字段就填第一个槽（对口型的 audio / 参考音频 audio_1）
+    audio_slot = ""
+    for field in card.get("fields") or []:
+        if str(field.get("type")) == "audio" and field.get("key"):
+            audio_slot = str(field["key"])
+            break
+    if audio_slot:
+        values[audio_slot] = audio_asset_id or ""
+
     errors = validate(card, values)
     width, height = size_from(aspect, mp) if aspect else (0, 0)
     return {
@@ -233,6 +247,8 @@ def video_inputs_preview(prompt: str, mode: str = "t2v", aspect: str = "16:9",
             "width": width,
             "height": height,
             "image_asset_id": image_asset_id,
+            "audio_asset_id": audio_asset_id,
+            "audio_slot": audio_slot,
         },
         "megapixels_options": size_field.get("megapixels_options") or [0.4, 0.8],
         "values": values,
@@ -242,8 +258,10 @@ def video_inputs_preview(prompt: str, mode: str = "t2v", aspect: str = "16:9",
 
 async def make_video(prompt: str, mode: str = "t2v", aspect: str = "16:9",
                      duration: float | None = None, image_asset_id: str = "",
-                     megapixels: float | None = None) -> str:
-    preview = video_inputs_preview(prompt, mode, aspect, duration, image_asset_id, megapixels)
+                     megapixels: float | None = None,
+                     audio_asset_id: str = "") -> str:
+    preview = video_inputs_preview(prompt, mode, aspect, duration, image_asset_id,
+                                   megapixels, audio_asset_id)
     if preview["errors"]:
         return _dumps({"ok": False, "error": "invalid_params",
                        "hint": "；".join(preview["errors"])})
