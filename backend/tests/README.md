@@ -37,6 +37,7 @@ python test_agent_loop.py    # 规则没覆盖的说法：看状态后能否做�
 python test_motion_prompt.py # 图生视频的运镜是否看图生成 + 确认卡标出能力卡
 python test_vision.py        # 看图写运镜（i2v/r2v）+ 视觉修订（模糊评价/改画幅）
 python test_topic.py         # 换话题后答「视频啊」：应按新题材生成
+python test_animate.py       # 上传图 + 「让它动起来」：走 i2v 并看图写运镜
 ```
 
 ## 覆盖范围
@@ -54,6 +55,7 @@ python test_topic.py         # 换话题后答「视频啊」：应按新题材�
 | `test_motion_prompt.py` | 看图生成运镜提示词、确认卡显示能力卡 |
 | `test_vision.py` | i2v/r2v 看图写运镜、模糊修订与改画幅走视觉 |
 | `test_topic.py` | 话题切换后按新题材出片、题材扩写成画面描述 |
+| `test_animate.py` | 「让它动起来」走图生视频、用的是刚上传的图 |
 
 ## 约定
 

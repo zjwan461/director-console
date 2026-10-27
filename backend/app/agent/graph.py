@@ -308,7 +308,8 @@ def _fast_intent(state: AgentState) -> dict | None:
             [a for a in (state.get("attachments") or []) if a.get("kind") == "image"])
         if re.search(r"(参考|参考图|照这张|按这张)", text) and has_ref:
             mode = "r2v"
-        elif re.search(r"(首帧|这张图|这个图|用它|把这张|让这张)", text) and has_ref:
+        elif has_ref and re.search(
+                r"(首帧|这张图|这个图|用它|把这张|让这张|让它|给它|动起来|动一下|动一动)", text):
             mode = "i2v"
         else:
             mode = "t2v"
@@ -967,7 +968,8 @@ async def node_prepare(state: AgentState) -> dict:
         audio_id = audio_ids[0] if audio_ids else ""
 
         # 文生视频：提示词只是一个题材（「生化危机」）时，先扩写成画面描述
-        if mode == "t2v" and prompt and len(prompt) <= 12 and not re.search(
+        motion_cmd = bool(re.search(r"(动起来|动一下|动一动|做成|让它|给它|变|视频|动画)", prompt or ""))
+        if mode == "t2v" and prompt and not motion_cmd and len(prompt) <= 12 and not re.search(
                 r"(雪|雨|风|光|夜|人物|镜头|奔跑|转身|站|坐|城市|森林|海|山|手|发|房间|街)", prompt):
             brief = await tools.expand_brief(prompt)
             if brief:
