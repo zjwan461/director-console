@@ -109,7 +109,16 @@ CAPABILITY_TEXT = (
 
 VIDEO_RE = re.compile(r"(视频|动起来|动一下|动画|运镜|几秒|秒的片|短片|出片)")
 IMAGE_RE = re.compile(r"(画|图|海报|剧照|插画|立绘|封面|定妆照)")
-LOOKUP_RE = re.compile(r"(素材|找一?张|有没有.*图|看看.*图)")
+LOOKUP_RE = re.compile(
+    r"(素材|找一?张|有没有.*图|看看.*图|"
+    r"(有没有|有哪些|查一下|看看|列一下|给我看|生成好的|做好的|已有的|现成的)"
+    r".{0,12}(视频|图片|图|素材|音频|音乐|镜头))")
+ASSET_KIND_RE = [
+    (re.compile(r"(视频|片子|成片)"), "video"),
+    (re.compile(r"(音乐|音频|配音|bgm)", re.IGNORECASE), "audio"),
+    (re.compile(r"(图片|图|照片|截图)"), "image"),
+]
+QUERY_RE = re.compile(r"(有没有|有哪些|查一下|看看|列一下|给我看|生成好的|做好的|已有的|现成的)")
 EXPORT_RE = re.compile(r"(导出|合成|出成片|成片)")
 SAVE_RE = re.compile(r"(存成?镜头|放进项目|存进项目|加入项目)")
 DURATION_RE = re.compile(r"(\d+)\s*秒")
@@ -136,9 +145,12 @@ def _fast_intent(state: AgentState) -> dict | None:
     NEWPROJECT_RE = re.compile(r"(新建|建个|开个|创建).{0,4}项目|新项目")
     ADDSHOT_RE = re.compile(r"(加|添加|补|建).{0,3}(镜头|几镜|分镜)")
 
-    # 找素材优先：问句里也常带「有什么猫的图」
-    if LOOKUP_RE.search(text):
-        return {"intent": "lookup", "args": {"q": "", "kind": "image"},
+    # 找素材优先：问句里也常带「有什么猫的图」「有没有生成好的视频」
+    # 但「有哪些视频工作流」问的是能力卡，不是素材
+    workflow_question = bool(re.search(r"(工作流|能力卡|卡片|预设|模型|节点)", text))
+    if LOOKUP_RE.search(text) and not workflow_question:
+        kind = next((k for pattern, k in ASSET_KIND_RE if pattern.search(text)), "")
+        return {"intent": "lookup", "args": {"q": "", "kind": kind},
                 "reply": "我去素材库里翻一下。"}
 
     # 问「有哪些/能不能/怎么做/…吗？」这类问题，不要当成生成任务
@@ -231,6 +243,10 @@ def _short_circuit(state: AgentState) -> dict | None:
                         "last_job_id": artifact["ref_id"], "last_url": artifact["url"]})
                     break
     if not asset_id:
+        return None
+
+    # 「有没有生成好的视频」是查询，不是要生成
+    if QUERY_RE.search(text):
         return None
 
     video_intent = any(word in text for word in VIDEO_WORDS)
