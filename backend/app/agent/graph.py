@@ -1070,7 +1070,8 @@ async def node_confirm(state: AgentState) -> dict:
     decision = interrupt(payload) or {}
     approved = bool(decision.get("approved"))
     if not approved:
-        return {"decision": "cancelled", "reply": "好，这次不生成。想改哪里直接说。", "intent": "chat"}
+        return {"decision": "cancelled", "intent": "chat",
+                "reply": "已取消，这次没有提交。想调整参数或换个说法，直接告诉我就行。"}
 
     # 确认卡上改过的参数（提示词 / 画幅 / 清晰度 / 时长）要真正生效
     edited = decision.get("params") or {}
@@ -1315,7 +1316,8 @@ def route_after_prepare(state: AgentState) -> str:
 
 def route_after_confirm(state: AgentState) -> str:
     if state.get("decision") != "approved":
-        return "chat"
+        # 取消就是取消：用本地写好的回复，别让模型再发挥
+        return "quick_reply" if str(state.get("reply") or "").strip() else "chat"
     kind = (state.get("plan") or {}).get("kind")
     return "dispatch_multi" if kind == "multi" else "dispatch"
 
@@ -1379,7 +1381,8 @@ def build_graph(checkpointer=None):
                                      "quick_reply": "quick_reply"})
     graph.add_conditional_edges("confirm", route_after_confirm,
                                 {"dispatch": "dispatch", "chat": "chat",
-                                 "dispatch_multi": "dispatch_multi"})
+                                 "dispatch_multi": "dispatch_multi",
+                                 "quick_reply": "quick_reply"})
     graph.add_edge("dispatch", END)
     graph.add_edge("dispatch_multi", END)
     graph.add_edge("chat", END)

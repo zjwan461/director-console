@@ -31,6 +31,7 @@ python test_step2.py         # 多步计划：拆分 + 一次确认 + 连续执�
 python test_chain.py --gpu   # 依赖链：出图 → 自动续跑视频
 python test_audio.py         # 音频上传 + 对口型确认卡（不提交 GPU）
 python test_audio2.py        # 时长对齐 / 多段参考音频 / 上传音频当 BGM
+python test_cancel.py        # 取消确认卡后的回复（不能像要继续）
 ```
 
 ## 覆盖范围
@@ -42,6 +43,7 @@ python test_audio2.py        # 时长对齐 / 多段参考音频 / 上传音频�
 | `test_chain.py` | 依赖步骤延后 + 产物完成后自动续跑 |
 | `test_audio.py` | 音频上传、附件进消息、对口型（lipsync）确认卡带参考音频 |
 | `test_audio2.py` | 对口型按音频时长出片、多段参考音频、上传音频当 BGM |
+| `test_cancel.py` | 取消确认卡后回复为「已取消」且不产生任务 |
 
 ## 约定
 
