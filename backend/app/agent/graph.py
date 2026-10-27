@@ -145,11 +145,11 @@ def _fast_intent(state: AgentState) -> dict | None:
     asking = bool(re.search(r"(？|\?|怎么|如何|为什么|哪些|什么|支持|是否|能否|可以吗|吗[？?]?$)", text))
     command_hint = bool(re.match(r"^(帮我|给我|替我|劳驾)", text))
     if asking and not command_hint:
-        if re.search(r"(区别|不一样|哪个|选哪|哪种|优缺点|适合|怎么选)", text):
-            return {"intent": "explain", "args": {"q": text}, "reply": ""}
-        if re.search(r"(工作流|能力卡|卡片|预设|模型|节点)", text):
+        if (re.search(r"(工作流|能力卡|卡片|预设|模型|节点)", text)
+                and not re.search(r"(区别|不一样|哪个|选哪|哪种|怎么|如何|用法)", text)):
             return {"intent": "list_presets", "args": {}, "reply": ""}
-        return {"intent": "capability", "args": {}, "reply": CAPABILITY_TEXT}
+        # 其余问题（区别 / 怎么用 / 参数含义）统一走解释型问答，回答更具体
+        return {"intent": "explain", "args": {"q": text}, "reply": ""}
 
     if NEWPROJECT_RE.search(text):
         name_match = re.search(r"[叫名称为是]\s*[「《\"]([^」》\"]{1,20})", text)
@@ -429,6 +429,20 @@ async def node_quick_reply(state: AgentState) -> dict:
     return {"reply": reply or "我没太听懂，换个说法？", "streamed": False}
 
 
+OPERATION_FACTS = """\n操作方式（可直接引用这里的说法）：
+- 图生视频：先说「画一张…」出图，再说「可以，就用这张图」，这张图会当首帧
+- 文生视频：直接说「做一个 5 秒的…视频」
+- 参考生视频：先说「参考这张图做一个视频」，最多 9 张参考图
+- 补字幕/旁白：说「帮我补字幕和旁白」，旁白写了字幕会跟着旁白走，可自动配音和调速
+- 配乐：说「配点背景音乐」按开场/发展/收尾自动配；指定某首说「用那首治愈的」；关掉说「把音乐去掉」
+- 导出：说「导出成片」或「导出 720p」，确认卡会列出镜数、是否烧字幕、几条 BGM、片头片尾时长
+- 建项目：说「新建一个项目叫《雪夜归人》」
+- 加镜头：说「加三个镜头：A，B，C」，系统按逗号拆成镜头
+- 改上一版：说「第 2 张再亮一点」「时长改成 8 秒」「换成竖屏」，会基于那一版改，不重新写提示词
+- 分辨率：图片 0.8~2.0 MP，视频 0.4/0.8 MP，画幅决定形状（9:16 竖屏 / 16:9 横屏）
+- 时长：视频 3~15 秒，按 24fps 取 4n+1 帧，5 秒实际约 5.17 秒"""
+
+
 def _card_facts() -> str:
     """把能力卡整理成事实清单，供「解释型」问答使用。"""
     lines = []
@@ -443,7 +457,7 @@ def _card_facts() -> str:
         labels = [str(f.get("label")) for f in fields if f.get("label")]
         if labels:
             lines.append(f"  可调参数：{'、'.join(labels[:6])}")
-    return "\n".join(lines) or "（没有可用的能力卡）"
+    return ("\n".join(lines) or "（没有可用的能力卡）") + OPERATION_FACTS
 
 
 EXPLAIN_SYSTEM = """你是导演台的能力顾问，只根据下面这份「能力卡事实」回答问题。
@@ -453,9 +467,9 @@ EXPLAIN_SYSTEM = """你是导演台的能力顾问，只根据下面这份「能
 
 要求：
 1. 只用事实里出现的信息，不要编造工作流或参数
-2. 3~5 句中文，先说结论再补一句区别
-3. 用户问「有什么区别」时，要点出关键差异（输入形式、时长、参考图数量、适用场景）
-4. 不要输出 JSON，不要罗列全部卡片"""
+2. 用户问「怎么做/怎么用」时，给可执行的步骤，可以直接引用「操作方式」里的说法
+3. 用户问「有什么区别」时，点出关键差异（输入形式、时长、参考图数量、适用场景）
+4. 3~6 句中文，先给结论；不要输出 JSON，不要罗列全部卡片"""
 
 
 async def node_explain(state: AgentState) -> dict:
