@@ -27,7 +27,8 @@ FIELD_CATEGORY = {
     "control_net_name": "controlnet",
     "style_model_name": "style_models",
     "upscale_model_name": "upscale_models",
-    "upscaler_model": "upscale_models",
+    # SelfLiftH3Sampler 的 upscaler_model 读的是 latent_upscale_models（不是 upscale_models）
+    "upscaler_model": "latent_upscale_models",
 }
 
 CLASS_OVERRIDE = {
