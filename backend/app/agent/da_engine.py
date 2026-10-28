@@ -16,6 +16,7 @@ import json
 from langchain_core.tools import tool
 
 from . import planner, state as agent_state, store as agent_store, tools
+from .. import store
 
 MAX_STEPS = 5
 
@@ -52,7 +53,10 @@ SYSTEM = """你是「导演台」的执行大脑。用户用自然语言说要�
 
 def _state_text(thread_id: str, project_id: str, attachments: list[dict]) -> str:
     st = agent_state.thread_state(thread_id)
-    lines = [f"- 会话产物：{st['count']} 个"]
+    project = store.get_project(project_id) if project_id else None
+    name = (project or {}).get("name") or "未命名"
+    lines = [f"- 当前项目：《{name}》（{project_id or '未绑定'}）",
+             f"- 会话产物：{st['count']} 个"]
     for item in st["artifacts"][-6:]:
         note = item.get("note") or (item.get("prompt") or "")[:24]
         params = item.get("params") or {}

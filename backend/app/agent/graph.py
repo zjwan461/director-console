@@ -212,6 +212,11 @@ def _fast_intent(state: AgentState) -> dict | None:
     if planner.looks_compound(text):
         return None
 
+    # 存成镜头：确定性操作，规则直判（引擎容易反问）
+    if re.search(r"(存|保存|收).{0,4}(成|为|到).{0,3}(镜头|分镜)", text):
+        return {"intent": "save_shot", "args": {},
+                "reply": "好，把刚才那一版存成镜头。"}
+
     # 改片：需要精确解析「第几张 / 刚才那个 / 上一版」，放规则里更稳（其余判断交给引擎）
     explicit_revise = bool(re.search(r"(修订|改一版|再改|重做|改一下|改改|调整一下)", text))
     has_artifact = bool(agent_store.list_artifacts(state.get("thread_id", ""), limit=1))
@@ -238,8 +243,34 @@ def _fast_intent(state: AgentState) -> dict | None:
         return {"intent": "audit", "args": {}, "reply": ""}
 
     # 问「项目里有几个镜头/都是什么」→ 直接读镜头列表
-    if re.search(r"(几个|多少|有哪些|看看).{0,6}(镜头|分镜)|镜头.{0,4}(几个|多少)", text):
+    if re.search(r"(几个|多少|有哪些|有什么|哪些|看看|都是什么).{0,6}(镜头|分镜)"
+                 r"|(镜头|分镜).{0,4}(几个|多少|有什么|有哪些)", text):
         return {"intent": "list_shots", "args": {}, "reply": ""}
+
+    # 「当前是哪个项目 / 这是哪个项目」→ 直接答
+    if re.search(r"(当前|现在|这个|这).{0,4}(是|在).{0,4}(哪个|什么|哪一个).{0,2}项目"
+                 r"|这是哪个项目|当前项目", text):
+        project_id = state.get("project_id", "")
+        project = store.get_project(project_id) if project_id else None
+        if project:
+            shots = store.list_shots(project_id)
+            return {"intent": "chat", "args": {},
+                    "reply": f"当前项目是《{project.get('name') or '未命名'}》（{project_id}），"
+                             f"里面有 {len(shots)} 个镜头。想看清单可以说「有哪些分镜」。"}
+        return {"intent": "chat", "args": {},
+                "reply": "这个会话还没绑定项目，可以说「新建一个项目叫《…》」。"}
+
+    # 「重新做这个项目 / 整片重做」→ 给可执行选项
+    if re.search(r"(重新做|重做|从头做|推倒重来|再来一遍).{0,8}(项目|这条|整片|片子|这版)", text):
+        project_id = state.get("project_id", "")
+        shots = store.list_shots(project_id) if project_id else []
+        covered = [s for s in shots if s.get("cover") or s.get("last_frame")]
+        return {"intent": "chat", "args": {},
+                "reply": "明白。重做有这几种，你挑一种我立刻排步骤：\n"
+                         f"1. 只重新出画面：逐镜重出（现有 {len(shots)} 镜，其中 {len(covered)} 镜有画面）\n"
+                         "2. 整片重来：新建一个同题材项目，镜头重新加（会保留旧项目）\n"
+                         "3. 只改某几镜：说「第 2 镜重做」\n"
+                         "另外「重新导出」不会重跑画面，只是重新合成——如果你只是对成片不满意，说「重新导出」就行。"}
 
     # 找素材优先：问句里也常带「有什么猫的图」「有没有生成好的视频」
     # 但「有哪些视频工作流」问的是能力卡，不是素材
@@ -548,6 +579,14 @@ async def node_decide(state: AgentState) -> dict:
             "可以当首帧的素材": ctx.get("last_asset_id", ""),
         }
 
+    project_id_now = state.get("project_id", "")
+    if project_id_now:
+        project_now = store.get_project(project_id_now)
+        shots_now = store.list_shots(project_id_now)
+        project_ctx = dict(project_ctx or {})
+        project_ctx["当前项目"] = [
+            f"《{(project_now or {}).get('name') or '未命名'}》（{project_id_now}），"
+            f"{len(shots_now)} 个镜头"]
     attachments = state.get("attachments") or []
     if attachments:
         lines = []

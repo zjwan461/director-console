@@ -909,6 +909,30 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
   border: 1px dashed #2a3040; border-radius: 10px; font-size: 12px; color: var(--muted);
 }
 
+/* 折叠回放：过程块放在回答上方，默认收起 */
+.agent-trace-panel {
+  margin: 2px 0 6px; font-size: 12px; color: var(--muted);
+}
+.agent-trace-panel > summary {
+  display: flex; align-items: center; gap: 6px;
+  list-style: none; cursor: pointer; width: fit-content;
+  padding: 3px 10px 3px 2px; border-radius: 999px;
+  color: #7f8ba1;
+}
+.agent-trace-panel > summary::-webkit-details-marker { display: none; }
+.agent-trace-panel > summary:hover { color: #b9c4d8; }
+.agent-trace-panel > summary .label { color: #b9c4d8; }
+.agent-trace-panel > summary .meta { font-size: 11.5px; }
+.agent-trace-panel > summary .current { font-size: 11.5px; color: #8aa6ff; }
+.agent-trace-panel[open] > summary { color: #c6cfdf; }
+.agent-trace-panel .agent-trace { margin-top: 2px; }
+.agent-step-head.static { cursor: default; }
+.agent-thinking-pre {
+  margin: 4px 0 8px; padding: 10px 12px; max-height: 200px; overflow: auto;
+  background: #0d1017; border: 1px solid #232838; border-radius: 8px;
+  font-size: 11.5px; line-height: 1.55; color: #8b9bb2; white-space: pre-wrap;
+}
+
 /* 折叠回放 */
 .agent-trace {
   display: flex; flex-direction: column; gap: 3px;

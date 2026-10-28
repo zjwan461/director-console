@@ -35,6 +35,7 @@ export default function AgentPanel({ projectId, onOpenProject }: {
   const [busy, setBusy] = useState(false)
   const [streamText, setStreamText] = useState('')
   const [thinking, setThinking] = useState('')
+  const [traceOpen, setTraceOpen] = useState(false)
   const [lastUserText, setLastUserText] = useState('')
   const [error, setError] = useState('')
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
@@ -543,29 +544,60 @@ export default function AgentPanel({ projectId, onOpenProject }: {
             </div>
           ))}
 
+          {(steps.length > 0 || thinking) && (
+            <details className="agent-trace-panel" open={traceOpen}>
+              <summary onClick={(event) => { event.preventDefault(); setTraceOpen((v) => !v) }}>
+                <span className="caret">{traceOpen ? '▾' : '▸'}</span>
+                <span className="label">过程</span>
+                <span className="meta">
+                  · {steps.length} 步{steps.some((s) => s.status === 'running') ? ' · 进行中' : ' · 已完成'}
+                </span>
+                {steps.some((s) => s.status === 'running') && (
+                  <span className="current">
+                    · {steps.filter((s) => s.status === 'running').slice(-1)[0]?.title}
+                  </span>
+                )}
+              </summary>
+              <div className="agent-trace">
+                {steps.map((step) => (
+                  <div key={step.id} className={`agent-step ${step.status}`}>
+                    <button
+                      className="agent-step-head"
+                      onClick={() => setExpanded((prev) => ({ ...prev, [step.id]: !prev[step.id] }))}
+                    >
+                      <span className="caret">{expanded[step.id] ? '▾' : '▸'}</span>
+                      <span className="title">{step.title}</span>
+                      <span className="status">
+                        {step.status === 'running' ? '进行中' : step.status === 'error' ? '失败' : '完成'}
+                      </span>
+                    </button>
+                    {expanded[step.id] && step.detail && (
+                      <pre className="agent-step-detail">{JSON.stringify(step.detail, null, 2)}</pre>
+                    )}
+                  </div>
+                ))}
+                {thinking && (
+                  <>
+                    <div className="agent-step">
+                      <span className="agent-step-head static">
+                        <span className="caret" />
+                        <span className="title">模型思考</span>
+                        <span className="status">{thinking.length} 字</span>
+                      </span>
+                    </div>
+                    <pre className="agent-thinking-pre">{thinking}</pre>
+                  </>
+                )}
+              </div>
+            </details>
+          )}
+
           {streamText && (
             <div className="agent-msg assistant">
               <div className="agent-bubble">
                 {streamText}
                 <span className="agent-caret" />
               </div>
-            </div>
-          )}
-
-          {steps.length > 0 && (
-            <div className="agent-trace">
-              {steps.map((step) => (
-                <div key={step.id} className={`agent-step ${step.status}`}>
-                  <button className="agent-step-head" onClick={() => setExpanded((prev) => ({ ...prev, [step.id]: !prev[step.id] }))}>
-                    <span className="caret">{expanded[step.id] ? '▾' : '▸'}</span>
-                    <span className="title">{step.title}</span>
-                    <span className="status">{step.status === 'running' ? '进行中' : step.status === 'error' ? '失败' : '完成'}</span>
-                  </button>
-                  {expanded[step.id] && step.detail && (
-                    <pre className="agent-step-detail">{JSON.stringify(step.detail, null, 2)}</pre>
-                  )}
-                </div>
-              ))}
             </div>
           )}
 
@@ -766,16 +798,6 @@ export default function AgentPanel({ projectId, onOpenProject }: {
                 <button className="ghost" disabled={busy} onClick={() => void decide(false)}>取消</button>
               </div>
             </div>
-          )}
-
-          {thinking && (
-            <details className="agent-thinking" open={busy && !streamText}>
-              <summary>
-                {busy && !streamText ? '正在思考…' : '思考过程'}
-                <span className="meta"> · {thinking.length} 字</span>
-              </summary>
-              <pre>{thinking}</pre>
-            </details>
           )}
 
           {busy && !pending && (
