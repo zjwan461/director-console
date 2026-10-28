@@ -37,6 +37,13 @@ export default function AgentPanel({ projectId, onOpenProject }: {
   const [streamText, setStreamText] = useState('')
   const [thinking, setThinking] = useState('')
   const [traceOpen, setTraceOpen] = useState(false)
+
+  useEffect(() => {
+    // 还没有正文时，先让用户看到实时思考，不用干等
+    if (thinking && !streamText) {
+      setExpanded((prev) => (prev.thinking ? prev : { ...prev, thinking: true }))
+    }
+  }, [thinking, streamText])
   const [lastUserText, setLastUserText] = useState('')
   const [error, setError] = useState('')
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
@@ -176,7 +183,7 @@ export default function AgentPanel({ projectId, onOpenProject }: {
       })
       setBusy(false)
       setStreamText('')
-      setThinking('')
+      // 保留思考内容，方便任务结束后展开查看
     } else if (event.t === 'artifact') {
       const refId = String(event.ref_id || '')
       const url = String(event.url || '')
@@ -204,7 +211,7 @@ export default function AgentPanel({ projectId, onOpenProject }: {
     } else if (event.t === 'run_end') {
       setBusy(false)
       setStreamText('')
-      setThinking('')
+      // 保留思考内容，方便任务结束后展开查看
       if (event.status === 'waiting_confirm') setBusy(false)
       setRun((prev) => prev ? { ...prev, status: (event.status as AgentRun['status']) || 'done' } : prev)
       // 用服务端记录覆盖本地乐观消息，避免重复
@@ -600,13 +607,20 @@ export default function AgentPanel({ projectId, onOpenProject }: {
                 {thinking && (
                   <>
                     <div className="agent-step">
-                      <span className="agent-step-head static">
-                        <span className="caret" />
+                      <button
+                        className="agent-step-head"
+                        onClick={() => setExpanded((prev) => ({ ...prev, thinking: !prev.thinking }))}
+                      >
+                        <span className="caret">{expanded.thinking ? '▾' : '▸'}</span>
                         <span className="title">模型思考</span>
-                        <span className="status">{thinking.length} 字</span>
-                      </span>
+                        <span className="status">
+                          {thinking.length} 字 · {expanded.thinking ? '收起' : '展开'}
+                        </span>
+                      </button>
                     </div>
-                    <pre className="agent-thinking-pre">{thinking}</pre>
+                    {expanded.thinking && (
+                      <pre className="agent-thinking-pre">{thinking}</pre>
+                    )}
                   </>
                 )}
               </div>
