@@ -159,7 +159,19 @@ def resolve(text: str, thread_id: str, project_id: str = "") -> dict:
 # 主观评价：没有具体参数，但确实是想改，交给视觉模型翻译
 SUBJECTIVE_RE = re.compile(
     r"(太乱|很乱|杂乱|干净|简洁|不好看|不满意|再改改|改好|精致|高级感|氛围|更有感觉|更有质感"
-    r"|太艳|艳了|颜色|色调|太亮|太暗|发灰|偏黄|偏蓝|太素|太平)")
+    r"|太艳|艳了|颜色|色调|太亮|太暗|发灰|偏黄|偏蓝|太素|太平"
+    # 人物长相 / 颜值：这类反馈没有参数，但明确是要改画面内容
+    r"|帅|丑|好看|漂亮|美|颜值|五官|脸|面部|长相|气质|皮肤|发型|妆容|胖|瘦|肌肉|身材"
+    r"|显老|老气|年轻|减龄|稚嫩|成熟|凶|温柔|可爱|亲和"
+    # 通用主观反馈（没有具体参数时也算“想改”）
+    r"|不够|不太|有点|感觉|看着|怪|太假|假人|僵硬|糊|噪点|畸形|穿模|比例|手|手指)"
+)
+
+# 长相 / 颜值类：给出可直接追加到提示词的描述，避免只喊“改不了”
+FACE_UP = re.compile(r"(不够帅|不帅|更帅|帅一点|帅些|好看|漂亮|美一点|更美|颜值|五官|脸|面部|长相|精致|清秀)")
+FACE_YOUNG = re.compile(r"(显老|老气|太老|年龄大|减龄|年轻|稚嫩|少年感)")
+FACE_SOFT = re.compile(r"(凶|太凶|严厉|面善|温柔|亲和|和善)")
+FACE_STRONG = re.compile(r"(壮|肌肉|身材|魁梧|有力量)")
 
 BRIGHT_UP = re.compile(r"(亮一点|更亮|提亮|亮些|曝光.*(高|加))")
 BRIGHT_DOWN = re.compile(r"(暗一点|更暗|压暗|暗些)")
@@ -184,6 +196,15 @@ def build_patch(text: str) -> dict[str, Any]:
         suffixes.append("动作放慢，镜头运镜更舒缓")
     if FAST.search(text):
         suffixes.append("动作加快，节奏更利落")
+    # 长相 / 颜值类反馈：翻译成具体的外貌描述（后面视觉模型有更细腻的理解会再补）
+    if FACE_UP.search(text):
+        suffixes.append("面部五官更立体精致、五官比例协调、英俊清秀，皮肤质感自然")
+    if FACE_YOUNG.search(text):
+        suffixes.append("更显年轻，皮肤紧致，去掉老气")
+    if FACE_SOFT.search(text):
+        suffixes.append("表情更温和亲切，眼神柔和")
+    if FACE_STRONG.search(text):
+        suffixes.append("身形更健硕有力量感，肌肉线条清晰")
     ambiguous_aspect = bool(PORTRAIT.search(text)) and bool(LANDSCAPE.search(text))
     if PORTRAIT.search(text) and not ambiguous_aspect:
         patch["aspect"] = "9:16"

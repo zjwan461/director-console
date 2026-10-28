@@ -1305,6 +1305,49 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
   font-family: inherit;
 }
 
+/* 思考过程：直接显示在消息流里（流式追加） */
+.agent-think-bubble {
+  max-width: 82%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px dashed #2b3552;
+  background: linear-gradient(180deg, #121722, #0f131c);
+}
+.agent-think-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #93a0b8;
+}
+.agent-think-head .meta { color: #6d7893; }
+.agent-think-head .ghost.tiny { margin-left: auto; }
+.agent-think-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #6ea8fe;
+  box-shadow: 0 0 0 0 rgba(110, 168, 254, 0.55);
+  animation: think-pulse 1.4s ease-out infinite;
+}
+.agent-think-dot.done { background: #4ec98a; animation: none; }
+@keyframes think-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(110, 168, 254, 0.45); }
+  70% { box-shadow: 0 0 0 7px rgba(110, 168, 254, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(110, 168, 254, 0); }
+}
+.agent-think-bubble .agent-thinking-pre {
+  margin: 8px 0 0;
+  max-height: 260px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.7;
+  font-size: 12.5px;
+  color: #8d99b1;
+  font-family: inherit;
+}
+
 /* 产物编号 / 血缘 */
 .agent-artifact-card { position: relative; }
 .agent-artifact-ref {

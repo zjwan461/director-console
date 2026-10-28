@@ -36,14 +36,9 @@ export default function AgentPanel({ projectId, onOpenProject }: {
   const [busy, setBusy] = useState(false)
   const [streamText, setStreamText] = useState('')
   const [thinking, setThinking] = useState('')
+  // 思考内容直接显示在消息流里（默认展开），不用去「过程」里翻
+  const [thinkOpen, setThinkOpen] = useState(true)
   const [traceOpen, setTraceOpen] = useState(false)
-
-  useEffect(() => {
-    // 还没有正文时，先让用户看到实时思考，不用干等
-    if (thinking && !streamText) {
-      setExpanded((prev) => (prev.thinking ? prev : { ...prev, thinking: true }))
-    }
-  }, [thinking, streamText])
   const [lastUserText, setLastUserText] = useState('')
   const [error, setError] = useState('')
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
@@ -118,7 +113,7 @@ export default function AgentPanel({ projectId, onOpenProject }: {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages.length, steps.length, run?.status])
+  }, [messages.length, steps.length, run?.status, thinking.length, streamText.length])
 
   function handleEvent(raw: Record<string, unknown>) {
     const event = raw as unknown as AgentEvent
@@ -604,27 +599,26 @@ export default function AgentPanel({ projectId, onOpenProject }: {
                     )}
                   </div>
                 ))}
-                {thinking && (
-                  <>
-                    <div className="agent-step">
-                      <button
-                        className="agent-step-head"
-                        onClick={() => setExpanded((prev) => ({ ...prev, thinking: !prev.thinking }))}
-                      >
-                        <span className="caret">{expanded.thinking ? '▾' : '▸'}</span>
-                        <span className="title">模型思考</span>
-                        <span className="status">
-                          {thinking.length} 字 · {expanded.thinking ? '收起' : '展开'}
-                        </span>
-                      </button>
-                    </div>
-                    {expanded.thinking && (
-                      <pre className="agent-thinking-pre">{thinking}</pre>
-                    )}
-                  </>
-                )}
               </div>
             </details>
+          )}
+
+          {thinking && (
+            <div className="agent-msg assistant">
+              <div className="agent-think-bubble">
+                <div className="agent-think-head">
+                  <span className={`agent-think-dot ${streamText ? 'done' : ''}`} />
+                  <span className="agent-think-label">
+                    {streamText ? '思考完成，开始作答' : '思考中…'}
+                  </span>
+                  <span className="meta">{thinking.length} 字</span>
+                  <button className="ghost tiny" onClick={() => setThinkOpen((v) => !v)}>
+                    {thinkOpen ? '收起' : '展开'}
+                  </button>
+                </div>
+                {thinkOpen && <pre className="agent-thinking-pre">{thinking}</pre>}
+              </div>
+            </div>
           )}
 
           {streamText && (

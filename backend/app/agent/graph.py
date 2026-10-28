@@ -1377,6 +1377,7 @@ async def node_dispatch_multi(state: AgentState) -> dict:
 async def node_prepare_revise(state: AgentState) -> dict:
     args = state.get("args") or {}
     text = str(args.get("raw") or state.get("text") or "")
+    _emit({"t": "thinking", "text": f"先看这句话要改哪里：「{text}」\n"})
     preview = tools.revise_preview(state.get("thread_id", ""), state.get("project_id", ""), text)
     _emit({"t": "tool_call", "id": "prep_revise", "name": "revise.preview",
            "args": {"text": text}})
@@ -1384,11 +1385,18 @@ async def node_prepare_revise(state: AgentState) -> dict:
         _emit({"t": "tool_result", "id": "prep_revise", "ok": False, "data": preview})
         return {"intent": "chat", "reply": preview.get("hint") or "没找到要改的那一版"}
 
+    patch = preview.get("patch") or {}
+    if patch.get("prompt_suffix"):
+        _emit({"t": "thinking", "text": f"这句是主观评价，先按这个方向补描述：{patch['prompt_suffix']}\n"})
+    if patch.get("aspect") or patch.get("duration") or patch.get("megapixels"):
+        _emit({"t": "thinking", "text": f"参数改动：{preview.get('summary')}\n"})
+
     # 图片修订：让视觉模型把「太乱/改横屏」翻译成具体改动
     if preview.get("base_kind") == "image" and preview.get("base_url"):
         asset_id = tools.asset_from_url(str(preview["base_url"]), "")
         if asset_id:
             aspect = str((preview.get("patch") or {}).get("aspect") or "")
+            _emit({"t": "thinking", "text": "把上一版图连同这句话一起看一遍…\n"})
             guidance = await tools.vision_patch(asset_id, text, aspect)
             if guidance:
                 params = dict(preview.get("params") or {})
@@ -1399,6 +1407,7 @@ async def node_prepare_revise(state: AgentState) -> dict:
                 preview = {**preview, "params": params,
                            "patch": {**(preview.get("patch") or {}), "prompt_suffix": guidance},
                            "summary": f"{preview.get('summary')}｜看图：{guidance}"}
+                _emit({"t": "thinking", "text": f"看图结论：{guidance}\n"})
                 _emit({"t": "step", "id": "vision_patch", "node": "prepare",
                        "title": "看图理解改动", "status": "done",
                        "detail": {"guidance": guidance}})
@@ -1693,7 +1702,7 @@ async def node_dispatch(state: AgentState) -> dict:
         data = json.loads(raw)
         _emit({"t": "tool_result", "id": "gen", "ok": bool(data.get("ok")), "data": data})
         if not data.get("ok"):
-            return {"reply": f"改不了：{data.get('hint') or data.get('error')}"}
+            return {"reply": str(data.get("hint") or data.get("error") or "这次没改成")}
         revision = data.get("revision") or {}
         rev_params = data.get("params") or {}
         rev_kind = "video" if revision.get("base_kind") == "video" else "image"

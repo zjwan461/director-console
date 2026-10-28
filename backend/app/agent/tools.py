@@ -685,7 +685,9 @@ def revise_preview(thread_id: str, project_id: str, text: str) -> dict:
 
     patch = agent_state.build_patch(text)
     if not patch and not agent_state.SUBJECTIVE_RE.search(text):
-        return {"ok": False, "hint": "没听出要改什么，可以说「再亮一点」「时长改成 8 秒」「换成竖屏」"}
+        return {"ok": False,
+                "hint": "这句话没对上具体改动。可以直接说哪里不满意（脸、光、色调、动作、时长、画幅），"
+                        "比如「脸再帅一点」「人物再年轻些」「亮一点」「时长改成 8 秒」「换成竖屏」"}
 
     params = _revision_params(target, patch)
     kind = target.get("kind") or "image"
