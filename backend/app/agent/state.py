@@ -145,6 +145,11 @@ def resolve(text: str, thread_id: str, project_id: str = "") -> dict:
         if target:
             return {"target": {"type": "artifact", **target}, "how": "默认最近一个", "ambiguous": []}
 
+    # 上下文没记住 last_ref（刷新/测试/换设备）时，退化成「最近那个产物」
+    if artifacts:
+        return {"target": {"type": "artifact", **artifacts[-1]}, "how": "最近一个",
+                "ambiguous": []}
+
     return {"target": None, "how": "", "ambiguous": [], "error": "这次会话里还没有产物"}
 
 
@@ -179,9 +184,10 @@ def build_patch(text: str) -> dict[str, Any]:
         suffixes.append("动作放慢，镜头运镜更舒缓")
     if FAST.search(text):
         suffixes.append("动作加快，节奏更利落")
-    if PORTRAIT.search(text):
+    ambiguous_aspect = bool(PORTRAIT.search(text)) and bool(LANDSCAPE.search(text))
+    if PORTRAIT.search(text) and not ambiguous_aspect:
         patch["aspect"] = "9:16"
-    if LANDSCAPE.search(text):
+    if LANDSCAPE.search(text) and not ambiguous_aspect:
         patch["aspect"] = "16:9"
     duration = DURATION_RE.search(text)
     if duration:

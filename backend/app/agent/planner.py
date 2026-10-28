@@ -15,7 +15,7 @@ from typing import Any
 from . import graph as graph_module
 from . import state as agent_state
 
-MAX_STEPS = 4
+MAX_STEPS = 5
 
 # 工具白名单：与 graph 里的意图一一对应
 TOOLS: dict[str, dict[str, Any]] = {
@@ -37,6 +37,11 @@ TOOLS: dict[str, dict[str, Any]] = {
     "set_film_options": {"intent": "film_options", "desc": "转场/片头/片尾/画幅",
                          "args": {"raw": "用户原话"}},
     "create_project": {"intent": "create_project", "desc": "新建项目", "args": {"name": "项目名"}},
+    "save_shot": {
+        "intent": "save_shot",
+        "desc": "把上一版产物存成项目镜头",
+        "args": {},
+    },
     "add_shots": {"intent": "add_shot", "desc": "批量加镜头", "args": {"raw": "用户原话"}},
 }
 

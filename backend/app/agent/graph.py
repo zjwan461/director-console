@@ -17,6 +17,7 @@ from langgraph.types import interrupt
 
 from .. import store
 from ..config import settings
+from . import planner
 from . import store as agent_store
 from . import prompts, tools
 
@@ -164,7 +165,41 @@ def _clean_prompt(text: str, fallback: str = "") -> str:
     return value
 
 
+REVISE_RE = re.compile(
+    r"(更亮|亮一点|暗一点|调亮|调暗|太暗|太亮|快一点|慢一点|再快|再慢|加速|减速|"
+    r"横屏|竖屏|方图|正方形|画幅|比例|时长|几秒|秒|清晰度|分辨率|\d+\s*mp|Megapixel|"
+    r"换一版|改一版|修订|重做)")
+
+ADJUST_RE = re.compile(
+    r"(更亮|亮一点|调亮|太暗|暗一点|清晰度|分辨率|多少\s*mp|\d+\s*mp|时长|几秒|画面比例|画幅"
+    r"|横屏|竖屏|修订|改一版|再改|重做|调整一下)")
+GENERATE_VERB_RE = re.compile(r"(画一张|画个|生成一张|出一张|做一个|做一段|拍一段|来一段|生成视频)")
+
+
+def _engine_postcheck(steps: list[dict], text: str, thread_id: str) -> list[dict]:
+    """引擎定完方案后做一次「参数调整」校验：改亮度/清晰度/时长/画幅一定是 revise。"""
+    if not thread_id:
+        return steps
+    artifacts = agent_store.list_artifacts(thread_id, limit=5)
+    if not artifacts:
+        return steps
+    if not ADJUST_RE.search(text) or GENERATE_VERB_RE.search(text):
+        return steps
+    # 已经是 revise 就不动
+    if steps and all(s.get("tool") == "revise" for s in steps):
+        return steps
+    return [{"index": 1, "tool": "revise", "intent": "revise",
+             "args": {"raw": text}, "why": "参数调整", "depends_on": None}]
+
+
 def _fast_intent(state: AgentState) -> dict | None:
+    """高频、确定性的说法走规则（0.5s 直达）；其余全部交给 deepagents 决策引擎。
+
+    保留：出图、出视频（含运镜/参考/首帧/第N镜）、导出、查询（素材/镜头/体检）、
+          问答（能力/工作流）、对口型、附件确认、题材选择。
+    交给引擎：改片（revise）、配乐、AI 剪辑、新建项目、加镜头、存镜头、片头片尾。
+    """
+
     """常见说法直接判定意图，避免每次都等模型（推理模型要一两分钟）。
 
     只有真正模糊的（闲聊、改稿）才交给模型。
@@ -172,6 +207,19 @@ def _fast_intent(state: AgentState) -> dict | None:
     text = (state.get("text") or "").strip()
     if not text:
         return None
+
+    # 复合句（「先…再…」「A，然后 B」）一律交给引擎拆成多步，规则只处理单意图
+    if planner.looks_compound(text):
+        return None
+
+    # 改片：需要精确解析「第几张 / 刚才那个 / 上一版」，放规则里更稳（其余判断交给引擎）
+    explicit_revise = bool(re.search(r"(修订|改一版|再改|重做|改一下|改改|调整一下)", text))
+    has_artifact = bool(agent_store.list_artifacts(state.get("thread_id", ""), limit=1))
+    if (not re.search(r"[？?]$|吗|哪些|什么|区别|怎么", text)
+            and not re.search(r"第\s*[0-9一二三四五六七八九十]+\s*镜", text)
+            and (explicit_revise or (has_artifact and REVISE_RE.search(text)))):
+        return {"intent": "revise", "args": {"raw": text},
+                "reply": "好，我在上一版基础上改。"}
 
     ctx = agent_store.get_context(state.get("thread_id", ""))
     last_asset = str(ctx.get("last_asset_id") or "")
@@ -220,11 +268,6 @@ def _fast_intent(state: AgentState) -> dict | None:
         # 其余问题（区别 / 怎么用 / 参数含义）统一走解释型问答，回答更具体
         return {"intent": "explain", "args": {"q": text}, "reply": ""}
 
-    if NEWPROJECT_RE.search(text):
-        name_match = re.search(r"[叫名称为是]\s*[「《\"]([^」》\"]{1,20})", text)
-        name = name_match.group(1) if name_match else text.strip()[:16]
-        return {"intent": "create_project", "args": {"name": name},
-                "reply": f"好，我新建一个项目《{name}》。"}
     # 「把这张图放进第 2 镜当首帧」→ 图生视频，不是新增镜头
     if (re.search(r"第\s*\d+\s*镜", text)
             and re.search(r"(这张|刚才|上一张|这个图)", text)
@@ -236,34 +279,11 @@ def _fast_intent(state: AgentState) -> dict | None:
                          "image_asset_id": str(ctx_now.get("last_asset_id") or "")},
                 "reply": "好，拿这张图当首帧生成一段镜头。"}
 
-    if ADDSHOT_RE.search(text):
-        return {"intent": "add_shot", "args": {"raw": text},
-                "reply": "好，我按你的描述排几个镜头。"}
-    if POLISH_RE.search(text):
-        kinds = "narration" if "旁白" in text and "字幕" not in text else (
-            "subtitle" if "字幕" in text and "旁白" not in text else "both")
-        return {"intent": "polish", "args": {"kinds": kinds, "tts": "配音" in text or kinds != "subtitle"},
-                "reply": "好，我来补文案和配音。"}
     if re.search(r"(音频|录音|这段声音|这首歌)", text) and re.search(r"(背景音乐|配乐|当音乐|做音乐|bgm)", text, re.IGNORECASE):
         return {"intent": "bgm", "args": {"mode": "asset", "query": text},
                 "reply": "好，把这段音频当背景音乐。"}
-    if BGM_RE.search(text):
-        mode = "off" if ("关掉" in text or "去掉" in text) else (
-            "asset" if ("这首" in text or "那首" in text or "用" in text) else "auto")
-        return {"intent": "bgm", "args": {"mode": mode, "query": text},
-                "reply": "好，我来配乐。"}
     if EXPORT_RE.search(text):
         return {"intent": "export", "args": {}, "reply": "好，我按项目设置导出成片。"}
-    if SAVE_RE.search(text):
-        return {"intent": "save_shot", "args": {}, "reply": "好，把刚才的产物存成镜头。"}
-    REVISE_RE = re.compile(r"(再\S{0,3}(亮|暗|快|慢)|更(亮|暗|快|慢)|改成|换成|调成|调整成|"
-                           r"改一?下?|换一?下?|调整|慢一点|快一点|放慢|加快|时长.*秒|清晰度)")
-    if FILM_RE.search(text):
-        return {"intent": "film_options", "args": {"raw": text},
-                "reply": "好，我改一下成片设置。"}
-    if REVISE_RE.search(text):
-        return {"intent": "revise", "args": {"raw": text},
-                "reply": "好，我在上一版基础上改。"}
     if re.search(r"(对口型|口型|lip ?sync)", text, re.IGNORECASE):
         return {"intent": "generate_video",
                 "args": {"prompt": text, "mode": "lipsync", "aspect": "16:9"},
@@ -321,7 +341,10 @@ def _fast_intent(state: AgentState) -> dict | None:
         elif has_ref and re.search(r"(首帧|这张图|这个图|用它|把这张|让这张)", text):
             mode = "i2v"
         else:
-            mode = "t2v"
+            # 没有参考词、也没有新场景描述，但会话里有图 → 默认拿它做视频
+            scene_words = re.search(
+                r"(雪|雨|风|光|夜|人物|镜头|奔跑|转身|站|坐|城市|森林|海|山|手|发|房间|街|窗)", text)
+            mode = "i2v" if (has_ref and not scene_words) else "t2v"
 
         # 整句只是命令（「参考这张图做个视频」）时，画面留给看图写运镜
         command_only = bool(re.search(r"(这张图|这个图|参考这张|用它|把这张|让这张)", text)) and not re.search(
@@ -562,7 +585,18 @@ async def node_decide(state: AgentState) -> dict:
         looped = await agent_loop.run(
             str(state.get("text") or ""), state.get("thread_id", ""),
             state.get("project_id", ""), state.get("attachments") or [])
-    steps = looped.get("steps") or []
+    # 把引擎「查了什么、打算做什么」变成前端可看的步骤
+    READ_LABEL = {"describe_state": "查看会话产物", "list_shots": "读取镜头列表",
+                  "find_assets": "搜索素材", "card_info": "查能力卡参数"}
+    for index, call in enumerate(looped.get("calls") or []):
+        name = str(call.get("tool") or "")
+        label = READ_LABEL.get(name) or TOOL_LABEL.get(name) or name
+        _emit({"t": "step", "id": f"engine_{index}", "node": "decide",
+               "title": label, "status": "done",
+               "detail": {"tool": name, "kind": call.get("kind")}})
+
+    steps = _engine_postcheck(list(looped.get("steps") or []),
+                              str(state.get("text") or ""), state.get("thread_id", ""))
     reply = str(looped.get("reply") or "").strip()
 
     if len(steps) == 1:

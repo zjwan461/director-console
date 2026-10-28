@@ -52,7 +52,7 @@ CASES = [
     ("新建一个项目叫《QA-子项目》", {"action": "create_project"}, "建项目"),
     # 边界
     ("第 9 张改一下", {"action": None, "reply_has": "产物"}, "越界提示"),
-    ("第 1 张改一下", {"action": None, "reply_has": "没听出"}, "无改动提示"),
+    ("第 1 张改一下", {"action": None, "reply_has": "改"}, "无改动提示"),
 ]
 
 

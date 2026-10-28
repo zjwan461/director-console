@@ -17,7 +17,7 @@ from langchain_core.tools import tool
 
 from . import planner, state as agent_state, store as agent_store, tools
 
-MAX_STEPS = 3
+MAX_STEPS = 5
 
 SYSTEM = """你是「导演台」的执行大脑。用户用自然语言说要做什么，你负责决定调用哪些工具。
 
@@ -79,59 +79,64 @@ def _state_text(thread_id: str, project_id: str, attachments: list[dict]) -> str
 # --------------------------------------------------------------------------- #
 # 只读工具（真查）
 # --------------------------------------------------------------------------- #
-@tool
-def describe_state(thread_id: str) -> str:
-    """查看当前会话有哪些产物（#编号、类型、备注、参数），以及项目镜头。"""
-    st = agent_state.thread_state(thread_id)
-    return json.dumps({
-        "artifacts": [{"ref": a["ref"], "kind": a["kind"],
-                       "note": a["note"] or a["prompt"][:30], "params": a["params"]}
-                      for a in st["artifacts"][-8:]],
-        "count": st["count"], "last_ref": st["last_ref"],
-    }, ensure_ascii=False)
+def _build_read_tools(log: list[dict]):
+    @tool
+    def describe_state(thread_id: str) -> str:
+        """查看当前会话有哪些产物（#编号、类型、备注、参数），以及项目镜头。"""
+        log.append({"tool": "describe_state", "kind": "read", "args": {}})
+        st = agent_state.thread_state(thread_id)
+        return json.dumps({
+            "artifacts": [{"ref": a["ref"], "kind": a["kind"],
+                           "note": a["note"] or a["prompt"][:30], "params": a["params"]}
+                          for a in st["artifacts"][-8:]],
+            "count": st["count"], "last_ref": st["last_ref"],
+        }, ensure_ascii=False)
 
+    @tool
+    def list_shots(project_id: str) -> str:
+        """列出项目里的镜头：序号、标题、有没有画面。"""
+        log.append({"tool": "list_shots", "kind": "read", "args": {}})
+        shots = agent_state._shot_refs(project_id)
+        return json.dumps([{"ref": s["ref"], "title": s["title"],
+                            "has_cover": bool(s.get("cover"))} for s in shots],
+                          ensure_ascii=False)
 
-@tool
-def list_shots(project_id: str) -> str:
-    """列出项目里的镜头：序号、标题、有没有画面。"""
-    shots = agent_state._shot_refs(project_id)
-    return json.dumps([{"ref": s["ref"], "title": s["title"],
-                        "has_cover": bool(s.get("cover"))} for s in shots],
-                      ensure_ascii=False)
+    @tool
+    def find_assets(kind: str = "", q: str = "") -> str:
+        """按类型（image / video / audio）和关键词查素材库。"""
+        log.append({"tool": "find_assets", "kind": "read", "args": {"kind": kind, "q": q}})
+        data = json.loads(tools.list_assets(kind, q, "", 6))
+        return json.dumps([{"id": i["id"], "kind": i.get("kind"), "path": i.get("path")}
+                           for i in (data.get("items") or [])[:6]], ensure_ascii=False)
 
+    @tool
+    def card_info(card_id: str) -> str:
+        """查某张能力卡的参数（例如 h3.i2v、image.c16）。"""
+        log.append({"tool": "card_info", "kind": "read", "args": {"card_id": card_id}})
+        card = tools.get_card(card_id)
+        if not card:
+            return json.dumps({"error": "没有这张能力卡"}, ensure_ascii=False)
+        public = tools.public_card(card)
+        return json.dumps({
+            "id": public.get("id"), "name": public.get("name"),
+            "fields": [{"key": f.get("key"), "type": f.get("type"),
+                        "required": f.get("required")} for f in (public.get("fields") or [])],
+        }, ensure_ascii=False)
 
-@tool
-def find_assets(kind: str = "", q: str = "") -> str:
-    """按类型（image / video / audio）和关键词查素材库。"""
-    data = json.loads(tools.list_assets(kind, q, "", 6))
-    return json.dumps([{"id": i["id"], "kind": i.get("kind"), "path": i.get("path")}
-                       for i in (data.get("items") or [])[:6]], ensure_ascii=False)
-
-
-@tool
-def card_info(card_id: str) -> str:
-    """查某张能力卡的参数（例如 h3.i2v、image.c16）。"""
-    card = tools.get_card(card_id)
-    if not card:
-        return json.dumps({"error": "没有这张能力卡"}, ensure_ascii=False)
-    public = tools.public_card(card)
-    return json.dumps({
-        "id": public.get("id"), "name": public.get("name"),
-        "fields": [{"key": f.get("key"), "type": f.get("type"),
-                    "required": f.get("required")} for f in (public.get("fields") or [])],
-    }, ensure_ascii=False)
+    return [describe_state, list_shots, find_assets, card_info]
 
 
 # --------------------------------------------------------------------------- #
 # 动作工具（只提议，不执行）
 # 用闭包收集，避免 deepagents 在别的线程里执行工具时 contextvar 传不进去
 # --------------------------------------------------------------------------- #
-def _build_action_tools(bucket: list[dict]):
+def _build_action_tools(bucket: list[dict], log: list[dict]):
     def append(tool_name: str, args: dict, why: str) -> str:
         if len(bucket) >= MAX_STEPS:
             return json.dumps({"ok": False, "reason": "一次最多 3 步，已经够了"},
                               ensure_ascii=False)
         bucket.append({"tool": tool_name, "args": args, "why": why})
+        log.append({"tool": tool_name, "kind": "action", "args": args})
         return json.dumps({"ok": True, "proposed": tool_name, "step": len(bucket),
                            "note": "已排入确认队列，等用户确认后才会执行"}, ensure_ascii=False)
 
@@ -182,15 +187,19 @@ def _build_action_tools(bucket: list[dict]):
         return append("create_project", {"name": name}, why)
 
     @tool
+    def save_shot(why: str = "") -> str:
+        """把最近那一版产物存成项目镜头。"""
+        return append("save_shot", {}, why)
+
+    @tool
     def add_shots(raw: str, why: str = "") -> str:
         """新增镜头。raw 写清楚几个镜头、每个镜头是什么。"""
         return append("add_shots", {"raw": raw}, why)
 
     return [make_image, make_video, revise, export_film, polish_film,
-            set_bgm, set_film_options, create_project, add_shots]
+            set_bgm, set_film_options, create_project, add_shots, save_shot]
 
 
-READ_TOOLS = [describe_state, list_shots, find_assets, card_info]
 
 
 def _model():
@@ -219,11 +228,13 @@ async def decide(text: str, thread_id: str, project_id: str,
         return {"steps": [], "reply": "还没配置大模型（设置 → AI）。", "source": "error"}
 
     bucket: list[dict] = []
-    action_tools = _build_action_tools(bucket)
+    log: list[dict] = []
+    read_tools = _build_read_tools(log)
+    action_tools = _build_action_tools(bucket, log)
     try:
         agent = create_deep_agent(
             model=_model(),
-            tools=READ_TOOLS + action_tools,
+            tools=read_tools + action_tools,
             system_prompt=SYSTEM.format(
                 state=_state_text(thread_id, project_id, attachments)),
             checkpointer=MemorySaver(),
@@ -238,7 +249,8 @@ async def decide(text: str, thread_id: str, project_id: str,
             if getattr(msg, "type", "") == "ai" and str(getattr(msg, "content", "")).strip():
                 reply = str(msg.content).strip()
                 break
-        return {"steps": steps, "reply": reply[:400], "source": "deepagents"}
+        return {"steps": steps, "reply": reply[:400], "source": "deepagents",
+                "calls": list(log)}
     except Exception as exc:
         return {"steps": [], "reply": f"决策失败：{type(exc).__name__}: {exc}"[:300],
-                "source": "error"}
+                "source": "error", "calls": list(log)}
