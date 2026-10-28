@@ -13,3 +13,4 @@ langchain-openai>=1.0,<2
 aiosqlite>=0.20
 # deepagents：决策层（只提议不执行，确认卡复用现有流程）
 deepagents>=0.7,<0.8
+langgraph-checkpoint-sqlite==3.1.2
