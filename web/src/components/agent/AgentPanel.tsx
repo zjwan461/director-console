@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { agentStream, api } from '../../api'
+import { MarkdownText } from './MarkdownText'
 import type { AgentArtifact, AgentEvent, AgentMessage, AgentRun, AgentThread, Project } from '../../types'
 
 interface Step {
@@ -489,7 +490,9 @@ export default function AgentPanel({ projectId, onOpenProject }: {
 
           {messages.map((msg) => (
             <div key={msg.id} className={`agent-msg ${msg.role}`}>
-              <div className="agent-bubble">{msg.content}</div>
+              <div className="agent-bubble">
+                {msg.role === 'assistant' ? <MarkdownText text={msg.content} /> : msg.content}
+              </div>
               {msg.parts.map((part, index) => {
                 if (part.type === 'assets') {
                   const items = (part.items || []) as Array<Record<string, unknown>>
@@ -595,7 +598,7 @@ export default function AgentPanel({ projectId, onOpenProject }: {
           {streamText && (
             <div className="agent-msg assistant">
               <div className="agent-bubble">
-                {streamText}
+                <MarkdownText text={streamText} />
                 <span className="agent-caret" />
               </div>
             </div>

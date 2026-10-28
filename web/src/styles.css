@@ -1373,3 +1373,31 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
   width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
   font-size: 20px; color: #b9a6f0;
 }
+
+
+/* markdown 气泡 */
+.agent-bubble > :first-child { margin-top: 0; }
+.agent-bubble > :last-child { margin-bottom: 0; }
+.agent-bubble p { margin: 6px 0; }
+.agent-bubble ul, .agent-bubble ol { margin: 6px 0 6px 18px; padding: 0; }
+.agent-bubble li { margin: 3px 0; }
+.agent-bubble strong { color: #e6ecf7; }
+.agent-bubble code {
+  padding: 1px 5px; border-radius: 4px; background: #0d1017;
+  border: 1px solid #232838; font-size: 12px;
+}
+.agent-bubble pre {
+  margin: 8px 0; padding: 10px 12px; overflow: auto;
+  background: #0d1017; border: 1px solid #232838; border-radius: 8px;
+}
+.agent-bubble pre code { border: 0; background: none; padding: 0; }
+.agent-bubble blockquote {
+  margin: 6px 0; padding: 2px 0 2px 10px; border-left: 2px solid #2a3040; color: #9fb0c8;
+}
+.md-table-wrap { overflow-x: auto; margin: 8px 0; }
+.agent-bubble table { border-collapse: collapse; font-size: 12.5px; }
+.agent-bubble th, .agent-bubble td {
+  padding: 4px 10px; border: 1px solid #232838; text-align: left; white-space: nowrap;
+}
+.agent-bubble th { background: #151a24; color: #c6cfdf; font-weight: 600; }
+.agent-bubble a { color: #7ea6ff; }

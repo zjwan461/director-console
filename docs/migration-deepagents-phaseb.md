@@ -89,3 +89,12 @@ SSE 实测：`['run_start','step','step','step','tool_call','tool_result','need_
 2. 多步确认卡支持「逐条执行 / 全部执行」
 3. 引擎结果缓存（同一句话重复说，省一次 5s）
 4. 量化：把「未写进规则的 20 条说法」固化成测试，防止以后退化
+
+
+## 7. 前端：气泡支持 markdown（2026-10-28 下午）
+
+- 新增 `web/src/components/agent/MarkdownText.tsx`（react-markdown + remark-gfm）
+- 助手消息与流式输出都走 markdown 渲染；表格、列表、代码块、引用、链接（新窗口打开）
+- 样式补在 `styles.css`：表格横向滚动、`th` 背景、代码块底色
+- 构建注意：esbuild 的临时目录默认在 `%TEMP%`，本机偶发 `Access is denied`，
+  构建前把 `TEMP/TMP` 指到 `web/.tmp` 即可。
