@@ -141,12 +141,27 @@ class ComfyClient:
             await asyncio.sleep(interval)
         raise ComfyError("等待生成超时")
 
-    async def download(self, filename: str, subfolder: str = "", kind: str = "output") -> bytes:
+    async def download(self, filename: str, subfolder: str = "", kind: str = "output",
+                       attempts: int = 4) -> bytes:
+        """拉产物。局域网偶发「传输中断」，重试几次再放弃。"""
         params = {"filename": filename, "type": kind}
         if subfolder:
             params["subfolder"] = subfolder
-        resp = await self._request("GET", "/view", params=params)
-        return resp.content
+
+        last: Exception | None = None
+        for index in range(attempts):
+            try:
+                resp = await self._request("GET", "/view", params=params)
+                data = resp.content
+                expected = resp.headers.get("content-length")
+                if expected and expected.isdigit() and len(data) != int(expected):
+                    raise ComfyError(f"下载不完整：{len(data)}/{expected} 字节")
+                return data
+            except Exception as exc:  # noqa: BLE001
+                last = exc
+                if index < attempts - 1:
+                    await asyncio.sleep(1.5 * (index + 1))
+        raise ComfyError(f"下载产物失败（重试 {attempts} 次）：{last}")
 
     async def interrupt(self) -> None:
         await self._request("POST", "/interrupt")
