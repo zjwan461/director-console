@@ -76,22 +76,18 @@ no text, no calligraphy, no plaques, no Chinese characters, no extra people, no 
 
 ```text
 写实历史短剧定妆照，不是偶像剧，非美型，竖屏构图，太庙内殿石墙前，正面半身：
-选型 A（推荐 · 已实测）：A Chinese man in his late thirties, lean and sharp-featured but weather-beaten, short uneven black beard, hard narrow eyes, thick brows almost meeting, hair in a tight topknot. He wears dark lamellar armour with a dusty grey fur collar and a simple leather cap. Sunburnt peeling skin, old smallpox scars on the jaw, chapped lips, a chipped front tooth, sweat and dust on the forehead, a smug unpleasant half-smile. Front-facing, chest up, looking straight at the camera
+A Chinese man in his late thirties, tall and broad-shouldered, lean but strong boned, a hard masculine face with a square jaw, high cheekbones, thick straight brows, deep-set stern eyes looking straight at the camera, a short trimmed black beard, weathered sunburnt skin with a faint old scar on one cheekbone, hair in a tight topknot, wearing dark lamellar armour with a dusty grey fur collar and a simple leather cap, stern serious expression, mouth closed, jaw set, no smile, imposing and calm
 documentary-style hard light from above, sweat shine on the forehead, no beauty retouching, plain grey stone wall background, shallow depth of field
 no text, no calligraphy, no plaques, no Chinese characters, no extra people, no modern objects, handsome idol face, beauty filter, smooth flawless skin, glamour lighting, makeup, k-pop, young man, youthful face, boyish look, porcelain skin
 ```
 
-> **拓跋焘有两个可选脸**（都实测过，二选一）：
+![拓跋焘定版](/D:/temp/tuoba_hard.png)
+
+> **拓跋焘定版（H1）**：英气硬朗、严肃不笑。关键是三个词：
+> `square jaw`（方下颌）、`thick straight brows`（浓直眉）、`stern serious expression, no smile`。
+> 反面词要写 `not feminine, no soft delicate features, no eyeliner, no bright glossy eyes`。
 >
-> - **选型 A（手册采用）**：边军糙汉，晚三十几、风霜脸、豁牙、疤。缺点是模型仍画得偏帅。
-> - **选型 B（喜剧向）**：胖、圆脸、小眼睛、络腮胡、豁牙，彻底离开帅哥区间，更好笑。提示词：
->
-> ```text
-> 写实历史短剧定妆照，不是偶像剧，非美型，竖屏构图，太庙内殿石墙前，正面半身：
-> a stocky heavy-set Chinese soldier, 40 years old, wide flat face, heavy jowls, small close-set eyes, wide flattened nose, full untrimmed scruffy black beard covering the jaw, thick neck, sweaty forehead, smug unpleasant grin, a chipped front tooth, wearing dusty dark lamellar armour with a matted grey fur collar, round dented helmet, holding a small shabby bundle of dried herbs in his right hand
-> documentary-style hard light from above, dust and sweat on skin, no beauty retouching
-> no text, no calligraphy, no Chinese plaques, no extra people, handsome idol face, beauty filter, smooth skin, glamour lighting, makeup, k-pop, young man, boyish look, porcelain skin
-> ```
+> 如果想让他更滑稽，可换成「胖赢家」版（见下方附录 B）。
 
 > 三张出完逐一看：**是不是"普通人"而不是"演员偶像"、冠对不对、有没有多余人、有没有自造汉字**。
 > 不满意就原样再执行（同提示词多跑几次）。满意的三张自动进素材库，后面按名字引用。
@@ -155,7 +151,7 @@ no text, no calligraphy, no Chinese characters, no extra people, handsome idol f
 
 ```text
 写实历史短剧，非美型，竖屏，太庙内殿侧廊：深色木柱之间有一道阴影，背景是灰石墙和虚化烛火，冷环境光，纪录片质感，浅景深
-中景：a lean, rough Chinese soldier of 38 with a slightly crooked broken nose, sunburnt peeling cheeks, old smallpox scars on the jaw, uneven patchy black beard with grey strands, narrow smug eyes, wearing dusty dark lamellar armour with a matted grey fur collar, round dented helmet, holding a small shabby bundle of dried herbs in his right hand, walking out of the shadow toward the camera with a smug unpleasant half-smile
+中景：a tall broad-shouldered Chinese man of 38 with a hard square-jawed masculine face, thick straight brows, deep-set stern eyes, short trimmed black beard, weathered skin with a faint scar on one cheekbone, wearing dusty dark lamellar armour with a grey fur collar and a simple leather cap, holding a small shabby bundle of dried herbs in his right hand, walking out of the shadow toward the camera with a calm stern expression, mouth closed
 只有半边脸被烛光照亮，另一边在暗部
 no text, no calligraphy, no plaques, no Chinese characters, no extra people, handsome idol face, beauty filter, smooth skin, glamour lighting
 ```
@@ -293,7 +289,7 @@ Camera tracks sideways a little as he walks in.
 subject_definitions:
 <Subject 1> is the son: a gaunt middle-aged Chinese man of 45, hollow cheeks, sallow greyish uneven skin, heavy dark eye bags, graying stubble, black ceremonial crown with a flat board and short bead strings, black robe with an oversized high white collar. <Picture 1> is his appearance reference.
 <Subject 2> is the father: a weathered ordinary-looking Chinese man in his mid sixties, broad rough face, deep wrinkles, messy grey-streaked beard, dark grey-black robe, hands behind his back. <Picture 2> is his appearance reference.
-<Subject 3> is the northern emperor: a lean rough Chinese soldier of 38, crooked broken nose, sunburnt peeling skin, old smallpox scars, uneven patchy black beard with grey strands, dusty dark lamellar armour with matted grey fur collar, round dented helmet, holding a small shabby bundle of dried herbs. <Picture 3> is his appearance reference.
+<Subject 3> is the northern emperor: a tall broad-shouldered Chinese man of 38, hard square-jawed masculine face, thick straight brows, deep-set stern eyes, short trimmed black beard, weathered skin with a faint scar, dusty dark lamellar armour with grey fur collar, simple leather cap, holding a small shabby bundle of dried herbs, stern and unsmiling. <Picture 3> is his appearance reference.
 <Subject 4> is the ancestral temple hall: grey stone walls, dark wooden columns, blank wooden tablets, bronze candlesticks, incense smoke, cold hard light.
 
 summary:
