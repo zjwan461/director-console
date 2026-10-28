@@ -199,8 +199,8 @@ def main() -> int:
         if not current:
             continue
         log(f"  {current.get('status')} {round(float(current.get('progress') or 0) * 100)}%")
-        if current.get("status") in ("done", "failed", "canceled"):
-            if current.get("status") == "done":
+        if current.get("status") in ("done", "succeeded", "failed", "canceled"):
+            if current.get("status") in ("done", "succeeded"):
                 log(f"\n成片：{current.get('url')}")
                 log(f"项目页：{B}/?tab=edit&project={project_id}")
                 return 0
