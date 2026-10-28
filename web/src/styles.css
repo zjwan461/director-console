@@ -1419,3 +1419,7 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
   font-size: 11.5px; color: #9fb0c8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .picker-file audio { display: none; }
+
+
+/* 只发附件时的占位气泡 */
+.agent-bubble.empty { color: #7f8ba1; font-style: italic; }

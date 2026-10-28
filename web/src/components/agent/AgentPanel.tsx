@@ -488,10 +488,27 @@ export default function AgentPanel({ projectId, onOpenProject }: {
             </div>
           )}
 
-          {messages.map((msg) => (
+          {messages.map((msg) => {
+            // 只发了附件没打字：给个占位说明，别留空气泡
+            const attachmentKinds = msg.parts.flatMap((part) => {
+              if (part.type === 'assets') {
+                return ((part.items || []) as Array<Record<string, unknown>>)
+                  .map((item) => String(item.kind || ''))
+              }
+              return ['image', 'audio', 'video'].includes(part.type) ? [part.type] : []
+            })
+            const attachmentLabel = attachmentKinds.length
+              ? [...new Set(attachmentKinds.map((kind) => kind === 'image' ? '图片'
+                  : kind === 'audio' ? '音频' : kind === 'video' ? '视频' : '文件'))].join(' / ')
+              : ''
+            const emptyText = attachmentLabel ? `（发送了 ${attachmentLabel}）` : '（附件）'
+
+            return (
             <div key={msg.id} className={`agent-msg ${msg.role}`}>
-              <div className="agent-bubble">
-                {msg.role === 'assistant' ? <MarkdownText text={msg.content} /> : msg.content}
+              <div className={`agent-bubble${msg.content.trim() ? '' : ' empty'}`}>
+                {msg.content.trim()
+                  ? (msg.role === 'assistant' ? <MarkdownText text={msg.content} /> : msg.content)
+                  : emptyText}
               </div>
               {msg.parts.map((part, index) => {
                 if (part.type === 'assets') {
@@ -545,7 +562,8 @@ export default function AgentPanel({ projectId, onOpenProject }: {
                 return null
               })}
             </div>
-          ))}
+            )
+          })}
 
           {(steps.length > 0 || thinking) && (
             <details className="agent-trace-panel" open={traceOpen}>
