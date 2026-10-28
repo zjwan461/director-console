@@ -1401,3 +1401,21 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
 }
 .agent-bubble th { background: #151a24; color: #c6cfdf; font-weight: 600; }
 .agent-bubble a { color: #7ea6ff; }
+
+
+/* 素材库：音频/视频条目（不再用 img 渲染） */
+.picker-file {
+  display: flex; align-items: center; gap: 8px; width: 100%; height: 96px;
+  padding: 10px; border: 1px solid #232838; border-radius: 8px;
+  background: #11151d; color: #c6cfdf; cursor: pointer; text-align: left;
+  overflow: hidden;
+}
+.picker-file:hover { border-color: #3a4664; }
+.picker-file .icon {
+  width: 28px; height: 28px; flex: none; display: flex; align-items: center; justify-content: center;
+  border-radius: 6px; background: #1b2130; color: #8aa6ff; font-size: 14px;
+}
+.picker-file .name {
+  font-size: 11.5px; color: #9fb0c8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.picker-file audio { display: none; }

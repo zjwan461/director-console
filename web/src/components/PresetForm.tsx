@@ -215,33 +215,63 @@ export default function PresetFields({ card, values, onChange, assets, setAssets
               )
             })}
           </div>
-          {pickerKey && (
-            <div className="assist" style={{ marginTop: 10 }}>
-              <div className="row" style={{ justifyContent: 'space-between' }}>
-                <b>素材库（最近图片）</b>
-                <button className="ghost tiny" onClick={() => setPickerKey(null)}>关闭</button>
+          {pickerKey && (() => {
+            const pickerField = mediaFields.find((f) => f.key === pickerKey)
+            const pickerKind = pickerField?.type === 'audio' ? 'audio'
+              : pickerField?.type === 'video' ? 'video' : 'image'
+            const kindLabel = pickerKind === 'audio' ? '音频' : pickerKind === 'video' ? '视频' : '图片'
+            const emptyHint = pickerKind === 'audio'
+              ? '还没有音频素材，可以上传一段，或用「素材库」里的背景音乐。'
+              : pickerKind === 'video'
+                ? '还没有视频素材，先出一段视频吧。'
+                : '还没有图片素材，先用「剧照 / 角色图」生成一张。'
+            const pick = (a: Asset) => {
+              setAssets((prev) => ({ ...prev, [pickerKey]: a }))
+              onChange(pickerKey, a.id)
+              setPickerKey(null)
+            }
+            return (
+              <div className="assist" style={{ marginTop: 10 }}>
+                <div className="row" style={{ justifyContent: 'space-between' }}>
+                  <b>素材库（最近{kindLabel}）</b>
+                  <button className="ghost tiny" onClick={() => setPickerKey(null)}>关闭</button>
+                </div>
+                {pickerLoading && <div className="msg">加载中…</div>}
+                {!pickerLoading && pickerAssets.length === 0 && <div className="msg">{emptyHint}</div>}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(128px, 1fr))', gap: 8 }}>
+                  {pickerAssets.map((a) => {
+                    const name = String(a.path || '').split('/').pop() || a.id
+                    if (pickerKind === 'image') {
+                      return (
+                        <img
+                          key={a.id}
+                          src={a.url}
+                          alt={name}
+                          title={name}
+                          style={{ width: '100%', height: 96, objectFit: 'cover', borderRadius: 8, cursor: 'pointer' }}
+                          onClick={() => pick(a)}
+                        />
+                      )
+                    }
+                    return (
+                      <button
+                        key={a.id}
+                        className="picker-file"
+                        title={name}
+                        onClick={() => pick(a)}
+                      >
+                        <span className="icon">{pickerKind === 'audio' ? '♪' : '▶'}</span>
+                        <span className="name">{name}</span>
+                        {pickerKind === 'audio' && (
+                          <audio src={a.url} preload="none" onClick={(event) => event.stopPropagation()} />
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
-              {pickerLoading && <div className="msg">加载中…</div>}
-              {!pickerLoading && pickerAssets.length === 0 && (
-                <div className="msg">还没有图片素材，先用「剧照 / 角色图」生成一张。</div>
-              )}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(96px, 1fr))', gap: 8 }}>
-                {pickerAssets.map((a) => (
-                  <img
-                    key={a.id}
-                    src={a.url}
-                    alt={a.id}
-                    style={{ width: '100%', height: 96, objectFit: 'cover', borderRadius: 8, cursor: 'pointer' }}
-                    onClick={() => {
-                      setAssets((prev) => ({ ...prev, [pickerKey]: a }))
-                      onChange(pickerKey, a.id)
-                      setPickerKey(null)
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
+            )
+          })()}
 
           <input
             ref={mediaInputRef}
