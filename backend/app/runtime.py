@@ -34,6 +34,8 @@ VALID_MODES = {"local", "ssh", "external", "mock"}
 def apply_runtime_settings() -> None:
     """启动时调用：把库里的覆盖值写回 settings.raw，之后所有代码读到的都是最新值。"""
     stored = store.list_settings()
+    if stored.get("agent_engine"):
+        settings.raw.setdefault("agent", {})["engine"] = stored["agent_engine"]
     comfy = settings.raw.setdefault("comfy", {})
     if stored.get(MODE_KEY) in VALID_MODES:
         comfy["mode"] = stored[MODE_KEY]
@@ -243,3 +245,19 @@ def reset_asr_settings() -> dict:
     from . import asr as asr_module
 
     return asr_module.config()
+
+
+ENGINE_KEY = "agent_engine"
+
+
+def public_agent_settings() -> dict:
+    return {"engine": str(settings.get("agent.engine") or "rules")}
+
+
+def save_agent_settings(engine: str) -> dict:
+    value = (engine or "").strip().lower()
+    if value not in {"rules", "deepagents"}:
+        raise ValueError("engine 只能是 rules 或 deepagents")
+    store.set_setting(ENGINE_KEY, value)
+    settings.raw.setdefault("agent", {})["engine"] = value
+    return public_agent_settings()

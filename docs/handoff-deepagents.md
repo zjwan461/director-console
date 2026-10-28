@@ -1,6 +1,7 @@
 # 交接：deepagents 迁移（2026-10-27 → 明日开工）
 
-> 状态：spike 已验证，**生产代码未改动**。明天从这里开始换。
+> 状态：**Phase A 已完成**（决策层已换成 deepagents，可用 `agent.engine` 回滚）。
+> 进展与新计划见 [migration-deepagents-day2.md](migration-deepagents-day2.md)。
 
 ## 一句话结论
 

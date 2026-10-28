@@ -1516,6 +1516,19 @@ async def put_ai_settings(body: AISettings) -> dict:
         raise HTTPException(status_code=400, detail=str(exc))
 
 
+@app.get("/api/settings/agent")
+async def get_agent_settings() -> dict:
+    return runtime.public_agent_settings()
+
+
+@app.put("/api/settings/agent")
+async def put_agent_settings(body: dict) -> dict:
+    try:
+        return runtime.save_agent_settings(str(body.get("engine") or ""))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
 @app.post("/api/settings/ai/reset")
 async def reset_ai_settings() -> dict:
     return runtime.reset_ai_settings()

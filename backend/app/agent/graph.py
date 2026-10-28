@@ -302,6 +302,14 @@ def _fast_intent(state: AgentState) -> dict | None:
 
         return None
 
+    # 「做个环绕 / 推近 / 拉远」这类运镜词，有图就是视频，不是出图
+    if (re.search(r"(环绕|推近|拉远|运镜|摇镜|跟拍|围绕)", text)
+            and (last_asset or re.search(r"(这张图|这个图|底图|参考图|刚才)", text))):
+        return {"intent": "generate_video",
+                "args": {"prompt": text, "mode": "i2v", "aspect": "16:9", "duration": 5,
+                         "image_asset_id": str(last_asset or "")},
+                "reply": "好，用这张图做一个环绕镜头。"}
+
     if VIDEO_RE.search(text) and IMPERATIVE_RE.search(text):
         # 判断用哪种视频卡：参考图 → r2v，明确说首帧/这张图 → i2v，否则 t2v
         has_ref = bool(last_asset) or bool(
@@ -367,6 +375,18 @@ def _short_circuit(state: AgentState) -> dict | None:
                         "last_asset_id": asset_id, "last_kind": "image",
                         "last_job_id": artifact["ref_id"], "last_url": artifact["url"]})
                     break
+    # 只说了「视频啊」「图」这种选择词，而刚聊过新话题 → 按话题新做（不需要已有素材）
+    topic = str(ctx.get("last_topic") or "").strip()
+    if topic and _is_media_choice(text) and not QUERY_RE.search(text):
+        video_intent = any(word in text for word in VIDEO_WORDS)
+        want_image = bool(re.search(r"(图|图片|剧照)", text)) and not video_intent
+        if want_image:
+            return {"intent": "generate", "args": {"prompt": topic, "aspect": "9:16"},
+                    "reply": f"好，按「{topic}」出一张图。"}
+        return {"intent": "generate_video",
+                "args": {"prompt": topic, "mode": "t2v", "aspect": "16:9", "duration": 5},
+                "reply": f"好，按「{topic}」出一段视频。"}
+
     if not asset_id:
         return None
 
@@ -381,17 +401,6 @@ def _short_circuit(state: AgentState) -> dict | None:
     video_intent = any(word in text for word in VIDEO_WORDS)
     if not (_is_affirmative(text) or video_intent):
         return None
-
-    # 只说了「视频啊」「图」这种选择词，而刚聊过新话题 → 按话题新做，不是改上一张图
-    topic = str(ctx.get("last_topic") or "").strip()
-    if topic and _is_media_choice(text):
-        want_image = bool(re.search(r"(图|图片|剧照)", text)) and not video_intent
-        if want_image:
-            return {"intent": "generate", "args": {"prompt": topic, "aspect": "9:16"},
-                    "reply": f"好，按「{topic}」出一张图。"}
-        return {"intent": "generate_video",
-                "args": {"prompt": topic, "mode": "t2v", "aspect": "16:9", "duration": 5},
-                "reply": f"好，按「{topic}」出一段视频。"}
 
     # 接着上一张图做视频时，必须明确指代（这张/它/刚才）或直接同意
     refers_previous = bool(re.search(r"(这张|这个图|刚才|上一张|它|首帧)", text))
@@ -539,12 +548,20 @@ async def node_decide(state: AgentState) -> dict:
                 "reply": "还没配置大模型（设置 → AI），先配好我才能帮你出图。",
                 "args": {}}
 
-    # 规则没接住 → 交给 agentic 循环：模型可以查状态/素材，再决定做什么
-    from . import agent_loop
+    # 规则没接住 → 交给决策引擎（deepagents 或自研循环，由 agent.engine 切换）
+    engine = str(settings.get("agent.engine") or "rules")
+    if engine == "deepagents":
+        from . import da_engine
 
-    looped = await agent_loop.run(
-        str(state.get("text") or ""), state.get("thread_id", ""),
-        state.get("project_id", ""), state.get("attachments") or [])
+        looped = await da_engine.decide(
+            str(state.get("text") or ""), state.get("thread_id", ""),
+            state.get("project_id", ""), state.get("attachments") or [])
+    else:
+        from . import agent_loop
+
+        looped = await agent_loop.run(
+            str(state.get("text") or ""), state.get("thread_id", ""),
+            state.get("project_id", ""), state.get("attachments") or [])
     steps = looped.get("steps") or []
     reply = str(looped.get("reply") or "").strip()
 

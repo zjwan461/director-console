@@ -39,6 +39,10 @@ DEFAULTS: dict[str, Any] = {
         "api_key": "",
         "model": "",
     },
+    "agent": {
+        # rules = 规则 + 自研循环；deepagents = deepagents 决策引擎
+        "engine": "deepagents",
+    },
     "ui": {"advanced_panel": "", "comfy_web": ""},
 }
 
