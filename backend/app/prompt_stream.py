@@ -10,6 +10,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from .config import settings
+from .netutil import proxy_for
 
 router = APIRouter()
 
@@ -69,8 +70,9 @@ async def rewrite_stream(body: RewriteRequest):
 
     proxy = str(settings.get("ai.proxy", "") or "").strip()
     kwargs = {"timeout": httpx.Timeout(connect=15, read=300, write=30, pool=30), "trust_env": False}
-    if proxy:
-        kwargs["proxy"] = proxy
+    use_proxy = proxy_for(base, proxy)   # 局域网地址不走代理，否则会被网关返回 504
+    if use_proxy:
+        kwargs["proxy"] = use_proxy
     elif settings.get("ai.trust_env", False):
         kwargs["trust_env"] = True
 
