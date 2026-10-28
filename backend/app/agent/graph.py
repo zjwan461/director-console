@@ -18,6 +18,7 @@ from langgraph.types import interrupt
 from .. import store
 from ..config import settings
 from . import planner
+from . import state as agent_state
 from . import store as agent_store
 from . import prompts, tools
 
@@ -211,6 +212,15 @@ def _fast_intent(state: AgentState) -> dict | None:
     # 复合句（「先…再…」「A，然后 B」）一律交给引擎拆成多步，规则只处理单意图
     if planner.looks_compound(text):
         return None
+
+    # 撤销上一版：产物都是编号的，回退一格
+    if re.search(r"(撤销|回退|退回|撤回|上一步|退一步)", text):
+        return {"intent": "undo", "args": {}, "reply": ""}
+
+    # 批量存成镜头：「把这 3 张存成镜头」「把会话里的图都存成镜头」
+    if (re.search(r"(几张|这些|全部|所有|都|会话里)", text)
+            and re.search(r"(存|保存|收).{0,4}(成|为|到).{0,3}(镜头|分镜)", text)):
+        return {"intent": "save_many", "args": {}, "reply": ""}
 
     # 存成镜头：确定性操作，规则直判（引擎容易反问）
     if re.search(r"(存|保存|收).{0,4}(成|为|到).{0,3}(镜头|分镜)", text):
@@ -510,6 +520,17 @@ async def node_decide(state: AgentState) -> dict:
                     "reply": f"收到音频{hint}。你打算把它当背景音乐、做对口型、还是配到某一镜做旁白？",
                     "args": {}}
 
+    # 用户说「继续」→ 接着上次没做的步骤，重新弹确认卡
+    ctx_now = agent_store.get_context(state.get("thread_id", ""))
+    pending_steps = list(ctx_now.get("pending_steps") or [])
+    if pending_steps and re.search(r"^(继续|下一步|接着做|往下做|继续执行|继续吧)",
+                                   str(state.get("text") or "").strip()):
+        _emit({"t": "step", "id": "continue", "node": "decide",
+               "title": f"继续剩余 {len(pending_steps)} 步", "status": "done",
+               "detail": {"source": "上下文"}})
+        return {"intent": "multi", "args": {"steps": pending_steps},
+                "reply": f"好，继续剩下的 {len(pending_steps)} 步。"}
+
     # 上一轮确认过的多步计划，依赖产物到位后继续执行（不再弹确认）
     if state.get("preapproved"):
         steps = list((state.get("args") or {}).get("steps") or [])
@@ -551,16 +572,18 @@ async def node_decide(state: AgentState) -> dict:
     # 肯定回复优先于关键词：否则「可以，就用这张图」会被 图 字带走，重新出图
     shortcut = _short_circuit(state)
     if shortcut:
-        _emit({"t": "step", "id": "decide", "node": "decide", "title": "接着上一步",
-               "status": "done", "detail": {"intent": shortcut["intent"],
-                                             "reason": "肯定回复 + 最近有产物"}})
+        _emit({"t": "step", "id": "decide", "node": "decide",
+               "title": "决策：接着上一步", "status": "done",
+               "detail": {"source": "规则", "intent": shortcut["intent"],
+                          "reason": "肯定回复 + 最近有产物"}})
         return {**shortcut, "decision": ""}
 
     fast = _fast_intent(state)
     if fast:
-        _emit({"t": "step", "id": "decide", "node": "decide", "title": "理解需求",
-               "status": "done", "detail": {"intent": fast["intent"], "fast": True,
-                                             "args": fast.get("args")}})
+        _emit({"t": "step", "id": "decide", "node": "decide",
+               "title": "决策：规则快通道", "status": "done",
+               "detail": {"source": "规则", "intent": fast["intent"],
+                          "args": fast.get("args")}})
         return fast
 
     env = json.loads(tools.env_check())
@@ -640,14 +663,15 @@ async def node_decide(state: AgentState) -> dict:
 
     if len(steps) == 1:
         step = steps[0]
-        _emit({"t": "step", "id": "decide", "node": "decide", "title": "理解需求",
-               "status": "done",
-               "detail": {"intent": step["intent"], "tool": step["tool"], "args": step["args"]}})
+        _emit({"t": "step", "id": "decide", "node": "decide",
+               "title": f"决策：deepagents → {step['tool']}", "status": "done",
+               "detail": {"source": "deepagents", "intent": step["intent"],
+                          "tool": step["tool"], "args": step["args"]}})
         return {"intent": step["intent"], "args": step.get("args") or {}, "reply": reply}
 
     if len(steps) > 1:
         _emit({"t": "step", "id": "decide", "node": "decide",
-               "title": f"拆成 {len(steps)} 步", "status": "done",
+               "title": f"决策：多步计划（{len(steps)} 步）", "status": "done",
                "detail": {"steps": [{"tool": s["tool"], "why": s.get("why")} for s in steps]}})
         return {"intent": "multi", "args": {"steps": steps}, "reply": reply}
 
@@ -946,6 +970,63 @@ async def node_audit(state: AgentState) -> dict:
     _emit({"t": "step", "id": "audit", "node": "decide", "title": "项目体检",
            "status": "done", "detail": {"shots": len(shots), "covered": len(with_cover)}})
     return {"intent": "chat", "reply": reply}
+
+
+async def node_undo(state: AgentState) -> dict:
+    """撤销上一版：把「当前版本」指回上一个产物（历史仍保留可回看）。"""
+    thread_id = state.get("thread_id", "")
+    artifacts = agent_state.thread_artifacts(thread_id)
+    if len(artifacts) < 2:
+        return {"intent": "chat",
+                "reply": "这个会话只有一版产物，没有可撤销的。想换一版就说「再改一版」。"}
+
+    previous = artifacts[1]
+    agent_store.set_context(thread_id, {
+        "last_ref": previous["ref"],
+        "last_asset_id": tools.asset_from_url(str(previous.get("url") or ""),
+                                             str(previous.get("ref_id") or "")),
+        "last_kind": previous.get("kind") or "image",
+        "last_url": previous.get("url") or "",
+    })
+    _emit({"t": "step", "id": "undo", "node": "decide", "title": f"撤销到 #{previous['ref']}",
+           "status": "done", "detail": {"ref": previous["ref"]}})
+    note = previous.get("note") or (previous.get("params") or {}).get("prompt") or ""
+    return {"intent": "chat",
+            "reply": f"已撤销最新那版，现在以 #{previous['ref']}{('「' + note[:24] + '」') if note else ''} 为准。"
+                     f"接着改或者说「再改一版」都行。"}
+
+
+async def node_save_many(state: AgentState) -> dict:
+    """把会话里的图片产物批量存成镜头。"""
+    thread_id = state.get("thread_id", "")
+    project_id = state.get("project_id", "")
+    if not project_id:
+        return {"intent": "chat", "reply": "这个会话还没绑定项目，先说「新建一个项目叫《…》」。"}
+
+    artifacts = agent_state.thread_artifacts(thread_id)
+    images = [a for a in artifacts if (a.get("kind") or "") == "image" and a.get("url")]
+    if not images:
+        return {"intent": "chat", "reply": "会话里还没有图片，先让我出一张图吧。"}
+
+    created = []
+    for artifact in images:  # thread_artifacts 已是生成顺序
+        note = artifact.get("note") or ""
+        title = (note[:20] or f"镜头 {len(created) + 1}")
+        shot = store.create_shot(project_id, title, "", "")
+        params = artifact.get("params") or {}
+        store.update_shot(shot["id"], cover=artifact.get("url") or "",
+                          preset_id=str(params.get("preset_id") or ""),
+                          prompt=str(params.get("prompt") or note))
+        created.append(title)
+
+    _emit({"t": "step", "id": "save_many", "node": "decide",
+           "title": f"存成 {len(created)} 个镜头", "status": "done",
+           "detail": {"count": len(created)}})
+    lines = "\n".join(f"{index}. {name}（#{artifact['ref']}）"
+                      for index, (name, artifact) in enumerate(zip(created, images), 1))
+    return {"intent": "chat",
+            "reply": f"已把会话里的 {len(created)} 张图按顺序存成镜头：\n{lines}\n"
+                     "去剪辑页可以直接排片、加旁白。"}
 
 
 async def node_list_shots(state: AgentState) -> dict:
@@ -1529,6 +1610,18 @@ async def node_confirm(state: AgentState) -> dict:
 
     decision = interrupt(payload) or {}
     approved = bool(decision.get("approved"))
+    only_first = bool(decision.get("only_first")) and plan.get("kind") == "multi"
+    if only_first:
+        steps = list(params.get("steps") or [])
+        if len(steps) > 1:
+            # 只跑第一步，剩下的存进上下文，等用户说「继续」再确认
+            agent_store.set_context(state.get("thread_id", ""),
+                                    {"pending_steps": steps[1:]})
+            plan = {**plan, "params": {**params, "steps": steps[:1],
+                                       "previews": (params.get("previews") or [])[:1]}}
+            _emit({"t": "step", "id": "only_first", "node": "confirm",
+                   "title": f"只执行第 1 步（剩 {len(steps) - 1} 步待确认）",
+                   "status": "done", "detail": {"remaining": len(steps) - 1}})
     if not approved:
         return {"decision": "cancelled", "intent": "chat",
                 "reply": "已取消，这次没有提交。想调整参数或换个说法，直接告诉我就行。"}
@@ -1735,6 +1828,10 @@ async def node_dispatch(state: AgentState) -> dict:
 
 def route_after_decide(state: AgentState) -> str:
     intent = state.get("intent") or "chat"
+    if intent == "undo":
+        return "undo"
+    if intent == "save_many":
+        return "save_many"
     if intent == "audit":
         return "audit"
     if intent == "list_shots":
@@ -1808,6 +1905,8 @@ def build_graph(checkpointer=None):
     graph.add_node("lookup", node_lookup)
     graph.add_node("list_shots", node_list_shots)
     graph.add_node("audit", node_audit)
+    graph.add_node("undo", node_undo)
+    graph.add_node("save_many", node_save_many)
     graph.add_node("prepare", node_prepare)
     graph.add_node("prepare_export", node_prepare_export)
     graph.add_node("prepare_save", node_prepare_save)
@@ -1838,12 +1937,16 @@ def build_graph(checkpointer=None):
                                  "advise": "advise",
                                  "list_shots": "list_shots",
                                  "audit": "audit",
+                                 "undo": "undo",
+                                 "save_many": "save_many",
                                  "prepare_revise": "prepare_revise",
                                  "prepare_multi": "prepare_multi",
                                  "quick_reply": "quick_reply"})
     graph.add_edge("lookup", END)
     graph.add_edge("list_shots", END)
     graph.add_edge("audit", END)
+    graph.add_edge("undo", END)
+    graph.add_edge("save_many", END)
     graph.add_conditional_edges("prepare", route_after_prepare,
                                 {"chat": "chat", "confirm": "confirm",
                                  "quick_reply": "quick_reply"})

@@ -319,7 +319,7 @@ export default function AgentPanel({ projectId, onOpenProject }: {
     }
   }
 
-  async function decide(approved: boolean) {
+  async function decide(approved: boolean, onlyFirst = false) {
     let target = run
     if (!target?.id) {
       try {
@@ -369,7 +369,7 @@ export default function AgentPanel({ projectId, onOpenProject }: {
     }
     setBusy(true)
     try {
-      await api.agentConfirm(target.id, approved, params)
+      await api.agentConfirm(target.id, approved, params, onlyFirst)
       setConfirmDraft(null)
       setMultiEdits({})
       setSteps([])
@@ -798,6 +798,12 @@ export default function AgentPanel({ projectId, onOpenProject }: {
 
               <div className="agent-confirm-actions">
                 <button className="primary" disabled={busy} onClick={() => void decide(true)}>执行</button>
+                {Array.isArray(((pending.params as Record<string, unknown> | undefined)?.steps))
+                  && (((pending.params as Record<string, unknown>).steps) as unknown[]).length > 1 && (
+                  <button className="ghost" disabled={busy} onClick={() => void decide(true, true)}>
+                    只执行第一步
+                  </button>
+                )}
                 <button className="ghost" disabled={busy} onClick={() => void decide(false)}>取消</button>
               </div>
             </div>

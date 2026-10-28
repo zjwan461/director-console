@@ -272,10 +272,11 @@ export const api = {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text, attachments }),
     }),
-  agentConfirm: (runId: string, approved: boolean, params?: Record<string, unknown>) =>
+  agentConfirm: (runId: string, approved: boolean, params?: Record<string, unknown>,
+                 onlyFirst = false) =>
     request<AgentRun>(`/api/agent/runs/${runId}/confirm`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ approved, params }),
+      body: JSON.stringify({ approved, params, only_first: onlyFirst }),
     }),
   agentRun: (runId: string) => request<AgentRun>(`/api/agent/runs/${runId}`),
   agentCancel: (runId: string) =>

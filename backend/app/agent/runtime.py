@@ -134,7 +134,8 @@ async def _run(thread: dict, run_id: str, text: str,
         pass
 
 
-async def confirm_run(run_id: str, approved: bool, params: dict | None = None) -> dict:
+async def confirm_run(run_id: str, approved: bool, params: dict | None = None,
+                      only_first: bool = False) -> dict:
     """用户在确认卡上点了执行/取消。"""
     run = agent_store.get_run(run_id)
     if not run:
@@ -144,6 +145,8 @@ async def confirm_run(run_id: str, approved: bool, params: dict | None = None) -
     thread_id = run["thread_id"]
     config = {"configurable": {"thread_id": run_id, "emit": _sink(thread_id)}}
     payload: dict = {"approved": approved}
+    if only_first:
+        payload["only_first"] = True
     if params:
         payload["params"] = params
     try:

@@ -46,7 +46,7 @@ TOOLS: dict[str, dict[str, Any]] = {
 }
 
 # 复合句标记：出现这些才认为「一句话多件事」
-COMPOUND_RE = re.compile(r"(然后|接着|再|并且|同时|之后|顺便|，再|；|;)")
+COMPOUND_RE = re.compile(r"(然后|接着|并且|同时|之后|顺便|，再|；|;)")
 # 依赖标记：后一步要用前一步的产物
 DEPENDS_RE = re.compile(r"(这张图|这个图|刚才那|用它|基于它|把(它|这张)做成|这张.*视频|首帧)")
 
@@ -85,7 +85,11 @@ def _tools_text() -> str:
 
 def looks_compound(text: str) -> bool:
     """粗略判断是否一句话多件事。"""
-    if len(COMPOUND_RE.findall(text or "")) >= 1:
+    body = text or ""
+    if len(COMPOUND_RE.findall(body)) >= 1:
+        return True
+    # 「再」只有后面真的跟着第二个动作才算多件事；「再快一点 / 再亮一点」是单意图
+    if re.search(r"再\s*(帮|给|把|做|加|配|导出|生成|来一|拍|出)", body):
         return True
     # 同时出现两类动作关键词
     kinds = 0

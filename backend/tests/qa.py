@@ -131,3 +131,40 @@ def set_shot_cover(shot_id: str, url: str) -> None:
     from app import store
 
     store.update_shot(shot_id, cover=url)
+
+
+def send_retry(thread_id: str, text: str, expect_action: str | None = None,
+               attempts: int = 3, wait: int = 120):
+    """发送并等待结果；遇到上游抖动（空回复 / 出错了）自动重试。
+
+    expect_action: 期望的确认卡动作。给了就要求 status=waiting_confirm 且 action 匹配。
+    """
+    last_run, last_reply = {}, ""
+    for attempt in range(attempts):
+        before = len(messages(thread_id))
+        res = httpx.Client(trust_env=False, timeout=90).post(
+            B + f"/api/agent/threads/{thread_id}/messages",
+            json={"text": text}).json()
+        run = {}
+        for _ in range(wait):
+            time.sleep(1)
+            run = c.get(B + f"/api/agent/runs/{res['run_id']}").json()
+            if run.get("status") in ("waiting_confirm", "done", "failed"):
+                break
+        reply = ""
+        for _ in range(10):
+            msgs = messages(thread_id)
+            if len(msgs) > before and msgs[-1]["role"] == "assistant":
+                reply = msgs[-1]["content"]
+                break
+            time.sleep(0.3)
+        last_run, last_reply = run, reply
+
+        pending = run.get("pending") or {}
+        if run.get("status") == "failed" or "出错了" in reply:
+            continue
+        if expect_action and not (run.get("status") == "waiting_confirm"
+                                  and pending.get("action") == expect_action):
+            continue
+        return run, reply
+    return last_run, last_reply

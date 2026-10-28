@@ -35,6 +35,7 @@ class MessageIn(BaseModel):
 class ConfirmIn(BaseModel):
     approved: bool = True
     params: dict | None = None
+    only_first: bool = False
 
 
 # --------------------------------------------------------------------------- #
@@ -197,7 +198,7 @@ async def stream(thread_id: str, after_seq: int = 0) -> StreamingResponse:
 @router.post("/runs/{run_id}/confirm")
 async def confirm(run_id: str, body: ConfirmIn) -> dict:
     try:
-        return await runtime.confirm_run(run_id, body.approved, body.params)
+        return await runtime.confirm_run(run_id, body.approved, body.params, body.only_first)
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc))
     except Exception as exc:
