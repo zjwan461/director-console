@@ -15,7 +15,7 @@ LOCAL_CONFIG_PATH = ROOT / "config.local.yaml"
 DEFAULTS: dict[str, Any] = {
     "app": {"host": "127.0.0.1", "port": 6006},
     "comfy": {
-        "mode": "local",  # local | ssh | external | mock
+        "mode": "local",  # local | external
         "base_url": "http://127.0.0.1:8188",
         "timeout": 30,
         "local": {
@@ -23,15 +23,6 @@ DEFAULTS: dict[str, Any] = {
             "python": "python",
             "args": ["main.py", "--listen", "127.0.0.1", "--port", "8188"],
             "env": {},
-        },
-        "ssh": {
-            "host": "",
-            "port": 22,
-            "user": "root",
-            "start": "bash /root/ComfyUI/start.sh",
-            "stop": "pkill -f 'python.*main.py'",
-            "status": "pgrep -f 'python.*main.py' | head -n1",
-            "log": "tail -n 200 /root/ComfyUI/comfyui.log",
         },
     },
     "ai": {

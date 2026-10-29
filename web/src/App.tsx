@@ -207,8 +207,8 @@ export default function App() {
 
         <div className="rail-foot">
           <span>
-            <span className={`status-dot ${ready ? (status?.mode === 'mock' ? 'mock' : 'on') : ''}`} />{' '}
-            {ready ? (status?.mode === 'mock' ? '模拟模式' : 'ComfyUI 在线') : 'ComfyUI 离线'}
+            <span className={`status-dot ${ready ? 'on' : ''}`} />{' '}
+            {ready ? 'ComfyUI 在线' : 'ComfyUI 离线'}
           </span>
           <span>{status?.mode ?? '—'} · {status?.base_url ?? '—'}</span>
           <span>v0.1 · H3 专版</span>

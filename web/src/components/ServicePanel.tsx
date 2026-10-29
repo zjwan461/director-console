@@ -88,7 +88,7 @@ export default function ServicePanel({ status, onRefresh }: Props) {
       <div className="panel">
         <h2>
           <span>
-            <span className={`status-dot ${local?.running ? (status?.mode === 'mock' ? 'mock' : 'on') : ''}`} />{' '}
+            <span className={`status-dot ${local?.running ? 'on' : ''}`} />{' '}
             {local?.running ? '本地 ComfyUI 已连接' : '本地 ComfyUI 未连接'}
           </span>
           <span className="badge">本机 {local?.url ?? ''}</span>
@@ -115,7 +115,7 @@ export default function ServicePanel({ status, onRefresh }: Props) {
           {health?.error && (<><dt>错误</dt><dd style={{ color: 'var(--err)' }}>{health.error}</dd></>)}
         </dl>
 
-        {status && status.mode !== 'local' && status.mode !== 'ssh' && (
+        {status && status.mode !== 'local' && (
           <div className="notice" style={{ marginTop: 10 }}>
             当前任务走「{modeLabel(status.mode)}」，这张卡只反映本机 ComfyUI 是否在线。
             想让面板托管启停，把上面的连接方式改成「本机」。
@@ -190,8 +190,6 @@ function modeLabel(mode?: string): string {
   return {
     external: '云端 / 外部（只连接）',
     local: '本机（面板启动进程）',
-    ssh: '远程机（SSH 启停）',
-    mock: '模拟（不出真片）',
   }[mode || ''] || mode || '—'
 }
 
@@ -210,14 +208,14 @@ function ConnectionSettings({ status, onSaved }: { status: ServiceStatus | null;
     // 独立拉一次设置，避免状态轮询还没回来时表单先渲染成默认值
     api.comfySettings().then((s) => {
       setMode(s.mode)
-      setUrl(s.base_url === 'mock://' ? '' : s.base_url)
+      setUrl(s.base_url || '')
     }).catch(() => undefined)
   }, [])
 
   useEffect(() => {
     if (!stored) return
     setMode(stored.mode)
-    setUrl(stored.base_url === 'mock://' ? '' : stored.base_url)
+    setUrl(stored.base_url || '')
   }, [stored?.mode, stored?.base_url])
 
   const test = async () => {
@@ -285,8 +283,6 @@ function ConnectionSettings({ status, onSaved }: { status: ServiceStatus | null;
             {[
               ['external', '云端 / 外部'],
               ['local', '本机'],
-              ['ssh', '远程机 (SSH)'],
-              ['mock', '模拟'],
             ].map(([value, label]) => (
               <button
                 key={value}
@@ -300,11 +296,7 @@ function ConnectionSettings({ status, onSaved }: { status: ServiceStatus | null;
           <span className="helper">
             {mode === 'external'
               ? '只填地址，不启动进程；适合 RunPod / 云主机 / 别人已经跑着的 ComfyUI。'
-              : mode === 'local'
-                ? '面板在本机拉起 ComfyUI 进程，用 config.yaml 里的 workdir/python。'
-                : mode === 'ssh'
-                  ? '面板通过 SSH 在远程机执行启动/停止命令，健康检查仍走上方的地址。'
-                  : '不出真片，3 秒返回占位产物，用来验证界面与流程。'}
+              : '面板在本机拉起 ComfyUI 进程，用 config.yaml 里的 workdir/python。'}
           </span>
         </div>
 

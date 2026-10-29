@@ -2,7 +2,6 @@
 
 三种模式：
   local    - 本机 spawn 子进程（Windows 开发 / Linux 同机部署）
-  ssh      - 远程 Linux 机器上执行启动脚本（AutoDL / 自建服务器）
   external - 已经有人在跑，只做健康检查与代理（旧面板托管的情况）
 
 两条关键约定（之前踩过的坑）：
@@ -295,7 +294,7 @@ class BaseLauncher:
     async def start(self) -> dict:
         raise LaunchError(
             "当前是云端/外部模式，面板不负责启动进程；如果 ComfyUI 没开，请到云平台控制台启动，"
-            "或把连接方式改成「本机 / SSH」由面板托管"
+            "或把连接方式改成「本机」由面板托管"
         )
 
     async def stop(self) -> dict:
@@ -314,26 +313,6 @@ class BaseLauncher:
 
     async def logs(self, lines: int = 200) -> str:
         return ""
-
-
-class MockLauncher(BaseLauncher):
-    mode = "mock"
-    managed = False
-
-    async def start(self) -> dict:
-        return {"ok": True, "message": "模拟模式：假装已启动"}
-
-    async def stop(self) -> dict:
-        return {"ok": True, "message": "模拟模式：假装已停止"}
-
-    async def status(self) -> dict:
-        return {
-            "mode": "mock",
-            "managed": False,
-            "base_url": "mock://",
-            "running": True,
-            "health": {"ok": True, "mock": True, "devices": [{"name": "MOCK GPU"}]},
-        }
 
 
 class LocalLauncher(BaseLauncher):
@@ -509,55 +488,6 @@ class LocalLauncher(BaseLauncher):
         return _tail(path, lines)
 
 
-class SshLauncher(BaseLauncher):
-    mode = "ssh"
-    managed = True
-
-    def _ssh_target(self) -> str:
-        host = str(settings.get("comfy.ssh.host", ""))
-        if not host:
-            raise LaunchError("没有配置 comfy.ssh.host")
-        user = settings.get("comfy.ssh.user", "")
-        return f"{user}@{host}" if user else host
-
-    async def _run(self, command: str, timeout: float = 120) -> tuple[int, str]:
-        target = self._ssh_target()
-        port = str(settings.get("comfy.ssh.port", 22))
-        cmd = ["ssh", "-o", "BatchMode=yes", "-o", "StrictHostKeyChecking=accept-new",
-               "-p", port, target, command]
-        proc = await asyncio.create_subprocess_exec(
-            *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.STDOUT
-        )
-        try:
-            out, _ = await asyncio.wait_for(proc.communicate(), timeout=timeout)
-        except asyncio.TimeoutError:
-            proc.kill()
-            raise LaunchError("SSH 命令超时")
-        return proc.returncode or 0, (out or b"").decode("utf-8", "replace")
-
-    async def start(self) -> dict:
-        if (await self.status())["running"]:
-            return {"ok": True, "message": "远程 ComfyUI 已在运行"}
-        code, out = await self._run(str(settings.get("comfy.ssh.start", "bash /root/ComfyUI/start.sh")))
-        return {"ok": code == 0, "message": out.strip() or ("已发送启动命令" if code == 0 else "启动失败")}
-
-    async def stop(self) -> dict:
-        code, out = await self._run(str(settings.get("comfy.ssh.stop", "pkill -f 'python.*main.py'")))
-        return {"ok": code == 0, "message": out.strip() or "已发送停止命令"}
-
-    async def status(self) -> dict:
-        base = await super().status()
-        base["ssh_target"] = str(settings.get("comfy.ssh.host", ""))
-        return base
-
-    async def logs(self, lines: int = 200) -> str:
-        cmd = str(settings.get("comfy.ssh.log", ""))
-        if not cmd:
-            return ""
-        code, out = await self._run(cmd, timeout=30)
-        return "\n".join(out.splitlines()[-lines:])
-
-
 class ExternalLauncher(BaseLauncher):
     mode = "external"
     managed = False
@@ -567,10 +497,6 @@ _LAUNCHERS: dict[str, BaseLauncher] = {}
 
 
 def _make_launcher(mode: str) -> BaseLauncher:
-    if mode == "mock":
-        return MockLauncher()
-    if mode == "ssh":
-        return SshLauncher()
     if mode == "external":
         return ExternalLauncher()
     return LocalLauncher()
@@ -579,7 +505,7 @@ def _make_launcher(mode: str) -> BaseLauncher:
 def get_launcher() -> BaseLauncher:
     """同一个模式下始终返回同一个实例，启动的进程句柄才不会丢。"""
     mode = settings.comfy_mode
-    if mode not in {"local", "ssh", "external", "mock"}:
+    if mode not in {"local", "external"}:
         mode = "local"
     launcher = _LAUNCHERS.get(mode)
     if launcher is None:

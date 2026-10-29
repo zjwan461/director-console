@@ -136,7 +136,7 @@ async def service_status() -> dict:
     status["config_mode"] = settings.comfy_mode
     status["advanced_panel"] = settings.get("ui.advanced_panel", "")
     status["comfy_web"] = (
-        settings.base_url if settings.comfy_mode in {"external", "mock"}
+        settings.base_url if settings.comfy_mode == "external"
         else settings.get("ui.comfy_web", "")
     )
     status["settings"] = runtime.public_comfy_settings()
@@ -747,12 +747,12 @@ async def asset_create_shot(asset_id: str, body: AssetShotCreate) -> dict:
 
 @app.post("/api/assets/cleanup-test")
 async def assets_cleanup_test() -> dict:
-    """清理早期 mock/stub 测试产物（极小文件）。"""
+    """清理早期测试产物（极小文件与 stub_ 开头的文件）。"""
     assets = store.list_assets(None, 2000)
     removed = 0
     for asset in assets:
         name = asset["path"].rsplit("/", 1)[-1].lower()
-        if not (name.startswith(("mock_output", "stub_output", "stub_image")) or asset.get("size", 0) <= 64):
+        if not (name.startswith(("stub_output", "stub_image")) or asset.get("size", 0) <= 64):
             continue
         try:
             (DATA / asset["path"]).unlink(missing_ok=True)

@@ -1,4 +1,4 @@
-"""ComfyUI HTTP 客户端（含 mock 模式，便于没有显卡时跑通链路）。"""
+"""ComfyUI HTTP 客户端。"""
 from __future__ import annotations
 
 import asyncio
@@ -194,58 +194,7 @@ def _status_error(status: dict) -> str:
     return "；".join(messages) or "ComfyUI 执行失败"
 
 
-class MockComfy(ComfyClient):
-    """没有 ComfyUI 时用：写一个占位视频/图片，把整条链路跑通。"""
-
-    def __init__(self) -> None:
-        super().__init__()
-        self._jobs: dict[str, dict] = {}
-
-    async def health(self) -> dict:
-        return {"ok": True, "mock": True, "latency_ms": 0,
-                "system": {"os": "mock", "comfyui_version": "mock"},
-                "devices": [{"name": "MOCK GPU", "vram_total": 24 * 1024**3,
-                             "vram_free": 20 * 1024**3}]}
-
-    async def upload(self, filename: str, content: bytes, kind: str = "input", subfolder: str = "") -> dict:
-        return {"name": filename, "subfolder": subfolder, "type": kind}
-
-    async def submit(self, workflow: dict, client_id: str | None = None) -> str:
-        pid = uuid.uuid4().hex
-        self._jobs[pid] = {"t": time.time(), "workflow": workflow}
-        return pid
-
-    async def wait_history(self, prompt_id: str, timeout: float = 3600, interval: float = 1.5) -> dict:
-        started = self._jobs.get(prompt_id, {}).get("t", time.time())
-        while time.time() - started < 3:
-            await asyncio.sleep(0.3)
-        return {
-            "prompt": [],
-            "outputs": {
-                "9": {
-                    "gifs": [{"filename": "mock_output.mp4", "subfolder": "mock", "type": "output"}]
-                }
-            },
-            "status": {"completed": True, "status_str": "success"},
-        }
-
-    async def download(self, filename: str, subfolder: str = "", kind: str = "output") -> bytes:
-        # 最小可播放的 mp4 不好手搓，给一段可识别的文本占位，前端会按“模拟产物”提示
-        return b"MOCK_COMFY_OUTPUT\n" + filename.encode()
-
-    async def object_info(self) -> dict:
-        raise ComfyError("模拟模式没有真实模型清单，请先在「ComfyUI 连接」里配置真实地址")
-
-    async def interrupt(self) -> None:
-        return None
-
-    async def free(self, unload_models: bool = True) -> None:
-        return None
-
-
 def make_client() -> ComfyClient:
-    if settings.comfy_mode == "mock":
-        return MockComfy()
     return ComfyClient()
 
 

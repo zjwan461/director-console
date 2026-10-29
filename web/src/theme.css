@@ -198,7 +198,6 @@ body {
   animation: dot-breathe 2s ease-in-out infinite;
 }
 
-.status-dot.mock { background: var(--sys-orange); }
 
 @keyframes dot-breathe {
   0%, 100% { opacity: 1; }

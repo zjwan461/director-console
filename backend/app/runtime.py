@@ -28,7 +28,7 @@ ASR_KEY_KEY = "asr.api_key"
 ASR_MODEL_KEY = "asr.model"
 ASR_PROXY_KEY = "asr.proxy"
 
-VALID_MODES = {"local", "ssh", "external", "mock"}
+VALID_MODES = {"local", "external"}
 
 
 def apply_runtime_settings() -> None:
@@ -91,7 +91,7 @@ def save_comfy_settings(mode: str, base_url: str, token: str | None = None) -> d
     if mode not in VALID_MODES:
         raise ValueError(f"不支持的连接方式：{mode}")
     url = normalize_url(base_url)
-    if mode != "mock" and not url:
+    if not url:
         raise ValueError("请填写 ComfyUI 地址")
     store.set_setting(MODE_KEY, mode)
     store.set_setting(URL_KEY, url)
@@ -130,7 +130,7 @@ def public_comfy_settings() -> dict:
         "base_url": settings.base_url,
         "token_set": bool(token),
         "token_hint": mask_token(token),
-        "managed": settings.comfy_mode in {"local", "ssh"},
+        "managed": settings.comfy_mode == "local",
         "overridden": bool(store.list_settings().get(URL_KEY)),
     }
 

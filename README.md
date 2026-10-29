@@ -56,7 +56,7 @@ python tools/stub_comfy.py --port 8199 --token secret123
 - [x] M2.5 云端 ComfyUI：页面填地址/令牌，测试连接 + 持久化
 - [x] M3 成片：镜头勾选排序、逐段标准化、拼接、抽封面（需要本机有 ffmpeg）
 - [x] M4 剪辑 M1：逐镜裁剪、BGM 混音、字幕烧录、响度标准化
-- [ ] M4 真实环境联调：local / ssh 模式接上 GPU 机
+- [ ] M4 真实环境联调：local / external 模式接上 GPU 机
 
 ## 提示词助手（可选）
 
@@ -110,7 +110,6 @@ models:
   download_base: ""              # 没有已知 URL 时的拼接基地址
 ```
 
-> `mock` 模式没有真实模型清单，检查会直接提示“请配置真实 ComfyUI 地址”。
 
 ![模型检查](docs/preview-model-check.png)
 
@@ -213,6 +212,10 @@ ComfyUI 面板的「缺失模型 → 下载」按钮，读的是 **UI 工作流 
 注意：ComfyUI 自身的模型清单接口是 `/experiment/models`（旧代码曾误写为 `/models`），
 现已修正。
 
+## 导演助手
+
+![导演助手](docs/preview-agent.png)
+
 ## 创作台 ↔ 项目
 
 两边现在互通了：
@@ -275,7 +278,7 @@ mp3/wav/m4a/aac/flac  → 音频
 资产页提供两个清理入口：
 
 - **清理重复素材**：同一文件只保留最早一条记录，并把镜头/剪辑状态里的引用改指到保留项
-- **清理测试产物**：删除 mock/stub 等早期测试文件
+- **清理测试产物**：删除早期 stub 测试文件
 
 ### 内置 BGM 素材
 
@@ -675,16 +678,13 @@ npm run build    # 生产模式，构建后由后端在 6006 直接托管
 
 ```yaml
 comfy:
-  mode: mock     # 先看界面：mock 不需要显卡
+  mode: external # 直接连一台已经跑着的 ComfyUI
   # mode: local  # 本机一键启停
-  # mode: ssh    # 远程 Linux 机一键启停
 ```
 
 | 模式 | 说明 |
 |---|---|
-| `mock` | 假装有 ComfyUI，3 秒返回占位产物，用来验证整条链路和界面 |
 | `local` | 本机 spawn 子进程；`workdir` 指向 ComfyUI 目录，`python` 指向解释器 |
-| `ssh` | 远程机执行 `start` / `stop` 命令，健康检查走 `base_url`（需先打通隧道） |
 | `external` | ComfyUI 已由别人托管，只做健康检查与提交 |
 
 本机示例：
@@ -753,7 +753,7 @@ comfy:
 
 创建完可直接「去该镜头」跳转（`?tab=projects&project=…&shot=…`）。
 
-资产页还提供「清理测试产物」，删除早期 `mock_`/`stub_` 开头的极小文件。
+资产页还提供「清理测试产物」，删除早期 `stub_` 开头的极小文件。
 
 ## 资产面板
 
@@ -845,8 +845,8 @@ fields:
 ```
 backend/app/
   main.py      FastAPI 路由
-  launcher.py  服务管家（local / ssh / external / mock）
-  comfy.py     ComfyUI HTTP 客户端 + mock
+  launcher.py  服务管家（local / external）
+  comfy.py     ComfyUI HTTP 客户端
   ffmpeg.py    ffmpeg 探测 / 标准化 / 拼接 / 抽封面
   render.py    成片导出任务执行器
   presets.py   能力卡加载、参数注入
@@ -866,7 +866,6 @@ data/          SQLite / 上传 / 产物 / ComfyUI 日志
 ## 已知边界
 
 - 只支持 API 格式工作流；画布里的 UI JSON 不能直接提交
-- `mock` 模式产物是占位文件，不是真视频
 - 单机单用户，没有账号体系；多机并发是下一阶段
 
 ## 许可证
