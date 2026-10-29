@@ -480,10 +480,9 @@ pre, code { background: #f2f4f9; color: #1f2733; border-color: var(--line); }
   color: #39445a !important;
 }
 
-.agent-typing span:first-child::after {
-  content: '···';
-  letter-spacing: 2px;
-  animation: breathe 1.2s ease-in-out infinite;
+/* 文案本身已带「…」，不要再用 ::after 追加省略号（会变成「思考中······」） */
+.agent-typing span:first-child {
+  animation: breathe 1.4s ease-in-out infinite;
 }
 
 @keyframes breathe {
