@@ -1131,3 +1131,37 @@ select { background-image: none; }
   bottom: 14px;
   z-index: 200 !important;
 }
+
+
+/* ================= 对比度修复：资产类型徽章 / 时间轴提示 ================= */
+/* 资产卡片左上角「图片 / 视频 / 音频」：深底白字，压在缩略图上也能看清 */
+.asset-kind {
+  background: rgba(12, 16, 24, 0.62) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  border-radius: 999px !important;
+  padding: 2px 8px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: .02em;
+  backdrop-filter: blur(6px);
+}
+.asset-meta, .asset-card .asset-meta {
+  color: #4b5162 !important;
+}
+.asset-card .asset-meta b,
+.asset-card b { color: var(--text) !important; }
+
+/* 时间轴里的「字幕文案」提示：加深颜色 */
+.tl-clip-narration, .tl-clip-pending {
+  background: rgba(255, 149, 0, 0.18) !important;
+  border-color: rgba(180, 105, 0, 0.55) !important;
+  color: #6b3a00 !important;
+  font-weight: 600 !important;
+}
+.tl-clip-narration *, .tl-clip-pending * { color: #6b3a00 !important; }
+
+/* 时间轴空提示 */
+.tl-empty, .timeline .empty, .tl-track .empty {
+  color: #6b7280 !important;
+}
