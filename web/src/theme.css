@@ -699,3 +699,33 @@ select { background-image: none; }
   border-radius: var(--radius-lg) !important;
   box-shadow: var(--shadow-sm);
 }
+
+
+/* ================= 列表选中态 / 助手面板背景 ================= */
+.list-item {
+  background: #fff !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--radius-sm) !important;
+  transition: transform .16s cubic-bezier(.2,.8,.2,1), box-shadow .2s, border-color .2s;
+}
+.list-item:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(16,24,40,.08); }
+.list-item.active {
+  background: linear-gradient(135deg, rgba(0,122,255,.1), rgba(175,82,222,.08)) !important;
+  border-color: rgba(0,122,255,.45) !important;
+  box-shadow: 0 8px 20px rgba(0,122,255,.12) !important;
+}
+
+.agent-panel, .agent-thread, .agent-scroll, .agent-messages {
+  background: #fbfcfe !important;
+}
+.agent-canvas { background: #fff !important; }
+.agent-bubble { box-shadow: 0 2px 10px rgba(16,24,40,.05); }
+.agent-confirm { border-color: rgba(0,122,255,.35) !important; }
+
+/* 卡片内 metadata 胶囊 */
+.pill, .tag, .meta-chip {
+  background: #f1f3f8 !important;
+  border: 1px solid rgba(17,24,39,.06) !important;
+  color: #4b5162 !important;
+  border-radius: 999px !important;
+}
