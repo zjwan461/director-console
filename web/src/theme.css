@@ -1037,21 +1037,7 @@ select { background-image: none; }
 }
 
 
-/* 镜头列表：横向滚动，别把 12 个挤成一排 */
-.panel-shots .list {
-  display: flex !important;
-  flex-wrap: nowrap !important;
-  gap: 10px !important;
-  overflow-x: auto !important;
-  padding-bottom: 6px;
-  scrollbar-width: thin;
-}
-.panel-shots .list > .render-shot {
-  flex: 0 0 auto;
-  min-width: 108px;
-  max-width: 190px;
-}
-.render-shot-head b { font-size: 12px; }
+/* 镜头卡片列表保持原布局（编辑区不能被 flex 挤窄） */
 
 
 /* 时间轴分段：没时长的镜头也留出可读宽度，并允许横向滚动 */
@@ -1165,3 +1151,40 @@ select { background-image: none; }
 .tl-empty, .timeline .empty, .tl-track .empty {
   color: #6b7280 !important;
 }
+
+
+/* ================= 素材槽 / 拖拽区（浅色）+ 吸底条不遮内容 ================= */
+.media-slot {
+  background: #fbfcff !important;
+  border: 1.5px dashed rgba(0, 122, 255, 0.32) !important;
+  color: #5f6577 !important;
+  border-radius: 14px !important;
+  transition: border-color .2s, background .2s, transform .16s;
+}
+.media-slot:hover {
+  background: rgba(0, 122, 255, 0.05) !important;
+  border-color: rgba(0, 122, 255, 0.55) !important;
+}
+.media-slot.filled { border-style: solid !important; border-color: var(--line) !important; background: #fff !important; }
+.media-slot span, .media-slot .name, .media-slot .icon, .media-slot div { color: #5f6577 !important; }
+.media-slot .icon { color: #8fb4e8 !important; }
+
+.slot-pick, .slot-clear {
+  background: rgba(255, 255, 255, 0.94) !important;
+  color: #0f1320 !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 8px !important;
+  box-shadow: var(--shadow-sm);
+}
+.slot-pick:hover, .slot-clear:hover { background: #fff !important; border-color: var(--line-strong) !important; }
+
+.dropzone {
+  background: #fbfcff !important;
+  border: 1.5px dashed rgba(0, 122, 255, 0.3) !important;
+  border-radius: 14px !important;
+  color: #5f6577 !important;
+}
+.dropzone:hover { background: rgba(0,122,255,.05) !important; border-color: rgba(0,122,255,.5) !important; }
+
+/* 吸底条不再挡住页面底部内容 */
+.main:has(.sticky-bar) { padding-bottom: 120px !important; }

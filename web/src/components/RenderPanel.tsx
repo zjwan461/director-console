@@ -3,10 +3,25 @@ import { api, formatDuration, timeAgo } from '../api'
 import type { Asset, Render, Shot } from '../types'
 
 const RESOLUTIONS = [
-  { key: '480p', label: '480p · 854×480', width: 854, height: 480 },
-  { key: '720p', label: '720p · 1280×720', width: 1280, height: 720 },
-  { key: '1080p', label: '1080p · 1920×1080', width: 1920, height: 1080 },
+  { key: '480p', label: '横屏 480p · 854×480', width: 854, height: 480, portrait: false },
+  { key: '720p', label: '横屏 720p · 1280×720', width: 1280, height: 720, portrait: false },
+  { key: '1080p', label: '横屏 1080p · 1920×1080', width: 1920, height: 1080, portrait: false },
+  { key: '480p-v', label: '竖屏 480p · 480×854', width: 480, height: 854, portrait: true },
+  { key: '720p-v', label: '竖屏 720p · 720×1280', width: 720, height: 1280, portrait: true },
+  { key: '1080p-v', label: '竖屏 1080p · 1080×1920', width: 1080, height: 1920, portrait: true },
 ]
+
+// 从镜头参数里猜项目画幅：镜头是 9:16 就用竖屏预设
+function detectPortrait(shots: Shot[]): boolean {
+  for (const shot of shots) {
+    const values = (shot as unknown as { values?: Record<string, unknown> }).values || {}
+    const size = values.size as { aspect?: string } | undefined
+    const aspect = String(size?.aspect || '')
+    if (aspect.includes('9:16') || aspect.includes('3:4') || aspect.includes('2:3')) return true
+    if (aspect.includes('16:9') || aspect.includes('4:3')) return false
+  }
+  return false
+}
 
 interface Edit {
   in_point: string
@@ -22,7 +37,7 @@ interface Props {
 export default function RenderPanel({ projectId, shots }: Props) {
   const [selected, setSelected] = useState<string[]>([])
   const [edits, setEdits] = useState<Record<string, Edit>>({})
-  const [resKey, setResKey] = useState('720p')
+  const [resKey, setResKey] = useState(() => (detectPortrait(shots) ? '720p-v' : '720p'))
   const [fps, setFps] = useState(24)
   const [audios, setAudios] = useState<Asset[]>([])
   const [bgmId, setBgmId] = useState('')
@@ -38,6 +53,13 @@ export default function RenderPanel({ projectId, shots }: Props) {
   const [error, setError] = useState('')
   const [active, setActive] = useState<Render | null>(null)
   const [draftNote, setDraftNote] = useState('')
+
+  useEffect(() => {
+    setResKey((prev) => {
+      if (prev !== '720p' && prev !== '720p-v') return prev
+      return detectPortrait(shots) ? '720p-v' : '720p'
+    })
+  }, [shots])
   const [caps, setCaps] = useState<{ subtitles?: boolean }>({})
   const timer = useRef<number | null>(null)
 
