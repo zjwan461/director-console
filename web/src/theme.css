@@ -1376,3 +1376,62 @@ label.check:focus-within {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+
+/* ================= 画布产物卡片：深色小标签改浅色 ================= */
+.agent-artifact-ref {
+  background: rgba(0, 122, 255, 0.12) !important;
+  color: #0b5bb5 !important;
+  border: 1px solid rgba(0, 122, 255, 0.22);
+  font-weight: 700;
+}
+.agent-artifact-parent {
+  background: rgba(175, 82, 222, 0.12) !important;
+  color: #7b2fa8 !important;
+  border: 1px solid rgba(175, 82, 222, 0.22);
+  font-weight: 600;
+}
+.agent-artifact-card {
+  background: #fff !important;
+  border: 1px solid var(--line) !important;
+  color: var(--muted) !important;
+}
+.agent-artifact-card:hover {
+  border-color: rgba(0, 122, 255, 0.4) !important;
+  box-shadow: 0 6px 16px rgba(16, 24, 40, 0.08);
+}
+.agent-artifact-actions button {
+  background: #fff !important;
+  border: 1px solid var(--line) !important;
+  color: #4b5162 !important;
+}
+.agent-artifact-actions button:hover {
+  border-color: rgba(0, 122, 255, 0.45) !important;
+  color: #0b5bb5 !important;
+}
+.agent-run-card {
+  background: #fff !important;
+  border: 1px solid var(--line) !important;
+}
+.agent-empty-mini {
+  background: #fbfcff !important;
+  border: 1px dashed rgba(0, 122, 255, 0.25) !important;
+  color: var(--muted-2) !important;
+}
+
+
+/* ================= 助手页剩余深色小块（对比度） ================= */
+.agent-multi-index {
+  background: rgba(0, 122, 255, 0.14) !important;
+  color: #0b5bb5 !important;
+  font-weight: 700;
+}
+.agent-attach,
+.agent-attach.audio,
+.agent-attach.image {
+  background: #f2f6fd !important;
+  border: 1px solid var(--line) !important;
+  color: #39445a !important;
+  border-radius: 10px !important;
+}
+.agent-attach .name, .agent-attach .meta { color: #5f6577 !important; }
