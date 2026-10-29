@@ -302,6 +302,27 @@ def _fast_intent(state: AgentState) -> dict | None:
     if advice_like and has_asset and not re.search(r"(工作流|区别|能力卡|卡片)", text):
         return {"intent": "advise", "args": {"q": text}, "reply": ""}
 
+    # 工作台自身状态（ComfyUI 连通、项目库、素材库存、进度）交给决策引擎：
+    # 它有查库与探活的工具，能答出真实数字，而不是「我不知道」。
+    world_question = bool(re.search(
+        r"(comfy\s*ui|comfy|连通|通不通|连不上|在线|离线|排队|队列|重启了吗|"
+        r"项目(有)?多少|多少(个)?项目|项目数|项目列表|都有些什么项目|做过多少|"
+        r"进度|素材(有)?多少|素材库有多大|库存|显卡|显存|gpu)", text, re.IGNORECASE))
+    if world_question:
+        return None
+
+    # 补字幕 / 写旁白 / 配音：确定性意图，直接走 AI 剪辑（不必等引擎）
+    polish_verb = bool(re.search(r"(补|加|做|生成|配|写|来|弄|整|开始|一键)", text))
+    polish_negative = bool(re.search(r"(关掉|取消|不要|去掉|别|不用|不需要)", text))
+    if POLISH_RE.search(text) and polish_verb and not polish_negative:
+        has_sub = bool(re.search(r"(字幕)", text))
+        has_voice = bool(re.search(r"(旁白|配音|解说|口播)", text))
+        kinds = "both" if has_sub and has_voice else ("subtitle" if has_sub else "narration")
+        tts = bool(re.search(r"(配音|口播)", text))
+        return {"intent": "polish", "args": {"kinds": kinds, "tts": tts},
+                "reply": "好，我来补字幕和旁白。" if kinds == "both"
+                else ("好，我来补字幕。" if kinds == "subtitle" else "好，我来写旁白。")}
+
     if asking and not command_hint:
         if (re.search(r"(工作流|能力卡|卡片|预设|模型|节点)", text)
                 and not re.search(r"(区别|不一样|哪个|选哪|哪种|怎么|如何|用法)", text)):

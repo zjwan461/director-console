@@ -12,11 +12,14 @@
 from __future__ import annotations
 
 import json
+import time
 
+import httpx
 from langchain_core.tools import tool
 
 from . import planner, state as agent_state, store as agent_store, tools
 from .. import store
+from ..config import settings
 
 MAX_STEPS = 5
 
@@ -31,6 +34,16 @@ SYSTEM = """你是「导演台」的执行大脑。用户用自然语言说要�
 - 改上一版：revise（提高亮度、换画幅、改时长、加元素…）
 - 成片相关：export_film 导出、polish_film 字幕旁白、set_bgm 配乐、set_film_options 片头片尾
 - 项目管理：create_project 新建、add_shots 加镜头
+
+## 你能查到的信息（先查再答，不要说不了解）
+- `studio_overview()`：整个工作台的总量——几个项目、多少镜头、素材各多少、导出过几次
+- `list_projects()`：所有项目清单（名称、镜头数、创建时间、最近一次导出）
+- `project_stats(project_id)`：单个项目的细节（镜头数、几个已有画面、总时长、导出次数）
+- `comfy_status()`：ComfyUI 现在通不通、地址、队列里在跑几个、排了几个
+- `list_shots` / `find_assets` / `describe_state` / `card_info`：镜头、素材、本会话产物、能力卡参数
+
+用户问「ComfyUI 通吗」「我做过多少项目」「这个项目多少镜头」这类问题，
+必须先用上面的工具查，再据此回答；查不到就明说查不到，不要凭空推测。
 
 ## 铁律
 1. **先查后做**：用户说「这张图 / 刚才那个 / 第几镜 / 上一版」时，必须先调
@@ -52,12 +65,104 @@ SYSTEM = """你是「导演台」的执行大脑。用户用自然语言说要�
 """
 
 
+_STATUS_CACHE: dict = {"at": 0.0, "data": {}}
+
+
+def _comfy_status(fresh: bool = False) -> dict:
+    """2 秒超时探一次 ComfyUI；30 秒内复用结果。"""
+    now = time.time()
+    if not fresh and now - _STATUS_CACHE["at"] < 30 and _STATUS_CACHE["data"]:
+        return _STATUS_CACHE["data"]
+    # 库里的覆盖值优先（服务未走 lifespan 时 settings 还是 config.yaml 的默认值）
+    try:
+        stored = store.list_settings()
+    except Exception:  # noqa: BLE001
+        stored = {}
+    base = str(stored.get("comfy.base_url") or settings.base_url or "").rstrip("/")
+    mode = stored.get("comfy.mode") or settings.comfy_mode
+    data: dict = {"base_url": base, "mode": mode, "ok": False}
+    if base:
+        started = time.time()
+        try:
+            with httpx.Client(trust_env=False, timeout=2.0) as client:
+                resp = client.get(base + "/queue")
+                ok = resp.status_code < 400
+                data["ok"] = ok
+                data["latency_ms"] = int((time.time() - started) * 1000)
+                if ok:
+                    payload = resp.json() or {}
+                    data["running"] = len(payload.get("queue_running") or [])
+                    data["pending"] = len(payload.get("queue_pending") or [])
+        except Exception as exc:  # noqa: BLE001
+            data["error"] = f"{type(exc).__name__}"
+    _STATUS_CACHE.update({"at": now, "data": data})
+    return data
+
+
+def _library_counts() -> dict:
+    counts = {}
+    total = 0
+    for kind in ("image", "video", "audio"):
+        try:
+            _, n = store.search_assets(kind, "", 1, 0)
+            counts[kind] = n
+            total += n
+        except Exception:  # noqa: BLE001
+            counts[kind] = 0
+    counts["total"] = total
+    return counts
+
+
+def _world_text(project_id: str) -> list[str]:
+    lines: list[str] = []
+    try:
+        projects = store.list_projects()
+    except Exception:  # noqa: BLE001
+        projects = []
+    counts = _library_counts()
+    status = _comfy_status()
+
+    lines.append(f"- 工作台总量：项目 {len(projects)} 个 · 素材 {counts['total']} 个"
+                 f"（图 {counts.get('image', 0)} / 视频 {counts.get('video', 0)} / 音频 {counts.get('audio', 0)}）")
+    if projects:
+        preview = []
+        for item in projects[:6]:
+            try:
+                shots = len(store.list_shots(item["id"]))
+            except Exception:  # noqa: BLE001
+                shots = 0
+            preview.append(f"{item.get('name') or '未命名'}（{shots} 镜）")
+        lines.append("- 项目清单（前 6 个）：" + "；".join(preview))
+
+    state = "在线" if status.get("ok") else "连不上"
+    extra = ""
+    if status.get("ok"):
+        extra = f"，队列 跑 {status.get('running', 0)} / 排 {status.get('pending', 0)}"
+    elif status.get("error"):
+        extra = f"（{status['error']}）"
+    lines.append(f"- ComfyUI：{state} · {status.get('base_url') or '未配置'}"
+                 f" · 模式 {status.get('mode')}{extra}")
+
+    if project_id:
+        try:
+            shots = store.list_shots(project_id)
+            renders = store.list_renders(project_id, 5)
+        except Exception:  # noqa: BLE001
+            shots, renders = [], []
+        with_cover = sum(1 for s in shots if s.get("cover"))
+        with_video = sum(1 for s in shots if s.get("active_job"))
+        lines.append(f"- 当前项目镜头 {len(shots)} 个（有首帧/封面 {with_cover} 个，"
+                     f"已出视频 {with_video} 个）· 导出记录 {len(renders)} 条")
+    return lines
+
+
 def _state_text(thread_id: str, project_id: str, attachments: list[dict]) -> str:
     st = agent_state.thread_state(thread_id)
     project = store.get_project(project_id) if project_id else None
     name = (project or {}).get("name") or "未命名"
     lines = [f"- 当前项目：《{name}》（{project_id or '未绑定'}）",
              f"- 会话产物：{st['count']} 个"]
+    lines.extend(_world_text(project_id))
     for item in st["artifacts"][-6:]:
         note = item.get("note") or (item.get("prompt") or "")[:24]
         params = item.get("params") or {}
@@ -69,10 +174,16 @@ def _state_text(thread_id: str, project_id: str, attachments: list[dict]) -> str
         lines.append(f"    #{item['ref']} {item['kind']}：{note}{extra}")
     shots = agent_state._shot_refs(project_id)
     if shots:
+        video_map = {s["id"]: bool(s.get("active_job")) for s in store.list_shots(project_id)}
         lines.append(f"- 项目镜头：{len(shots)} 个")
-        for shot in shots[:8]:
-            cover = "有画面" if shot.get("cover") else "还没画面"
-            lines.append(f"    {shot['ref']} {shot['title']}（{cover}）")
+        for shot in shots[:12]:
+            if video_map.get(shot.get("shot_id")):
+                state_note = "已出视频"
+            elif shot.get("cover"):
+                state_note = "只有首帧"
+            else:
+                state_note = "空镜头"
+            lines.append(f"    {shot['ref']} {shot['title']}（{state_note}）")
     if attachments:
         lines.append("- 本条消息附件：")
         for att in attachments:
@@ -102,9 +213,13 @@ def _build_read_tools(log: list[dict]):
         """列出项目里的镜头：序号、标题、有没有画面。"""
         log.append({"tool": "list_shots", "kind": "read", "args": {}})
         shots = agent_state._shot_refs(project_id)
-        return json.dumps([{"ref": s["ref"], "title": s["title"],
-                            "has_cover": bool(s.get("cover"))} for s in shots],
-                          ensure_ascii=False)
+        rows = []
+        for s in shots:
+            shot = store.get_shot(s.get("id") or "") or {}
+            rows.append({"ref": s["ref"], "title": s["title"],
+                         "has_cover": bool(s.get("cover")),
+                         "has_video": bool(shot.get("active_job"))})
+        return json.dumps(rows, ensure_ascii=False)
 
     @tool
     def find_assets(kind: str = "", q: str = "") -> str:
@@ -128,7 +243,86 @@ def _build_read_tools(log: list[dict]):
                         "required": f.get("required")} for f in (public.get("fields") or [])],
         }, ensure_ascii=False)
 
-    return [describe_state, list_shots, find_assets, card_info]
+    @tool
+    def studio_overview() -> str:
+        """整个工作台的总量：项目数、素材数（分类型）、导出记录数、ComfyUI 状态。"""
+        log.append({"tool": "studio_overview", "kind": "read", "args": {}})
+        projects = store.list_projects()
+        shots_total = 0
+        for item in projects:
+            try:
+                shots_total += len(store.list_shots(item["id"]))
+            except Exception:  # noqa: BLE001
+                continue
+        return json.dumps({
+            "projects": len(projects),
+            "shots": shots_total,
+            "assets": _library_counts(),
+            "comfy": _comfy_status(fresh=True),
+        }, ensure_ascii=False)
+
+    @tool
+    def list_projects() -> str:
+        """列出所有项目：名称、镜头数、创建时间、最近一次导出状态。"""
+        log.append({"tool": "list_projects", "kind": "read", "args": {}})
+        out = []
+        for item in store.list_projects()[:30]:
+            try:
+                shots = len(store.list_shots(item["id"]))
+            except Exception:  # noqa: BLE001
+                shots = 0
+            renders = []
+            try:
+                renders = store.list_renders(item["id"], 1)
+            except Exception:  # noqa: BLE001
+                pass
+            out.append({
+                "id": item["id"],
+                "name": item.get("name"),
+                "shots": shots,
+                "created_at": item.get("created_at"),
+                "last_render": (renders[0].get("status") if renders else None),
+            })
+        return json.dumps(out, ensure_ascii=False)
+
+    @tool
+    def project_stats(project_id: str = "") -> str:
+        """单个项目的细节：镜头数、几个已有画面、总时长、导出次数。project_id 留空=当前项目。"""
+        log.append({"tool": "project_stats", "kind": "read", "args": {"project_id": project_id}})
+        pid = project_id or ""
+        if not pid:
+            return json.dumps({"error": "没有指定项目"}, ensure_ascii=False)
+        project = store.get_project(pid)
+        if not project:
+            return json.dumps({"error": "项目不存在"}, ensure_ascii=False)
+        shots = store.list_shots(pid)
+        with_cover = sum(1 for s in shots if s.get("cover"))
+        with_video = sum(1 for s in shots if s.get("active_job"))
+        duration = 0.0
+        for shot in shots:
+            values = shot.get("values") or {}
+            try:
+                duration += float(values.get("duration") or 0)
+            except (TypeError, ValueError):
+                continue
+        renders = store.list_renders(pid, 5)
+        return json.dumps({
+            "id": pid, "name": project.get("name"),
+            "shots": len(shots), "shots_with_cover": with_cover,
+            "shots_with_video": with_video,
+            "duration_seconds": round(duration, 1),
+            "renders": len(renders),
+            "last_render": (renders[0].get("status") if renders else None),
+        }, ensure_ascii=False)
+
+    @tool
+    def comfy_status() -> str:
+        """ComfyUI 现在通不通、地址、队列里跑几个排几个。"""
+        log.append({"tool": "comfy_status", "kind": "read", "args": {}})
+        return json.dumps(_comfy_status(fresh=True), ensure_ascii=False)
+
+    return [describe_state, list_shots, find_assets, card_info,
+            studio_overview, list_projects, project_stats, comfy_status]
 
 
 # --------------------------------------------------------------------------- #
