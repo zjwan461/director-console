@@ -924,3 +924,131 @@ select { background-image: none; }
   box-shadow: 0 8px 20px rgba(0,122,255,.14) !important;
 }
 .shot-row > .active *, .shot-row > *.selected * { color: #0b4a94 !important; }
+
+
+/* ================= 助手页头部：别挤在一起 ================= */
+.agent-head {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 14px 18px !important;
+  flex-wrap: wrap !important;
+  padding: 14px 18px !important;
+}
+.agent-head-title {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  min-width: 0;
+}
+.agent-project-chip {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 4px 10px 4px 12px !important;
+  height: 34px !important;
+  max-width: 100%;
+}
+.agent-project-chip .label {
+  font-size: 11px !important;
+  opacity: .7;
+  white-space: nowrap;
+}
+.agent-project-chip select {
+  min-width: 150px;
+  max-width: 260px;
+  height: 26px;
+  padding: 0 24px 0 8px;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-weight: 600;
+  color: #0b4a94 !important;
+  text-overflow: ellipsis;
+}
+.agent-bind-hint {
+  font-size: 11px !important;
+  color: #8b90a1 !important;
+  white-space: nowrap;
+}
+.agent-head-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-shrink: 0;
+}
+
+/* 编辑页：面板标题强制左对齐（h2 内是 <span>标题</span><span class=meta>） */
+.panel h2, .panel h3 { display: flex !important; align-items: baseline; gap: 10px; }
+.panel h2 > span:first-child, .panel h3 > span:first-child { flex: 0 0 auto; text-align: left !important; }
+.panel h2 > .meta, .panel h3 > .meta { margin-left: auto !important; }
+
+/* 编辑页灰块统一为近白 */
+.shot-edit, .shot-edit-body, .render-shot, .render-shot-edit {
+  background: #fff !important;
+  border-color: var(--line) !important;
+}
+
+
+/* ================= 剪辑页：镜头块 / 时间轴段（浅色收尾 4） ================= */
+.render-shot {
+  background: #fff !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 14px !important;
+  color: var(--text) !important;
+  transition: transform .16s cubic-bezier(.2,.8,.2,1), box-shadow .2s, border-color .2s;
+}
+.render-shot:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(16,24,40,.09); }
+.render-shot.on { border-color: rgba(0,122,255,.3) !important; }
+.render-shot.active {
+  background: linear-gradient(135deg, rgba(0,122,255,.13), rgba(175,82,222,.11)) !important;
+  border-color: rgba(0,122,255,.55) !important;
+  box-shadow: 0 10px 24px rgba(0,122,255,.14) !important;
+}
+.render-shot.active .render-shot-head,
+.render-shot.active .meta,
+.render-shot.active i { color: #0b4a94 !important; }
+
+.timeline-seg {
+  background: rgba(0, 122, 255, 0.07) !important;
+  border: 1px solid rgba(0, 122, 255, 0.18) !important;
+  color: #14457f !important;
+  border-radius: 10px !important;
+  transition: transform .16s, box-shadow .2s, background .2s;
+}
+.timeline-seg:hover { background: rgba(0, 122, 255, 0.12) !important; }
+.timeline-seg.on {
+  background: linear-gradient(135deg, rgba(0,122,255,.18), rgba(175,82,222,.16)) !important;
+  border-color: rgba(0, 122, 255, 0.5) !important;
+  box-shadow: 0 6px 16px rgba(0, 122, 255, 0.16);
+}
+.timeline-seg i { color: #5f7ba6 !important; }
+.mode-badge, .badge.warn { border-radius: 999px !important; }
+.mode-badge { background: rgba(0,122,255,.12) !important; color: #0b5bb5 !important; }
+.badge.warn { background: rgba(255,149,0,.16) !important; color: #8a5200 !important; }
+
+/* 助手页项目胶囊里的「项目」小标签 */
+.agent-project-chip .label {
+  background: transparent !important;
+  color: #7a8090 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  font-size: 11.5px !important;
+}
+
+
+/* 镜头列表：横向滚动，别把 12 个挤成一排 */
+.panel-shots .list {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  gap: 10px !important;
+  overflow-x: auto !important;
+  padding-bottom: 6px;
+  scrollbar-width: thin;
+}
+.panel-shots .list > .render-shot {
+  flex: 0 0 auto;
+  min-width: 108px;
+  max-width: 190px;
+}
+.render-shot-head b { font-size: 12px; }
