@@ -56,7 +56,7 @@ python tools/stub_comfy.py --port 8199 --token secret123
 - [x] M2.5 云端 ComfyUI：页面填地址/令牌，测试连接 + 持久化
 - [x] M3 成片：镜头勾选排序、逐段标准化、拼接、抽封面（需要本机有 ffmpeg）
 - [x] M4 剪辑 M1：逐镜裁剪、BGM 混音、字幕烧录、响度标准化
-- [ ] M4 真实环境联调：local / external 模式接上 GPU 机
+- [x] M4 真实环境联调：local / external 模式接上 GPU 机
 
 ## 提示词助手（可选）
 
