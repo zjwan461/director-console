@@ -876,3 +876,51 @@ select { background-image: none; }
   border-color: rgba(10, 132, 255, 0.45) !important;
   box-shadow: 0 0 0 4px rgba(10, 132, 255, 0.1), 0 10px 28px rgba(16, 24, 40, 0.08) !important;
 }
+
+
+/* ================= 卡片标题一律左对齐 ================= */
+/* 之前 h2 是 space-between 的 flex，我加的 ::before 光点把标题推到了右边 */
+.panel h2, .panel h3, .panel-head, .panel-head h2, .panel-head h3,
+.card h2, .card h3, .task-item, .list-item, .render-card, .asset-card {
+  justify-content: flex-start !important;
+  text-align: left !important;
+}
+.panel h2::before, .panel h3::before { display: none !important; }
+
+/* 右侧提示/统计仍然贴右 */
+.panel h2 > *:last-child:not(:first-child),
+.panel h3 > *:last-child:not(:first-child) { margin-left: auto; }
+
+/* 卡片内的其他文字 */
+.panel, .card, .task-item, .list-item, .render-card, .asset-card, .agent-bubble { text-align: left; }
+
+
+/* ================= 任务行 / 镜头选择块（浅色收尾 3） ================= */
+.task-row {
+  background: #fff !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--radius-sm) !important;
+  box-shadow: var(--shadow-sm);
+  transition: transform .16s cubic-bezier(.2,.8,.2,1), box-shadow .2s, border-color .2s;
+}
+.task-row:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(16,24,40,.09); }
+.task-row.failed, .task-row.interrupted { background: #fff6f8 !important; border-color: rgba(255,45,85,.28) !important; }
+.task-row.running, .task-row.rendering, .task-row.waiting_confirm { border-color: rgba(0,122,255,.35) !important; }
+.task-row.succeeded, .task-row.done { border-color: rgba(52,199,89,.28) !important; }
+
+/* 剪辑页镜头块 */
+.shot-row > * {
+  background: #fff !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 12px !important;
+  color: var(--text) !important;
+  transition: transform .16s, box-shadow .2s, border-color .2s;
+}
+.shot-row > *:hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(16,24,40,.1); }
+.shot-row > .active, .shot-row > *.selected {
+  background: linear-gradient(135deg, rgba(0,122,255,.14), rgba(175,82,222,.12)) !important;
+  border-color: rgba(0,122,255,.55) !important;
+  color: #0b4a94 !important;
+  box-shadow: 0 8px 20px rgba(0,122,255,.14) !important;
+}
+.shot-row > .active *, .shot-row > *.selected * { color: #0b4a94 !important; }
