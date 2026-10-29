@@ -190,19 +190,19 @@ export default function App() {
         </div>
 
         <nav className="nav">
-          <button className={tab === 'agent' ? 'active' : ''} onClick={() => setTab('agent')}>导演助手</button>
-          <button className={tab === 'studio' ? 'active' : ''} onClick={() => setTab('studio')}>创作台</button>
-          <button className={tab === 'projects' ? 'active' : ''} onClick={() => setTab('projects')}>项目</button>
-          <button className={tab === 'edit' ? 'active' : ''} onClick={() => setTab('edit')}>剪辑</button>
-          <button className={tab === 'assets' ? 'active' : ''} onClick={() => setTab('assets')}>资产</button>
+          <button className={tab === 'agent' ? 'active' : ''} onClick={() => setTab('agent')}><i className="nav-ico">✦</i>导演助手</button>
+          <button className={tab === 'studio' ? 'active' : ''} onClick={() => setTab('studio')}><i className="nav-ico">◈</i>创作台</button>
+          <button className={tab === 'projects' ? 'active' : ''} onClick={() => setTab('projects')}><i className="nav-ico">▤</i>项目</button>
+          <button className={tab === 'edit' ? 'active' : ''} onClick={() => setTab('edit')}><i className="nav-ico">✂</i>剪辑</button>
+          <button className={tab === 'assets' ? 'active' : ''} onClick={() => setTab('assets')}><i className="nav-ico">❖</i>资产</button>
           <button className={tab === 'renders' ? 'active' : ''} onClick={() => setTab('renders')}>
-            成片
+            <i className="nav-ico">▶</i>成片
           </button>
           <button className={tab === 'jobs' ? 'active' : ''} onClick={() => setTab('jobs')}>
-            任务
+            <i className="nav-ico">◎</i>任务
             {badges.tasks > 0 && <span className="nav-badge">{badges.tasks > 99 ? '99+' : badges.tasks}</span>}
           </button>
-          <button className={tab === 'service' ? 'active' : ''} onClick={() => setTab('service')}>服务管家</button>
+          <button className={tab === 'service' ? 'active' : ''} onClick={() => setTab('service')}><i className="nav-ico">⚙</i>服务管家</button>
         </nav>
 
         <div className="rail-foot">
@@ -230,6 +230,7 @@ export default function App() {
       </div>
 
       <main className="main">
+        <div className="page-enter" key={tab}>
         {tab === 'agent' && (
           <AgentPanel
             projectId={new URLSearchParams(window.location.search).get('project') || ''}
@@ -287,6 +288,7 @@ export default function App() {
           />
         )}
         {tab === 'service' && <ServicePanel status={status} onRefresh={refreshStatus} />}
+        </div>
       </main>
     </div>
   )
