@@ -11,8 +11,9 @@ from typing import Any
 from . import store
 from .comfy import ComfyClient, ComfyError, make_client
 from .config import settings
-from .presets import (adapt_workflow_models, apply_bindings, build_bindings, get_card,
-                      load_workflow, sanitize_load_images)
+from .presets import (adapt_workflow_models, apply_bindings, build_bindings,
+                      drop_bindings, get_card, load_workflow, optional_drops,
+                      sanitize_load_images)
 
 OUTPUT_KEYS = ("images", "gifs", "videos", "audio", "files", "video")
 
@@ -107,6 +108,10 @@ class JobRunner:
         # 2) 参数注入（模型路径按当前 ComfyUI 实际清单自适应）
         binds = build_bindings(card, values, media)
         workflow = apply_bindings(load_workflow(card["workflow"]), binds)
+        # 可选素材槽没传时摘掉对应输入（多图编辑的 image_2 / image_3）
+        drops = optional_drops(card, media)
+        if drops:
+            workflow = drop_bindings(workflow, drops)
         try:
             object_info = await client.object_info()
             workflow, changes = adapt_workflow_models(workflow, object_info)

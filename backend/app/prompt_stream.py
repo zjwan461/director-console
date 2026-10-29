@@ -16,6 +16,7 @@ router = APIRouter()
 
 MODES = {
     "t2i": "imagePrompt",
+    "i2i": "imageEdit",
     "t2v": "keyframeT2va",
     "i2v": "keyframeI2va",
     "flf2v": "keyframeFl2va",

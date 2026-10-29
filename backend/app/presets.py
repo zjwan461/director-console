@@ -255,7 +255,14 @@ def build_bindings(card: dict, values: dict, media: dict[str, str]) -> dict[str,
         if val in (None, "") and not f.get("required"):
             continue
         if f.get("bind"):
-            binds[f["bind"]] = val
+            value: Any = val
+            # 下拉里存的可能是 "1024"，但工作流要 INT
+            if f.get("numeric"):
+                try:
+                    value = int(float(val))
+                except (TypeError, ValueError):
+                    value = f.get("default")
+            binds[f["bind"]] = value
     return binds
 
 
@@ -444,6 +451,36 @@ def apply_bindings(workflow: dict, binds: dict[str, Any]) -> dict:
         inputs = node.setdefault("inputs", {})
         inputs[field] = value
     return wf
+
+
+def optional_drops(card: dict, media: dict[str, str]) -> list[str]:
+    """可选素材槽没传时，需要从工作流里摘掉的输入（例如多图编辑的 image_2/3）。"""
+    drops: list[str] = []
+    for field in card.get("fields", []):
+        if field.get("type") not in {"image", "video", "audio"}:
+            continue
+        key = str(field.get("key") or "")
+        if media.get(key):
+            continue
+        for target in field.get("remove_when_empty") or []:
+            if isinstance(target, str) and target:
+                drops.append(target)
+    return drops
+
+
+def drop_bindings(workflow: dict, drops: list[str]) -> dict:
+    """按 "节点:字段" 把输入删掉（节点本身留着，没被引用就不会执行）。"""
+    for compound in drops:
+        if ":" not in compound:
+            continue
+        node_id, field = compound.split(":", 1)
+        node = workflow.get(node_id)
+        if not isinstance(node, dict):
+            continue
+        inputs = node.get("inputs")
+        if isinstance(inputs, dict):
+            inputs.pop(field, None)
+    return workflow
 
 
 def card_assets(card: dict) -> dict:

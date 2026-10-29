@@ -1,0 +1,48 @@
+id: image.ref
+name: 改图 / 图生图（Qwen 2.1 编辑）
+badge: 改图
+category: image
+output_kind: image
+order: 6
+desc: 拿一张图按指令改：换背景、换衣服、加/去元素、调光线；也可以再传 1~2 张参考图做合成或换人。
+hint: 只改「上一版产物」时，直接在导演助手说「再亮一点 / 换成红衣」，它会走 revise；这张卡适合你手里已经有明确的参考图。
+workflow: API-B20Q-改图-多图-Qwen2.1编辑.json
+timeout: 2400
+placeholders:
+  image: blank-image.png
+fields:
+  - key: image
+    bind: "21:image"
+    type: image
+    label: 要改的图
+    required: true
+  - key: image2
+    bind: "31:image"
+    type: image
+    label: 参考图 2（可选）
+    remove_when_empty: ["4:images.image_2"]
+  - key: image3
+    bind: "32:image"
+    type: image
+    label: 参考图 3（可选）
+    remove_when_empty: ["4:images.image_3"]
+  - key: prompt
+    bind: "4:prompt"
+    type: textarea
+    label: 改什么
+    rows: 8
+    required: true
+    assist: i2i
+    placeholder: >-
+      例：把背景换成雪夜山门，保留人物的脸和服装；或：把图 2 的人物放到图 1 里，站在左侧；或：去掉画面右侧的手
+  - key: resolution
+    bind: "4:resolution"
+    type: select
+    label: 分辨率（短边）
+    options: ["1024", "1152", "1328"]
+    numeric: true
+    default: "1024"
+  - key: seed
+    bind: "7:noise_seed"
+    type: seed
+    label: 随机种子
