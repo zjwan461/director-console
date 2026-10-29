@@ -230,6 +230,14 @@ export default function AssetsPanel({ onOpenProject }: { onOpenProject: (project
       {uploadNote && <div className="notice">{uploadNote}</div>}
 
       <div className={`assets-split ${selected ? 'with-detail' : ''}`}>
+      {loading && items.length === 0 && (
+        <div className="skeleton-grid">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <div key={i} className="skeleton skeleton-card" />
+          ))}
+        </div>
+      )}
+
         <div className="asset-grid">
           {items.map((asset) => (
             <div

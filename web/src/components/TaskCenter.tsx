@@ -46,6 +46,7 @@ export default function TaskCenter({ onNavigate }: {
   onNavigate?: (tab: Tab, params?: Record<string, string>) => void
 }) {
   const [items, setItems] = useState<TaskItem[]>([])
+  const [loaded, setLoaded] = useState(false)
   const [total, setTotal] = useState(0)
   const [active, setActive] = useState(0)
   const [counts, setCounts] = useState<Record<string, number>>({})
@@ -70,6 +71,7 @@ export default function TaskCenter({ onNavigate }: {
         return
       }
       setItems(res.items as unknown as TaskItem[])
+      setLoaded(true)
       setTotal(res.total)
       setActive(res.active)
       setCounts(res.counts || {})
@@ -161,7 +163,14 @@ export default function TaskCenter({ onNavigate }: {
       {error && <div className="notice err">{error}</div>}
 
       <div className="task-table">
-        {items.length === 0 && <p className="meta">没有符合条件的任务</p>}
+        {!loaded && (
+          <div className="task-skeleton">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="skeleton skeleton-line" style={{ height: 34, marginBottom: 8 }} />
+            ))}
+          </div>
+        )}
+        {loaded && items.length === 0 && <p className="meta">没有符合条件的任务</p>}
         {items.map((item) => {
           const key = `${item.kind}:${item.id}`
           const openable = item.kind === 'render' || item.kind === 'agent' || item.kind === 'ai_edit'
