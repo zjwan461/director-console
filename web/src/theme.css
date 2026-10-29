@@ -1070,3 +1070,64 @@ select { background-image: none; }
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+
+/* ================= 底部吸底操作条（浅色） ================= */
+.sticky-bar {
+  background: rgba(255, 255, 255, 0.86) !important;
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid var(--line) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: 0 -6px 26px rgba(16, 24, 40, 0.08), 0 10px 30px rgba(16, 24, 40, 0.06);
+  padding: 10px 12px !important;
+  color: var(--muted) !important;
+}
+.sticky-bar > span { color: var(--muted) !important; }
+
+/* 其他可能的深色浮层一并修正 */
+.drawer, .sheet, .modal-card, .dialog, .popover, .dropdown-menu {
+  background: #fff !important;
+  border: 1px solid var(--line) !important;
+  box-shadow: var(--shadow-lg) !important;
+  color: var(--text) !important;
+}
+
+
+/* ================= 能力卡栅格：宽屏别挤成 6 列 ================= */
+.card-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+}
+@media (max-width: 1600px) {
+  .card-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+}
+@media (max-width: 1180px) {
+  .card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+@media (max-width: 760px) {
+  .card-grid { grid-template-columns: 1fr !important; }
+}
+.card-grid > * { min-width: 0; }
+
+
+/* ================= 切页动画改成纯淡入 =================
+   原来用 transform 做动画会让祖先元素成为 fixed 的包含块，
+   底部吸底条（position:fixed）因此跑出视口看不见。
+   只用 opacity 不会创建包含块。 */
+.page-enter {
+  animation: page-fade var(--dur-mid) var(--ease-out) both !important;
+}
+@keyframes page-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* 吸底条：确保在面板之上 */
+.sticky-bar {
+  position: fixed;
+  left: 250px;
+  right: 30px;
+  bottom: 14px;
+  z-index: 200 !important;
+}
