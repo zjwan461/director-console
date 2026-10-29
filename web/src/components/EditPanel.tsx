@@ -6,9 +6,12 @@ import PromptDialog from './PromptDialog'
 import type { PromptDraft } from './PromptDialog'
 
 const RESOLUTIONS = [
-  { key: '480p', label: '480p · 854×480', width: 854, height: 480 },
-  { key: '720p', label: '720p · 1280×720', width: 1280, height: 720 },
-  { key: '1080p', label: '1080p · 1920×1080', width: 1920, height: 1080 },
+  { key: '480p', label: '横屏 480p · 854×480', width: 854, height: 480 },
+  { key: '720p', label: '横屏 720p · 1280×720', width: 1280, height: 720 },
+  { key: '1080p', label: '横屏 1080p · 1920×1080', width: 1920, height: 1080 },
+  { key: '480p-v', label: '竖屏 480p · 480×854', width: 480, height: 854 },
+  { key: '720p-v', label: '竖屏 720p · 720×1280', width: 720, height: 1280 },
+  { key: '1080p-v', label: '竖屏 1080p · 1080×1920', width: 1080, height: 1920 },
 ]
 
 interface BgmTrack {
@@ -51,7 +54,15 @@ export default function EditPanel({
   const [shots, setShots] = useState<Shot[]>([])
   const [selected, setSelected] = useState<string[]>([])
   const [edits, setEdits] = useState<Record<string, Edit>>({})
-  const [resKey, setResKey] = useState('720p')
+  const [resKey, setResKey] = useState(() => {
+    const portrait = shots.some((s) => {
+      const size = ((s as unknown as { values?: Record<string, unknown> }).values?.size || {}) as {
+        aspect?: string
+      }
+      return String(size.aspect || '').includes('9:16')
+    })
+    return portrait ? '720p-v' : '720p'
+  })
   const [fps, setFps] = useState(24)
   const [audios, setAudios] = useState<Asset[]>([])
   const [voiceOptions, setVoiceOptions] = useState<Array<{ id: string; name: string }>>([])
@@ -159,7 +170,21 @@ export default function EditPanel({
         setShots(shotRes.items)
         const opts = (state.options || {}) as Record<string, unknown>
         const w = Number(opts.width || 1280)
-        setResKey(RESOLUTIONS.find((r) => r.width === w)?.key || '720p')
+        const h = Number(opts.height || 720)
+        // 项目是竖屏、而旧草稿还是横屏默认值时，别把竖屏默认顶掉
+        const projectPortrait = shotRes.items.some((s) => {
+          const size = ((s as unknown as { values?: Record<string, unknown> }).values?.size || {}) as {
+            aspect?: string
+          }
+          return String(size.aspect || '').includes('9:16')
+        })
+        const savedLandscapeDefault = w > h && (w === 1280 || w === 1920 || w === 854)
+        if (projectPortrait && savedLandscapeDefault && !localStorage.getItem(`dsh.res.${projectId}`)) {
+          setResKey('720p-v')
+        } else {
+          setResKey(RESOLUTIONS.find((r) => r.width === w && r.height === h)?.key
+            || RESOLUTIONS.find((r) => r.width === w)?.key || '720p')
+        }
         setFps(Number(opts.fps || 24))
         setFitMode(String(opts.fit || 'letterbox'))
         setContentMode((String(opts.content_mode || 'narration') as typeof contentMode))
@@ -1911,7 +1936,10 @@ export default function EditPanel({
         <div className="panel panel-side">
           <h2>成片设置</h2>
           <div className="row">
-            <select value={resKey} onChange={(e) => setResKey(e.target.value)}>
+            <select value={resKey} onChange={(e) => {
+              setResKey(e.target.value)
+              if (projectId) localStorage.setItem(`dsh.res.${projectId}`, e.target.value)
+            }}>
               {RESOLUTIONS.map((r) => <option key={r.key} value={r.key}>{r.label}</option>)}
             </select>
             <select value={fps} onChange={(e) => setFps(Number(e.target.value))}>

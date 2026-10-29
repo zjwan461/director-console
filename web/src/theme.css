@@ -1188,3 +1188,75 @@ select { background-image: none; }
 
 /* 吸底条不再挡住页面底部内容 */
 .main:has(.sticky-bar) { padding-bottom: 120px !important; }
+
+
+/* ================= 素材槽编号角标（浅色） ================= */
+.idx {
+  background: rgba(232, 241, 255, 0.95) !important;
+  color: #0b5bb5 !important;
+  border: 1px solid rgba(0, 122, 255, 0.25);
+  border-radius: 8px !important;
+  padding: 1px 6px !important;
+  font-weight: 600;
+}
+
+/* ================= 剪辑页镜头卡：松一点 ================= */
+.render-shot { padding: 12px 14px !important; }
+.render-shot-head { gap: 10px !important; padding-bottom: 4px; }
+.render-shot-edit {
+  gap: 14px !important;
+  margin-top: 14px !important;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.render-shot-edit .row {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 12px 18px !important;
+  align-items: flex-end;
+}
+.render-shot-edit .field, .render-shot-edit label { min-width: 96px; }
+.render-shot-edit input, .render-shot-edit select { min-width: 96px; }
+.render-shot-edit textarea { min-height: 34px; }
+
+
+/* ================= 收尾：徽章 / 提示块 / 遮罩 ================= */
+.badge {
+  background: #eef2f8 !important;
+  color: #4b5162 !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 999px !important;
+  padding: 1px 9px !important;
+  font-weight: 600;
+}
+.badge.ok { background: rgba(52, 199, 89, .14) !important; color: #1a7f3c !important; border-color: rgba(52,199,89,.25) !important; }
+.badge.warn { background: rgba(255, 149, 0, .16) !important; color: #8a5200 !important; border-color: rgba(255,149,0,.28) !important; }
+.badge.err { background: rgba(255, 45, 85, .12) !important; color: #b3002d !important; border-color: rgba(255,45,85,.22) !important; }
+
+.hint, .helper, .meta {
+  color: #5f6577;
+}
+.hint {
+  background: #f7f9fd !important;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 8px 10px;
+  line-height: 1.6;
+}
+
+.notice {
+  background: #f4f8ff !important;
+  border: 1px solid rgba(0, 122, 255, 0.18) !important;
+  color: #1c3a63 !important;
+  border-radius: 12px;
+}
+.notice.err {
+  background: #fff5f8 !important;
+  border-color: rgba(255, 45, 85, 0.28) !important;
+  color: #a30028 !important;
+}
+
+.picker-overlay {
+  background: rgba(10, 14, 22, 0.42) !important;
+  backdrop-filter: blur(6px);
+}
