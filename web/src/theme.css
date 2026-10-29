@@ -908,22 +908,7 @@ select { background-image: none; }
 .task-row.running, .task-row.rendering, .task-row.waiting_confirm { border-color: rgba(0,122,255,.35) !important; }
 .task-row.succeeded, .task-row.done { border-color: rgba(52,199,89,.28) !important; }
 
-/* 剪辑页镜头块 */
-.shot-row > * {
-  background: #fff !important;
-  border: 1px solid var(--line) !important;
-  border-radius: 12px !important;
-  color: var(--text) !important;
-  transition: transform .16s, box-shadow .2s, border-color .2s;
-}
-.shot-row > *:hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(16,24,40,.1); }
-.shot-row > .active, .shot-row > *.selected {
-  background: linear-gradient(135deg, rgba(0,122,255,.14), rgba(175,82,222,.12)) !important;
-  border-color: rgba(0,122,255,.55) !important;
-  color: #0b4a94 !important;
-  box-shadow: 0 8px 20px rgba(0,122,255,.14) !important;
-}
-.shot-row > .active *, .shot-row > *.selected * { color: #0b4a94 !important; }
+/* .shot-row 是字段行容器，不能给它加边框（会变成「每个输入项一个框」） */
 
 
 /* ================= 助手页头部：别挤在一起 ================= */
@@ -1292,3 +1277,17 @@ select { background-image: none; }
 .render-shot-edit input,
 .render-shot-edit select { padding: 8px 12px !important; }
 .render-shot-edit textarea { padding: 10px 12px !important; }
+
+
+/* 字段行：保持无框，只有控件本身有边框 */
+.shot-row { display: flex !important; flex-wrap: wrap !important; gap: 12px 18px !important; align-items: flex-end; }
+.shot-row > label { background: transparent !important; border: 0 !important; box-shadow: none !important; }
+.shot-row label { color: #5f6577; }
+.mode-toggles { display: flex; gap: 14px; align-items: center; background: transparent !important; border: 0 !important; }
+.mode-toggles .check { background: transparent !important; border: 0 !important; padding: 0 !important; }
+/* 只有 select / input / textarea 有描边 */
+.shot-row select, .shot-row input, .shot-row textarea {
+  border: 1px solid var(--line) !important;
+  background: #fff !important;
+  border-radius: 12px !important;
+}
