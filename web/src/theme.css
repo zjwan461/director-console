@@ -1260,3 +1260,35 @@ select { background-image: none; }
   background: rgba(10, 14, 22, 0.42) !important;
   backdrop-filter: blur(6px);
 }
+
+
+/* ================= 剪辑镜头卡：内边距补足（之前内容顶到边框） ================= */
+.panel-shots .render-shot,
+.render-shot {
+  padding: 16px 18px !important;
+  border-radius: 16px !important;
+}
+.render-shot-edit {
+  padding: 4px 2px 6px !important;
+  gap: 16px !important;
+  margin-top: 14px !important;
+}
+.shot-section {
+  padding: 14px 2px 0 !important;
+  margin-top: 0 !important;
+  gap: 10px !important;
+  border-top: 1px solid var(--line) !important;
+}
+.shot-section:first-child {
+  border-top: 0 !important;
+  padding-top: 4px !important;
+}
+.shot-section-head {
+  margin-bottom: 2px !important;
+  color: #5f6577 !important;
+  letter-spacing: .08em !important;
+}
+.render-shot-edit .row { gap: 14px 20px !important; }
+.render-shot-edit input,
+.render-shot-edit select { padding: 8px 12px !important; }
+.render-shot-edit textarea { padding: 10px 12px !important; }
