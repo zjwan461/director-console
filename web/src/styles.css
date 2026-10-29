@@ -1078,7 +1078,15 @@ label.check input[type=checkbox] { width: auto; height: auto; flex: 0 0 auto; }
 }
 .agent-empty h2 { margin: 0; font-size: 17px; }
 .agent-empty p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.7; }
-.agent-empty select { height: 34px; font-size: 13px; }
+/* 注意：全局 select 有 padding: 9px 11px，配 height 34px 会把文字压扁裁掉，
+   这里改成竖向 padding 0（由浏览器居中），只留左右内边距 */
+.agent-empty select {
+  height: 38px;
+  padding: 0 12px;
+  font-size: 13px;
+  line-height: normal;
+  text-overflow: ellipsis;
+}
 
 
 /* 视频产物 */
