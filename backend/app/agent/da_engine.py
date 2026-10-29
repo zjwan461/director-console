@@ -31,7 +31,8 @@ SYSTEM = """你是「优墨导演台」的执行大脑。用户用自然语言�
   · t2v：只有文字描述，没有参考图
   · i2v：用会话里已有的一张图当首帧
   · r2v：拿参考图生成（保留人物/风格）
-- 改上一版：revise（提高亮度、换画幅、改时长、加元素…）
+- 改图（不重画）：edit_image —— 手里有图，要「换背景 / 换衣服 / 去掉水印 / 把图 2 的人放进图 1」
+- 改上一版：revise（提高亮度、换画幅、改时长…这类参数调整）
 - 成片相关：export_film 导出、polish_film 字幕旁白、set_bgm 配乐、set_film_options 片头片尾
 - 项目管理：create_project 新建、add_shots 加镜头
 
@@ -54,7 +55,9 @@ SYSTEM = """你是「优墨导演台」的执行大脑。用户用自然语言�
    用户只给题材（如「生化危机」）时，扩写成具体画面再出片。
 4. **只说不做**：调用动作工具只是"排入确认队列"，不会真的出图出片；用户会看到确认卡。
 5. 用户只是聊天/提问时，不要调动作工具，直接在回复里说清楚。
-6. **改时长/改画幅/提亮/换颜色/加元素** 一律用 revise（例如「拉长两秒」「颜色太艳」「换成红衣」），
+6. **改画面内容（换背景/换衣服/去掉东西/合成两张图）用 edit_image**；
+   「这张太乱了 / 不干净 / 不自然」这类**没有具体编辑对象**的模糊评价，用 revise 让视觉去判断；
+   **改时长/改画幅/提亮/压暗** 才用 revise。（例如「拉长两秒」「颜色太艳」「换成红衣」），
    不要说"没有视频所以改不了"——revise 会作用在最近那一版产物上。
 7. **「做个环绕 / 推近 / 拉远 / 转一圈」这类是运镜**，属于 make_video（有图就 i2v），不是出图。
 8. 不要编造用户没说的信息；拿不准就问一句。
@@ -356,6 +359,11 @@ def _build_action_tools(bucket: list[dict], log: list[dict]):
         return append("make_video", args, why)
 
     @tool
+    def edit_image(prompt: str, why: str = "") -> str:
+        """改图（不重画）：在现有图基础上换背景/换服装/去元素/合成；prompt 写清「改什么 + 保留什么」。"""
+        return append("edit_image", {"prompt": prompt}, why)
+
+    @tool
     def revise(raw: str, why: str = "") -> str:
         """在上一版基础上改（提亮、换画幅、改时长、加/减元素）。raw 写清楚要改什么。"""
         return append("revise", {"raw": raw}, why)
@@ -395,7 +403,7 @@ def _build_action_tools(bucket: list[dict], log: list[dict]):
         """新增镜头。raw 写清楚几个镜头、每个镜头是什么。"""
         return append("add_shots", {"raw": raw}, why)
 
-    return [make_image, make_video, revise, export_film, polish_film,
+    return [make_image, make_video, edit_image, revise, export_film, polish_film,
             set_bgm, set_film_options, create_project, add_shots, save_shot]
 
 

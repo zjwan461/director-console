@@ -21,6 +21,7 @@ from ..presets import (build_bindings, get_card, is_video_card, load_cards, publ
                        size_from, validate)
 
 IMAGE_CARD_ID = "image.c16"
+EDIT_CARD_ID = "image.ref"
 
 # 视频模式 -> (能力卡, 必填的图片槽位)
 VIDEO_CARDS = {
@@ -165,6 +166,64 @@ def job_status(job_id: str) -> str:
 # --------------------------------------------------------------------------- #
 # 写（确认后执行）
 # --------------------------------------------------------------------------- #
+def edit_inputs_preview(prompt: str, base_asset_id: str,
+                         extra_asset_ids: list[str] | None = None,
+                         resolution: int = 1024, seed: int = -1) -> dict:
+    """改图（image.ref）的参数预览：底图 + 最多 2 张参考图。"""
+    card = get_card(EDIT_CARD_ID)
+    if not card:
+        return {"errors": [f"改图能力卡 {EDIT_CARD_ID} 不存在"], "params": {}, "values": {}}
+
+    extras = [str(a) for a in (extra_asset_ids or []) if a][:2]
+    values = {
+        "image": base_asset_id or "",
+        "image2": extras[0] if len(extras) > 0 else "",
+        "image3": extras[1] if len(extras) > 1 else "",
+        "prompt": prompt,
+        "resolution": str(resolution),
+        "seed": seed,
+    }
+    errors = validate(card, values)
+    if not base_asset_id:
+        errors.append("要改的图（底图）是必需的")
+
+    base = store.get_asset(base_asset_id) if base_asset_id else None
+    base_name = ""
+    if base:
+        base_name = str(base.get("path") or "").rsplit("/", 1)[-1]
+    return {
+        "preset_id": EDIT_CARD_ID,
+        "params": {
+            "prompt": prompt,
+            "resolution": resolution,
+            "seed": seed,
+            "image_asset_id": base_asset_id,
+            "extra_asset_ids": extras,
+            "base_name": base_name,
+            "eta": 30,
+        },
+        "values": values,
+        "errors": errors,
+    }
+
+
+async def edit_image(prompt: str, base_asset_id: str,
+                     extra_asset_ids: list[str] | None = None,
+                     resolution: int = 1024, seed: int = -1) -> str:
+    preview = edit_inputs_preview(prompt, base_asset_id, extra_asset_ids, resolution, seed)
+    if preview["errors"]:
+        return _dumps({"ok": False, "error": "invalid_params",
+                       "hint": "；".join(preview["errors"])})
+    job = store.create_job(EDIT_CARD_ID, preview["values"], "", "")
+    try:
+        await runner.enqueue(job["id"])
+    except Exception as exc:  # noqa: BLE001
+        return _dumps({"ok": False, "error": "enqueue_failed", "hint": str(exc),
+                       "job_id": job["id"]})
+    return _dumps({"ok": True, "job_id": job["id"], "preset_id": EDIT_CARD_ID,
+                   "params": preview["params"]})
+
+
 async def make_image(prompt: str, aspect: str = "9:16", megapixels: float | None = None,
                      seed: int = -1) -> str:
     preview = image_inputs_preview(prompt, aspect, megapixels, seed)

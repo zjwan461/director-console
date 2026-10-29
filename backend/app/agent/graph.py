@@ -177,10 +177,21 @@ ADJUST_RE = re.compile(
 GENERATE_VERB_RE = re.compile(r"(画一张|画个|生成一张|出一张|做一个|做一段|拍一段|来一段|生成视频)")
 
 
+EDIT_CONTENT_RE = re.compile(
+    r"(背景|衣服|服装|头发|发型|脸|表情|手|水印|路人|人物|道具|天空|雪|雨|灯|字|logo|"
+    r"合成|放到|放进|加一|加上|去掉|删掉|擦掉|换成|改成|变成)")
+
+
 def _engine_postcheck(steps: list[dict], text: str, thread_id: str) -> list[dict]:
     """引擎定完方案后做一次「参数调整」校验：改亮度/清晰度/时长/画幅一定是 revise。"""
     if not thread_id:
         return steps
+
+    # 「这张太乱了，改干净一点」这类模糊评价没有具体编辑对象 → 走 revise（让视觉去判断）
+    if (steps and any(str(s.get("tool")) == "edit_image" for s in steps)
+            and not EDIT_CONTENT_RE.search(text)):
+        return [{"index": 1, "tool": "revise", "intent": "revise",
+                 "args": {"raw": text}, "why": "模糊评价改画面", "depends_on": None}]
     artifacts = agent_store.list_artifacts(thread_id, limit=5)
     if not artifacts:
         return steps
@@ -235,6 +246,16 @@ def _fast_intent(state: AgentState) -> dict | None:
             and (explicit_revise or (has_artifact and REVISE_RE.search(text)))):
         return {"intent": "revise", "args": {"raw": text},
                 "reply": "好，我在上一版基础上改。"}
+
+    # 改图（内容编辑）：换背景 / 去掉水印 / 把 A 换成 B …
+    edit_like = bool(re.search(
+        r"((换|改|加|放|拼|合成|贴|涂|修|去|擦|删|移除|扣|抠).{0,8}"
+        r"(背景|衣服|服装|头发|发型|发色|脸|表情|手|水印|路人|人物|元素|道具|天空|雪|雨|灯|字|logo|阴影))"
+        r"|((把|将).{0,14}(换成|改成|变成|放到|移到|去掉|拿掉|挪到))"
+        r"|(换|改)(个|一个)?(背景|衣服|服装|表情)", text, re.IGNORECASE))
+    if edit_like and not re.search(r"(视频|成片|导出|镜头|分镜|字幕|旁白)", text):
+        return {"intent": "edit_image", "args": {"prompt": text},
+                "reply": "好，拿这张图按你说的改。"}
 
     ctx = agent_store.get_context(state.get("thread_id", ""))
     last_asset = str(ctx.get("last_asset_id") or "")
@@ -710,6 +731,7 @@ TOOL_LABEL = {
     "set_film_options": "成片设置",
     "create_project": "建项目",
     "add_shots": "加镜头",
+    "edit_image": "改图",
 }
 
 FAQ = [
@@ -1117,6 +1139,67 @@ async def node_prepare(state: AgentState) -> dict:
     if not prompt and intent != "generate_video":
         return {"intent": "chat", "reply": "能再说清楚一点画面内容吗？我好照着画。"}
 
+    if intent == "edit_image":
+        thread_id_now = state.get("thread_id", "")
+        base_id = ""
+        extras: list[str] = []
+        for att in state.get("attachments") or []:
+            if str(att.get("kind") or "") != "image":
+                continue
+            aid = str(att.get("id") or "")
+            if not aid:
+                continue
+            if not base_id:
+                base_id = aid
+            elif len(extras) < 2:
+                extras.append(aid)
+        if not base_id:
+            ctx_now = agent_store.get_context(thread_id_now)
+            if str(ctx_now.get("last_kind") or "") == "image":
+                base_id = str(ctx_now.get("last_asset_id") or "")
+        if not base_id:
+            for art in agent_store.list_artifacts(thread_id_now, limit=12):
+                if art.get("kind") == "image" and art.get("url"):
+                    base_id = tools.asset_from_url(str(art["url"]), str(art.get("ref_id") or ""))
+                    if base_id:
+                        break
+        if not base_id:
+            found = json.loads(tools.list_assets(kind="image", limit=3))
+            items = found.get("items") or []
+            if not items:
+                return {"intent": "chat", "reply": "素材库里还没有图片，先发一张要我改的图。"}
+            base_id = str(items[0]["id"])
+            _emit({"t": "step", "id": "pick_base", "node": "prepare",
+                   "title": "从素材库挑底图", "status": "done",
+                   "detail": {"asset": items[0].get("path")}})
+
+        # 嘴里提到「图 2 / 图 3」时，把会话里其它图片补成参考图
+        if len(extras) < 2 and re.search(r"(图\s*[23]|第\s*[23]\s*张|另一张|第二张)", prompt):
+            for art in agent_store.list_artifacts(thread_id_now, limit=10):
+                if art.get("kind") != "image" or not art.get("url"):
+                    continue
+                aid = tools.asset_from_url(str(art["url"]), str(art.get("ref_id") or ""))
+                if not aid or aid == base_id or aid in extras:
+                    continue
+                extras.append(aid)
+                if len(extras) >= 2:
+                    break
+            if extras:
+                _emit({"t": "step", "id": "pick_refs", "node": "prepare",
+                       "title": f"带上 {len(extras)} 张参考图", "status": "done",
+                       "detail": {"refs": len(extras)}})
+
+        preview = tools.edit_inputs_preview(prompt, base_id, extras)
+        _emit({"t": "tool_call", "id": "prep_edit", "name": "edit_image.preview",
+               "args": {"prompt": prompt, "base": preview["params"].get("base_name"),
+                        "refs": len(extras)}})
+        if preview["errors"]:
+            _emit({"t": "tool_result", "id": "prep_edit", "ok": False,
+                   "data": {"errors": preview["errors"]}})
+            return {"intent": "chat", "reply": "改不了：" + "；".join(preview["errors"])}
+        _emit({"t": "tool_result", "id": "prep_edit", "ok": True, "data": preview["params"]})
+        return {"plan": {"kind": "edit_image", **preview}}
+
     if intent == "generate_video":
         mode = str(args.get("mode") or "t2v").strip()
         if mode not in tools.VIDEO_CARDS:
@@ -1315,6 +1398,7 @@ def _prepare_for(intent: str):
         "film_options": node_prepare_film,
         "create_project": node_prepare_new_project,
         "add_shot": node_prepare_add_shot,
+        "edit_image": node_prepare,
     }.get(intent, node_prepare)
 
 
@@ -1619,6 +1703,17 @@ async def node_confirm(state: AgentState) -> dict:
         payload = {"kind": "confirm", "action": "save_shot", "title": "存为镜头",
                    "summary": params.get("title") or "写入当前项目",
                    "params": params, "preset_id": "", "mode": ""}
+    elif kind == "edit_image":
+        refs = len(params.get("extra_asset_ids") or [])
+        bits = [f"底图 {params.get('base_name') or '最近一张图'}",
+                f"短边 {params.get('resolution')}",
+                f"约 {params.get('eta') or 30} 秒"]
+        if refs:
+            bits.append(f"+{refs} 张参考图")
+        payload = {"kind": "confirm", "action": "edit_image", "title": "改图",
+                   "summary": " · ".join(bits), "params": params,
+                   "mode": "", "preset_id": plan.get("preset_id"),
+                   "preset_name": "改图 / 图生图"}
     elif kind == "video":
         eta = max(60, int(float(params.get("duration") or 5) * 40))
         card = tools.get_card(str(plan.get("preset_id") or "")) or {}
@@ -1876,7 +1971,7 @@ def route_after_decide(state: AgentState) -> str:
         return "quick_reply"
     if intent in {"capability", "list_presets"}:
         return "reply_capability"
-    if intent in {"generate", "generate_video"}:
+    if intent in {"generate", "generate_video", "edit_image"}:
         return "prepare"
     if intent == "export":
         return "prepare_export"
