@@ -729,3 +729,150 @@ select { background-image: none; }
   color: #4b5162 !important;
   border-radius: 999px !important;
 }
+
+
+/* ================= 助手页：修滚动 + 配色 ================= */
+/* 切页包裹层不能让 height:100% 失效（否则聊天区滚不动） */
+.main:has(.agent-page) {
+  display: flex;
+  flex-direction: column;
+}
+.main:has(.agent-page) .page-enter {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  animation: none;
+}
+.main:has(.agent-page) .agent-page {
+  flex: 1;
+  min-height: 0;
+}
+
+/* 助手页配色：白卡 + 淡蓝聊天底 */
+.agent-page { background: transparent; }
+.agent-main {
+  background: #fff !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+.agent-head {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border-bottom: 1px solid var(--line) !important;
+  backdrop-filter: blur(12px);
+}
+.agent-feed {
+  background: linear-gradient(180deg, #fbfcff, #f6f8fd) !important;
+}
+.agent-composer, .agent-composer-box {
+  background: #fff !important;
+  border-top: 1px solid var(--line) !important;
+}
+.agent-canvas {
+  background: #f8faff !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--radius-lg) !important;
+}
+.agent-empty { border-color: rgba(0, 122, 255, 0.25) !important; }
+
+/* 助手消息气泡更清晰的层次 */
+.agent-msg.assistant .agent-bubble {
+  background: #fff !important;
+  border: 1px solid rgba(17, 24, 39, 0.07) !important;
+  box-shadow: 0 6px 18px rgba(16, 24, 40, 0.06) !important;
+}
+.agent-hint, .agent-notice-line {
+  background: rgba(0, 122, 255, 0.06) !important;
+  border: 1px solid rgba(0, 122, 255, 0.14) !important;
+  border-radius: var(--radius-sm) !important;
+}
+
+
+/* ================= 助手气泡：文字色 + 行距 + 层次 ================= */
+.agent-msg.user .agent-bubble {
+  color: #fff !important;
+  background: linear-gradient(135deg, #0a84ff, #8b5cf6) !important;
+  border-bottom-right-radius: 6px !important;
+  box-shadow: 0 8px 22px rgba(10, 132, 255, 0.25);
+}
+.agent-msg.assistant .agent-bubble {
+  background: #fff !important;
+  border: 1px solid rgba(17, 24, 39, 0.08) !important;
+  border-bottom-left-radius: 6px !important;
+  color: #1a2030 !important;
+  box-shadow: 0 6px 18px rgba(16, 24, 40, 0.06);
+}
+
+/* pre-wrap 会把 markdown 里的空行放大 → 块级子元素恢复正常换行 */
+.agent-bubble p,
+.agent-bubble li,
+.agent-bubble h1, .agent-bubble h2, .agent-bubble h3,
+.agent-bubble blockquote { white-space: normal; }
+.agent-bubble p { margin: 6px 0 !important; }
+.agent-bubble li { margin: 3px 0 !important; }
+.agent-bubble ul, .agent-bubble ol { margin: 6px 0 6px 20px !important; padding: 0 !important; }
+
+/* 聊天气泡里的代码/表格 */
+.agent-bubble code {
+  background: rgba(0, 122, 255, 0.08) !important;
+  color: #0b5bb5 !important;
+  border-radius: 6px;
+  padding: 1px 5px;
+}
+.agent-bubble pre {
+  background: #f4f7fc !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--radius-sm);
+}
+.agent-bubble table { border-collapse: collapse; }
+.agent-bubble th, .agent-bubble td {
+  border: 1px solid var(--line);
+  padding: 5px 9px;
+  text-align: left;
+}
+.agent-bubble th { background: #f4f7fc; font-weight: 600; }
+
+/* 聊天区底：极淡渐变，别一大片纯白 */
+.agent-feed {
+  background:
+    radial-gradient(760px 420px at 82% -8%, rgba(139, 92, 246, 0.07), transparent 62%),
+    radial-gradient(700px 420px at 8% 108%, rgba(10, 132, 255, 0.07), transparent 60%),
+    #fbfcff !important;
+}
+
+
+/* markdown 气泡：不要 pre-wrap，否则 <li> 之间的换行会被当成空行放大 */
+.agent-msg.assistant .agent-bubble {
+  white-space: normal !important;
+}
+.agent-msg.user .agent-bubble {
+  white-space: pre-wrap;
+}
+
+
+/* ================= 助手页：加一点色彩层次 ================= */
+.agent-msg.assistant .agent-bubble {
+  background: linear-gradient(180deg, #ffffff, #fbfcff) !important;
+  border: 1px solid rgba(10, 132, 255, 0.12) !important;
+}
+.agent-msg.assistant .agent-bubble::first-line { color: #0b1220; }
+
+.agent-project-chip {
+  background: linear-gradient(135deg, rgba(10, 132, 255, 0.12), rgba(139, 92, 246, 0.12)) !important;
+  border: 1px solid rgba(10, 132, 255, 0.22) !important;
+  color: #0b4a94 !important;
+  border-radius: 999px !important;
+}
+
+.agent-canvas-head {
+  border-bottom: 1px solid rgba(10, 132, 255, 0.14) !important;
+  background: linear-gradient(180deg, rgba(10, 132, 255, 0.06), transparent) !important;
+}
+
+.agent-composer-box { box-shadow: 0 8px 26px rgba(16, 24, 40, 0.06); }
+.agent-composer-box:focus-within {
+  border-color: rgba(10, 132, 255, 0.45) !important;
+  box-shadow: 0 0 0 4px rgba(10, 132, 255, 0.1), 0 10px 28px rgba(16, 24, 40, 0.08) !important;
+}
