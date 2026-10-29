@@ -1324,3 +1324,23 @@ input[type='file'] { width: auto !important; height: auto !important; }
   color: #4b5162 !important;
   gap: 7px !important;
 }
+
+
+/* 复选框聚焦时不要出现蓝框（Chrome 的 focus ring 会画成一个蓝方块） */
+input[type='checkbox']:focus,
+input[type='checkbox']:focus-visible,
+input[type='radio']:focus,
+input[type='radio']:focus-visible {
+  outline: none !important;
+  outline-offset: 0 !important;
+  box-shadow: none !important;
+}
+.check:focus-within,
+.mode-toggles:focus-within,
+label.check:focus-within {
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  border: 0 !important;
+}
+.check input[type='checkbox'] { margin: 0 !important; vertical-align: middle; }
