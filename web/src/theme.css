@@ -1052,3 +1052,21 @@ select { background-image: none; }
   max-width: 190px;
 }
 .render-shot-head b { font-size: 12px; }
+
+
+/* 时间轴分段：没时长的镜头也留出可读宽度，并允许横向滚动 */
+.panel-shots .timeline {
+  display: flex !important;
+  gap: 6px !important;
+  overflow-x: auto !important;
+  padding-bottom: 4px;
+}
+.panel-shots .timeline > .timeline-seg {
+  min-width: 96px;
+  flex-shrink: 0;
+}
+.panel-shots .timeline > .timeline-seg span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
