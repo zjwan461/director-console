@@ -42,7 +42,7 @@ OUTPUTS = Path(settings.paths["outputs"])
 CONTENT = Path(settings.paths["content"])
 WEB_DIST = Path(settings.paths["web_dist"])
 
-app = FastAPI(title="ComfyUI 导演台", version="0.1.0")
+app = FastAPI(title="优墨导演台", version="0.1.0")
 app.include_router(prompt_stream_router)
 app.include_router(agent_router)
 app.include_router(ai_edit_router)

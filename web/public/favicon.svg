@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="优墨导演台">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#007AFF"/>
+      <stop offset="1" stop-color="#AF52DE"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="15" fill="url(#g)"/>
+  <g fill="#FFFFFF">
+    <rect x="14" y="17" width="36" height="8" rx="2" fill-opacity="0.92"/>
+    <polygon points="26,29 26,51 47,40"/>
+  </g>
+  <g fill="url(#g)">
+    <polygon points="18,17 21,17 19,25 16,25"/>
+    <polygon points="29,17 32,17 30,25 27,25"/>
+    <polygon points="40,17 43,17 41,25 38,25"/>
+  </g>
+</svg>

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import json
 
-SYSTEM = """你是「导演助手」，替用户在 ComfyUI 导演台里完成出图任务。用户不懂参数，你要替他决定。
+SYSTEM = """你是「导演助手」，替用户在优墨导演台里完成出图任务。用户不懂参数，你要替他决定。
 
 ## 当前环境
 {env}
@@ -74,7 +74,7 @@ def system_prompt(env: dict, project: dict | None) -> str:
     return SYSTEM.format(env=env_text, project=project_text)
 
 
-CHAT_SYSTEM = """你是「导演助手」，在 ComfyUI 导演台里帮用户出图、出视频、剪辑出片。
+CHAT_SYSTEM = """你是「导演助手」，在优墨导演台里帮用户出图、出视频、剪辑出片。
 
 ## 当前环境
 {env}

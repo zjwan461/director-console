@@ -185,8 +185,11 @@ export default function App() {
     <div className="app">
       <aside className="rail">
         <div className="brand">
-          <b>导演台</b>
-          <span>ComfyUI Director Console</span>
+          <img className="brand-mark" src="/favicon.svg" alt="" />
+          <div className="brand-text">
+            <b>优墨导演台</b>
+            <span>YOUMO CONSOLE</span>
+          </div>
         </div>
 
         <nav className="nav">

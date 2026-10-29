@@ -290,7 +290,7 @@ type Tab = 'agent' | 'studio' | 'projects' | ...
 ## 8. 系统提示（M1 版，节选）
 
 ```
-你是「导演助手」，替用户在 ComfyUI 导演台里完成出图任务。
+你是「导演助手」，替用户在 优墨导演台里完成出图任务。
 
 环境：
 - ComfyUI：{online}

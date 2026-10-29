@@ -1342,3 +1342,37 @@ label.check:focus-within {
   border: 0 !important;
 }
 .check input[type='checkbox'] { margin: 0 !important; vertical-align: middle; }
+
+
+/* ================= 品牌区：logo + 文字 ================= */
+.rail .brand {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+.rail .brand-mark {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  flex: 0 0 auto;
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.28);
+}
+.rail .brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.rail .brand-text b {
+  font-size: 16px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.rail .brand-text span {
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
